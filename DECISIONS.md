@@ -79,3 +79,41 @@ sellada para el cliente.
 Decisión: GET = TMR × PAL de vida diaria + ejercicio neto (MET − 1); la estrategia factorial existe pero no
 suma ejercicio (RN-E02, RN-E03).
 Consecuencias: se evita el doble conteo del ejercicio, el error más caro del dominio.
+
+## ADR-017 · API en ESM por NestJS 12 — aceptada (2026-10-03)
+Contexto: NestJS 12 publica sus paquetes solo como ESM y su CLI recomienda ESM con Vitest en proyectos nuevos.
+Decisión: apps/api con "type": "module", module y moduleResolution nodenext, imports relativos con .js y
+verbatimModuleSyntax; compila con SWC (nest build) y se prueba con Vitest y unplugin-swc.
+Consecuencias: los tipos se importan con import type (importar una interfaz como valor falla al ejecutar); un ciclo
+entre archivos rompe la inyección en ESM: lo atrapa no-circular en lint:arch y, si hiciera falta, forwardRef.
+
+## ADR-018 · TypeScript 6.0 y pnpm 10 fijados — aceptada (2026-10-03)
+Contexto: la última versión es TypeScript 7.0, pero typescript-eslint 8.71 soporta hasta la 6.0 y el lint con tipos
+es parte de RNF-22. pnpm 12 existe; la rama 10 sigue con parches y es la que el equipo ya usa.
+Decisión: typescript ~6.0.3 en el catálogo de pnpm-workspace.yaml y pnpm 10.34.6 en packageManager, que corepack de
+Node 24 respeta. Los tsconfig no usan baseUrl: TypeScript 6 lo depreca.
+Consecuencias: pasar a TypeScript 7 cuando typescript-eslint lo soporte. El alias @/* de la web se declara para
+dependency-cruiser en packages/config/dependency-cruiser.resolve.cjs.
+
+## ADR-019 · Paquetes internos compilados con la condición @nutricoach/source — aceptada (2026-10-03)
+Contexto: Node y Next necesitan JavaScript compilado; los tipos, las pruebas y las reglas de arquitectura no deberían
+esperar a que se compilen los paquetes de los que dependen.
+Decisión: engine, shared-kernel y contracts compilan a dist (ESM con d.ts) y su exports declara además la condición
+@nutricoach/source hacia src, que usan TypeScript (customConditions), Vitest y dependency-cruiser. ui no se compila:
+Next lo transpila.
+Consecuencias: typecheck, lint, test y lint:arch corren sin compilar antes; pnpm dev y pnpm build compilan primero
+los paquetes (dependsOn ^build en turbo.json).
+
+## ADR-020 · ESLint 10 sin eslint-config-next — aceptada (2026-10-03)
+Contexto: eslint-config-next arrastra eslint-plugin-react, import y jsx-a11y sin soporte claro de ESLint 10.
+Decisión: typescript-eslint strictTypeChecked con @next/eslint-plugin-next y eslint-plugin-react-hooks, compuestos en
+packages/config.
+Consecuencias: el lint no trae reglas jsx-a11y; la accesibilidad se verifica con axe en Playwright (RNF-18, desde P3).
+
+## ADR-021 · Lectura de las reglas de dependencia de 02 §4 — aceptada (2026-10-03)
+Contexto: la tabla de 02 §4 dice qué puede importar cada capa y dependency-cruiser no ve los nombres importados.
+Decisión: lo que domain puede importar es una lista cerrada: su dominio, shared-kernel y tipos de engine (ni Node ni
+otras bibliotecas). src/platform se trata como un módulo: desde fuera solo su index.ts. Además: sin ciclos salvo
+imports de solo tipos, paquetes que no dependen de apps, engine y shared-kernel sin dependencias, y web sin
+shared-kernel. Que application use de NestJS solo Injectable e Inject lo verifica no-restricted-imports de ESLint.
+Consecuencias: usar date-fns u otra biblioteca dentro de domain exige discutirlo y registrar un ADR.

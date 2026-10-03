@@ -1,13 +1,13 @@
 # STATUS — NutriCoach v1.0
 
-Actualizado: AAAA-MM-DD · Por: Rodrigo | Iván, con Claude Code
+Actualizado: 2026-10-03 · Por: Rodrigo, con Claude Code
 Inicio del proyecto: POR CONFIRMAR (día siguiente al Pago 1) · Semana actual: 0 de 9
 Próxima demo: Demo 1 · Base y evaluación · semana 2
 
 ## Prompts
 | Prompt | Estado | Responsable | PR | Notas |
 |---|---|---|---|---|
-| P0 Andamiaje | 🟨 | Rodrigo | | |
+| P0 Andamiaje | 🟨 | Rodrigo | | Verificado en local; falta CI en verde en el primer PR |
 | P1 Motor de cálculo | ⬜ | Rodrigo | | |
 | P2 Base de datos y plataforma | ⬜ | Rodrigo | | |
 | P3 Sistema de diseño | ⬜ | Iván | | |
@@ -28,10 +28,11 @@ Próxima demo: Demo 1 · Base y evaluación · semana 2
 Leyenda: ⬜ pendiente · 🟨 en curso · ✅ terminado · ⛔ bloqueado
 
 ## En curso
-- P0 · andamiaje del monorepo en la rama `chore/andamiaje-monorepo`
+- P0 · andamiaje del monorepo en la rama `chore/andamiaje-monorepo`: criterios verificados en local;
+  falta el primer PR con CI en verde
 
 ## Siguiente paso
-- (una sola acción concreta)
+- Subir `main` y `chore/andamiaje-monorepo` y abrir el PR de P0; con CI en verde, marcar P0 ✅
 
 ## Bloqueos y preguntas al cliente
 - [ ] N9: límites y precio de los tramos de membresía; qué pasa al superar el límite
@@ -41,9 +42,16 @@ Leyenda: ⬜ pendiente · 🟨 en curso · ✅ terminado · ⛔ bloqueado
 - [ ] N7: confirmar el estado diario (estrés, sueño, energía)
 - [ ] R4: permiso de uso de las listas Dextre y ADA
 - [ ] Textos legales revisados por el abogado del cliente
+- [ ] docs/reference/ (guía de dominio, engine.ts y examples.ts) no está en el repositorio: P1 lo necesita
 
 ## Deuda técnica
-- (qué se dejó para después y por qué)
+- /api/health/ready es provisional: P2 agrega base, migraciones al día, cola activa y partición del mes siguiente
+- engine, ui y web corren Vitest con --passWithNoTests hasta tener pruebas (P1 y P3)
+- db:migrate, db:pull, db:seed, seed:load y e2e llaman scripts que llegan en P2, P3 y P7
+- El worker solo late y `pnpm dev` no lo levanta (`pnpm --filter api dev:worker`): P2 decide al traer el outbox
+- TypeScript fijado en 6.0 hasta que typescript-eslint soporte TypeScript 7 (ADR-018)
 
 ## Registro de sesiones (solo las 5 últimas)
-- AAAA-MM-DD · PN · qué se hizo · qué quedó pendiente
+- 2026-10-03 · P0 · monorepo pnpm y Turborepo, configuración compartida, reglas de arquitectura con su prueba,
+  shared-kernel, API NestJS con salud y worker, web con cuatro grupos, compose local, CI y README; ADR-017 a
+  ADR-021 · falta el primer PR con CI en verde
