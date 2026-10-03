@@ -1,0 +1,29 @@
+# Entorno local (Notion 01 §2): PostgreSQL 18 y Mailpit, publicados solo en 127.0.0.1.
+# Los roles (app_owner, app_user, app_readonly), la base nutricoach y las funciones app.* los
+# crea infra/db/init a partir de P2. Se levanta con `pnpm db:up`.
+name: nutricoach
+
+services:
+  postgres:
+    image: postgres:18
+    environment:
+      POSTGRES_PASSWORD: postgres # solo para este entorno local
+    ports:
+      - '127.0.0.1:5432:5432'
+    volumes:
+      # PostgreSQL 18 guarda los datos en /var/lib/postgresql/18/docker: se monta la carpeta padre.
+      - postgres-data:/var/lib/postgresql
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U postgres']
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  mailpit:
+    image: axllent/mailpit:v1.31
+    ports:
+      - '127.0.0.1:1025:1025' # SMTP para la API
+      - '127.0.0.1:8025:8025' # bandeja web: http://127.0.0.1:8025
+
+volumes:
+  postgres-data:
