@@ -1,0 +1,60 @@
+# Integración continua (Notion 01 §6): cada pull request y cada fusión en main.
+# Las pruebas de integración con Testcontainers se agregan como otro job en P2.
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+env:
+  TURBO_TELEMETRY_DISABLED: 1
+  NEXT_TELEMETRY_DISABLED: 1
+
+jobs:
+  check:
+    name: Lint, arquitectura, tipos, pruebas y build
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v7
+
+      # Sin `version`: toma la de packageManager en package.json.
+      - uses: pnpm/action-setup@v6
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+
+      - name: Caché de Turborepo
+        uses: actions/cache@v6
+        with:
+          path: .turbo/cache
+          key: turbo-${{ runner.os }}-${{ github.sha }}
+          restore-keys: turbo-${{ runner.os }}-
+
+      - name: Instalar dependencias
+        run: pnpm install --frozen-lockfile
+
+      - name: Lint
+        run: pnpm lint
+
+      - name: Reglas de arquitectura
+        run: pnpm lint:arch
+
+      - name: Tipos
+        run: pnpm typecheck
+
+      - name: Pruebas
+        run: pnpm test
+
+      - name: Build
+        run: pnpm build

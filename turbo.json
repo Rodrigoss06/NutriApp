@@ -3,6 +3,7 @@
   "ui": "stream",
   "agentGuidance": false,
   "globalDependencies": [".gitignore", ".prettierignore", "prettier.config.js"],
+  "globalPassThroughEnv": ["CI", "NODE_ENV", "NEXT_TELEMETRY_DISABLED"],
   "tasks": {
     "transit": {
       "dependsOn": ["^transit"]
