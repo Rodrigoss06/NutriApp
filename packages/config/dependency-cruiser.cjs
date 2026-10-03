@@ -5,6 +5,8 @@
  * test/dependency-cruiser.spec.ts demuestra que cada regla atrapa su caso.
  */
 
+const { resolve } = require('node:path');
+
 const API_SRC = '^apps/api/src/';
 /** Un contexto de src/modules o la plataforma técnica: ambos exponen solo su index.ts. */
 const BOUNDED = '(modules/[^/]+|platform)';
@@ -131,6 +133,8 @@ module.exports = {
       ],
     },
     tsPreCompilationDeps: true,
+    // El alias @/* de apps/web se resuelve con dependency-cruiser.resolve.cjs.
+    webpackConfig: { fileName: resolve(__dirname, 'dependency-cruiser.resolve.cjs') },
     enhancedResolveOptions: {
       exportsFields: ['exports'],
       conditionNames: ['@nutricoach/source', 'import', 'require', 'node', 'default', 'types'],

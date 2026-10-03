@@ -113,4 +113,8 @@ describe('02 §4 · RNF-21 · reglas de dependencia (pnpm lint:arch)', () => {
 
     expect(violations.filter((violation) => allowed.includes(violation.from))).toEqual([]);
   });
+
+  it('resuelve el alias @/* de apps/web', () => {
+    expect(violations.filter(({ from }) => from === 'apps/web/src/app/uses-alias.tsx')).toEqual([]);
+  });
 });

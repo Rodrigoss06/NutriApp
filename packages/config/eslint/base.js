@@ -57,6 +57,7 @@ export function base({ tsconfigRootDir }) {
     {
       files: ['**/*.cjs'],
       languageOptions: { sourceType: 'commonjs', globals: globals.node },
+      rules: { '@typescript-eslint/no-require-imports': 'off' },
     },
     {
       files: CONFIG_FILES,
