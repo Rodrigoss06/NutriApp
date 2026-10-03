@@ -1,0 +1,10 @@
+{
+  "extends": "./tsconfig/library.json",
+  "compilerOptions": {
+    "noEmit": true,
+    "allowJs": true,
+    "types": ["node"]
+  },
+  "include": ["test/**/*.ts"],
+  "exclude": ["test/fixtures"]
+}

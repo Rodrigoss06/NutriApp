@@ -1,0 +1,33 @@
+{
+  "name": "nutricoach",
+  "private": true,
+  "type": "module",
+  "packageManager": "pnpm@10.34.6",
+  "engines": {
+    "node": ">=24"
+  },
+  "scripts": {
+    "dev": "turbo run dev",
+    "build": "turbo run build",
+    "lint": "turbo run lint",
+    "lint:arch": "depcruise apps packages --config packages/config/dependency-cruiser.cjs",
+    "typecheck": "turbo run typecheck",
+    "test": "turbo run test",
+    "test:golden": "pnpm --filter @nutricoach/engine test:golden",
+    "test:int": "turbo run test:int",
+    "e2e": "pnpm --filter web e2e",
+    "db:up": "docker compose -f infra/docker/compose.local.yml up -d",
+    "db:migrate": "pnpm --filter api exec prisma migrate deploy",
+    "db:pull": "pnpm --filter api exec prisma db pull && pnpm --filter api exec prisma generate",
+    "db:seed": "pnpm --filter api seed",
+    "seed:load": "pnpm --filter api seed:load",
+    "check": "pnpm lint && pnpm lint:arch && pnpm typecheck && pnpm test && pnpm test:int"
+  },
+  "devDependencies": {
+    "@nutricoach/config": "workspace:*",
+    "dependency-cruiser": "catalog:",
+    "prettier": "catalog:",
+    "turbo": "catalog:",
+    "typescript": "catalog:"
+  }
+}
