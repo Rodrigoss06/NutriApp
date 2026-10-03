@@ -1,0 +1,38 @@
+{
+  "name": "@nutricoach/shared-kernel",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Bloques compartidos de los dominios (02 §5): Entity, AggregateRoot, ValueObject, DomainEvent, Result, Id, unidades y puertos.",
+  "type": "module",
+  "sideEffects": false,
+  "exports": {
+    ".": {
+      "@nutricoach/source": "./src/index.ts",
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    },
+    "./testing": {
+      "@nutricoach/source": "./src/testing/index.ts",
+      "types": "./dist/testing/index.d.ts",
+      "default": "./dist/testing/index.js"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "dev": "tsc -p tsconfig.build.json --watch --preserveWatchOutput",
+    "lint": "eslint . && prettier --check . --ignore-path ../../.prettierignore --ignore-path ../../.gitignore",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run --coverage"
+  },
+  "devDependencies": {
+    "@nutricoach/config": "workspace:*",
+    "@vitest/coverage-v8": "catalog:",
+    "eslint": "catalog:",
+    "prettier": "catalog:",
+    "typescript": "catalog:",
+    "vitest": "catalog:"
+  }
+}
