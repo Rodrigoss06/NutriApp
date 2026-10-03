@@ -3,6 +3,7 @@ node_modules/
 
 # Salidas de compilación y pruebas
 dist/
+dist-worker/
 .next/
 out/
 coverage/

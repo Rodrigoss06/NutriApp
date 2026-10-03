@@ -125,7 +125,7 @@ module.exports = {
     doNotFollow: { path: '(^|/)node_modules/' },
     exclude: {
       path: [
-        '(^|/)(dist|coverage|\\.next|\\.turbo)/',
+        '(^|/)(dist|dist-worker|coverage|\\.next|\\.turbo)/',
         'next-env\\.d\\.ts$',
         '^packages/config/test/fixtures/',
       ],

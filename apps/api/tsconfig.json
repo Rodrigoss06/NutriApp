@@ -1,0 +1,7 @@
+{
+  "extends": "@nutricoach/config/tsconfig/nestjs.json",
+  "compilerOptions": {
+    "noEmit": true
+  },
+  "include": ["src", "test"]
+}

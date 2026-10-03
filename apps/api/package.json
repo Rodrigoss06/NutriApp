@@ -1,0 +1,50 @@
+{
+  "name": "api",
+  "version": "0.0.0",
+  "private": true,
+  "description": "API NestJS de NutriCoach: proceso HTTP (main.ts) y worker (worker.ts) con el mismo código.",
+  "type": "module",
+  "scripts": {
+    "build": "nest build",
+    "dev": "nest start --watch | pino-pretty --singleLine",
+    "dev:worker": "nest start --watch --entryFile worker --path tsconfig.worker.json | pino-pretty --singleLine",
+    "start": "node dist/main.js",
+    "start:worker": "node dist/worker.js",
+    "lint": "eslint . && prettier --check . --ignore-path ../../.prettierignore --ignore-path ../../.gitignore",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run --coverage"
+  },
+  "dependencies": {
+    "@nestjs/common": "catalog:",
+    "@nestjs/core": "catalog:",
+    "@nestjs/platform-express": "catalog:",
+    "@nutricoach/contracts": "workspace:*",
+    "@nutricoach/shared-kernel": "workspace:*",
+    "nestjs-pino": "catalog:",
+    "pino": "catalog:",
+    "pino-http": "catalog:",
+    "reflect-metadata": "catalog:",
+    "rxjs": "catalog:",
+    "uuid": "catalog:",
+    "zod": "catalog:"
+  },
+  "devDependencies": {
+    "@nestjs/cli": "catalog:",
+    "@nestjs/testing": "catalog:",
+    "@nutricoach/config": "workspace:*",
+    "@swc/cli": "catalog:",
+    "@swc/core": "catalog:",
+    "@types/express": "catalog:",
+    "@types/node": "catalog:",
+    "@types/supertest": "catalog:",
+    "@vitest/coverage-v8": "catalog:",
+    "chokidar": "catalog:",
+    "eslint": "catalog:",
+    "pino-pretty": "catalog:",
+    "prettier": "catalog:",
+    "supertest": "catalog:",
+    "typescript": "catalog:",
+    "unplugin-swc": "catalog:",
+    "vitest": "catalog:"
+  }
+}

@@ -16,7 +16,16 @@ export const CONFIG_FILES = ['**/*.config.{js,mjs,cjs,ts,mts}'];
  */
 export function base({ tsconfigRootDir }) {
   return defineConfig(
-    { ignores: ['dist/**', 'coverage/**', '.next/**', '.turbo/**', 'next-env.d.ts'] },
+    {
+      ignores: [
+        'dist/**',
+        'dist-worker/**',
+        'coverage/**',
+        '.next/**',
+        '.turbo/**',
+        'next-env.d.ts',
+      ],
+    },
     js.configs.recommended,
     tseslint.configs.strictTypeChecked,
     {
