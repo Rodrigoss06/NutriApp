@@ -7,7 +7,7 @@ Próxima demo: Demo 1 · Base y evaluación · semana 2
 ## Prompts
 | Prompt | Estado | Responsable | PR | Notas |
 |---|---|---|---|---|
-| P0 Andamiaje | 🟨 | Rodrigo | | Verificado en local; falta CI en verde en el primer PR |
+| P0 Andamiaje | ✅ | Rodrigo | #1 | CI en verde; pendiente /notion-sync |
 | P1 Motor de cálculo | ⬜ | Rodrigo | | |
 | P2 Base de datos y plataforma | ⬜ | Rodrigo | | |
 | P3 Sistema de diseño | ⬜ | Iván | | |
@@ -28,11 +28,10 @@ Próxima demo: Demo 1 · Base y evaluación · semana 2
 Leyenda: ⬜ pendiente · 🟨 en curso · ✅ terminado · ⛔ bloqueado
 
 ## En curso
-- P0 · andamiaje del monorepo en la rama `chore/andamiaje-monorepo`: criterios verificados en local;
-  falta el primer PR con CI en verde
+- PR #1 de P0 en revisión (Iván), con CI en verde
 
 ## Siguiente paso
-- Subir `main` y `chore/andamiaje-monorepo` y abrir el PR de P0; con CI en verde, marcar P0 ✅
+- Fusionar el PR #1 con squash y empezar P1 (antes, copiar docs/reference/)
 
 ## Bloqueos y preguntas al cliente
 - [ ] N9: límites y precio de los tramos de membresía; qué pasa al superar el límite
@@ -54,4 +53,4 @@ Leyenda: ⬜ pendiente · 🟨 en curso · ✅ terminado · ⛔ bloqueado
 ## Registro de sesiones (solo las 5 últimas)
 - 2026-10-03 · P0 · monorepo pnpm y Turborepo, configuración compartida, reglas de arquitectura con su prueba,
   shared-kernel, API NestJS con salud y worker, web con cuatro grupos, compose local, CI y README; ADR-017 a
-  ADR-021 · falta el primer PR con CI en verde
+  ADR-021 · PR #1 con CI en verde; pendiente aplicar /notion-sync
