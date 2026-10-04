@@ -8,7 +8,7 @@ Próxima demo: Demo 1 · Base y evaluación · semana 2
 | Prompt | Estado | Responsable | PR | Notas |
 |---|---|---|---|---|
 | P0 Andamiaje | ✅ | Rodrigo | #1 | CI en verde; pendiente /notion-sync |
-| P1 Motor de cálculo | ⬜ | Rodrigo | | |
+| P1 Motor de cálculo | 🟨 | Rodrigo | | |
 | P2 Base de datos y plataforma | ⬜ | Rodrigo | | |
 | P3 Sistema de diseño | ⬜ | Iván | | |
 | P4 Servidor y staging | ⬜ | Iván | | |
