@@ -1,0 +1,11 @@
+# Copias exactas de Notion ("Archivos del repositorio"): no se reformatean
+CLAUDE.md
+STATUS.md
+DECISIONS.md
+.claude/
+.mcp.json
+.github/pull_request_template.md
+
+# Generados
+pnpm-lock.yaml
+next-env.d.ts

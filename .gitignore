@@ -1,0 +1,30 @@
+# Dependencias
+node_modules/
+
+# Salidas de compilación y pruebas
+dist/
+dist-worker/
+.next/
+apps/web/out/
+coverage/
+*.tsbuildinfo
+next-env.d.ts
+
+# Turborepo
+.turbo/
+
+# Variables de entorno: solo se versiona .env.example
+.env
+.env.*
+!.env.example
+
+# Claude Code: ajustes personales de cada máquina
+.claude/settings.local.json
+
+# Playwright
+playwright-report/
+test-results/
+
+# Registros y sistema
+*.log
+.DS_Store

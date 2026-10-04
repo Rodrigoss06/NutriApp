@@ -1,0 +1,42 @@
+{
+  "enabledMcpjsonServers": ["notion"],
+  "permissions": {
+    "allow": [
+      "Bash(pnpm:*)",
+      "Bash(docker compose:*)",
+      "Bash(git status)",
+      "Bash(git diff:*)",
+      "Bash(git log:*)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(git switch:*)",
+      "Bash(git checkout -b:*)",
+      "Bash(gh pr view:*)",
+      "mcp__notion__notion-search",
+      "mcp__notion__notion-fetch"
+    ],
+    "ask": [
+      "Bash(git push:*)",
+      "Bash(gh pr create:*)",
+      "mcp__notion__notion-update-page",
+      "mcp__notion__notion-create-pages",
+      "mcp__notion__notion-create-comment"
+    ],
+    "deny": [
+      "Read(./.env)",
+      "Read(./.env.local)",
+      "Read(./.env.staging)",
+      "Read(./.env.production)",
+      "Read(./apps/api/.env)",
+      "Read(./apps/web/.env)",
+      "Bash(git push --force:*)",
+      "Bash(rm -rf:*)",
+      "Bash(docker system prune:*)",
+      "Bash(npx prisma migrate dev:*)",
+      "Bash(npx prisma migrate reset:*)",
+      "Bash(pnpm exec prisma migrate dev:*)",
+      "Bash(pnpm --filter api exec prisma migrate dev:*)",
+      "Bash(pnpm --filter api exec prisma migrate reset:*)"
+    ]
+  }
+}

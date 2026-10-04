@@ -1,0 +1,23 @@
+{
+  "name": "@nutricoach/ui",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Sistema de diseño: shadcn/ui y tokens CSS. Next.js lo transpila desde el código fuente (P3).",
+  "type": "module",
+  "sideEffects": false,
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "lint": "eslint . && prettier --check . --ignore-path ../../.prettierignore --ignore-path ../../.gitignore",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run --passWithNoTests"
+  },
+  "devDependencies": {
+    "@nutricoach/config": "workspace:*",
+    "eslint": "catalog:",
+    "prettier": "catalog:",
+    "typescript": "catalog:",
+    "vitest": "catalog:"
+  }
+}

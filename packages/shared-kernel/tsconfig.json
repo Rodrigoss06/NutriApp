@@ -1,0 +1,7 @@
+{
+  "extends": "@nutricoach/config/tsconfig/library.json",
+  "compilerOptions": {
+    "noEmit": true
+  },
+  "include": ["src"]
+}
