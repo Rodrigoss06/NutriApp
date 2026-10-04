@@ -1,4 +1,12 @@
 import { baseConfig } from '@nutricoach/config/vitest';
+import { defineConfig, mergeConfig } from 'vitest/config';
 
-// P1 agrega test/golden (G-01 a G-25), test/properties y el umbral de cobertura de 90 % (RNF-20).
-export default baseConfig;
+export default mergeConfig(
+  baseConfig,
+  defineConfig({
+    test: {
+      // RNF-20 y packages/engine/CLAUDE.md: 90 % o más.
+      coverage: { thresholds: { lines: 90, functions: 90, branches: 90, statements: 90 } },
+    },
+  }),
+);
