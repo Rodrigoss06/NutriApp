@@ -1,0 +1,35 @@
+export {
+  EE_MET_COMPENDIUM2024,
+  PAL_RANGE,
+  totalEnergyExpenditure,
+  type ActivityInput,
+  type ActivityOutput,
+  type MetInput,
+  type MetOutput,
+  type TeeInput,
+  type TeeResult,
+} from './expenditure.js';
+export {
+  DAYS_PER_MONTH,
+  FAT_LOSS_7700,
+  KCAL_PER_KG_FAT,
+  TARGET_WEIGHT_FAT_PCT,
+  WEEKLY_RATE_PCT,
+  WEEKS_PER_MONTH,
+  type FatLossInput,
+  type FatLossOutput,
+  type TargetWeightInput,
+  type TargetWeightOutput,
+} from './goals.js';
+export {
+  BMR_SCHOFIELD1985,
+  RMR_CUNNINGHAM1980,
+  RMR_HB1919,
+  RMR_KATCH_MCARDLE,
+  RMR_MIFFLIN1990,
+  SCHOFIELD_BANDS,
+  type FatFreeMassInput,
+  type RmrOutput,
+  type RmrSubject,
+  type SchofieldInput,
+} from './rmr.js';

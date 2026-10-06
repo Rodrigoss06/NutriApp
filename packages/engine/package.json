@@ -20,12 +20,15 @@
     "dev": "tsc -p tsconfig.build.json --watch --preserveWatchOutput",
     "lint": "eslint . && prettier --check . --ignore-path ../../.prettierignore --ignore-path ../../.gitignore",
     "typecheck": "tsc --noEmit",
-    "test": "vitest run --passWithNoTests",
-    "test:golden": "vitest run test/golden --passWithNoTests"
+    "test": "vitest run --coverage",
+    "test:golden": "vitest run test/golden"
   },
   "devDependencies": {
     "@nutricoach/config": "workspace:*",
+    "@types/node": "catalog:",
+    "@vitest/coverage-v8": "catalog:",
     "eslint": "catalog:",
+    "fast-check": "catalog:",
     "prettier": "catalog:",
     "typescript": "catalog:",
     "vitest": "catalog:"

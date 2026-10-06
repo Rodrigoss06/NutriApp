@@ -45,7 +45,7 @@ No edites Notion sin aprobación explícita: propón el cambio con /notion-sync 
    Nunca `prisma migrate dev` ni `migrate reset`. Nunca edites una migración que ya llegó a staging.
 6. Unidades en los nombres (`weightKg`, `heightCm`, `tricepsMm`). Redondeo solo al presentar (RN-D09).
 7. Datos personales: nunca en logs, fixtures, capturas ni commits. Datos de prueba sintéticos. No leas `.env`.
-8. Pruebas primero en dominio y motor; cada prueba cita su regla (`RN-C02`). Casos dorados G-01 a G-25 siempre en verde.
+8. Pruebas primero en dominio y motor; cada prueba cita su regla (`RN-C02`). Casos dorados G-01 a G-28 siempre en verde.
 9. Código en inglés; interfaz, documentación y commits en español (Conventional Commits).
 10. Fuera de alcance (pasarela de pagos, SUNAT, IA en el producto, dispositivos, apps nativas): no se construye.
     Si una tarea lo roza, avísalo antes de seguir.

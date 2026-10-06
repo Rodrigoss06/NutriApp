@@ -9,6 +9,6 @@
 - Unidades con marca de tipo y en los nombres. Sin redondeo interno.
 - Validación fisiológica antes de calcular (RN-C04); advertencias con el código de la regla.
 - Cambiar una fórmula o una constante = subir la versión del método y la del motor + entrada en CHANGELOG.md.
-- Casos dorados G-01 a G-25 (Notion 03) en test/golden; propiedades con fast-check en test/properties.
+- Casos dorados G-01 a G-28 (Notion 03) en test/golden; propiedades con fast-check en test/properties.
   Cobertura de 90 % o más.
 - Referencia: docs/reference/engine.ts y examples.ts. Al portarlos, ningún número cambia.

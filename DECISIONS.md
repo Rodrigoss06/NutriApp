@@ -117,3 +117,23 @@ otras bibliotecas). src/platform se trata como un módulo: desde fuera solo su i
 imports de solo tipos, paquetes que no dependen de apps, engine y shared-kernel sin dependencias, y web sin
 shared-kernel. Que application use de NestJS solo Injectable e Inject lo verifica no-restricted-imports de ESLint.
 Consecuencias: usar date-fns u otra biblioteca dentro de domain exige discutirlo y registrar un ADR.
+
+## ADR-022 · Durnin y Womersley con los coeficientes del artículo original — aceptada (2026-10-04)
+Contexto: el consenso GREC 2009 imprime m = 0.0799 para hombres de 50 años o más; el artículo original de Durnin y
+Womersley (1974) da 0.0779. La guía de dominio y su motor de referencia copiaron la errata.
+Decisión: el motor usa 0.0779 y suma las bandas del artículo para 17–19 años (hombres) y 16–19 (mujeres). Se corrigen
+docs/reference/engine.ts y la guía en el mismo cambio, para que la referencia siga sirviendo de comparación.
+Consecuencias: un hombre de 55 años con 60 mm de suma da 29.20 % de grasa y no 30.85 %; el caso dorado G-26 bloquea
+la vuelta a la errata. Los números de Luis (28 años) no cambian.
+
+## ADR-023 · Contrato del motor de cálculo — aceptada (2026-10-06)
+Contexto: P7 guarda cada resultado en assessment.calculation_result y la interfaz muestra sus avisos; el motor
+tiene que entregar siempre lo mismo y explicar por qué no calcula.
+Decisión: runMethod valida los rangos de RN-C04, aplica la validez de cada método con gravedad ERROR,
+WARNING o INFO (RN-D06; ERROR no calcula, INFO queda en la definición) y devuelve el sobre de RN-D01 con
+inputsHash = SHA-256 del JSON canónico. Cada aviso trae su regla y un código NC-ENG-NNN estable. Los insumos
+con orden significativo van como listas, no como objetos (JSONB reordena las claves). Los sitios usan los
+códigos de engine/src/sites.ts, que la semilla del catálogo de P7 debe reutilizar. El GET con PAL no tiene
+código propio en 02 §9: es una función pura que devuelve sus avisos.
+Consecuencias: recalcular desde los insumos guardados reproduce el resultado y su hash. Agregar un aviso o
+cambiar su código es un cambio del método y sube su versión.

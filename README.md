@@ -28,7 +28,7 @@ desde entonces se copia `.env.example` (Notion 01 §12) y se completan los valor
 | --------------------------------------------------- | ----------------------------------------------------------------------- |
 | `pnpm check`                                        | Lint, reglas de arquitectura, tipos, unitarias e integración: la puerta |
 | `pnpm lint:arch`                                    | Reglas de dependencia de Notion 02 §4 con dependency-cruiser            |
-| `pnpm test:golden`                                  | Casos dorados del motor, G-01 a G-25 (desde P1)                         |
+| `pnpm test:golden`                                  | Casos dorados del motor, G-01 a G-28 (desde P1)                         |
 | `pnpm build`                                        | Compila los paquetes, la API y la web                                   |
 | `pnpm db:migrate` · `pnpm db:pull` · `pnpm db:seed` | Base de datos primero: migraciones SQL y cliente Prisma (desde P2)      |
 | `pnpm e2e`                                          | Recorridos de cada demo con Playwright (desde P3)                       |
