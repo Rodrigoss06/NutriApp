@@ -72,6 +72,8 @@ export interface Issue {
 
 /** Entrada de la tabla «Validez por método» de 03 (RN-D06). Sin `when`, aplica siempre. */
 export interface ValidityRule<TInput> {
+  /** Regla que cita el aviso; RN-D06 si no se indica. */
+  readonly rule?: `RN-${string}`;
   readonly severity: Severity;
   readonly code: `NC-ENG-${string}`;
   readonly message: string;

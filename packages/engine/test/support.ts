@@ -19,3 +19,7 @@ export function expectErrors<TInput, TOutput>(run: MethodRun<TInput, TOutput>) {
 export function expectKcal(actual: number, expected: number): void {
   expect(Math.abs(actual - expected)).toBeLessThanOrEqual(1);
 }
+
+/** Redondeo a la mitad hacia arriba, como `r()` de docs/reference/examples.ts. Solo para comparar en pruebas. */
+export const roundHalfUp = (value: number, decimals: number): number =>
+  Math.round(value * 10 ** decimals) / 10 ** decimals;

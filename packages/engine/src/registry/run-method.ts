@@ -51,7 +51,7 @@ export function runMethod<TInput, TOutput>(
 
   const validity: Issue[] = method.validity
     .filter((rule) => rule.severity !== 'INFO' && (rule.when?.(inputs) ?? true))
-    .map(({ severity, code, message }) => ({ rule: 'RN-D06', severity, code, message }));
+    .map(({ rule = 'RN-D06', severity, code, message }) => ({ rule, severity, code, message }));
   const validityErrors = validity.filter((issue) => issue.severity === 'ERROR');
   const validityWarnings = validity.filter((issue) => issue.severity === 'WARNING');
   if (validityErrors.length > 0) {
