@@ -1,3 +1,7 @@
+export * from './anthropometry/index.js';
+export * from './body-composition/index.js';
+export * from './diet/index.js';
+export * from './energy/index.js';
 export {
   canonicalJson,
   inputsHash,
@@ -5,6 +9,13 @@ export {
   type JsonObject,
   type JsonValue,
 } from './hash/index.js';
+export * from './proportionality/index.js';
+export { METHODS, availableMethods, type AnyMethod } from './registry/methods.js';
+export {
+  DEFAULT_ONE_RM_METHOD,
+  METHODS_BY_POPULATION,
+  type PopulationDefaults,
+} from './registry/population-defaults.js';
 export { defineMethod, runMethod } from './registry/run-method.js';
 export {
   METHOD_CODES,
@@ -21,6 +32,8 @@ export {
   type Sex,
   type ValidityRule,
 } from './registry/types.js';
+export { SITES, type SiteCode } from './sites.js';
+export * from './training/index.js';
 export {
   cm,
   cmToM,
