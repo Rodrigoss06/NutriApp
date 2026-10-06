@@ -28,3 +28,6 @@ test-results/
 # Registros y sistema
 *.log
 .DS_Store
+
+# Cliente de Prisma: se genera con `prisma generate` (postinstall)
+apps/api/src/platform/database/generated/

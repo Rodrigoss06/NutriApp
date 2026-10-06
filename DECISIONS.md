@@ -51,9 +51,10 @@ Consecuencias: revocación inmediata; nada legible desde el navegador; sin prove
 Decisión: (public), (panel), (paciente) y (admin) en apps/web; la app del paciente es una PWA instalable.
 Consecuencias: un despliegue y un sistema de diseño; experiencias separadas por layout.
 
-## ADR-011 · Prisma con base de datos primero — aceptada (revisar tras el spike de P2)
+## ADR-011 · Prisma con base de datos primero — aceptada (confirmada por el spike de P2, ADR-024)
 Decisión: migraciones en SQL aplicadas con prisma migrate deploy; schema.prisma se regenera con db pull;
-nunca prisma migrate dev. CI falla si db pull cambia schema.prisma.
+nunca prisma migrate dev. CI falla si db pull cambia schema.prisma. Desde P2 no hay FK sobre tablas
+particionadas: Prisma no las introspecta y se reemplazan por disparadores de restricción (ADR-024).
 Consecuencias: RLS, particiones y restricciones avanzadas viven versionadas en SQL sin pelear con Prisma.
 
 ## ADR-012 · Docker Compose en un servidor de Hetzner, con staging en el mismo servidor — aceptada
@@ -137,3 +138,27 @@ códigos de engine/src/sites.ts, que la semilla del catálogo de P7 debe reutili
 código propio en 02 §9: es una función pura que devuelve sus avisos.
 Consecuencias: recalcular desde los insumos guardados reproduce el resultado y su hash. Agregar un aviso o
 cambiar su código es un cambio del método y sube su versión.
+
+## ADR-024 · Spike de Prisma 7 con particiones, varios esquemas y RLS — aceptada (2026-10-06)
+Contexto: 05 §10 pide confirmar, con la versión estable instalada, que db pull reconoce las tablas padre
+particionadas y que el cliente trabaja con `@@id([id, localDate])`. P2 suma la unidad de trabajo con
+nestjs-cls y pg-boss.
+Hallazgos con Prisma 7.10.0 (la etiqueta `latest` de npm apunta a 8.0.0-rc), @prisma/adapter-pg y PostgreSQL 18:
+- db pull ve solo las tablas padre; una partición nueva en `part` no cambia schema.prisma.
+- `@@id([id, localDate])` funciona: create y findUnique por `id_localDate`.
+- Las tablas con el mismo nombre en dos esquemas (`iam.session`, `training.session`) salen con el esquema
+  como prefijo. Los nombres en inglés con `@@map` y `@map` se conservan al volver a introspectar.
+- Una FK hacia una tabla particionada rompe db pull (P4002): PostgreSQL la clona hacia cada partición de
+  `part`, y agregar `part` a `schemas` cambiaría schema.prisma cada mes.
+- Las columnas generadas salen con `@default(dbgenerated(...))`: se leen y nunca se escriben.
+- `createMany` no usa RETURNING y respeta la política del outbox; `create` falla con 42501, como se espera.
+- @nestjs-cls/transactional 4 con su adaptador de Prisma 2 funciona con Prisma 7 y el adaptador pg:
+  set_config(..., true) queda en la transacción y no se filtra; READ ONLY rechaza escrituras.
+- `_prisma_migrations` queda en `public`.
+- pg-boss 12.37 crea tablas al crear colas y particiones de estadísticas mientras corre.
+Decisión: Prisma 7.10.0 y pg-boss 12.37.0 con versión fija. `prisma.config.ts` con la URL de app_owner para
+migrar e introspectar; el cliente usa el adaptador pg con app_user. Sin FK sobre tablas particionadas: la
+FK de 05.2 de `tracking.set_log` hacia `tracking.workout_log` pasa a un disparador de restricción. El
+esquema `pgboss` lo crea una migración con AUTHORIZATION app_user y pg-boss se migra solo dentro de él.
+Consecuencias: schema.prisma sigue siendo generado y CI puede compararlo. Toda FK nueva hacia o desde una
+tabla particionada se escribe como disparador. Cambio para Notion 05.2 y 05 §10 (/notion-sync).

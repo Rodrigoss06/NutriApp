@@ -8,8 +8,8 @@ Próxima demo: Demo 1 · Base y evaluación · semana 2
 | Prompt | Estado | Responsable | PR | Notas |
 |---|---|---|---|---|
 | P0 Andamiaje | ✅ | Rodrigo | #1 | CI en verde; pendiente /notion-sync |
-| P1 Motor de cálculo | ✅ | Rodrigo | | G-01 a G-28 en verde; PR pendiente de subir |
-| P2 Base de datos y plataforma | ⬜ | Rodrigo | | |
+| P1 Motor de cálculo | ✅ | Rodrigo | #2 | G-01 a G-28 en verde; pendiente /notion-sync |
+| P2 Base de datos y plataforma | 🟨 | Rodrigo | | Plan aprobado con ajustes |
 | P3 Sistema de diseño | ⬜ | Iván | | |
 | P4 Servidor y staging | ⬜ | Iván | | |
 | P5 Identidad y organizaciones | ⬜ | Rodrigo | | |
@@ -28,10 +28,10 @@ Próxima demo: Demo 1 · Base y evaluación · semana 2
 Leyenda: ⬜ pendiente · 🟨 en curso · ✅ terminado · ⛔ bloqueado
 
 ## En curso
-- P1 terminado en la rama `feat/eng-motor`: falta subirla y abrir el PR
+- P2 en `feat/db-plataforma`: init, spike de Prisma, migraciones, RLS y plataforma de eventos
 
 ## Siguiente paso
-- Subir `feat/eng-motor`, abrir el PR de P1 y, con CI en verde, fusionarlo; luego P2
+- Spike de Prisma (ADR-024) y migración 0000
 
 ## Bloqueos y preguntas al cliente
 - [ ] N9: límites y precio de los tramos de membresía; qué pasa al superar el límite

@@ -10,7 +10,8 @@ export default mergeConfig(
     test: {
       coverage: {
         // Arranque de los procesos: lo cubren el humo de `pnpm dev` y las pruebas de API.
-        exclude: ['src/main.ts', 'src/worker.ts'],
+        // El cliente de Prisma lo genera `prisma generate`.
+        exclude: ['src/main.ts', 'src/worker.ts', 'src/platform/database/generated/**'],
         // RNF-20: 70 % o más en el backend.
         thresholds: { lines: 70, functions: 70, branches: 70, statements: 70 },
       },
