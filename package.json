@@ -7,7 +7,7 @@
     "node": ">=24"
   },
   "scripts": {
-    "dev": "turbo run dev",
+    "dev": "turbo run dev dev:worker",
     "build": "turbo run build",
     "lint": "turbo run lint",
     "lint:arch": "depcruise apps packages --config packages/config/dependency-cruiser.cjs",

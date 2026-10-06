@@ -1,6 +1,7 @@
 import { Global, Module } from '@nestjs/common';
 import { CLOCK, ID_GENERATOR } from '@nutricoach/shared-kernel';
 import { LoggerModule } from 'nestjs-pino';
+import { AuditModule } from './audit/audit.module.js';
 import { SystemClock } from './clock/system.clock.js';
 import { loadEnv } from './config/env.js';
 import { DatabaseModule } from './database/database.module.js';
@@ -10,7 +11,7 @@ import { buildLoggerParams } from './logging/logger.options.js';
 
 /**
  * Plataforma técnica compartida por la API y el worker (02 §2): logs y adaptadores de los puertos
- * transversales, la base con su unidad de trabajo y el outbox.
+ * transversales, la base con su unidad de trabajo, el outbox, la auditoría y el cifrado.
  */
 @Global()
 @Module({
@@ -18,6 +19,7 @@ import { buildLoggerParams } from './logging/logger.options.js';
     LoggerModule.forRoot(buildLoggerParams(loadEnv().NODE_ENV)),
     DatabaseModule,
     EventsModule,
+    AuditModule,
   ],
   providers: [
     { provide: CLOCK, useClass: SystemClock },

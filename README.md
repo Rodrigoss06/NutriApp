@@ -15,12 +15,15 @@ energía, dieta, rutinas y seguimiento diario del paciente. Versión 1.0, Paquet
 
 ```bash
 pnpm install
-pnpm db:up   # PostgreSQL 18 en 127.0.0.1:5432 y Mailpit en http://127.0.0.1:8025
-pnpm dev     # web en http://localhost:3000 y API en http://localhost:3001/api/health/live
+cp apps/api/env.local.example apps/api/.env   # valores locales; nunca secretos reales
+pnpm db:up       # PostgreSQL 18 en 127.0.0.1:5432 y Mailpit en http://127.0.0.1:8025
+pnpm db:migrate  # roles y base los crea infra/db/init al crear el volumen; esto aplica las migraciones
+pnpm dev         # web en :3000, API en http://localhost:3001/api/health/ready y el worker
 ```
 
-El worker se levanta aparte con `pnpm --filter api dev:worker`. Hasta P2 no hace falta un `.env`:
-desde entonces se copia `.env.example` (Notion 01 §12) y se completan los valores locales.
+`pnpm dev` levanta también el worker (outbox, colas y mantenimiento). La lista completa de variables de
+staging y producción está en `.env.example` (Notion 01 §12). Si el volumen de PostgreSQL es anterior a P2,
+se recrea con `docker compose -f infra/docker/compose.local.yml down -v` para que corra infra/db/init.
 
 ## Comandos
 

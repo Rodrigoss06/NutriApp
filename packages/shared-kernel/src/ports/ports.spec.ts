@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import { CLOCK } from './clock.port.js';
 import { ID_GENERATOR } from './id-generator.port.js';
+import { AUDIT_ACTIONS, AUDIT_PORT } from './audit.port.js';
+import { ENCRYPTION_PORT, normalizeDocumentNumber } from './encryption.port.js';
 import { OUTBOX } from './outbox.port.js';
 import { ACTOR_ROLES, systemContext, UNIT_OF_WORK } from './unit-of-work.port.js';
 
@@ -42,4 +44,30 @@ describe('02 §6 · puertos UnitOfWork y Outbox', () => {
     expect(Object.isFrozen(context)).toBe(true);
     expect(systemContext('org' as never).organizationId).toBe('org');
   });
+});
+
+describe('02 §10 · puertos de auditoría y cifrado', () => {
+  it('sus tokens son símbolos globales únicos', () => {
+    expect(
+      new Set([CLOCK, ID_GENERATOR, UNIT_OF_WORK, OUTBOX, AUDIT_PORT, ENCRYPTION_PORT]).size,
+    ).toBe(6);
+  });
+
+  it('RN-B03 · audita lecturas, exportaciones, cambios e ingresos', () => {
+    expect(AUDIT_ACTIONS).toEqual(
+      expect.arrayContaining(['READ', 'EXPORT', 'UPDATE', 'LOGIN', 'LOGIN_FAILED']),
+    );
+  });
+
+  it.each([
+    ['12 345 678', '12345678'],
+    ['00123456', '00123456'],
+    ['ab-12.34', 'AB1234'],
+    ['０１２３４５６７', '01234567'],
+  ])(
+    'RN-B06 · normaliza el documento %s como %s, sin perder ceros a la izquierda',
+    (raw, normalized) => {
+      expect(normalizeDocumentNumber(raw)).toBe(normalized);
+    },
+  );
 });

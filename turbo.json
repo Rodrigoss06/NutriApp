@@ -33,6 +33,11 @@
     "test:int": {
       "dependsOn": ["transit"],
       "cache": false
+    },
+    "dev:worker": {
+      "dependsOn": ["^build"],
+      "cache": false,
+      "persistent": true
     }
   }
 }

@@ -1,9 +1,12 @@
+export { AuditModule } from './audit/audit.module.js';
 export { DatabaseModule } from './database/database.module.js';
 export { PRISMA, type Db } from './database/prisma.provider.js';
 export { ConsumerRegistry, type EventConsumer } from './events/event-consumer.js';
 export { EventsModule } from './events/events.module.js';
 export type { OutboxEnvelope } from './events/outbox-envelope.js';
 export { API_PORT, configureHttp } from './http/configure-http.js';
+export type { ContextualRequest } from './http/request-context.js';
+export { IdempotencyModule } from './idempotency/idempotency.module.js';
 export { HealthModule } from './health/health.module.js';
 export { PlatformModule } from './platform.module.js';
 export { WorkerPlatformModule } from './worker/worker-platform.module.js';

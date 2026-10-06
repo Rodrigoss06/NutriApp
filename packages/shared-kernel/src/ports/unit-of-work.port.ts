@@ -1,4 +1,4 @@
-import type { OrganizationId, PatientId, UserId } from '../id.js';
+import type { Id, OrganizationId, PatientId, UserId } from '../id.js';
 
 /** Roles del contexto de seguridad (RN-A04). SYSTEM es el worker: despacho, consumidores y mantenimiento. */
 export const ACTOR_ROLES = [
@@ -21,6 +21,8 @@ export interface SecurityContext {
   readonly role: ActorRole;
   /** Solo con el rol PATIENT: sale de la sesión, nunca de la petición (02 §10). */
   readonly patientId: PatientId | null;
+  /** Solo con PLATFORM_ADMIN: el permiso de soporte vigente con que actúa (RN-A09); se audita. */
+  readonly supportGrantId?: Id<'SupportGrantId'> | null;
 }
 
 /** Contexto del worker: sin usuario; con organización cuando procesa un evento de una. */

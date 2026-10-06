@@ -10,6 +10,10 @@ export const INTEGRATION_COVERED = [
   'src/platform/maintenance/**',
   'src/platform/worker/**',
   'src/platform/health/readiness.service.ts',
+  'src/platform/audit/**',
+  'src/platform/idempotency/idempotency.interceptor.ts',
+  'src/platform/idempotency/idempotency.module.ts',
+  'src/platform/http/request-meta.ts',
 ];
 
 const config = mergeConfig(
