@@ -12,7 +12,14 @@
 - Guardias en orden: SessionGuard, TenantGuard, PolicyGuard. El paciente usa /api/v1/me/... y nunca envía su id.
 - Lectura de expediente clínico y exportaciones: AuditPort.record().
 - Migraciones: prisma/migrations/AAAAMMDDHHMM_nombre/migration.sql. Toda tabla nueva con organization_id lleva
-  ENABLE y FORCE ROW LEVEL SECURITY y su política en la misma migración. Luego pnpm db:migrate && pnpm db:pull.
-- Tablas particionadas: se crea la padre y se llama app.ensure_monthly_partitions en la migración.
+  en la misma migración `SELECT app.enable_tenant_rls(...)` (o `app.enable_catalog_rls` si NULL es global) y
+  `SELECT app.restrict_patient(...)` con lo que el paciente puede ver y escribir (ADR-025). Luego
+  pnpm db:migrate && pnpm db:pull. schema.prisma no se edita a mano.
+- Permisos: app_user nace con SELECT, INSERT y UPDATE; DELETE y UPDATE por columna se conceden explícitos.
+- Tablas particionadas: se crea la padre y se llama app.ensure_monthly_partitions en la migración. Sin FK hacia
+  ni desde ellas: un disparador de restricción (ADR-024). Una tabla particionada nueva entra en la lista
+  cerrada de la función y en PARTITIONED_TABLES.
+- Auditoría con AUDIT_PORT (transacción propia, falla cerrado); campos sensibles con ENCRYPTION_PORT.
 - Logs con pino: nunca cuerpos de petición ni datos personales.
 - Pruebas de integración (*.int.spec.ts, Testcontainers, rol app_user) por repositorio y por política RLS nueva.
+  Junto al código si prueban archivos internos; en test/integration si solo usan la API pública.

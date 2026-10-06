@@ -29,11 +29,14 @@ describe('01 §8 · verificaciones de salud de la API', () => {
     expect(healthResponseSchema.parse(response.body)).toEqual({ status: 'ok' });
   });
 
-  it('GET /api/health/ready responde 200; es provisional hasta P2', async () => {
+  it('GET /api/health/ready responde 503 sin base y dice qué revisó', async () => {
     const response = await request(app.getHttpServer()).get('/api/health/ready');
 
-    expect(response.status).toBe(200);
-    expect(healthResponseSchema.parse(response.body)).toEqual({ status: 'ok', checks: {} });
+    expect(response.status).toBe(503);
+    expect(healthResponseSchema.parse(response.body)).toEqual({
+      status: 'error',
+      checks: { database: 'error', migrations: 'error', queue: 'error', partitions: 'error' },
+    });
   });
 
   it('RNF-24 · cada respuesta trae x-request-id y conserva el que llega válido', async () => {

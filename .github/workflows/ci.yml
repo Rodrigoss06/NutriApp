@@ -1,5 +1,6 @@
 # Integración continua (Notion 01 §6): cada pull request y cada fusión en main.
-# Las pruebas de integración con Testcontainers se agregan como otro job en P2.
+# Tres jobs: la puerta rápida (lint, arquitectura, tipos, unitarias y build), la integración con
+# PostgreSQL 18 en Testcontainers y el esquema de base (migraciones desde cero y db pull sin cambios).
 name: CI
 
 on:
@@ -58,3 +59,63 @@ jobs:
 
       - name: Build
         run: pnpm build
+
+  integration:
+    name: Integración con PostgreSQL 18 (Testcontainers)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: pnpm/action-setup@v6
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+
+      - name: Instalar dependencias
+        run: pnpm install --frozen-lockfile
+
+      # Base desechable por corrida, como app_user (RNF-12, RN-A01). Docker ya está en el runner.
+      - name: Pruebas de integración
+        run: pnpm test:int
+
+  database-schema:
+    name: Esquema de base desde cero
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    env:
+      # Solo la base local del compose: contraseñas de desarrollo, no secretos.
+      DATABASE_OWNER_URL: postgresql://app_owner:app_owner_local@127.0.0.1:5432/nutricoach
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: pnpm/action-setup@v6
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+
+      - name: Instalar dependencias
+        run: pnpm install --frozen-lockfile
+
+      - name: Levantar PostgreSQL 18 con infra/db/init
+        run: |
+          pnpm db:up
+          for i in $(seq 1 60); do
+            docker compose -f infra/docker/compose.local.yml exec -T -e PGPASSWORD=app_owner_local postgres \
+              psql -h 127.0.0.1 -U app_owner -d nutricoach -Atc 'select 1' && exit 0
+            sleep 2
+          done
+          exit 1
+
+      - name: Migraciones desde una base vacía
+        run: pnpm db:migrate
+
+      # ADR-011 y ADR-024: schema.prisma es generado; si db pull lo cambia, falta una migración o un pull.
+      - name: db pull no cambia schema.prisma
+        run: |
+          pnpm db:pull
+          git diff --exit-code -- apps/api/prisma/schema.prisma

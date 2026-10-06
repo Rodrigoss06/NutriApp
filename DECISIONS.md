@@ -51,9 +51,10 @@ Consecuencias: revocación inmediata; nada legible desde el navegador; sin prove
 Decisión: (public), (panel), (paciente) y (admin) en apps/web; la app del paciente es una PWA instalable.
 Consecuencias: un despliegue y un sistema de diseño; experiencias separadas por layout.
 
-## ADR-011 · Prisma con base de datos primero — aceptada (revisar tras el spike de P2)
+## ADR-011 · Prisma con base de datos primero — aceptada (confirmada por el spike de P2, ADR-024)
 Decisión: migraciones en SQL aplicadas con prisma migrate deploy; schema.prisma se regenera con db pull;
-nunca prisma migrate dev. CI falla si db pull cambia schema.prisma.
+nunca prisma migrate dev. CI falla si db pull cambia schema.prisma. Desde P2 no hay FK sobre tablas
+particionadas: Prisma no las introspecta y se reemplazan por disparadores de restricción (ADR-024).
 Consecuencias: RLS, particiones y restricciones avanzadas viven versionadas en SQL sin pelear con Prisma.
 
 ## ADR-012 · Docker Compose en un servidor de Hetzner, con staging en el mismo servidor — aceptada
@@ -137,3 +138,65 @@ códigos de engine/src/sites.ts, que la semilla del catálogo de P7 debe reutili
 código propio en 02 §9: es una función pura que devuelve sus avisos.
 Consecuencias: recalcular desde los insumos guardados reproduce el resultado y su hash. Agregar un aviso o
 cambiar su código es un cambio del método y sube su versión.
+
+## ADR-024 · Spike de Prisma 7 con particiones, varios esquemas y RLS — aceptada (2026-10-06)
+Contexto: 05 §10 pide confirmar, con la versión estable instalada, que db pull reconoce las tablas padre
+particionadas y que el cliente trabaja con `@@id([id, localDate])`. P2 suma la unidad de trabajo con
+nestjs-cls y pg-boss.
+Hallazgos con Prisma 7.10.0 (la etiqueta `latest` de npm apunta a 8.0.0-rc), @prisma/adapter-pg y PostgreSQL 18:
+- db pull ve solo las tablas padre; una partición nueva en `part` no cambia schema.prisma.
+- `@@id([id, localDate])` funciona: create y findUnique por `id_localDate`.
+- Las tablas con el mismo nombre en dos esquemas (`iam.session`, `training.session`) salen con el esquema
+  como prefijo. Los nombres en inglés con `@@map` y `@map` se conservan al volver a introspectar.
+- Una FK hacia una tabla particionada rompe db pull (P4002): PostgreSQL la clona hacia cada partición de
+  `part`, y agregar `part` a `schemas` cambiaría schema.prisma cada mes.
+- Las columnas generadas salen con `@default(dbgenerated(...))`: se leen y nunca se escriben.
+- `createMany` no usa RETURNING y respeta la política del outbox; `create` falla con 42501, como se espera.
+- @nestjs-cls/transactional 4 con su adaptador de Prisma 2 funciona con Prisma 7 y el adaptador pg:
+  set_config(..., true) queda en la transacción y no se filtra; READ ONLY rechaza escrituras.
+- `_prisma_migrations` queda en `public`.
+- pg-boss 12.37 crea tablas al crear colas y particiones de estadísticas mientras corre.
+Decisión: Prisma 7.10.0 y pg-boss 12.37.0 con versión fija. `prisma.config.ts` con la URL de app_owner para
+migrar e introspectar; el cliente usa el adaptador pg con app_user. Sin FK sobre tablas particionadas: la
+FK de 05.2 de `tracking.set_log` hacia `tracking.workout_log` pasa a un disparador de restricción. El
+esquema `pgboss` lo crea una migración con AUTHORIZATION app_user y pg-boss se migra solo dentro de él.
+Consecuencias: schema.prisma sigue siendo generado y CI puede compararlo. Toda FK nueva hacia o desde una
+tabla particionada se escribe como disparador. Cambio para Notion 05.2 y 05 §10 (/notion-sync).
+
+## ADR-025 · Seguridad de datos en PostgreSQL — aceptada (2026-10-06)
+Contexto: 05 §3 fija roles, RLS y políticas especiales; P2 decidió el resto con Rodrigo (decisiones 1 a 9).
+Decisión:
+- infra/db/init solo hace lo que exige superusuario: roles, base, extensiones y zona horaria UTC, más
+  `GRANT app_user TO app_owner WITH INHERIT FALSE, SET TRUE` para crear el esquema pgboss. Esquemas,
+  funciones app.* y permisos por defecto van en la migración 0000, de app_owner.
+- Toda tabla con organization_id tiene RLS forzada, sin excepciones; iam.invitation también, y se busca sin
+  sesión con app.find_invitation(hash). processed_event e idempotency_key tienen RLS propia.
+- Segunda capa del paciente como lista de lo permitido (política restrictiva patient_scope en cada tabla).
+- PLATFORM_ADMIN solo lee los esquemas clínicos con un CLINICAL_READ vigente, verificado por
+  app.has_clinical_support_grant(); nunca escribe ahí.
+- Catálogos con organization_id NULL: se lee lo global y lo propio; lo global lo escribe solo SYSTEM.
+- Funciones SECURITY DEFINER de app_owner, con search_path fijo y EXECUTE solo para app_user.
+- Inmutabilidad: disparadores donde depende del estado (plan, rutina, evaluación cerrada y sus tomas) y
+  permisos por columna en el resto (resultados, registros, consentimiento, invitación, suscripción).
+- DELETE solo donde se concede: hijos de borradores, equipo de atención, disponibilidad, read models y la
+  limpieza de SYSTEM.
+- Índice ciego HMAC(organization_id:tipo:documento normalizado) y cifrado con datos asociados por lugar.
+Consecuencias: el catálogo de PostgreSQL lo verifica en cada CI (rls-catalog.int.spec.ts). Una tabla nueva
+usa app.enable_tenant_rls o app.enable_catalog_rls y app.restrict_patient en su misma migración.
+
+## ADR-026 · Plataforma de eventos, idempotencia y auditoría — aceptada (2026-10-06)
+Contexto: 02 §6 pide outbox, consumidores idempotentes, Idempotency-Key y auditoría de lecturas.
+Decisión:
+- Outbox con createMany (sin RETURNING) en la transacción del comando. El worker despacha cada segundo con
+  FOR UPDATE SKIP LOCKED y publica en pg-boss 12; cada consumidor tiene su cola, 5 reintentos con espera
+  creciente y la cola de errores platform.dead-letter. processed_event va en la misma transacción que el
+  consumidor. Los consumidores comparan occurredAt o versión antes de pisar un read model.
+- pg-boss se migra solo en su esquema, con createSchema: false.
+- Idempotency-Key: la misma clave y el mismo cuerpo repiten la respuesta; otro cuerpo, 422; en curso, 409;
+  las 5xx no se guardan. 24 horas de vida y limpieza diaria.
+- AuditPort escribe en una transacción propia (las consultas son de solo lectura) y falla cerrado.
+- Mantenimiento diario en UTC: particiones a las 02:00 y limpieza a las 03:30 (outbox de más de 7 días,
+  processed_event de más de 30 e idempotencia vencida). El worker también asegura particiones al arrancar.
+- /api/health/ready: base, migraciones aplicadas (app.applied_migrations), cola activa (cron de pg-boss en
+  los últimos 5 minutos) y partición del mes siguiente.
+Consecuencias: entrega al menos una vez; la imagen de la API debe llevar prisma/migrations para /ready.

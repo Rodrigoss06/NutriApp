@@ -1,18 +1,24 @@
 # Entorno local (Notion 01 §2): PostgreSQL 18 y Mailpit, publicados solo en 127.0.0.1.
-# Los roles (app_owner, app_user, app_readonly), la base nutricoach y las funciones app.* los
-# crea infra/db/init a partir de P2. Se levanta con `pnpm db:up`.
+# infra/db/init crea al primer arranque los roles (app_owner, app_user, app_readonly), la base nutricoach
+# y sus extensiones; el resto llega con `pnpm db:migrate`. Se levanta con `pnpm db:up`.
+# Las contraseñas por defecto solo sirven en local (apps/api/env.local.example las usa).
 name: nutricoach
 
 services:
   postgres:
     image: postgres:18
+    command: ['postgres', '-c', 'shared_preload_libraries=pg_stat_statements']
     environment:
       POSTGRES_PASSWORD: postgres # solo para este entorno local
+      APP_OWNER_PASSWORD: ${APP_OWNER_PASSWORD:-app_owner_local}
+      APP_USER_PASSWORD: ${APP_USER_PASSWORD:-app_user_local}
+      APP_READONLY_PASSWORD: ${APP_READONLY_PASSWORD:-app_readonly_local}
     ports:
       - '127.0.0.1:5432:5432'
     volumes:
       # PostgreSQL 18 guarda los datos en /var/lib/postgresql/18/docker: se monta la carpeta padre.
       - postgres-data:/var/lib/postgresql
+      - ../db/init:/docker-entrypoint-initdb.d:ro
     healthcheck:
       test: ['CMD-SHELL', 'pg_isready -U postgres']
       interval: 5s

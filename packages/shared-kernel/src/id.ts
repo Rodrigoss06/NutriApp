@@ -7,6 +7,12 @@ export type Id<TBrand extends string> = string & { readonly __brand: TBrand };
 /** Organización dueña de los datos: viaja en cada evento y en la RLS (ADR-004). */
 export type OrganizationId = Id<'OrganizationId'>;
 
+/** Cuenta de iam.user_account: quien actúa, en el contexto de seguridad y la auditoría. */
+export type UserId = Id<'UserId'>;
+
+/** Paciente de clinical.patient: la segunda capa de la RLS lo usa con el rol PATIENT (05 §3). */
+export type PatientId = Id<'PatientId'>;
+
 const UUID_V7 = /^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/;
 
 /** UUIDv7 en su forma canónica: minúsculas y con guiones. */
