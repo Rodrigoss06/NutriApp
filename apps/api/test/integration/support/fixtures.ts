@@ -18,6 +18,7 @@ async function owner(sql: string, params: unknown[]): Promise<void> {
 }
 
 export async function createTenant(label: string): Promise<Tenant> {
+  await ensureGlobalCatalog();
   const tenant: Tenant = { orgId: id(), memberUserId: id(), patientId: id(), otherPatientId: id() };
   await owner(`INSERT INTO tenancy.organization (id, name, slug) VALUES ($1, $2, $3)`, [
     tenant.orgId,

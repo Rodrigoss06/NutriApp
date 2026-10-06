@@ -104,6 +104,7 @@ describe('RNF-12 · RN-A01 · el catálogo de PostgreSQL prueba el aislamiento',
 
     expect(unsafe).toEqual([]);
     expect(definers).toEqual([
+      { name: 'app.applied_migrations()', owner: 'app_owner' },
       { name: 'app.ensure_monthly_partitions(regclass,integer,date)', owner: 'app_owner' },
       { name: 'app.find_invitation(bytea)', owner: 'app_owner' },
       { name: 'app.has_clinical_support_grant()', owner: 'app_owner' },
@@ -120,6 +121,7 @@ describe('RNF-12 · RN-A01 · el catálogo de PostgreSQL prueba el aislamiento',
     );
 
     expect(executable.map((f) => f.name)).toEqual([
+      'applied_migrations',
       'ensure_monthly_partitions',
       'find_invitation',
       'has_clinical_support_grant',

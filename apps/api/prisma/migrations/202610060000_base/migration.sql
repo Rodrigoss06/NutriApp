@@ -189,3 +189,17 @@ BEGIN
                            OR (SELECT app.has_clinical_support_grant()))
                     WITH CHECK (app.role() IS DISTINCT FROM ''PLATFORM_ADMIN'')', p_table);
 END $$;
+
+-- Verificación de salud: migraciones aplicadas. Prisma crea public._prisma_migrations antes de esta migración;
+-- app_user no la lee directamente.
+CREATE FUNCTION app.applied_migrations() RETURNS SETOF text
+LANGUAGE sql STABLE
+SECURITY DEFINER
+SET search_path = pg_catalog, pg_temp
+AS $$
+  SELECT migration_name FROM public._prisma_migrations
+  WHERE finished_at IS NOT NULL AND rolled_back_at IS NULL
+  ORDER BY migration_name
+$$;
+
+GRANT EXECUTE ON FUNCTION app.applied_migrations() TO app_user;

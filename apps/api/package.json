@@ -16,7 +16,7 @@
     "postinstall": "prisma generate",
     "db:migrate": "prisma migrate deploy",
     "db:pull": "prisma db pull && node scripts/prisma-naming.ts && prisma format && prisma generate",
-    "test:int": "vitest run --config vitest.int.config.js"
+    "test:int": "vitest run --config vitest.int.config.js --coverage"
   },
   "dependencies": {
     "@nestjs-cls/transactional": "catalog:",

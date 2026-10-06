@@ -1,5 +1,5 @@
-import { randomUUID } from 'node:crypto';
 import pg from 'pg';
+import { v7 as uuidv7 } from 'uuid';
 import { afterAll, inject } from 'vitest';
 
 export type DbRole = 'owner' | 'user' | 'readonly';
@@ -78,7 +78,8 @@ export async function errorCode(
   }
 }
 
-export const id = (): string => randomUUID();
+/** UUIDv7, como los genera el dominio (ADR-003). */
+export const id = (): string => uuidv7();
 
 /** Códigos de PostgreSQL que esperan las pruebas. */
 export const PG = {
