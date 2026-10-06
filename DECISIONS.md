@@ -162,3 +162,41 @@ FK de 05.2 de `tracking.set_log` hacia `tracking.workout_log` pasa a un disparad
 esquema `pgboss` lo crea una migración con AUTHORIZATION app_user y pg-boss se migra solo dentro de él.
 Consecuencias: schema.prisma sigue siendo generado y CI puede compararlo. Toda FK nueva hacia o desde una
 tabla particionada se escribe como disparador. Cambio para Notion 05.2 y 05 §10 (/notion-sync).
+
+## ADR-025 · Seguridad de datos en PostgreSQL — aceptada (2026-10-06)
+Contexto: 05 §3 fija roles, RLS y políticas especiales; P2 decidió el resto con Rodrigo (decisiones 1 a 9).
+Decisión:
+- infra/db/init solo hace lo que exige superusuario: roles, base, extensiones y zona horaria UTC, más
+  `GRANT app_user TO app_owner WITH INHERIT FALSE, SET TRUE` para crear el esquema pgboss. Esquemas,
+  funciones app.* y permisos por defecto van en la migración 0000, de app_owner.
+- Toda tabla con organization_id tiene RLS forzada, sin excepciones; iam.invitation también, y se busca sin
+  sesión con app.find_invitation(hash). processed_event e idempotency_key tienen RLS propia.
+- Segunda capa del paciente como lista de lo permitido (política restrictiva patient_scope en cada tabla).
+- PLATFORM_ADMIN solo lee los esquemas clínicos con un CLINICAL_READ vigente, verificado por
+  app.has_clinical_support_grant(); nunca escribe ahí.
+- Catálogos con organization_id NULL: se lee lo global y lo propio; lo global lo escribe solo SYSTEM.
+- Funciones SECURITY DEFINER de app_owner, con search_path fijo y EXECUTE solo para app_user.
+- Inmutabilidad: disparadores donde depende del estado (plan, rutina, evaluación cerrada y sus tomas) y
+  permisos por columna en el resto (resultados, registros, consentimiento, invitación, suscripción).
+- DELETE solo donde se concede: hijos de borradores, equipo de atención, disponibilidad, read models y la
+  limpieza de SYSTEM.
+- Índice ciego HMAC(organization_id:tipo:documento normalizado) y cifrado con datos asociados por lugar.
+Consecuencias: el catálogo de PostgreSQL lo verifica en cada CI (rls-catalog.int.spec.ts). Una tabla nueva
+usa app.enable_tenant_rls o app.enable_catalog_rls y app.restrict_patient en su misma migración.
+
+## ADR-026 · Plataforma de eventos, idempotencia y auditoría — aceptada (2026-10-06)
+Contexto: 02 §6 pide outbox, consumidores idempotentes, Idempotency-Key y auditoría de lecturas.
+Decisión:
+- Outbox con createMany (sin RETURNING) en la transacción del comando. El worker despacha cada segundo con
+  FOR UPDATE SKIP LOCKED y publica en pg-boss 12; cada consumidor tiene su cola, 5 reintentos con espera
+  creciente y la cola de errores platform.dead-letter. processed_event va en la misma transacción que el
+  consumidor. Los consumidores comparan occurredAt o versión antes de pisar un read model.
+- pg-boss se migra solo en su esquema, con createSchema: false.
+- Idempotency-Key: la misma clave y el mismo cuerpo repiten la respuesta; otro cuerpo, 422; en curso, 409;
+  las 5xx no se guardan. 24 horas de vida y limpieza diaria.
+- AuditPort escribe en una transacción propia (las consultas son de solo lectura) y falla cerrado.
+- Mantenimiento diario en UTC: particiones a las 02:00 y limpieza a las 03:30 (outbox de más de 7 días,
+  processed_event de más de 30 e idempotencia vencida). El worker también asegura particiones al arrancar.
+- /api/health/ready: base, migraciones aplicadas (app.applied_migrations), cola activa (cron de pg-boss en
+  los últimos 5 minutos) y partición del mes siguiente.
+Consecuencias: entrega al menos una vez; la imagen de la API debe llevar prisma/migrations para /ready.
