@@ -218,7 +218,7 @@ De ahí sale la pregunta que realmente importa en el seguimiento: **¿el cambio 
 CMD₉₅ = 1,96 × √2 × error de medida
 ```
 
-Sobre la suma de 6 pliegues de Luis (95 mm, 2,35 % de ETM → 2,23 mm), el CMD₉₅ es **6,19 mm**: bajar de 95 a 92 mm *no* es evidencia de nada. Traducido a porcentaje de grasa con Yuhasz, son **0,65 puntos**.
+Sobre la suma de 6 pliegues de Luis (95 mm, 2,35 % de ETM → 2,23 mm), el CMD₉₅ es **6,18 mm** (calculado sin redondear el %ETM): bajar de 95 a 92 mm *no* es evidencia de nada. Traducido a porcentaje de grasa con Yuhasz, son **0,65 puntos**.
 
 **En la app:** guardar el ETM por evaluador y marcar los cambios menores al CMD como "dentro del error de medición". Es una función de tres líneas que evita conclusiones falsas:
 
