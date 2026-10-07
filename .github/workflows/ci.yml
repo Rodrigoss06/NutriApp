@@ -1,6 +1,7 @@
 # Integración continua (Notion 01 §6): cada pull request y cada fusión en main.
-# Tres jobs: la puerta rápida (lint, arquitectura, tipos, unitarias y build), la integración con
-# PostgreSQL 18 en Testcontainers y el esquema de base (migraciones desde cero y db pull sin cambios).
+# Cuatro jobs: la puerta rápida (lint, arquitectura, tipos, unitarias y build), la integración con
+# PostgreSQL 18 en Testcontainers, el esquema de base (migraciones desde cero y db pull sin cambios) y la
+# interfaz con Playwright y axe sobre el build de producción.
 name: CI
 
 on:
@@ -119,3 +120,38 @@ jobs:
         run: |
           pnpm db:pull
           git diff --exit-code -- apps/api/prisma/schema.prisma
+
+  ui-e2e:
+    name: Interfaz con Playwright y axe
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: pnpm/action-setup@v6
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+
+      - name: Instalar dependencias
+        run: pnpm install --frozen-lockfile
+
+      - name: Instalar Chromium para Playwright
+        run: pnpm --filter web exec playwright install --with-deps chromium
+
+      - name: Build de producción de la web
+        run: pnpm turbo run build --filter web
+
+      # RNF-18: axe sin violaciones graves en el catálogo (también con marcas extremas) y en las pantallas base.
+      - name: Playwright en escritorio y móvil
+        run: pnpm e2e
+
+      - name: Guardar el reporte si falla
+        if: failure()
+        uses: actions/upload-artifact@v7
+        with:
+          name: playwright-report
+          path: apps/web/test-results/
+          retention-days: 7

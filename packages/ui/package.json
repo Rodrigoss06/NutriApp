@@ -2,22 +2,45 @@
   "name": "@nutricoach/ui",
   "version": "0.0.0",
   "private": true,
-  "description": "Sistema de diseño: shadcn/ui y tokens CSS. Next.js lo transpila desde el código fuente (P3).",
+  "description": "Sistema de diseño: tokens CSS, marca en ejecución y componentes al estilo shadcn/ui (P3). Next.js lo transpila desde el código fuente.",
   "type": "module",
   "sideEffects": false,
   "exports": {
-    ".": "./src/index.ts"
+    ".": "./src/index.ts",
+    "./styles.css": "./src/styles.css",
+    "./chart": "./src/components/chart.tsx"
   },
   "scripts": {
     "lint": "eslint . && prettier --check . --ignore-path ../../.prettierignore --ignore-path ../../.gitignore",
     "typecheck": "tsc --noEmit",
-    "test": "vitest run --passWithNoTests"
+    "test": "vitest run --coverage"
   },
   "devDependencies": {
     "@nutricoach/config": "workspace:*",
+    "@testing-library/react": "catalog:",
+    "@types/node": "catalog:",
+    "@types/react": "catalog:",
+    "@types/react-dom": "catalog:",
+    "@vitest/coverage-v8": "catalog:",
     "eslint": "catalog:",
+    "happy-dom": "catalog:",
     "prettier": "catalog:",
+    "react": "catalog:",
+    "react-dom": "catalog:",
     "typescript": "catalog:",
     "vitest": "catalog:"
+  },
+  "dependencies": {
+    "class-variance-authority": "catalog:",
+    "clsx": "catalog:",
+    "lucide-react": "catalog:",
+    "radix-ui": "catalog:",
+    "recharts": "catalog:",
+    "tailwind-merge": "catalog:",
+    "zod": "catalog:"
+  },
+  "peerDependencies": {
+    "react": "catalog:",
+    "react-dom": "catalog:"
   }
 }

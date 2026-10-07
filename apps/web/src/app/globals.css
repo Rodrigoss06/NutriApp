@@ -1,3 +1,5 @@
 @import 'tailwindcss';
+@import '@nutricoach/ui/styles.css';
 
-/* P3 define aquí los tokens de color, tipografía, radios y espaciado (02 §11). */
+/* Tailwind no mira node_modules: sin esto no genera las clases de los componentes de packages/ui. */
+@source '../../../../packages/ui/src';
