@@ -10,7 +10,7 @@ import {
 import { runMethod } from '../../src/registry/run-method.js';
 import { mm } from '../../src/units.js';
 import { LUIS } from '../fixtures/luis.js';
-import { expectOk, roundHalfUp } from '../support.js';
+import { expectOk } from '../support.js';
 
 const sf = LUIS.skinfoldsMm;
 const subject = {
@@ -167,10 +167,9 @@ describe('G-10 · RN-D07 · cinco componentes de Kerr', () => {
     expect(outputs.muscleKg).toBeCloseTo(35.92, 2);
     expect(outputs.zMuscle).toBeCloseTo(1.58, 2);
     expect(outputs.boneKg).toBeCloseTo(8.72, 2);
-    // 1.325 kg exactos: examples.ts lo imprime 1.33 con redondeo a la mitad hacia arriba, y la
-    // diferencia cae justo en el borde de toBeCloseTo(…, 2). Se compara el redondeo a 2 decimales.
-    expect(roundHalfUp(outputs.headBoneKg, 2)).toBe(1.33);
-    expect(outputs.bodyBoneKg).toBeCloseTo(7.4, 2);
+    // 03 v1.3: valores exactos, sin redondeo intermedio (cabeza 1.325 + cuerpo 7.397 = 8.722).
+    expect(outputs.headBoneKg).toBeCloseTo(1.325, 3);
+    expect(outputs.bodyBoneKg).toBeCloseTo(7.397, 3);
     expect(outputs.residualKg).toBeCloseTo(9.46, 2);
     expect(outputs.zResidual).toBeCloseTo(2.44, 2);
     expect(outputs.structuredMassKg).toBeCloseTo(81.59, 2);
