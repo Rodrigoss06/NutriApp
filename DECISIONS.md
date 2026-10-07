@@ -219,3 +219,11 @@ Decisión:
 - APP_ENV (local, staging, production) se lee en cada petición: la misma imagen corre en staging y producción.
 - PWA con alcance /mi/: «Hoy» vive en /mi/hoy y /mi redirige ahí, para que el inicio quede dentro del alcance.
 Consecuencias: un componente nuevo usa solo tokens. Lighthouse en CI queda para cuando exista staging (RNF-03).
+
+## ADR-028 · Bloque de Next.js en apps/web/CLAUDE.md — aceptada (2026-10-06)
+Contexto: Next 16.3 escribe en cada `next dev` un bloque entre los marcadores `nextjs-agent-rules` que remite a
+la documentación de la versión instalada (node_modules/next/dist/docs); Next 16 cambió APIs.
+Decisión: el bloque se commitea y no se edita a mano ni se desactiva (sin `agentRules: false`). Nuestras reglas
+van fuera de los marcadores. Si `next dev` crea apps/web/AGENTS.md, también se commitea.
+Consecuencias: el árbol queda limpio tras `next dev`. En Notion solo va nuestro contenido. La caché de Next se
+borra con `pnpm --filter web clean`, sin `rm -rf`.

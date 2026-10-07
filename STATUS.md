@@ -31,7 +31,7 @@ Leyenda: ⬜ pendiente · 🟨 en curso · ✅ terminado · ⛔ bloqueado
 - P3 terminado en `feat/ui-sistema-diseno`: falta subirla y abrir el PR
 
 ## Siguiente paso
-- PR de P3 con CI en verde (cuatro jobs); /notion-sync de P0 a P3; luego P4
+- PR de P3 con CI en verde (cuatro jobs); /notion-sync de P0 a P3 (incluye ADR-028); luego P4
 
 ## Bloqueos y preguntas al cliente
 - [ ] N9: límites y precio de los tramos de membresía; qué pasa al superar el límite
