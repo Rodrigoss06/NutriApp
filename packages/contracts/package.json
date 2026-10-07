@@ -27,6 +27,7 @@
   },
   "devDependencies": {
     "@nutricoach/config": "workspace:*",
+    "@nutricoach/engine": "workspace:*",
     "eslint": "catalog:",
     "prettier": "catalog:",
     "typescript": "catalog:",

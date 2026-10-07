@@ -5,9 +5,11 @@ import reactHooks from 'eslint-plugin-react-hooks';
 import globals from 'globals';
 import { base } from './base.js';
 
-/** Archivos de rutas del App Router que Next.js exige con `export default`. */
+/** Archivos del App Router que Next.js exige con `export default` (rutas y metadatos). */
 const NEXT_ROUTE_FILES = [
   'src/app/**/{page,layout,template,loading,error,global-error,not-found,default}.tsx',
+  'src/app/**/{icon,apple-icon,opengraph-image}.tsx',
+  'src/app/{manifest,robots,sitemap}.ts',
 ];
 
 /**

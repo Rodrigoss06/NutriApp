@@ -1,0 +1,97 @@
+/*
+ * Tokens del sistema de diseño (02 §11). La web los importa después de Tailwind.
+ *
+ * Marca: los valores viven en :root como --brand-* y @theme inline solo los referencia con var(). Así las
+ * clases (bg-brand, text-brand-text...) leen la variable en ejecución y cambiar la marca de la organización o el
+ * tema del paciente no toca ningún componente. Nunca valores fijos de marca dentro de @theme inline: quedarían
+ * incrustados en la clase. Los valores por defecto son la paleta provisional (DEFAULT_BRAND) pasada por
+ * brandTokens; BrandStyle los reemplaza desde el servidor.
+ */
+:root {
+  --brand-primary: #0f766e;
+  --brand-primary-foreground: #ffffff;
+  --brand-primary-text: #0f766e;
+  --brand-primary-border: #0f766e;
+  --brand-secondary: #d97706;
+  --brand-secondary-foreground: #000000;
+  --brand-secondary-text: #b26205;
+  --brand-secondary-border: #d97706;
+
+  /* Neutros: texto 17.7:1 y secundario 7.6:1 sobre el fondo; bordes de campos 4.8:1 (WCAG 1.4.11). */
+  --background: #ffffff;
+  --foreground: #111827;
+  --surface: #f9fafb;
+  --muted: #f3f4f6;
+  --muted-foreground: #4b5563;
+  --border: #e5e7eb;
+  --input-border: #6b7280;
+
+  /*
+   * Estados: siempre con ícono y texto, nunca solo color (WCAG 1.4.1). El éxito es verde lima para no
+   * confundirse con el primario verde azulado. Texto ≥ 4.5:1 sobre blanco y sobre su fondo.
+   */
+  --success: #4d7c0f;
+  --success-surface: #f7fee7;
+  --warning: #b45309;
+  --warning-surface: #fffbeb;
+  --danger: #b91c1c;
+  --danger-surface: #fef2f2;
+  --info: #1d4ed8;
+  --info-surface: #eff6ff;
+
+  --radius: 0.5rem;
+}
+
+@theme inline {
+  --color-brand: var(--brand-primary);
+  --color-brand-foreground: var(--brand-primary-foreground);
+  --color-brand-text: var(--brand-primary-text);
+  --color-brand-border: var(--brand-primary-border);
+  --color-brand-secondary: var(--brand-secondary);
+  --color-brand-secondary-foreground: var(--brand-secondary-foreground);
+  --color-brand-secondary-text: var(--brand-secondary-text);
+  --color-brand-secondary-border: var(--brand-secondary-border);
+
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-surface: var(--surface);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-border: var(--border);
+  --color-input-border: var(--input-border);
+  --color-success: var(--success);
+  --color-success-surface: var(--success-surface);
+  --color-warning: var(--warning);
+  --color-warning-surface: var(--warning-surface);
+  --color-danger: var(--danger);
+  --color-danger-surface: var(--danger-surface);
+  --color-info: var(--info);
+  --color-info-surface: var(--info-surface);
+
+  /* next/font define --font-inter en <html>. */
+  --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+
+  --radius-sm: calc(var(--radius) - 0.25rem);
+  --radius-md: var(--radius);
+  --radius-lg: calc(var(--radius) + 0.25rem);
+  --radius-xl: calc(var(--radius) + 0.5rem);
+}
+
+@theme {
+  /* Objetivo táctil mínimo de la app del paciente (06 §8): 44 px. Clases h-touch, min-h-touch, size-touch. */
+  --spacing-touch: 2.75rem;
+}
+
+@layer base {
+  html {
+    background-color: var(--background);
+    color: var(--foreground);
+    font-family: var(--font-sans);
+  }
+
+  /* Foco visible en todo lo interactivo, con el borde de marca a 3:1 (WCAG 2.4.7 y 1.4.11). */
+  :focus-visible {
+    outline: 2px solid var(--brand-primary-border);
+    outline-offset: 2px;
+  }
+}

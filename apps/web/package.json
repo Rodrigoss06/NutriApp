@@ -10,17 +10,27 @@
     "start": "next start --port 3000",
     "lint": "eslint . && prettier --check . --ignore-path ../../.prettierignore --ignore-path ../../.gitignore",
     "typecheck": "next typegen && tsc --noEmit",
-    "test": "vitest run --passWithNoTests"
+    "test": "vitest run --passWithNoTests",
+    "e2e": "playwright test",
+    "clean": "node -e \"require('fs').rmSync('.next',{recursive:true,force:true})\""
   },
   "dependencies": {
+    "@nutricoach/contracts": "workspace:*",
     "@nutricoach/engine": "workspace:*",
+    "@nutricoach/ui": "workspace:*",
+    "lucide-react": "catalog:",
     "next": "catalog:",
     "react": "catalog:",
-    "react-dom": "catalog:"
+    "react-dom": "catalog:",
+    "server-only": "catalog:",
+    "zod": "catalog:"
   },
   "devDependencies": {
+    "@axe-core/playwright": "catalog:",
     "@nutricoach/config": "workspace:*",
+    "@playwright/test": "catalog:",
     "@tailwindcss/postcss": "catalog:",
+    "@testing-library/react": "catalog:",
     "@types/node": "catalog:",
     "@types/react": "catalog:",
     "@types/react-dom": "catalog:",

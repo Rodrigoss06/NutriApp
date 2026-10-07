@@ -9,8 +9,8 @@ Próxima demo: Demo 1 · Base y evaluación · semana 2
 |---|---|---|---|---|
 | P0 Andamiaje | ✅ | Rodrigo | #1 | CI en verde; pendiente /notion-sync |
 | P1 Motor de cálculo | ✅ | Rodrigo | #2 | G-01 a G-28 en verde; pendiente /notion-sync |
-| P2 Base de datos y plataforma | ✅ | Rodrigo | | 61 pruebas de integración; falta PR y /notion-sync |
-| P3 Sistema de diseño | ⬜ | Iván | | |
+| P2 Base de datos y plataforma | ✅ | Rodrigo | #3 | 61 pruebas de integración; pendiente /notion-sync |
+| P3 Sistema de diseño | ✅ | Rodrigo | | Lighthouse móvil 99 en Hoy; axe sin violaciones graves; falta PR |
 | P4 Servidor y staging | ⬜ | Iván | | |
 | P5 Identidad y organizaciones | ⬜ | Rodrigo | | |
 | P6 Pacientes e historia clínica | ⬜ | Rodrigo | | |
@@ -28,10 +28,10 @@ Próxima demo: Demo 1 · Base y evaluación · semana 2
 Leyenda: ⬜ pendiente · 🟨 en curso · ✅ terminado · ⛔ bloqueado
 
 ## En curso
-- P2 terminado en `feat/db-plataforma`: falta subirla, abrir el PR y aplicar /notion-sync
+- P3 terminado en `feat/ui-sistema-diseno`: falta subirla y abrir el PR
 
 ## Siguiente paso
-- PR de P2 con CI en verde (tres jobs); /notion-sync de P0, P1 y P2; luego P3
+- PR de P3 con CI en verde (cuatro jobs); /notion-sync de P0 a P3 (incluye ADR-028); luego P4
 
 ## Bloqueos y preguntas al cliente
 - [ ] N9: límites y precio de los tramos de membresía; qué pasa al superar el límite
@@ -43,7 +43,9 @@ Leyenda: ⬜ pendiente · 🟨 en curso · ✅ terminado · ⛔ bloqueado
 - [ ] Textos legales revisados por el abogado del cliente
 
 ## Deuda técnica
-- ui y web corren Vitest con --passWithNoTests hasta tener pruebas de componentes (P3)
+- Lighthouse móvil en CI sobre staging (RNF-03) cuando exista staging; hoy se mide en local
+- CSP del despliegue: style-src con 'unsafe-inline' por BrandStyle (ADR-027)
+- La marca y la organización activa son provisionales hasta la sesión (P5) y la personalización (P19)
 - db:seed, seed:load y e2e llaman scripts que llegan en P3 y P7
 - La imagen de la API debe copiar apps/api/prisma/migrations: /api/health/ready las compara (ADR-026)
 - No hay filtro global RFC 9457: la idempotencia arma su problema a mano hasta que llegue el filtro
@@ -51,6 +53,8 @@ Leyenda: ⬜ pendiente · 🟨 en curso · ✅ terminado · ⛔ bloqueado
 - Jackson y Pollock 7 deja de crecer con la suma de pliegues sobre 395 mm (hombres) y 419 mm (mujeres): consultar si se advierte
 
 ## Registro de sesiones (solo las 5 últimas)
+- 2026-10-06 · P3 · tokens y marca en ejecución con contraste AA, 12 componentes base, layouts del panel y de la
+  app, catálogo, PWA, Playwright con axe y Lighthouse móvil 99; ADR-027 · falta el PR
 - 2026-10-06 · P2 · init de superusuario, 16 migraciones con RLS, políticas y particiones, spike de Prisma 7,
   UnitOfWork, outbox con pg-boss, idempotencia, auditoría, cifrado, salud y CI; ADR-024 a ADR-026 · falta el PR
 - 2026-10-06 · P1 · motor con los 39 métodos de 02 §9, validez por método, sobre con hash, G-01 a G-28,
