@@ -11,8 +11,8 @@ Próxima demo: Demo 1 · Base y evaluación · semana 2
 | P1 Motor de cálculo | ✅ | Rodrigo | #2 | G-01 a G-28 en verde; motor 1.1.0 con TEE_PAL (#4) |
 | P2 Base de datos y plataforma | ✅ | Rodrigo | #3 | 61 pruebas de integración |
 | P3 Sistema de diseño | ✅ | Rodrigo | #4 | Lighthouse móvil 99 en Hoy; axe sin violaciones graves |
-| P4 Servidor y staging | ⬜ | Iván | | |
-| P5 Identidad y organizaciones | ⬜ | Rodrigo | | |
+| P4 Servidor y staging | ⛔ | Iván | | En espera de la cuenta de Hetzner de Jeremy |
+| P5 Identidad y organizaciones | 🟨 | Rodrigo | | 3 PR: base e iam · tenancy y plataforma · web, E2E y CI |
 | P6 Pacientes e historia clínica | ⬜ | Rodrigo | | |
 | P7 Evaluación y cálculo, Demo 1 | ⬜ | Rodrigo e Iván | | |
 | P8 Datos maestros de alimentos | ⬜ | Rodrigo | | |
@@ -28,12 +28,13 @@ Próxima demo: Demo 1 · Base y evaluación · semana 2
 Leyenda: ⬜ pendiente · 🟨 en curso · ✅ terminado · ⛔ bloqueado
 
 ## En curso
-- Nada en curso. Notion sincronizado con P0 a P3 (Documento técnico 1.2, 03 v1.3, 05 v1.2)
+- P5, PR 1 de 3 en `feat/iam-acceso`: base transversal, iam, guardias y límite de intentos
 
 ## Siguiente paso
-- P4 · Servidor, staging y despliegue continuo (módulo 23; responsable según Notion: Iván). Empezar con /prompt P4
+- Migración de platform.rate_limit e índice de invitaciones; luego el dominio de iam con pruebas primero
 
 ## Bloqueos y preguntas al cliente
+- [ ] Cuenta de Hetzner y dominio a nombre de Jeremy: bloquea P4
 - [ ] N9: límites y precio de los tramos de membresía; qué pasa al superar el límite
 - [ ] N22: caducidad del enlace de acceso del paciente
 - [ ] N19: confirmar la carga manual de bioimpedancia
@@ -43,6 +44,8 @@ Leyenda: ⬜ pendiente · 🟨 en curso · ✅ terminado · ⛔ bloqueado
 - [ ] Textos legales revisados por el abogado del cliente
 
 ## Deuda técnica
+- Para P4: Caddy sin trusted_proxies, para que reescriba X-Forwarded-For con la IP real; en el Sentry de la web,
+  quitar el fragmento de las URL (beforeSend y beforeBreadcrumb): ahí viajan los tokens de invitación y recuperación
 - P7: columnas tee_method_code y tee_method_version en nutrition.energy_prescription (ADR-029)
 - Por decidir en el prompt que lo use: quién escribe tracking.daily_target, si el paciente marca
   content.resource_assignment.viewed_at y que active_plan_view compare el publishedAt del snapshot
