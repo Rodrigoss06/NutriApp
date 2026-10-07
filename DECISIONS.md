@@ -200,3 +200,22 @@ Decisión:
 - /api/health/ready: base, migraciones aplicadas (app.applied_migrations), cola activa (cron de pg-boss en
   los últimos 5 minutos) y partición del mes siguiente.
 Consecuencias: entrega al menos una vez; la imagen de la API debe llevar prisma/migrations para /ready.
+
+## ADR-027 · Sistema de diseño y marca en ejecución — aceptada (2026-10-06)
+Contexto: P3 pide una interfaz coherente, accesible (WCAG 2.2 AA) y con la marca de la organización y el tema
+del paciente cambiables sin tocar componentes (RN-H03).
+Decisión:
+- Tailwind 4 con tokens en packages/ui/src/styles.css. La marca vive en :root como --brand-*; @theme inline solo
+  la referencia con var(). Componentes al estilo shadcn/ui con Radix (paquete radix-ui).
+- brandTokens(hex) deriva texto sobre el color (≥ 4.5:1), el color como texto sobre blanco (≥ 4.5:1) y borde y
+  foco (≥ 3:1) para el primario y el secundario; el tema del paciente pasa por la misma función.
+- BrandStyle pinta las variables desde el servidor en un <style> de :root (sin useEffect, sin parpadeo). Va en
+  :root y no en un contenedor porque los diálogos y menús de Radix se montan en <body>. Exige style-src
+  'unsafe-inline' en la CSP del despliegue; los scripts siguen estrictos.
+- Etiquetas de los métodos en @nutricoach/contracts (las usan web y las fichas PDF de api).
+- packages/ui importa sin extensión (moduleResolution Bundler): Turbopack no resuelve `.js` hacia `.tsx`.
+- pnpm con virtualStoreDirMaxLength 60: con Playwright como peer opcional de next, la ruta del paquete pasaba
+  de 160 caracteres y Turbopack no encontraba next/package.json.
+- APP_ENV (local, staging, production) se lee en cada petición: la misma imagen corre en staging y producción.
+- PWA con alcance /mi/: «Hoy» vive en /mi/hoy y /mi redirige ahí, para que el inicio quede dentro del alcance.
+Consecuencias: un componente nuevo usa solo tokens. Lighthouse en CI queda para cuando exista staging (RNF-03).
