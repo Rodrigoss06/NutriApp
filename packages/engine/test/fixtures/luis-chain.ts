@@ -2,7 +2,7 @@ import {
   EE_MET_COMPENDIUM2024,
   FAT_LOSS_7700,
   RMR_MIFFLIN1990,
-  totalEnergyExpenditure,
+  TEE_PAL,
 } from '../../src/energy/index.js';
 import { runMethod } from '../../src/registry/run-method.js';
 import { expectOk } from '../support.js';
@@ -28,17 +28,19 @@ export function luisDailyTargetKcal(): number {
       activities: [{ met: 9.3, minutesPerSession: 30, sessionsPerWeek: 3 }],
     }),
   ).outputs.dailyAverageNetKcal;
-  const tee = totalEnergyExpenditure({
-    rmrKcal,
-    pal: 1.4,
-    strategy: 'ADDITIVE',
-    exerciseDailyNetKcal: exercise,
-    ageYears: LUIS.ageYears,
-  });
-  if (!tee.ok) throw new Error('El GET de Luis no calculó.');
+  const teeKcal = expectOk(
+    runMethod(TEE_PAL, {
+      rmrKcal,
+      pal: 1.4,
+      strategy: 'ADDITIVE',
+      exerciseMode: 'NET',
+      exerciseDailyNetKcal: exercise,
+      ageYears: LUIS.ageYears,
+    }),
+  ).outputs.teeKcal;
   return expectOk(
     runMethod(FAT_LOSS_7700, {
-      teeKcal: tee.outputs.teeKcal,
+      teeKcal,
       weightKg: LUIS.weightKg,
       fatChangeKgPerMonth: -3,
     }),

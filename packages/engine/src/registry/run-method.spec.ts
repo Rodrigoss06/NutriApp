@@ -65,7 +65,7 @@ describe('RN-D01 · sobre de resultado común', () => {
       outputs: { indexValue: 80 / 1.75 ** 2 },
       warnings: [],
     });
-    expect(ENGINE_VERSION).toBe('1.0.0');
+    expect(ENGINE_VERSION).toBe('1.1.0');
   });
 
   it('copia y congela los insumos: cambiar el objeto de origen no altera el resultado', () => {

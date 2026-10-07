@@ -1,13 +1,13 @@
 export {
   EE_MET_COMPENDIUM2024,
   PAL_RANGE,
-  totalEnergyExpenditure,
+  TEE_PAL,
   type ActivityInput,
   type ActivityOutput,
   type MetInput,
   type MetOutput,
   type TeeInput,
-  type TeeResult,
+  type TeeOutput,
 } from './expenditure.js';
 export {
   DAYS_PER_MONTH,

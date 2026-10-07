@@ -1,16 +1,16 @@
 # STATUS — NutriCoach v1.0
 
-Actualizado: 2026-10-06 · Por: Rodrigo, con Claude Code
+Actualizado: 2026-10-07 · Por: Rodrigo, con Claude Code
 Inicio del proyecto: POR CONFIRMAR (día siguiente al Pago 1) · Semana actual: 0 de 9
 Próxima demo: Demo 1 · Base y evaluación · semana 2
 
 ## Prompts
 | Prompt | Estado | Responsable | PR | Notas |
 |---|---|---|---|---|
-| P0 Andamiaje | ✅ | Rodrigo | #1 | CI en verde; pendiente /notion-sync |
-| P1 Motor de cálculo | ✅ | Rodrigo | #2 | G-01 a G-28 en verde; pendiente /notion-sync |
-| P2 Base de datos y plataforma | ✅ | Rodrigo | #3 | 61 pruebas de integración; pendiente /notion-sync |
-| P3 Sistema de diseño | ✅ | Rodrigo | | Lighthouse móvil 99 en Hoy; axe sin violaciones graves; falta PR |
+| P0 Andamiaje | ✅ | Rodrigo | #1 | CI en verde |
+| P1 Motor de cálculo | ✅ | Rodrigo | #2 | G-01 a G-28 en verde; motor 1.1.0 con TEE_PAL (#4) |
+| P2 Base de datos y plataforma | ✅ | Rodrigo | #3 | 61 pruebas de integración |
+| P3 Sistema de diseño | ✅ | Rodrigo | #4 | Lighthouse móvil 99 en Hoy; axe sin violaciones graves |
 | P4 Servidor y staging | ⬜ | Iván | | |
 | P5 Identidad y organizaciones | ⬜ | Rodrigo | | |
 | P6 Pacientes e historia clínica | ⬜ | Rodrigo | | |
@@ -28,10 +28,10 @@ Próxima demo: Demo 1 · Base y evaluación · semana 2
 Leyenda: ⬜ pendiente · 🟨 en curso · ✅ terminado · ⛔ bloqueado
 
 ## En curso
-- P3 terminado en `feat/ui-sistema-diseno`: falta subirla y abrir el PR
+- Nada en curso. Notion sincronizado con P0 a P3 (Documento técnico 1.2, 03 v1.3, 05 v1.2)
 
 ## Siguiente paso
-- PR de P3 con CI en verde (cuatro jobs); /notion-sync de P0 a P3 (incluye ADR-028); luego P4
+- P4 · Servidor, staging y despliegue continuo (módulo 23; responsable según Notion: Iván). Empezar con /prompt P4
 
 ## Bloqueos y preguntas al cliente
 - [ ] N9: límites y precio de los tramos de membresía; qué pasa al superar el límite
@@ -43,16 +43,21 @@ Leyenda: ⬜ pendiente · 🟨 en curso · ✅ terminado · ⛔ bloqueado
 - [ ] Textos legales revisados por el abogado del cliente
 
 ## Deuda técnica
+- P7: columnas tee_method_code y tee_method_version en nutrition.energy_prescription (ADR-029)
+- Por decidir en el prompt que lo use: quién escribe tracking.daily_target, si el paciente marca
+  content.resource_assignment.viewed_at y que active_plan_view compare el publishedAt del snapshot
 - Lighthouse móvil en CI sobre staging (RNF-03) cuando exista staging; hoy se mide en local
 - CSP del despliegue: style-src con 'unsafe-inline' por BrandStyle (ADR-027)
 - La marca y la organización activa son provisionales hasta la sesión (P5) y la personalización (P19)
-- db:seed, seed:load y e2e llaman scripts que llegan en P3 y P7
+- db:seed y seed:load llaman scripts que llegan en P7
 - La imagen de la API debe copiar apps/api/prisma/migrations: /api/health/ready las compara (ADR-026)
 - No hay filtro global RFC 9457: la idempotencia arma su problema a mano hasta que llegue el filtro
 - TypeScript fijado en 6.0 hasta que typescript-eslint soporte TypeScript 7 (ADR-018)
 - Jackson y Pollock 7 deja de crecer con la suma de pliegues sobre 395 mm (hombres) y 419 mm (mujeres): consultar si se advierte
 
 ## Registro de sesiones (solo las 5 últimas)
+- 2026-10-07 · P3 y Notion · TEE_PAL en el motor (1.1.0, ADR-029), G-10 con valores exactos, ADR-028 y
+  /notion-sync de P0 a P3 aplicado (32 cambios) · PR #4
 - 2026-10-06 · P3 · tokens y marca en ejecución con contraste AA, 12 componentes base, layouts del panel y de la
   app, catálogo, PWA, Playwright con axe y Lighthouse móvil 99; ADR-027 · falta el PR
 - 2026-10-06 · P2 · init de superusuario, 16 migraciones con RLS, políticas y particiones, spike de Prisma 7,

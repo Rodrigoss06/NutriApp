@@ -12,7 +12,7 @@ import {
   RMR_KATCH_MCARDLE,
   RMR_MIFFLIN1990,
   TARGET_WEIGHT_FAT_PCT,
-  totalEnergyExpenditure,
+  TEE_PAL,
 } from './index.js';
 
 const codes = (run: ReturnType<typeof runMethod>) =>
@@ -82,21 +82,35 @@ describe('RN-E01 y RN-D06 · validez de las ecuaciones de TMR', () => {
   );
 });
 
-describe('RN-E02 · gasto total', () => {
-  const base = { rmrKcal: 1700, exerciseDailyNetKcal: 150, ageYears: 30 } as const;
+describe('RN-E02 · gasto total (TEE_PAL)', () => {
+  const base = {
+    rmrKcal: 1700,
+    exerciseMode: 'NET',
+    exerciseDailyNetKcal: 150,
+    ageYears: 30,
+  } as const;
 
   it('aditiva suma el ejercicio neto; factorial no lo suma', () => {
-    const additive = totalEnergyExpenditure({ ...base, pal: 1.5, strategy: 'ADDITIVE' });
-    const factorial = totalEnergyExpenditure({ ...base, pal: 1.5, strategy: 'FACTORIAL' });
-    expect(additive.ok && additive.outputs.teeKcal).toBeCloseTo(1700 * 1.5 + 150, 10);
-    expect(factorial.ok && factorial.outputs.teeKcal).toBeCloseTo(1700 * 1.5, 10);
+    const additive = runMethod(TEE_PAL, { ...base, pal: 1.5, strategy: 'ADDITIVE' });
+    const factorial = runMethod(TEE_PAL, { ...base, pal: 1.5, strategy: 'FACTORIAL' });
+    expect(additive.ok && additive.result.outputs.teeKcal).toBeCloseTo(1700 * 1.5 + 150, 10);
+    expect(factorial.ok && factorial.result.outputs).toEqual({
+      baseKcal: 1700 * 1.5,
+      exerciseKcal: 0,
+      teeKcal: 1700 * 1.5,
+    });
   });
 
   it.each([1.39, 2.41])('ERROR con PAL %s: debe estar entre 1.40 y 2.40', (pal) => {
-    const result = totalEnergyExpenditure({ ...base, pal, strategy: 'ADDITIVE' });
+    const result = runMethod(TEE_PAL, { ...base, pal, strategy: 'ADDITIVE' });
     expect(!result.ok && result.errors.map((e) => [e.rule, e.code])).toEqual([
       ['RN-E02', 'NC-ENG-211'],
     ]);
+  });
+
+  it('RN-D06 · aviso pediátrico en menores de 18, sin dejar de calcular', () => {
+    const result = runMethod(TEE_PAL, { ...base, ageYears: 17, pal: 1.5, strategy: 'ADDITIVE' });
+    expect(result.ok && result.result.warnings.map((w) => w.code)).toEqual(['NC-ENG-210']);
   });
 });
 
