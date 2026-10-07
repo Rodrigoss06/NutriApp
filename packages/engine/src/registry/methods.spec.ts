@@ -18,9 +18,9 @@ const BASICS = [SITES.BASIC_WEIGHT, SITES.BASIC_HEIGHT, SITES.BASIC_SITTING_HEIG
 const adult = { sex: 'M', ageYears: 28, population: 'ADULT' };
 
 describe('02 §9 · registro de métodos de la versión 1.0', () => {
-  it('registra los 39 códigos, cada uno bajo su propio código', () => {
+  it('registra los 40 códigos (39 de 02 §9 más TEE_PAL), cada uno bajo su propio código', () => {
     expect(Object.keys(METHODS).sort()).toEqual([...METHOD_CODES].sort());
-    expect(METHOD_CODES).toHaveLength(39);
+    expect(METHOD_CODES).toHaveLength(40);
     for (const [code, method] of Object.entries(METHODS)) expect(method.code).toBe(code);
   });
 

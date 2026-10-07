@@ -227,3 +227,11 @@ Decisión: el bloque se commitea y no se edita a mano ni se desactiva (sin `agen
 van fuera de los marcadores. Si `next dev` crea apps/web/AGENTS.md, también se commitea.
 Consecuencias: el árbol queda limpio tras `next dev`. En Notion solo va nuestro contenido. La caché de Next se
 borra con `pnpm --filter web clean`, sin `rm -rf`.
+
+## ADR-029 · El GET con PAL es el método TEE_PAL — aceptada (2026-10-07)
+Contexto: ADR-023 dejó el GET como función sin código porque 02 §9 no le daba uno.
+Decisión: TEE_PAL 1.0.0 en el registro, con estrategia (aditiva o factorial) y modo neto del ejercicio como
+insumos, y la validez de la fila «GET con PAL» de 03. Motor 1.1.0. Etiqueta: «Gasto energético total
+(TMR × PAL + ejercicio)». Reemplaza en esto a ADR-023.
+Consecuencias: el GET guardado lleva método, versión e insumos con hash como cualquier resultado. P7 agrega
+tee_method_code y tee_method_version a nutrition.energy_prescription en su migración.

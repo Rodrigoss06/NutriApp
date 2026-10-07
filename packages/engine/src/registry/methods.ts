@@ -34,6 +34,7 @@ import {
   RMR_KATCH_MCARDLE,
   RMR_MIFFLIN1990,
   TARGET_WEIGHT_FAT_PCT,
+  TEE_PAL,
 } from '../energy/index.js';
 import { ACROMIOILIAC_INDEX, CORMIC_INDEX, MANOUVRIER_INDEX } from '../proportionality/index.js';
 import {
@@ -79,6 +80,7 @@ export const METHODS: Readonly<Record<MethodCode, AnyMethod>> = Object.freeze({
   RMR_CUNNINGHAM1980,
   RMR_KATCH_MCARDLE,
   EE_MET_COMPENDIUM2024,
+  TEE_PAL,
   MACROS_PROTEIN_FIRST,
   EXCHANGES_CLASSIC,
   MEAL_SPLIT_LARGEST_REMAINDER,

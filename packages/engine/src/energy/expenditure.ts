@@ -75,64 +75,64 @@ export const EE_MET_COMPENDIUM2024 = defineMethod<MetInput, MetOutput>({
 });
 
 export interface TeeInput {
-  /** TMR del método elegido; su resultado guarda el método. */
+  /** TMR del método elegido; su propio resultado guarda ese método. */
   readonly rmrKcal: number;
+  /** PAL de vida diaria (RN-E02). */
   readonly pal: number;
-  /** ADDITIVE: el PAL es solo la vida diaria y se suma el ejercicio neto. FACTORIAL: no se suma ejercicio. */
+  /** ADDITIVE: el PAL es solo la vida diaria y se suma el ejercicio. FACTORIAL: no se suma ejercicio (ADR-016). */
   readonly strategy: 'ADDITIVE' | 'FACTORIAL';
+  /** El ejercicio entra neto, (MET − 1) × kg × horas, para no contar dos veces el reposo (RN-E03). */
+  readonly exerciseMode: 'NET';
+  /** Promedio diario del ejercicio neto (EE_MET_COMPENDIUM2024). */
   readonly exerciseDailyNetKcal: number;
   readonly ageYears: number;
 }
 
-export type TeeResult =
-  | {
-      readonly ok: true;
-      readonly outputs: {
-        readonly baseKcal: number;
-        readonly exerciseKcal: number;
-        readonly teeKcal: number;
-      };
-      readonly warnings: readonly Issue[];
-    }
-  | { readonly ok: false; readonly errors: readonly Issue[]; readonly warnings: readonly Issue[] };
+export interface TeeOutput {
+  readonly baseKcal: number;
+  readonly exerciseKcal: number;
+  readonly teeKcal: number;
+}
 
 /**
- * GET = TMR × PAL (+ ejercicio neto en la estrategia aditiva), RN-E02 y ADR-016. 02 §9 no le da código
- * propio: la prescripción guarda cada componente con su método.
+ * Gasto energético total: GET = TMR × PAL, más el ejercicio neto en la estrategia aditiva (RN-E02, RN-E03,
+ * ADR-016). Validez de la fila «GET con PAL» de 03: aviso en menores de 18.
  */
-export function totalEnergyExpenditure(input: TeeInput): TeeResult {
-  const warnings: Issue[] =
-    input.ageYears < 18
-      ? [
-          {
-            rule: 'RN-D06',
-            severity: 'WARNING',
-            code: 'NC-ENG-210',
-            message:
-              'El GET con PAL es de adultos: la versión 1.0 no calcula requerimientos pediátricos, que la FAO estima con otro método.',
-          },
-        ]
-      : [];
-  const [minPal, maxPal] = PAL_RANGE;
-  if (!(input.pal >= minPal && input.pal <= maxPal)) {
-    return {
-      ok: false,
-      errors: [
-        {
-          rule: 'RN-E02',
-          severity: 'ERROR',
-          code: 'NC-ENG-211',
-          message: 'El PAL de vida diaria va de 1.40 a 2.40.',
-        },
-      ],
-      warnings,
-    };
-  }
-  const baseKcal = input.rmrKcal * input.pal;
-  const exerciseKcal = input.strategy === 'ADDITIVE' ? input.exerciseDailyNetKcal : 0;
-  return {
-    ok: true,
-    outputs: { baseKcal, exerciseKcal, teeKcal: baseKcal + exerciseKcal },
-    warnings,
-  };
-}
+export const TEE_PAL = defineMethod<TeeInput, TeeOutput>({
+  code: 'TEE_PAL',
+  version: '1.0.0',
+  kind: 'ENERGY',
+  population: 'ALL',
+  requiredInputs: [
+    'rmrKcal',
+    'pal',
+    'strategy',
+    'exerciseMode',
+    'exerciseDailyNetKcal',
+    'ageYears',
+  ],
+  requiredSites: [],
+  citation:
+    'FAO/WHO/UNU. Human energy requirements. Food and Nutrition Technical Report Series 1, 2004',
+  validity: [
+    {
+      rule: 'RN-E02',
+      severity: 'ERROR',
+      code: 'NC-ENG-211',
+      message: 'El PAL de vida diaria va de 1.40 a 2.40.',
+      when: ({ pal }) => !(pal >= PAL_RANGE[0] && pal <= PAL_RANGE[1]),
+    },
+    {
+      severity: 'WARNING',
+      code: 'NC-ENG-210',
+      message:
+        'El GET con PAL es de adultos: la versión 1.0 no calcula requerimientos pediátricos, que la FAO estima con otro método.',
+      when: ({ ageYears }) => ageYears < 18,
+    },
+  ],
+  compute: ({ rmrKcal, pal, strategy, exerciseDailyNetKcal }) => {
+    const baseKcal = rmrKcal * pal;
+    const exerciseKcal = strategy === 'ADDITIVE' ? exerciseDailyNetKcal : 0;
+    return { outputs: { baseKcal, exerciseKcal, teeKcal: baseKcal + exerciseKcal } };
+  },
+});

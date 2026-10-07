@@ -9,7 +9,7 @@ import {
   RMR_KATCH_MCARDLE,
   RMR_MIFFLIN1990,
   TARGET_WEIGHT_FAT_PCT,
-  totalEnergyExpenditure,
+  TEE_PAL,
 } from '../../src/energy/index.js';
 import {
   ACROMIOILIAC_INDEX,
@@ -57,13 +57,16 @@ const exercise = () =>
     }),
   ).outputs;
 const tee = () =>
-  totalEnergyExpenditure({
-    rmrKcal: mifflin(),
-    pal: 1.4,
-    strategy: 'ADDITIVE',
-    exerciseDailyNetKcal: exercise().dailyAverageNetKcal,
-    ageYears: LUIS.ageYears,
-  });
+  expectOk(
+    runMethod(TEE_PAL, {
+      rmrKcal: mifflin(),
+      pal: 1.4,
+      strategy: 'ADDITIVE',
+      exerciseMode: 'NET',
+      exerciseDailyNetKcal: exercise().dailyAverageNetKcal,
+      ageYears: LUIS.ageYears,
+    }),
+  );
 
 describe('G-11 · RN-C01 · proporcionalidad', () => {
   it('córmico 52.0; Manouvrier 92.31; acromio-ilíaco 71.25', () => {
@@ -108,17 +111,21 @@ describe('G-13 · RN-E01 · tasa metabólica en reposo', () => {
   });
 });
 
-describe('G-14 · RN-E02 · Mifflin con PAL 1.4', () => {
+describe('G-14 · RN-E02 · Mifflin con PAL 1.4 (TEE_PAL)', () => {
   it('2462 kcal sin ejercicio', () => {
-    const result = totalEnergyExpenditure({
-      rmrKcal: mifflin(),
-      pal: 1.4,
-      strategy: 'ADDITIVE',
-      exerciseDailyNetKcal: 0,
-      ageYears: LUIS.ageYears,
-    });
-    expect(result.ok && result.outputs.baseKcal).toBeTruthy();
-    if (result.ok) expectKcal(result.outputs.teeKcal, 2462);
+    const result = expectOk(
+      runMethod(TEE_PAL, {
+        rmrKcal: mifflin(),
+        pal: 1.4,
+        strategy: 'ADDITIVE',
+        exerciseMode: 'NET',
+        exerciseDailyNetKcal: 0,
+        ageYears: LUIS.ageYears,
+      }),
+    );
+    expectKcal(result.outputs.teeKcal, 2462);
+    expect(result.methodCode).toBe('TEE_PAL');
+    expect(result.inputs).toMatchObject({ strategy: 'ADDITIVE', exerciseMode: 'NET' });
   });
 });
 
@@ -129,15 +136,14 @@ describe('G-15 · RN-E03 · correr a 9.3 MET, 30 min, 3 sesiones por semana', ()
     expectKcal(activities[0]?.netKcalPerSession ?? 0, 332);
     expectKcal(dailyAverageNetKcal, 142);
     const result = tee();
-    if (!result.ok) expect.fail('El GET no calculó');
     expectKcal(result.outputs.teeKcal, 2605);
+    expect(result.methodCode).toBe('TEE_PAL');
   });
 });
 
 describe('G-16 · RN-E04 y RN-E06 · meta de −3 kg de grasa al mes', () => {
   it('déficit 770 kcal; objetivo 1835 kcal; ritmo 0.86 % semanal; 1.65 meses', () => {
     const result = tee();
-    if (!result.ok) expect.fail('El GET no calculó');
     const goal = expectOk(
       runMethod(FAT_LOSS_7700, {
         teeKcal: result.outputs.teeKcal,
@@ -167,16 +173,19 @@ describe('G-28 · RN-E01 y RN-D06 · niño de 12 años y 40 kg', () => {
     const rmrKcal = expectOk(
       runMethod(BMR_SCHOFIELD1985, { sex: 'M', ageYears: 12, weightKg: kg(40) }),
     ).outputs.rmrKcal;
-    const result = totalEnergyExpenditure({
-      rmrKcal,
-      pal: 1.6,
-      strategy: 'FACTORIAL',
-      exerciseDailyNetKcal: 0,
-      ageYears: 12,
-    });
+    const result = expectOk(
+      runMethod(TEE_PAL, {
+        rmrKcal,
+        pal: 1.6,
+        strategy: 'FACTORIAL',
+        exerciseMode: 'NET',
+        exerciseDailyNetKcal: 0,
+        ageYears: 12,
+      }),
+    );
 
     expect(rmrKcal).toBeCloseTo(1365.64, 2);
-    expect(result.ok && result.warnings).toEqual([
+    expect(result.warnings).toEqual([
       expect.objectContaining({ rule: 'RN-D06', severity: 'WARNING', code: 'NC-ENG-210' }),
     ]);
   });

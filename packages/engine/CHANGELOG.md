@@ -3,6 +3,14 @@
 Cambiar una fórmula o una constante sube la versión del método afectado y la del motor (02 §9).
 Los resultados guardados conservan la versión con que se calcularon (RN-D01, RN-D08).
 
+## 1.1.0 — 2026-10-07
+
+- Nuevo método `TEE_PAL` 1.0.0: gasto energético total, GET = TMR × PAL más el ejercicio neto en la estrategia
+  aditiva (RN-E02, RN-E03, ADR-016). Reemplaza la función `totalEnergyExpenditure`, que no tenía código. Insumos:
+  TMR, PAL, estrategia (`ADDITIVE` o `FACTORIAL`), modo del ejercicio (`NET`), ejercicio neto diario y edad.
+  Validez de la fila «GET con PAL» de 03: ERROR fuera de PAL 1.40–2.40 (NC-ENG-211) y aviso en menores de 18
+  (NC-ENG-210). Ningún número cambia: G-14 (2462) y G-15 (2605) siguen igual.
+
 ## 1.0.0 — 2026-10-06
 
 Primera versión, portada de `docs/reference/engine.ts` sin cambiar ningún número de `examples.ts`
@@ -18,7 +26,7 @@ Primera versión, portada de `docs/reference/engine.ts` sin cambiar ningún núm
 - Proporcionalidad: `CORMIC_INDEX`, `MANOUVRIER_INDEX`, `ACROMIOILIAC_INDEX`.
 - Metas: `TARGET_WEIGHT_FAT_PCT`, `FAT_LOSS_7700`.
 - Energía: `RMR_MIFFLIN1990`, `RMR_HB1919`, `BMR_SCHOFIELD1985`, `RMR_CUNNINGHAM1980`, `RMR_KATCH_MCARDLE`,
-  `EE_MET_COMPENDIUM2024`, y el GET aditivo o factorial (`totalEnergyExpenditure`, sin código propio).
+  `EE_MET_COMPENDIUM2024`, y el GET aditivo o factorial (función sin código; desde 1.1.0 es `TEE_PAL`).
 - Dieta: `MACROS_PROTEIN_FIRST`, `EXCHANGES_CLASSIC`, `MEAL_SPLIT_LARGEST_REMAINDER`, `RECIPE_NUTRIENTS`,
   `ADEQUACY`.
 - Entrenamiento: `TONNAGE`, `ONERM_EPLEY1985`, `ONERM_BRZYCKI1993`, `RPE_FROM_RIR`, `FRACTIONAL_SETS`, `SFR`,
