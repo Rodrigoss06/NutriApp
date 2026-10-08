@@ -1,6 +1,7 @@
 export { AuditModule } from './audit/audit.module.js';
 export { DatabaseModule } from './database/database.module.js';
 export { PRISMA, type Db } from './database/prisma.provider.js';
+export { ConsumerRunner } from './events/consumer-runner.js';
 export { ConsumerRegistry, type EventConsumer } from './events/event-consumer.js';
 export { EventsModule } from './events/events.module.js';
 export type { OutboxEnvelope } from './events/outbox-envelope.js';
@@ -52,3 +53,4 @@ export {
   rateLimitEmail,
   rateLimitIp,
 } from './rate-limit/rate-limiter.js';
+export { JobRegistry, type ScheduledJob } from './jobs/job-registry.js';

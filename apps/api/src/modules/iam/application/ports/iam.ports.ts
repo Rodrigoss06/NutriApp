@@ -23,6 +23,26 @@ export interface AccountStore {
   /** Fija el hash y deja failed_logins = 0 y locked_until = NULL. */
   setPassword(id: UserId, passwordHash: string, now: Date): Promise<void>;
   setDisplayName(id: UserId, displayName: string, now: Date): Promise<void>;
+  /** Cuenta nueva al aceptar una invitación: ACTIVE y con el correo verificado (lo probó el enlace). */
+  createActive(account: {
+    id: UserId;
+    email: string;
+    displayName: string;
+    passwordHash: string;
+    now: Date;
+  }): Promise<void>;
+  /** Cuenta PENDING (sin contraseña) que acepta: la activa con su nombre, su contraseña y el correo verificado. */
+  activate(id: UserId, displayName: string, passwordHash: string, now: Date): Promise<void>;
+  /** Administrador de plataforma sin contraseña: la fija con el enlace de bienvenida (24 horas). */
+  createPlatformAdmin(account: {
+    id: UserId;
+    email: string;
+    displayName: string;
+    now: Date;
+  }): Promise<void>;
+  profiles(
+    ids: readonly UserId[],
+  ): Promise<readonly { id: UserId; displayName: string; email: string }[]>;
 }
 
 export interface SessionRecord {
@@ -63,6 +83,7 @@ export interface SessionStore {
   revokeOwned(userId: UserId, id: string, now: Date): Promise<boolean>;
   revokeAll(userId: UserId, now: Date): Promise<number>;
   listAlive(userId: UserId, now: Date): Promise<readonly SessionRecord[]>;
+  setActiveOrganization(id: string, organizationId: OrganizationId): Promise<void>;
 }
 
 export interface PendingReset {
@@ -123,3 +144,48 @@ export interface MembershipDirectory {
 }
 
 export const MEMBERSHIP_DIRECTORY = Symbol.for('nutricoach.iam.MembershipDirectory');
+
+export type InvitationRole = 'OWNER' | 'ADMIN' | 'PROFESSIONAL' | 'PATIENT';
+
+export interface InvitationRecord {
+  readonly id: string;
+  readonly organizationId: OrganizationId;
+  readonly email: string;
+  readonly role: InvitationRole;
+  readonly expiresAt: Date;
+  readonly acceptedAt: Date | null;
+  readonly revokedAt: Date | null;
+}
+
+/**
+ * iam.invitation. Con el token, sin contexto, solo por app.find_invitation; el resto con la RLS de la organización.
+ * Pendiente = sin aceptar ni revocar (el índice parcial deja una por correo y organización, vencida o no).
+ */
+export interface InvitationStore {
+  create(invitation: {
+    id: string;
+    organizationId: OrganizationId;
+    email: string;
+    role: InvitationRole;
+    tokenHash: Uint8Array;
+    expiresAt: Date;
+    invitedBy: UserId;
+  }): Promise<void>;
+  findByToken(tokenHash: Uint8Array): Promise<InvitationRecord | null>;
+  findById(id: string): Promise<(InvitationRecord & { createdAt: Date }) | null>;
+  findPendingByEmail(
+    organizationId: OrganizationId,
+    email: string,
+  ): Promise<InvitationRecord | null>;
+  listPendingStaff(
+    organizationId: OrganizationId,
+  ): Promise<readonly (InvitationRecord & { createdAt: Date })[]>;
+  /** Pendientes de staff que siguen vigentes: ocupan cupo (RN-A03). */
+  countPendingStaff(organizationId: OrganizationId, now: Date): Promise<number>;
+  /** UPDATE condicional: true si seguía pendiente. */
+  revoke(id: string, now: Date): Promise<boolean>;
+  /** Un solo uso: UPDATE condicional (sin aceptar, sin revocar, vigente). true si esta petición la aceptó. */
+  accept(id: string, now: Date): Promise<boolean>;
+}
+
+export const INVITATION_STORE = Symbol.for('nutricoach.iam.InvitationStore');

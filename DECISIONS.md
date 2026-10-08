@@ -265,3 +265,29 @@ Decisión: la petición escribe un evento con el id y el token cifrado con Encry
 el worker busca el correo, descifra y envía con MailerPort (SMTP en local, Resend en staging y producción). El
 token va en el fragmento del enlace (/recuperar/nueva#TOKEN), armado con APP_URL. Resend sin seguimiento de clics.
 Consecuencias: el token nunca queda en claro en la base ni en los logs. Si el pedido ya se usó, no se envía nada.
+
+## ADR-033 · Cupos y «al menos un dueño» con un candado por organización — aceptada (2026-10-07)
+Contexto: RN-A03 y RN-A04 se rompen con dos peticiones simultáneas que cuentan antes de escribir.
+Decisión: QuotaPolicy en la API pública de tenancy toma pg_advisory_xact_lock(hashtextextended('tenancy:' || org))
+dentro de la transacción del caso de uso, cuenta y compara con el límite congelado de la suscripción activa. El
+mismo candado protege RN-A04. Cupo de staff: OWNER, ADMIN y PROFESSIONAL activos; al invitar suma las invitaciones
+de staff vigentes; al aceptar, activos + 1 sin contar las demás; SUSPENDED no cuenta y reactivar vuelve a verificar.
+Aceptar una invitación de staff es síncrono (02 §8): una sola transacción en el contexto de la organización marca
+accepted_at con UPDATE condicional, crea o activa la cuenta, da de alta al miembro con QuotaPolicy, abre la sesión y
+emite iam.invitation.accepted; si algo falla, se revierte todo. Una invitación pendiente por correo y organización
+(índice parcial): reenviar revoca la anterior.
+Consecuencias: el perdedor de una carrera recibe 422 con la regla, no un cupo excedido. La profesión del invitado
+se fija después en su ficha de miembro (iam.invitation no la guarda).
+
+## ADR-034 · Panel de plataforma, vencimiento RN-A02 y semilla — aceptada (2026-10-07)
+Contexto: RF-39 y RN-A02; el primer PLATFORM_ADMIN de un entorno no puede depender de otro.
+Decisión: el módulo backoffice orquesta las API públicas de tenancy (PlatformTenancy) e iam (IamApi) con el
+contexto PLATFORM_ADMIN de la organización afectada: alta de organización con su suscripción y la invitación al
+dueño en una transacción, renovar o cambiar de plan (la anterior pasa a REPLACED y READ_ONLY vuelve a ACTIVE) y
+días de gracia. El trabajo tenancy.expire-subscriptions corre cada hora en el worker con contexto PLATFORM_ADMIN
+(nunca app_owner) y actor SYSTEM en la auditoría: vence cuando la fecha local de la organización pasa ends_on +
+gracia. La CLI create-platform-admin crea la cuenta sin contraseña y un enlace de 24 horas por correo. Las escrituras
+de iam y tenancy se auditan desde sus eventos con el consumidor audit.events. pnpm db:seed (solo local y staging,
+como app_owner) carga TRAMO_5 y TRAMO_50 con valores provisionales de N9, una organización demo con dueña y
+profesional y un PLATFORM_ADMIN demo; en staging la contraseña llega en SEED_DEMO_PASSWORD.
+Consecuencias: cuando el cliente cierre N9, los planes se corrigen con una migración de datos, no en la semilla.

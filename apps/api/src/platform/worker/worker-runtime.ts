@@ -9,6 +9,7 @@ import type { PgBoss } from 'pg-boss';
 import { ConsumerRunner } from '../events/consumer-runner.js';
 import { ConsumerRegistry, type EventConsumer } from '../events/event-consumer.js';
 import { OutboxDispatcher } from '../events/outbox-dispatcher.js';
+import { JobRegistry } from '../jobs/job-registry.js';
 import type { OutboxEnvelope } from '../events/outbox-envelope.js';
 import { MaintenanceService } from '../maintenance/maintenance.service.js';
 import {
@@ -40,6 +41,7 @@ export class WorkerRuntime implements OnApplicationBootstrap, OnApplicationShutd
   constructor(
     @Inject(PG_BOSS) private readonly boss: PgBoss,
     private readonly registry: ConsumerRegistry,
+    private readonly jobs: JobRegistry,
     private readonly runner: ConsumerRunner,
     private readonly dispatcher: OutboxDispatcher,
     private readonly maintenance: MaintenanceService,
@@ -62,6 +64,7 @@ export class WorkerRuntime implements OnApplicationBootstrap, OnApplicationShutd
       const removed = await this.maintenance.cleanup();
       this.#logger.log(`Limpieza: ${JSON.stringify(removed)}`);
     });
+    for (const job of this.jobs.all()) await this.#schedule(job, () => job.run());
     // Tras un despliegue no se espera a la madrugada: la partición del mes siguiente debe existir ya.
     await this.maintenance.ensurePartitions();
     this.#timer = setInterval(() => void this.#dispatch(), WorkerRuntime.dispatchIntervalMs);

@@ -16,6 +16,8 @@
     "postinstall": "prisma generate",
     "db:migrate": "prisma migrate deploy",
     "db:pull": "prisma db pull && node scripts/prisma-naming.ts && prisma format && prisma generate",
+    "seed": "node scripts/seed.ts",
+    "platform-admin:create": "node dist/cli/create-platform-admin.js",
     "test:int": "vitest run --config vitest.int.config.js --coverage"
   },
   "dependencies": {

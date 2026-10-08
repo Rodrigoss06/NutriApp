@@ -1,2 +1,3 @@
-// API pública de iam (02 §2). Las invitaciones de staff y su aceptación llegan con tenancy (P5, PR 2).
+// API pública de iam (02 §2).
+export { IamApi } from './application/iam-api.js';
 export { IamModule } from './iam.module.js';

@@ -1,5 +1,6 @@
 import { createHash } from 'node:crypto';
 import type {
+  OrganizationId,
   AuditEntry,
   AuditPort,
   Clock,
@@ -17,6 +18,9 @@ import type {
   AccountRecord,
   AccountStore,
   CommonPasswords,
+  InvitationRecord,
+  InvitationRole,
+  InvitationStore,
   MembershipDirectory,
   MembershipSummary,
   NewSession,
@@ -130,6 +134,28 @@ export class MemoryAccounts implements AccountStore {
     if (row) row.displayName = displayName;
     return Promise.resolve();
   }
+  createActive(account: { id: UserId; email: string; displayName: string; passwordHash: string }) {
+    this.add({ ...account, status: 'ACTIVE' });
+    return Promise.resolve();
+  }
+  activate(id: UserId, displayName: string, passwordHash: string) {
+    const row = this.rows.get(id);
+    if (row?.status === 'PENDING')
+      Object.assign(row, { displayName, passwordHash, status: 'ACTIVE' });
+    return Promise.resolve();
+  }
+  createPlatformAdmin(account: { id: UserId; email: string; displayName: string }) {
+    this.add({ ...account, status: 'ACTIVE', isPlatformAdmin: true });
+    return Promise.resolve();
+  }
+  profiles(ids: readonly UserId[]) {
+    return Promise.resolve(
+      ids.flatMap((id) => {
+        const row = this.rows.get(id);
+        return row ? [{ id, displayName: row.displayName, email: row.email }] : [];
+      }),
+    );
+  }
 }
 
 const hex = (bytes: Uint8Array) => Buffer.from(bytes).toString('hex');
@@ -192,6 +218,11 @@ export class MemorySessions implements SessionStore {
           r.userId === userId && !r.revokedAt && r.idleExpiresAt > now && r.absoluteExpiresAt > now,
       ),
     );
+  }
+  setActiveOrganization(id: string, organizationId: OrganizationId) {
+    const row = this.rows.get(id);
+    if (row && !row.revokedAt) this.rows.set(id, { ...row, activeOrganizationId: organizationId });
+    return Promise.resolve();
   }
   alive(userId: UserId): number {
     return [...this.rows.values()].filter((r) => r.userId === userId && !r.revokedAt).length;
@@ -265,3 +296,73 @@ export class FakeTokens implements SecretTokens {
 export const membershipsOf = (list: MembershipSummary[]): MembershipDirectory => ({
   membershipsOf: () => Promise.resolve(list),
 });
+
+export class MemoryInvitations implements InvitationStore {
+  readonly rows = new Map<
+    string,
+    InvitationRecord & {
+      tokenHash: string;
+      createdAt: Date;
+      acceptedAt: Date | null;
+      revokedAt: Date | null;
+    }
+  >();
+  create(invitation: {
+    id: string;
+    organizationId: OrganizationId;
+    email: string;
+    role: InvitationRole;
+    tokenHash: Uint8Array;
+    expiresAt: Date;
+  }) {
+    this.rows.set(invitation.id, {
+      id: invitation.id,
+      organizationId: invitation.organizationId,
+      email: invitation.email,
+      role: invitation.role,
+      expiresAt: invitation.expiresAt,
+      tokenHash: hex(invitation.tokenHash),
+      createdAt: invitation.expiresAt,
+      acceptedAt: null,
+      revokedAt: null,
+    });
+    return Promise.resolve();
+  }
+  findByToken(tokenHash: Uint8Array) {
+    return Promise.resolve(
+      [...this.rows.values()].find((r) => r.tokenHash === hex(tokenHash)) ?? null,
+    );
+  }
+  findById(id: string) {
+    return Promise.resolve(this.rows.get(id) ?? null);
+  }
+  #pending(organizationId: OrganizationId) {
+    return [...this.rows.values()].filter(
+      (r) => r.organizationId === organizationId && !r.acceptedAt && !r.revokedAt,
+    );
+  }
+  findPendingByEmail(organizationId: OrganizationId, email: string) {
+    return Promise.resolve(this.#pending(organizationId).find((r) => r.email === email) ?? null);
+  }
+  listPendingStaff(organizationId: OrganizationId) {
+    return Promise.resolve(this.#pending(organizationId).filter((r) => r.role !== 'PATIENT'));
+  }
+  countPendingStaff(organizationId: OrganizationId, now: Date) {
+    return Promise.resolve(
+      this.#pending(organizationId).filter((r) => r.role !== 'PATIENT' && r.expiresAt > now).length,
+    );
+  }
+  revoke(id: string, now: Date) {
+    const row = this.rows.get(id);
+    if (!row || row.acceptedAt || row.revokedAt) return Promise.resolve(false);
+    row.revokedAt = now;
+    return Promise.resolve(true);
+  }
+  accept(id: string, now: Date) {
+    const row = this.rows.get(id);
+    if (!row || row.acceptedAt || row.revokedAt || row.expiresAt <= now)
+      return Promise.resolve(false);
+    row.acceptedAt = now;
+    return Promise.resolve(true);
+  }
+}
