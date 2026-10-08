@@ -35,3 +35,50 @@ export function passwordChangedMail(
     ].join('\n'),
   };
 }
+
+const ROLE_NAMES: Readonly<Record<string, string>> = {
+  OWNER: 'dueño',
+  ADMIN: 'administrador',
+  PROFESSIONAL: 'profesional',
+};
+
+export function invitationMail(
+  to: string,
+  organizationName: string,
+  role: string,
+  link: string,
+  expiresAt: Date,
+): MailMessage {
+  const until = expiresAt.toLocaleDateString('es-PE', {
+    dateStyle: 'long',
+    timeZone: 'America/Lima',
+  });
+  return {
+    to,
+    subject: `Te invitaron a ${organizationName}`,
+    text: [
+      'Hola:',
+      '',
+      `Te invitaron a unirte a ${organizationName} como ${ROLE_NAMES[role] ?? role}. Abre este enlace para aceptar:`,
+      link,
+      '',
+      `El enlace vale hasta el ${until} y solo funciona una vez.`,
+      'Si no esperabas esta invitación, ignora este correo.',
+    ].join('\n'),
+  };
+}
+
+export function platformWelcomeMail(to: string, name: string, link: string): MailMessage {
+  return {
+    to,
+    subject: 'Crea tu contraseña de administración',
+    text: [
+      `Hola, ${name}:`,
+      '',
+      'Se creó tu cuenta de administración de la plataforma. Crea tu contraseña en las próximas 24 horas:',
+      link,
+      '',
+      'Si no esperabas este correo, avísanos respondiendo a este mensaje.',
+    ].join('\n'),
+  };
+}

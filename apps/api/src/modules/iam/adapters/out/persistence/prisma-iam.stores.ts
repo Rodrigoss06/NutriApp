@@ -99,6 +99,77 @@ export class PrismaAccountStore implements AccountStore {
   async setDisplayName(id: UserId, displayName: string, now: Date): Promise<void> {
     await this.db.tx.userAccount.update({ where: { id }, data: { displayName, updatedAt: now } });
   }
+
+  async createActive(account: {
+    id: UserId;
+    email: string;
+    displayName: string;
+    passwordHash: string;
+    now: Date;
+  }): Promise<void> {
+    await this.db.tx.userAccount.createMany({
+      data: [
+        {
+          id: account.id,
+          email: account.email,
+          displayName: account.displayName,
+          passwordHash: account.passwordHash,
+          status: 'ACTIVE',
+          emailVerifiedAt: account.now,
+          createdAt: account.now,
+          updatedAt: account.now,
+        },
+      ],
+    });
+  }
+
+  async activate(id: UserId, displayName: string, passwordHash: string, now: Date): Promise<void> {
+    await this.db.tx.userAccount.updateMany({
+      where: { id, status: 'PENDING' },
+      data: {
+        displayName,
+        passwordHash,
+        status: 'ACTIVE',
+        emailVerifiedAt: now,
+        failedLogins: 0,
+        lockedUntil: null,
+        updatedAt: now,
+      },
+    });
+  }
+
+  async createPlatformAdmin(account: {
+    id: UserId;
+    email: string;
+    displayName: string;
+    now: Date;
+  }): Promise<void> {
+    await this.db.tx.userAccount.createMany({
+      data: [
+        {
+          id: account.id,
+          email: account.email,
+          displayName: account.displayName,
+          status: 'ACTIVE',
+          isPlatformAdmin: true,
+          emailVerifiedAt: account.now,
+          createdAt: account.now,
+          updatedAt: account.now,
+        },
+      ],
+    });
+  }
+
+  async profiles(
+    ids: readonly UserId[],
+  ): Promise<readonly { id: UserId; displayName: string; email: string }[]> {
+    if (ids.length === 0) return [];
+    const rows = await this.db.tx.userAccount.findMany({
+      where: { id: { in: [...ids] } },
+      select: { id: true, displayName: true, email: true },
+    });
+    return rows.map((row) => ({ ...row, id: row.id as UserId }));
+  }
 }
 
 interface SessionRow {
@@ -201,6 +272,13 @@ export class PrismaSessionStore implements SessionStore {
       data: { revokedAt: now },
     });
     return count;
+  }
+
+  async setActiveOrganization(id: string, organizationId: OrganizationId): Promise<void> {
+    await this.db.tx.session.updateMany({
+      where: { id, revokedAt: null },
+      data: { activeOrgId: organizationId },
+    });
   }
 
   async listAlive(userId: UserId, now: Date): Promise<readonly SessionRecord[]> {

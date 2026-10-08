@@ -28,10 +28,12 @@ Próxima demo: Demo 1 · Base y evaluación · semana 2
 Leyenda: ⬜ pendiente · 🟨 en curso · ✅ terminado · ⛔ bloqueado
 
 ## En curso
-- P5, PR 1 de 3 listo en `feat/iam-acceso`: base transversal, iam, guardias y límite de intentos (falta subirlo)
+- P5, PR 1 de 3 fusionado (#6, CI en verde): base transversal, iam, guardias y límite de intentos
+- P5, PR 2 de 3 listo en `feat/tenancy-membresias`: tenancy, invitaciones de staff, backoffice,
+  RN-A02, auditoría desde eventos, semilla y CLI del primer PLATFORM_ADMIN (falta subirlo)
 
 ## Siguiente paso
-- PR 2 de P5: tenancy, invitaciones de staff, API de plataforma (backoffice), trabajo de RN-A02 y semilla
+- PR 3 de P5: web (entrar, invitación, recuperar, organización, cuenta, selector), E2E con Mailpit y CI con worker
 
 ## Bloqueos y preguntas al cliente
 - [ ] Cuenta de Hetzner y dominio a nombre de Jeremy: bloquea P4
@@ -52,12 +54,15 @@ Leyenda: ⬜ pendiente · 🟨 en curso · ✅ terminado · ⛔ bloqueado
 - Lighthouse móvil en CI sobre staging (RNF-03) cuando exista staging; hoy se mide en local
 - CSP del despliegue: style-src con 'unsafe-inline' por BrandStyle (ADR-027)
 - La marca y la organización activa son provisionales hasta la sesión (P5) y la personalización (P19)
-- db:seed y seed:load llaman scripts que llegan en P7
+- seed:load llama un script que llega en P7 y P8 (db:seed existe desde P5)
+- Planes TRAMO_5 y TRAMO_50 con límites y precio provisionales (N9): corregir con migración de datos al cerrarse
 - La imagen de la API debe copiar apps/api/prisma/migrations: /api/health/ready las compara (ADR-026)
 - TypeScript fijado en 6.0 hasta que typescript-eslint soporte TypeScript 7 (ADR-018)
 - Jackson y Pollock 7 deja de crecer con la suma de pliegues sobre 395 mm (hombres) y 419 mm (mujeres): consultar si se advierte
 
 ## Registro de sesiones (solo las 5 últimas)
+- 2026-10-07 · P5 (2/3) · tenancy con QuotaPolicy y candado, invitaciones de un solo uso, organización activa,
+  backoffice, vencimiento RN-A02, auditoría desde eventos, semilla y CLI; ADR-033 y 034
 - 2026-10-07 · P5 (1/3) · filtro RFC 9457, guardias con negación por defecto, Origin, límite de intentos en la
   base, iam con argon2id, sesiones, bloqueo, recuperar y cambiar la contraseña, correos por el worker; ADR-030 a 032
 - 2026-10-07 · P3 y Notion · TEE_PAL en el motor (1.1.0, ADR-029), G-10 con valores exactos, ADR-028 y
@@ -66,5 +71,3 @@ Leyenda: ⬜ pendiente · 🟨 en curso · ✅ terminado · ⛔ bloqueado
   app, catálogo, PWA, Playwright con axe y Lighthouse móvil 99; ADR-027 · falta el PR
 - 2026-10-06 · P2 · init de superusuario, 16 migraciones con RLS, políticas y particiones, spike de Prisma 7,
   UnitOfWork, outbox con pg-boss, idempotencia, auditoría, cifrado, salud y CI; ADR-024 a ADR-026 · falta el PR
-- 2026-10-06 · P1 · motor con los 39 métodos de 02 §9, validez por método, sobre con hash, G-01 a G-28,
-  propiedades, paridad con la referencia y prueba en el navegador; ADR-022 y ADR-023 · falta el PR

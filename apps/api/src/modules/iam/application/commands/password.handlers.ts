@@ -1,6 +1,7 @@
 import { Inject, Injectable } from '@nestjs/common';
 import {
   anonymousContext,
+  systemContext,
   CLOCK,
   domainError,
   ENCRYPTION_PORT,
@@ -39,8 +40,14 @@ import {
 } from '../ports/iam.ports.js';
 import type { OpenedSession } from './login.handler.js';
 
-/** El enlace de recuperación vale una hora. */
+/** El enlace de recuperación vale una hora; el de bienvenida de un administrador de plataforma, 24. */
 export const RESET_TTL_MS = 60 * 60 * 1000;
+export const WELCOME_TTL_MS = 24 * 60 * 60 * 1000;
+
+export const ACCOUNT_EXISTS = domainError({
+  code: 'NC-IAM-012',
+  message: 'Ya existe una cuenta con ese correo.',
+});
 
 export const WRONG_CURRENT_PASSWORD = domainError({
   code: 'NC-IAM-011',
@@ -157,6 +164,41 @@ export class PasswordHandlers {
       });
       await this.outbox.append([resetRequested(resetId, encryptedToken, this.#events())]);
     });
+  }
+
+  /**
+   * Primer PLATFORM_ADMIN de un entorno (CLI): cuenta sin contraseña y enlace de 24 horas por correo para fijarla.
+   * Nadie más ve ni elige su contraseña.
+   */
+  async createPlatformAdmin(
+    email: string,
+    displayName: string,
+  ): Promise<Result<void, DomainError>> {
+    const now = this.clock.now();
+    const normalized = normalizeEmail(email);
+    const existing = await this.uow.query(anonymousContext(), () =>
+      this.accounts.findByEmail(normalized),
+    );
+    if (existing) return err(ACCOUNT_EXISTS);
+    const userId = this.ids.newId<'UserId'>();
+    const resetId = this.ids.newId<'PasswordResetId'>();
+    const { token, hash } = this.tokens.generate();
+    const encryptedToken = Buffer.from(
+      this.encryption.encrypt(token, resetTokenAad(resetId)),
+    ).toString('base64');
+    await this.uow.run(systemContext(), async () => {
+      await this.accounts.createPlatformAdmin({ id: userId, email: normalized, displayName, now });
+      await this.resets.create({
+        id: resetId,
+        userId,
+        tokenHash: hash,
+        expiresAt: new Date(now.getTime() + WELCOME_TTL_MS),
+      });
+      await this.outbox.append([resetRequested(resetId, encryptedToken, this.#events(), true)], {
+        actorRole: 'SYSTEM',
+      });
+    });
+    return ok(undefined);
   }
 
   /** Fijar la contraseña con el enlace: un solo uso con UPDATE condicional; revoca todas las sesiones. */

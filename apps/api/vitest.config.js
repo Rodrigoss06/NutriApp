@@ -42,6 +42,7 @@ const config = mergeConfig(
           'src/main.ts',
           'src/worker.ts',
           'src/env-file.ts',
+          'src/cli/**',
           'src/**/*.spec-support.ts',
           'src/platform/database/generated/**',
           ...INTEGRATION_COVERED,
