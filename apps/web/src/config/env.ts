@@ -9,6 +9,8 @@ import { z } from 'zod';
 const envSchema = z.object({
   APP_ENV: z.enum(['local', 'staging', 'production']).optional(),
   NODE_ENV: z.enum(['development', 'test', 'production']).default('development'),
+  /** La API desde el servidor de Next (red interna); el navegador usa /api. */
+  API_INTERNAL_URL: z.url({ protocol: /^https?$/ }).optional(),
 });
 
 export type AppEnv = 'local' | 'staging' | 'production';
@@ -21,4 +23,12 @@ export function appEnv(source: Record<string, string | undefined> = process.env)
 /** El catálogo de componentes y otras herramientas internas: solo en local y staging. */
 export function internalToolsEnabled(source?: Record<string, string | undefined>): boolean {
   return appEnv(source) !== 'production';
+}
+
+/** Origen de la API para los componentes de servidor, leído en ejecución. Fuera de local es obligatorio. */
+export function apiInternalUrl(source: Record<string, string | undefined> = process.env): string {
+  const env = envSchema.parse(source);
+  if (env.API_INTERNAL_URL) return new URL(env.API_INTERNAL_URL).origin;
+  if (appEnv(source) !== 'local') throw new Error('Falta API_INTERNAL_URL.');
+  return 'http://127.0.0.1:3001';
 }

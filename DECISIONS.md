@@ -291,3 +291,24 @@ de iam y tenancy se auditan desde sus eventos con el consumidor audit.events. pn
 como app_owner) carga TRAMO_5 y TRAMO_50 con valores provisionales de N9, una organización demo con dueña y
 profesional y un PLATFORM_ADMIN demo; en staging la contraseña llega en SEED_DEMO_PASSWORD.
 Consecuencias: cuando el cliente cierre N9, los planes se corrigen con una migración de datos, no en la semilla.
+
+## ADR-035 · Cookie Secure según el esquema de APP_URL — aceptada (2026-10-08)
+Contexto: precisa ADR-009 y ADR-031. Safari y WebKit no guardan cookies Secure en http://localhost (bug 232088 de
+WebKit, abierto), y el E2E del celular corre en WebKit sobre http://localhost.
+Decisión: la cookie de sesión es Secure si APP_URL usa https y no lo es con http://localhost. env.ts exige APP_URL
+con https cuando APP_ENV es staging o production y cuando SESSION_COOKIE_NAME empieza con __Host-; con NODE_ENV
+production sigue exigiendo el prefijo __Host-. httpOnly, SameSite=Lax y Path=/ no cambian.
+Consecuencias: fuera de local la cookie siempre es Secure y __Host-; en local y CI la sesión funciona en todos los
+navegadores. Un despliegue con http falla al arrancar.
+
+## ADR-036 · Datos y sesión en la web — aceptada (2026-10-08)
+Contexto: RF-01 a RF-04 en la web sin duplicar la autorización de la API.
+Decisión: el navegador llama a /api con TanStack Query para toda mutación (ninguna Server Action contra la API);
+Next reescribe /api a API_INTERNAL_URL, que existe al compilar en CI porque los rewrites quedan en el manifiesto
+del build (en staging y producción Caddy atiende /api antes que Next). Los componentes de servidor leen
+API_INTERNAL_URL en ejecución, con cache: 'no-store', la cookie y X-Forwarded-For. El layout de (panel) pide la
+cuenta en cada petición; sin sesión lleva a /entrar?next= (solo rutas internas) y una sesión PLATFORM va a la
+página de (admin)/admin/plataforma, con su guardia en un layout anidado para que /admin/componentes siga sin sesión.
+Cambiar de organización o salir vacía la caché de consultas y refresca. Los tokens de invitación y recuperación se
+leen del fragmento y se borran con history.replaceState. La interfaz oculta lo que el rol no puede; decide la API.
+Consecuencias: no hay proxy.ts; la protección de rutas en la web es solo comodidad.

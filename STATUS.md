@@ -29,15 +29,18 @@ Leyenda: ⬜ pendiente · 🟨 en curso · ✅ terminado · ⛔ bloqueado
 
 ## En curso
 - P5, PR 1 de 3 fusionado (#6, CI en verde): base transversal, iam, guardias y límite de intentos
-- P5, PR 2 de 3 listo en `feat/tenancy-membresias`: tenancy, invitaciones de staff, backoffice,
-  RN-A02, auditoría desde eventos, semilla y CLI del primer PLATFORM_ADMIN (falta subirlo)
+- P5, PR 2 de 3 fusionado (#7)
+- P5, PR 3 de 3 listo en `feat/web-acceso`: web de acceso, organización y cuenta, perfil profesional, E2E con
+  Mailpit en escritorio y celular (WebKit) y job de CI con la pila completa (falta subirlo)
 
 ## Siguiente paso
-- PR 3 de P5: web (entrar, invitación, recuperar, organización, cuenta, selector), E2E con Mailpit y CI con worker
+- Fusionar el PR 3; luego /cierre y /notion-sync de P5
 
 ## Bloqueos y preguntas al cliente
 - [ ] Cuenta de Hetzner y dominio a nombre de Jeremy: bloquea P4
 - [ ] N9: límites y precio de los tramos de membresía; qué pasa al superar el límite
+- [ ] Antes de P16: cargar en producción los valores definitivos de TRAMO_5 y TRAMO_50 (la semilla no corre en
+  producción): migración de datos o panel interno de P15
 - [ ] N22: caducidad del enlace de acceso del paciente
 - [ ] N19: confirmar la carga manual de bioimpedancia
 - [ ] N13: confirmar regresiones y progresiones en la biblioteca
@@ -61,6 +64,8 @@ Leyenda: ⬜ pendiente · 🟨 en curso · ✅ terminado · ⛔ bloqueado
 - Jackson y Pollock 7 deja de crecer con la suma de pliegues sobre 395 mm (hombres) y 419 mm (mujeres): consultar si se advierte
 
 ## Registro de sesiones (solo las 5 últimas)
+- 2026-10-08 · P5 (3/3) · web de acceso con TanStack Query, sesión en el layout del panel, organización, cuenta y
+  perfil profesional, avisos de RN-A02, cookie Secure según APP_URL, E2E con Mailpit y CI; ADR-035 y 036
 - 2026-10-07 · P5 (2/3) · tenancy con QuotaPolicy y candado, invitaciones de un solo uso, organización activa,
   backoffice, vencimiento RN-A02, auditoría desde eventos, semilla y CLI; ADR-033 y 034
 - 2026-10-07 · P5 (1/3) · filtro RFC 9457, guardias con negación por defecto, Origin, límite de intentos en la
@@ -69,5 +74,3 @@ Leyenda: ⬜ pendiente · 🟨 en curso · ✅ terminado · ⛔ bloqueado
   /notion-sync de P0 a P3 aplicado (32 cambios) · PR #4
 - 2026-10-06 · P3 · tokens y marca en ejecución con contraste AA, 12 componentes base, layouts del panel y de la
   app, catálogo, PWA, Playwright con axe y Lighthouse móvil 99; ADR-027 · falta el PR
-- 2026-10-06 · P2 · init de superusuario, 16 migraciones con RLS, políticas y particiones, spike de Prisma 7,
-  UnitOfWork, outbox con pg-boss, idempotencia, auditoría, cifrado, salud y CI; ADR-024 a ADR-026 · falta el PR

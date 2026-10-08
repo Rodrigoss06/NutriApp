@@ -1,7 +1,7 @@
 # Integración continua (Notion 01 §6): cada pull request y cada fusión en main.
 # Cuatro jobs: la puerta rápida (lint, arquitectura, tipos, unitarias y build), la integración con
 # PostgreSQL 18 en Testcontainers, el esquema de base (migraciones desde cero y db pull sin cambios) y la
-# interfaz con Playwright y axe sobre el build de producción.
+# interfaz: recorridos de Playwright con axe sobre el build de producción, con API, worker y Mailpit.
 name: CI
 
 on:
@@ -19,6 +19,8 @@ permissions:
 env:
   TURBO_TELEMETRY_DISABLED: 1
   NEXT_TELEMETRY_DISABLED: 1
+  # Next guarda los rewrites de /api en el manifiesto del build: la URL interna de la API debe existir al compilar.
+  API_INTERNAL_URL: http://127.0.0.1:3001
 
 jobs:
   check:
@@ -122,9 +124,23 @@ jobs:
           git diff --exit-code -- apps/api/prisma/schema.prisma
 
   ui-e2e:
-    name: Interfaz con Playwright y axe
+    name: Interfaz y recorridos con Playwright, axe y Mailpit
     runs-on: ubuntu-24.04
-    timeout-minutes: 20
+    timeout-minutes: 30
+    env:
+      # Solo la pila local del compose y llaves sintéticas de env.local.example: no son secretos.
+      APP_ENV: local
+      APP_URL: http://localhost:3000
+      E2E_APP_URL: http://localhost:3000
+      MAILPIT_URL: http://127.0.0.1:8025
+      DATABASE_URL: postgresql://app_user:app_user_local@127.0.0.1:5432/nutricoach
+      DATABASE_OWNER_URL: postgresql://app_owner:app_owner_local@127.0.0.1:5432/nutricoach
+      ENCRYPTION_KEYS: v1:bnV0cmljb2FjaC1sb2NhbC1kZXYta2V5LTAwMDAwMDE=
+      BLIND_INDEX_KEY: bnV0cmljb2FjaC1sb2NhbC1ibGluZC1pbmRleC0wMDE=
+      SESSION_COOKIE_NAME: nc_session
+      MAIL_DRIVER: smtp
+      SMTP_URL: smtp://127.0.0.1:1025
+      RATE_LIMIT_FACTOR: 100
     steps:
       - uses: actions/checkout@v7
 
@@ -138,20 +154,53 @@ jobs:
       - name: Instalar dependencias
         run: pnpm install --frozen-lockfile
 
-      - name: Instalar Chromium para Playwright
-        run: pnpm --filter web exec playwright install --with-deps chromium
+      # Escritorio en Chromium y celular en WebKit (iPhone).
+      - name: Instalar Chromium y WebKit para Playwright
+        run: pnpm --filter web exec playwright install --with-deps chromium webkit
 
-      - name: Build de producción de la web
-        run: pnpm turbo run build --filter web
+      # Después del checkout: los services de Actions arrancan antes y no pueden montar infra/db/init.
+      - name: Levantar PostgreSQL 18 y Mailpit
+        run: |
+          pnpm db:up
+          for i in $(seq 1 60); do
+            docker compose -f infra/docker/compose.local.yml exec -T -e PGPASSWORD=app_owner_local postgres \
+              psql -h 127.0.0.1 -U app_owner -d nutricoach -Atc 'select 1' && exit 0
+            sleep 2
+          done
+          exit 1
 
-      # RNF-18: axe sin violaciones graves en el catálogo (también con marcas extremas) y en las pantallas base.
-      - name: Playwright en escritorio y móvil
+      - name: Migraciones y semilla local
+        run: |
+          pnpm db:migrate
+          pnpm db:seed
+
+      - name: Build de producción de la API y la web
+        run: pnpm turbo run build --filter api --filter web
+
+      # 06 §6: el E2E corre sobre el build de producción. El worker va aparte, como en 01 §4.
+      - name: Arrancar la API y el worker
+        run: |
+          mkdir -p logs
+          nohup node apps/api/dist/main.js > logs/api.log 2>&1 &
+          nohup node apps/api/dist/worker.js > logs/worker.log 2>&1 &
+          for i in $(seq 1 60); do
+            curl -sf http://127.0.0.1:3001/api/health/ready && exit 0
+            sleep 2
+          done
+          cat logs/api.log logs/worker.log
+          exit 1
+
+      # Recorridos de P5 y axe sin violaciones graves (RNF-18) en escritorio y celular.
+      - name: Playwright en escritorio y celular
         run: pnpm e2e
 
-      - name: Guardar el reporte si falla
+      - name: Guardar el reporte, las trazas y los registros si falla
         if: failure()
         uses: actions/upload-artifact@v7
         with:
           name: playwright-report
-          path: apps/web/test-results/
+          path: |
+            apps/web/playwright-report/
+            apps/web/test-results/
+            logs/
           retention-days: 7

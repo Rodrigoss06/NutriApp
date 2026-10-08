@@ -15,6 +15,7 @@ import {
   TENANCY_STORE,
   type ActivePatientCounter,
   type MemberProfiles,
+  type MemberRecord,
   type MembershipRecord,
   type OrganizationRecord,
   type PendingStaffInvitations,
@@ -76,6 +77,16 @@ export class OrganizationQueries {
       status: member.status as 'ACTIVE' | 'SUSPENDED',
       profession: member.profession,
     }));
+  }
+
+  /** El miembro de la sesión en la organización activa, con su perfil profesional. */
+  ownMember(context: SecurityContext): Promise<MemberRecord | null> {
+    const organizationId = this.#organization(context);
+    return this.uow.query(context, async () => {
+      if (!context.userId) return null;
+      const member = await this.store.findMemberByUser(organizationId, context.userId);
+      return member?.status === 'ACTIVE' ? member : null;
+    });
   }
 
   subscription(context: SecurityContext): Promise<SubscriptionView> {

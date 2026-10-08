@@ -3,13 +3,20 @@
   "ui": "stream",
   "agentGuidance": false,
   "globalDependencies": [".gitignore", ".prettierignore", "prettier.config.js"],
-  "globalPassThroughEnv": ["CI", "NODE_ENV", "NEXT_TELEMETRY_DISABLED"],
+  "globalPassThroughEnv": [
+    "CI",
+    "NODE_ENV",
+    "NEXT_TELEMETRY_DISABLED",
+    "API_INTERNAL_URL",
+    "APP_ENV"
+  ],
   "tasks": {
     "transit": {
       "dependsOn": ["^transit"]
     },
     "build": {
       "dependsOn": ["^build"],
+      "env": ["API_INTERNAL_URL", "APP_ENV"],
       "outputs": ["dist/**", ".next/**", "!.next/cache/**", "!.next/dev/**"]
     },
     "dev": {

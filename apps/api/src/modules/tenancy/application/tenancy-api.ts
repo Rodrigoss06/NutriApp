@@ -123,7 +123,13 @@ export class TenancyApi {
       });
     } else {
       memberId = this.ids.newId<'MemberId'>();
-      await this.store.insertMember({ id: memberId, ...input, status: 'ACTIVE' });
+      await this.store.insertMember({
+        id: memberId,
+        ...input,
+        status: 'ACTIVE',
+        licenseNumber: null,
+        title: null,
+      });
     }
     await this.outbox.append(
       [

@@ -13,10 +13,12 @@ import {
   Req,
 } from '@nestjs/common';
 import {
+  updateMemberProfileSchema,
   updateMemberSchema,
   updateOrganizationSchema,
   updateSettingSchema,
   type MemberListResponse,
+  type MemberProfileResponse,
   type OrganizationResponse,
   type SettingsResponse,
   type SubscriptionResponse,
@@ -129,6 +131,35 @@ export class OrganizationController {
     const result = await this.commands.removeMember(contextOf(request), memberId);
     if (isErr(result))
       throw problemFromDomainError(result.error, statusOf(result.error.code, result.error.rule));
+  }
+
+  @Get('profile')
+  @RequirePermission('profile.self')
+  async profile(@Req() request: ContextualRequest): Promise<MemberProfileResponse> {
+    const member = await this.queries.ownMember(contextOf(request));
+    if (!member) throw new ProblemException(404, { title: 'No encontrado.', code: 'NC-TEN-021' });
+    return {
+      memberId: member.id,
+      role: member.role,
+      profession: member.profession,
+      licenseNumber: member.licenseNumber,
+      title: member.title,
+    };
+  }
+
+  @Put('profile')
+  @RequirePermission('profile.self')
+  async updateProfile(
+    @Req() request: ContextualRequest,
+    @Body() body: unknown,
+  ): Promise<MemberProfileResponse> {
+    const result = await this.commands.updateOwnProfile(
+      contextOf(request),
+      parseBody(updateMemberProfileSchema, body),
+    );
+    if (isErr(result))
+      throw problemFromDomainError(result.error, statusOf(result.error.code, result.error.rule));
+    return this.profile(request);
   }
 
   @Get('subscription')

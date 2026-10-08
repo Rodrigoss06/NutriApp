@@ -1,7 +1,9 @@
 'use client';
 
 import { Select } from '@nutricoach/ui';
-import { usePathname, useRouter } from 'next/navigation';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useRouter } from 'next/navigation';
+import { apiFetch } from '@/lib/api/client';
 
 export interface OrganizationOption {
   readonly id: string;
@@ -9,8 +11,8 @@ export interface OrganizationOption {
 }
 
 /**
- * Selector de organización activa (RF-04). Solo aparece si el usuario es miembro de más de una. Cambiarla la
- * fija en la sesión; hasta P5 solo recarga con `?org=`.
+ * Selector de organización activa (RF-04). Solo aparece con más de una membresía. Al cambiar, la sesión guarda la
+ * nueva organización y se vacía la caché, para no mostrar datos de la anterior.
  */
 export function OrganizationSwitcher({
   organizations,
@@ -20,7 +22,16 @@ export function OrganizationSwitcher({
   activeId: string;
 }) {
   const router = useRouter();
-  const pathname = usePathname();
+  const queryClient = useQueryClient();
+  const change = useMutation({
+    mutationFn: (organizationId: string) =>
+      apiFetch('/session/active-organization', { method: 'POST', body: { organizationId } }),
+    onSuccess: () => {
+      queryClient.clear();
+      router.push('/panel');
+      router.refresh();
+    },
+  });
   if (organizations.length < 2) return null;
   return (
     <Select
@@ -29,9 +40,11 @@ export function OrganizationSwitcher({
         value: organization.id,
         label: organization.name,
       }))}
-      value={activeId}
+      value={activeId || undefined}
+      placeholder="Elige una organización"
+      disabled={change.isPending}
       onValueChange={(id) => {
-        router.push(`${pathname}?org=${encodeURIComponent(id)}`);
+        change.mutate(id);
       }}
       className="w-56"
     />

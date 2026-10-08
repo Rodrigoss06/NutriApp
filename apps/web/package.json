@@ -15,13 +15,16 @@
     "clean": "node -e \"require('fs').rmSync('.next',{recursive:true,force:true})\""
   },
   "dependencies": {
+    "@hookform/resolvers": "catalog:",
     "@nutricoach/contracts": "workspace:*",
     "@nutricoach/engine": "workspace:*",
     "@nutricoach/ui": "workspace:*",
+    "@tanstack/react-query": "catalog:",
     "lucide-react": "catalog:",
     "next": "catalog:",
     "react": "catalog:",
     "react-dom": "catalog:",
+    "react-hook-form": "catalog:",
     "server-only": "catalog:",
     "zod": "catalog:"
   },

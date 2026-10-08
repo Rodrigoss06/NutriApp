@@ -10,6 +10,8 @@ const NEXT_ROUTE_FILES = [
   'src/app/**/{page,layout,template,loading,error,global-error,not-found,default}.tsx',
   'src/app/**/{icon,apple-icon,opengraph-image}.tsx',
   'src/app/{manifest,robots,sitemap}.ts',
+  // Playwright exige export default en su globalSetup.
+  'e2e/global-setup.ts',
 ];
 
 /**

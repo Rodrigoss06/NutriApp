@@ -1,18 +1,6 @@
-import AxeBuilder from '@axe-core/playwright';
-import { expect, test, type Page } from '@playwright/test';
-
-/** Violaciones graves: las que bloquean el criterio de P3 (RNF-18, WCAG 2.2 AA). */
-async function seriousViolations(page: Page) {
-  const results = await new AxeBuilder({ page })
-    .withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa', 'wcag22aa'])
-    .analyze();
-  return results.violations
-    .filter((violation) => violation.impact === 'serious' || violation.impact === 'critical')
-    .map((violation) => ({
-      id: violation.id,
-      nodes: violation.nodes.map((node) => node.target.join(' ')),
-    }));
-}
+import { expect, test } from '@playwright/test';
+import { seriousViolations } from './support/axe';
+import { DEMO_OWNER, DEMO_PASSWORD, loginInPage } from './support/stack';
 
 test.describe('RNF-18 · axe sin violaciones graves', () => {
   for (const [name, query] of [
@@ -32,6 +20,8 @@ test.describe('RNF-18 · axe sin violaciones graves', () => {
 
   for (const path of ['/mi/hoy', '/mi/plan', '/panel', '/panel/pacientes']) {
     test(`pantalla ${path}`, async ({ page }) => {
+      // El panel pide sesión (P5): se entra con la dueña de la organización demo de la semilla.
+      if (path.startsWith('/panel')) await loginInPage(page, DEMO_OWNER, DEMO_PASSWORD);
       await page.goto(path);
 
       expect(await seriousViolations(page)).toEqual([]);
