@@ -2,7 +2,14 @@
 
 - Next.js App Router con grupos de rutas: (public), (panel), (paciente), (admin).
 - Componentes de servidor por defecto; "use client" solo para interacción.
-- Datos: el servidor llama a la API reenviando la cookie; mutaciones con TanStack Query hacia /api/v1.
+- Datos (ADR-036): los componentes de servidor leen con serverApi (cache: 'no-store', cookie y X-Forwarded-For,
+  API_INTERNAL_URL en ejecución); toda mutación va del navegador a /api/v1 con TanStack Query (apiFetch), nunca
+  con Server Actions. Errores con errorMessage: español según el code y, en un 5xx, el requestId.
+- Sesión: el layout de (panel) pide /account en cada petición; sin sesión, /entrar?next= (safeNext: solo rutas
+  internas). PLATFORM va a /admin/plataforma, con la guardia en su layout anidado. Al cambiar de organización o
+  salir: queryClient.clear() y router.refresh(). La interfaz oculta lo que el rol no puede; decide la API.
+- Tokens de invitación y recuperación: del fragmento con useFragmentToken (se borran con history.replaceState)
+  y por POST.
 - Formularios: react-hook-form con los esquemas Zod de @nutricoach/contracts. Mensajes en español.
 - UI: componentes de @nutricoach/ui. Colores solo por tokens CSS: la marca y el tema del paciente cambian tokens.
   La marca se pinta con <BrandStyle> desde el layout del servidor (ADR-027); nunca colores fijos en componentes.
@@ -16,7 +23,8 @@
   del plan en tres toques o menos (RN-G06). Cada registro envía clientId e Idempotency-Key.
 - La palabra "Paciente" sale de la configuración de la organización (puede ser "Asesorado").
 - Accesibilidad: etiquetas, foco visible y contraste AA; axe en las pruebas de Playwright.
-- Un spec de Playwright por demo en e2e/, en escritorio y en móvil.
+- Un spec de Playwright por demo en e2e/, en escritorio (Chromium) y en móvil (iPhone, WebKit). Los enlaces de
+  correo se leen de Mailpit; nunca rutas de prueba que devuelvan tokens.
 
 <!-- BEGIN:nextjs-agent-rules -->
 
