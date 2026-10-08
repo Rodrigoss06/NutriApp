@@ -4,7 +4,7 @@ import { ID_GENERATOR } from './id-generator.port.js';
 import { AUDIT_ACTIONS, AUDIT_PORT } from './audit.port.js';
 import { ENCRYPTION_PORT, normalizeDocumentNumber } from './encryption.port.js';
 import { OUTBOX } from './outbox.port.js';
-import { ACTOR_ROLES, systemContext, UNIT_OF_WORK } from './unit-of-work.port.js';
+import { ACTOR_ROLES, anonymousContext, systemContext, UNIT_OF_WORK } from './unit-of-work.port.js';
 
 describe('02 §5 · puertos Clock e IdGenerator', () => {
   it('sus tokens son símbolos globales: dos copias del kernel inyectan el mismo puerto', () => {
@@ -21,7 +21,7 @@ describe('02 §6 · puertos UnitOfWork y Outbox', () => {
     expect(new Set([CLOCK, ID_GENERATOR, UNIT_OF_WORK, OUTBOX]).size).toBe(4);
   });
 
-  it('RN-A04 · los roles del contexto son los de la RLS, más SYSTEM para el worker', () => {
+  it('RN-A04 · los roles del contexto son los de la RLS, más SYSTEM, ACCOUNT y ANONYMOUS', () => {
     expect(ACTOR_ROLES).toEqual([
       'OWNER',
       'ADMIN',
@@ -29,7 +29,18 @@ describe('02 §6 · puertos UnitOfWork y Outbox', () => {
       'PATIENT',
       'PLATFORM_ADMIN',
       'SYSTEM',
+      'ACCOUNT',
+      'ANONYMOUS',
     ]);
+  });
+
+  it('una petición sin sesión no tiene usuario ni organización', () => {
+    expect(anonymousContext()).toEqual({
+      organizationId: null,
+      userId: null,
+      role: 'ANONYMOUS',
+      patientId: null,
+    });
   });
 
   it('el contexto del worker no tiene usuario ni paciente y no se puede alterar', () => {

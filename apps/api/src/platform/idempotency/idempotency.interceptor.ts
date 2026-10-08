@@ -16,6 +16,7 @@ import { from, lastValueFrom, type Observable } from 'rxjs';
 import type { Prisma } from '../database/generated/client.js';
 import type { Db } from '../database/prisma.provider.js';
 import type { ContextualRequest } from '../http/request-context.js';
+import { toProblem } from '../http/problem-details.filter.js';
 import { requestHash } from './request-hash.js';
 
 export const IDEMPOTENCY_HEADER = 'idempotency-key';
@@ -102,6 +103,11 @@ export class IdempotencyInterceptor implements NestInterceptor {
         );
       }
       response.status(stored.status_code).setHeader(REPLAYED_HEADER, 'true');
+      if (stored.status_code >= 400) {
+        // Un 4xx guardado se repite tal cual salió, como application/problem+json.
+        response.type('application/problem+json').json(stored.response);
+        return undefined;
+      }
       return stored.response;
     }
 
@@ -113,7 +119,12 @@ export class IdempotencyInterceptor implements NestInterceptor {
       return body;
     } catch (error) {
       if (error instanceof HttpException && error.getStatus() < 500) {
-        await this.#settle(user, key, error.getStatus(), error.getResponse());
+        const { status, body } = toProblem(error);
+        const requestId = (request as { id?: unknown }).id;
+        await this.#settle(user, key, status, {
+          ...body,
+          ...(typeof requestId === 'string' ? { requestId } : {}),
+        });
       } else {
         await this.#release(user, key);
       }

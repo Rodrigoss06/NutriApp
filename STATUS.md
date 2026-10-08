@@ -11,8 +11,8 @@ Próxima demo: Demo 1 · Base y evaluación · semana 2
 | P1 Motor de cálculo | ✅ | Rodrigo | #2 | G-01 a G-28 en verde; motor 1.1.0 con TEE_PAL (#4) |
 | P2 Base de datos y plataforma | ✅ | Rodrigo | #3 | 61 pruebas de integración |
 | P3 Sistema de diseño | ✅ | Rodrigo | #4 | Lighthouse móvil 99 en Hoy; axe sin violaciones graves |
-| P4 Servidor y staging | ⬜ | Iván | | |
-| P5 Identidad y organizaciones | ⬜ | Rodrigo | | |
+| P4 Servidor y staging | ⛔ | Iván | | En espera de la cuenta de Hetzner de Jeremy |
+| P5 Identidad y organizaciones | 🟨 | Rodrigo | | 3 PR: base e iam · tenancy y plataforma · web, E2E y CI |
 | P6 Pacientes e historia clínica | ⬜ | Rodrigo | | |
 | P7 Evaluación y cálculo, Demo 1 | ⬜ | Rodrigo e Iván | | |
 | P8 Datos maestros de alimentos | ⬜ | Rodrigo | | |
@@ -28,12 +28,13 @@ Próxima demo: Demo 1 · Base y evaluación · semana 2
 Leyenda: ⬜ pendiente · 🟨 en curso · ✅ terminado · ⛔ bloqueado
 
 ## En curso
-- Nada en curso. Notion sincronizado con P0 a P3 (Documento técnico 1.2, 03 v1.3, 05 v1.2)
+- P5, PR 1 de 3 listo en `feat/iam-acceso`: base transversal, iam, guardias y límite de intentos (falta subirlo)
 
 ## Siguiente paso
-- P4 · Servidor, staging y despliegue continuo (módulo 23; responsable según Notion: Iván). Empezar con /prompt P4
+- PR 2 de P5: tenancy, invitaciones de staff, API de plataforma (backoffice), trabajo de RN-A02 y semilla
 
 ## Bloqueos y preguntas al cliente
+- [ ] Cuenta de Hetzner y dominio a nombre de Jeremy: bloquea P4
 - [ ] N9: límites y precio de los tramos de membresía; qué pasa al superar el límite
 - [ ] N22: caducidad del enlace de acceso del paciente
 - [ ] N19: confirmar la carga manual de bioimpedancia
@@ -43,6 +44,8 @@ Leyenda: ⬜ pendiente · 🟨 en curso · ✅ terminado · ⛔ bloqueado
 - [ ] Textos legales revisados por el abogado del cliente
 
 ## Deuda técnica
+- Para P4: Caddy sin trusted_proxies, para que reescriba X-Forwarded-For con la IP real; en el Sentry de la web,
+  quitar el fragmento de las URL (beforeSend y beforeBreadcrumb): ahí viajan los tokens de invitación y recuperación
 - P7: columnas tee_method_code y tee_method_version en nutrition.energy_prescription (ADR-029)
 - Por decidir en el prompt que lo use: quién escribe tracking.daily_target, si el paciente marca
   content.resource_assignment.viewed_at y que active_plan_view compare el publishedAt del snapshot
@@ -51,11 +54,12 @@ Leyenda: ⬜ pendiente · 🟨 en curso · ✅ terminado · ⛔ bloqueado
 - La marca y la organización activa son provisionales hasta la sesión (P5) y la personalización (P19)
 - db:seed y seed:load llaman scripts que llegan en P7
 - La imagen de la API debe copiar apps/api/prisma/migrations: /api/health/ready las compara (ADR-026)
-- No hay filtro global RFC 9457: la idempotencia arma su problema a mano hasta que llegue el filtro
 - TypeScript fijado en 6.0 hasta que typescript-eslint soporte TypeScript 7 (ADR-018)
 - Jackson y Pollock 7 deja de crecer con la suma de pliegues sobre 395 mm (hombres) y 419 mm (mujeres): consultar si se advierte
 
 ## Registro de sesiones (solo las 5 últimas)
+- 2026-10-07 · P5 (1/3) · filtro RFC 9457, guardias con negación por defecto, Origin, límite de intentos en la
+  base, iam con argon2id, sesiones, bloqueo, recuperar y cambiar la contraseña, correos por el worker; ADR-030 a 032
 - 2026-10-07 · P3 y Notion · TEE_PAL en el motor (1.1.0, ADR-029), G-10 con valores exactos, ADR-028 y
   /notion-sync de P0 a P3 aplicado (32 cambios) · PR #4
 - 2026-10-06 · P3 · tokens y marca en ejecución con contraste AA, 12 componentes base, layouts del panel y de la
@@ -64,6 +68,3 @@ Leyenda: ⬜ pendiente · 🟨 en curso · ✅ terminado · ⛔ bloqueado
   UnitOfWork, outbox con pg-boss, idempotencia, auditoría, cifrado, salud y CI; ADR-024 a ADR-026 · falta el PR
 - 2026-10-06 · P1 · motor con los 39 métodos de 02 §9, validez por método, sobre con hash, G-01 a G-28,
   propiedades, paridad con la referencia y prueba en el navegador; ADR-022 y ADR-023 · falta el PR
-- 2026-10-03 · P0 · monorepo pnpm y Turborepo, configuración compartida, reglas de arquitectura con su prueba,
-  shared-kernel, API NestJS con salud y worker, web con cuatro grupos, compose local, CI y README; ADR-017 a
-  ADR-021 · PR #1 con CI en verde; pendiente aplicar /notion-sync

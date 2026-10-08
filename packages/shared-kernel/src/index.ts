@@ -27,6 +27,7 @@ export { ID_GENERATOR, type IdGenerator } from './ports/id-generator.port.js';
 export { OUTBOX, type EventMetadata, type Outbox } from './ports/outbox.port.js';
 export {
   ACTOR_ROLES,
+  anonymousContext,
   systemContext,
   UNIT_OF_WORK,
   type ActorRole,

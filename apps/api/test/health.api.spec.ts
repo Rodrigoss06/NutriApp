@@ -55,5 +55,8 @@ describe('01 §8 · verificaciones de salud de la API', () => {
     const response = await request(app.getHttpServer()).get('/api/v1/health/live');
 
     expect(response.status).toBe(404);
+    expect(response.headers['content-type']).toContain('application/problem+json');
+    expect(response.body).toMatchObject({ status: 404, code: 'NC-PLT-404' });
+    expect(response.body).toHaveProperty('requestId');
   });
 });

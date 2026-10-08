@@ -42,13 +42,14 @@ describe('RNF-12 · RN-A01 · el catálogo de PostgreSQL prueba el aislamiento',
     expect(tables.filter((t) => !t.enabled || !t.forced).map((t) => t.name)).toEqual([]);
   });
 
-  it('toda tabla con RLS tiene al menos una política permisiva: si no, nadie vería nada por error', async () => {
+  it('toda tabla con RLS tiene al menos una política permisiva, salvo las que app_user no toca (ADR-030)', async () => {
     const withoutPolicy = await rows<{ name: string }>(
       `SELECT format('%I.%I', n.nspname, c.relname) AS name
        FROM pg_class c
        JOIN pg_namespace n ON n.oid = c.relnamespace
        WHERE c.relrowsecurity AND NOT c.relispartition
          AND NOT EXISTS (SELECT 1 FROM pg_policy p WHERE p.polrelid = c.oid AND p.polpermissive)
+         AND has_table_privilege('app_user', c.oid, 'SELECT, INSERT, UPDATE, DELETE')
        ORDER BY 1`,
     );
 
@@ -81,6 +82,7 @@ describe('RNF-12 · RN-A01 · el catálogo de PostgreSQL prueba el aislamiento',
       'iam.user_account',
       'platform.idempotency_key',
       'platform.processed_event',
+      'platform.rate_limit',
       'tenancy.organization',
       'tenancy.subscription_plan',
       'tracking.metric_definition',
@@ -108,7 +110,9 @@ describe('RNF-12 · RN-A01 · el catálogo de PostgreSQL prueba el aislamiento',
       { name: 'app.ensure_monthly_partitions(regclass,integer,date)', owner: 'app_owner' },
       { name: 'app.find_invitation(bytea)', owner: 'app_owner' },
       { name: 'app.has_clinical_support_grant()', owner: 'app_owner' },
+      { name: 'app.hit_rate_limit(bytea,integer,integer)', owner: 'app_owner' },
       { name: 'app.missing_next_month_partitions()', owner: 'app_owner' },
+      { name: 'app.purge_rate_limits()', owner: 'app_owner' },
     ]);
   });
 
@@ -125,9 +129,11 @@ describe('RNF-12 · RN-A01 · el catálogo de PostgreSQL prueba el aislamiento',
       'ensure_monthly_partitions',
       'find_invitation',
       'has_clinical_support_grant',
+      'hit_rate_limit',
       'missing_next_month_partitions',
       'org_id',
       'patient_id',
+      'purge_rate_limits',
       'role',
       'unaccent_immutable',
       'user_id',

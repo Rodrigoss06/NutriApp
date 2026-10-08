@@ -5,3 +5,4 @@ export {
   type HealthStatus,
 } from './health.js';
 export { METHOD_LABELS, methodLabel, type LabeledMethodCode } from './methods/labels.js';
+export * from './iam/access.js';

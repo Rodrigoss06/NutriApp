@@ -1,10 +1,12 @@
 import { Controller, Get, HttpCode, HttpStatus, Res, VERSION_NEUTRAL } from '@nestjs/common';
 import type { HealthResponse } from '@nutricoach/contracts';
 import type { Response } from 'express';
+import { Public } from '../auth/access.js';
 import { ReadinessService } from './readiness.service.js';
 
 /** Salud del proceso (01 §8). Sin versión: queda en /api/health, fuera de /api/v1. */
 @Controller({ path: 'health', version: VERSION_NEUTRAL })
+@Public()
 export class HealthController {
   constructor(private readonly readiness: ReadinessService) {}
 
