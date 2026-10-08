@@ -5,6 +5,7 @@ import type { Db } from '../../../../../platform/index.js';
 import type { MemberRole, MemberStatus, Profession } from '../../../domain/tenancy-rules.js';
 import type {
   MemberRecord,
+  MemberChanges,
   MembershipRecord,
   OrganizationChanges,
   OrganizationRecord,
@@ -59,6 +60,8 @@ interface MemberRow {
   role: string;
   status: string;
   profession: string | null;
+  licenseNumber: string | null;
+  title: string | null;
 }
 
 const MEMBER_FIELDS = {
@@ -68,6 +71,8 @@ const MEMBER_FIELDS = {
   role: true,
   status: true,
   profession: true,
+  licenseNumber: true,
+  title: true,
 } as const;
 
 const toMember = (row: MemberRow): MemberRecord => ({
@@ -77,6 +82,8 @@ const toMember = (row: MemberRow): MemberRecord => ({
   role: row.role as MemberRole,
   status: row.status as MemberStatus,
   profession: row.profession as Profession | null,
+  licenseNumber: row.licenseNumber,
+  title: row.title,
 });
 
 interface PlanRow {
@@ -195,15 +202,14 @@ export class PrismaTenancyStore implements TenancyStore {
           role: member.role,
           status: member.status,
           profession: member.profession,
+          licenseNumber: member.licenseNumber,
+          title: member.title,
         },
       ],
     });
   }
 
-  async updateMember(
-    memberId: string,
-    changes: { role?: MemberRole; status?: MemberStatus; profession?: Profession | null },
-  ): Promise<void> {
+  async updateMember(memberId: string, changes: MemberChanges): Promise<void> {
     await this.db.tx.member.updateMany({
       where: { id: memberId },
       data: { ...changes, updatedAt: new Date() },

@@ -13,6 +13,8 @@ export const LOCAL_MAIL_FROM = 'NutriCoach <no-responder@nutricoach.local>';
 const envSchema = z
   .object({
     NODE_ENV: z.enum(['development', 'test', 'production']).default('development'),
+    /** Entorno de despliegue (01 §2): NODE_ENV es production también en staging. */
+    APP_ENV: z.enum(['local', 'staging', 'production']).default('local'),
     /** app_user: la API y el worker, siempre sujetos a RLS. Las migraciones usan DATABASE_OWNER_URL. */
     DATABASE_URL: z.url({
       protocol: /^postgres(ql)?$/,
@@ -65,6 +67,17 @@ const envSchema = z
         code: 'custom',
         path: ['RESEND_API_KEY'],
         message: 'MAIL_DRIVER=resend exige RESEND_API_KEY y MAIL_FROM',
+      });
+    }
+    // La cookie es Secure solo con https (ADR-035): staging, producción y __Host- lo exigen.
+    if (
+      !env.APP_URL.startsWith('https:') &&
+      (env.APP_ENV !== 'local' || env.SESSION_COOKIE_NAME.startsWith('__Host-'))
+    ) {
+      ctx.addIssue({
+        code: 'custom',
+        path: ['APP_URL'],
+        message: 'APP_URL debe ser https en staging y producción, y con una cookie __Host-',
       });
     }
     if (env.NODE_ENV === 'production' && !env.SESSION_COOKIE_NAME.startsWith('__Host-')) {

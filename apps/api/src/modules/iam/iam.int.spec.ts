@@ -117,7 +117,7 @@ afterAll(async () => {
 });
 
 describe('RF-01 · entrar', () => {
-  it('abre una sesión con cookie httpOnly, Secure, SameSite=Lax y Path=/, sin caché, y la audita sin organización', async () => {
+  it('abre una sesión con cookie httpOnly, SameSite=Lax y Path=/ (sin Secure con http, ADR-035), sin caché, y la audita sin organización', async () => {
     const account = await createAccount();
     const response = await login(account.email.toUpperCase());
 
@@ -125,7 +125,7 @@ describe('RF-01 · entrar', () => {
     expect(response.headers['cache-control']).toBe('no-store');
     const raw = (response.headers['set-cookie'] as unknown as string[]).join(';');
     expect(raw).toMatch(/HttpOnly/);
-    expect(raw).toMatch(/Secure/);
+    expect(raw).not.toMatch(/Secure/);
     expect(raw).toMatch(/SameSite=Lax/);
     expect(raw).toMatch(/Path=\//);
     expect(response.body).toMatchObject({

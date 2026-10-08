@@ -64,6 +64,29 @@ export const updateMemberSchema = z
   .refine((change) => Object.keys(change).length > 0, 'Indica qué cambia.');
 export type UpdateMember = z.infer<typeof updateMemberSchema>;
 
+/** Perfil profesional propio en la organización activa (/panel/cuenta): lo edita cada miembro. */
+const optionalText = (max: number) =>
+  z
+    .string()
+    .trim()
+    .max(max)
+    .transform((value) => (value === '' ? null : value))
+    .nullable();
+export const updateMemberProfileSchema = z.object({
+  profession: z.enum(PROFESSIONS).nullable(),
+  licenseNumber: optionalText(40),
+  title: optionalText(120),
+});
+export type UpdateMemberProfile = z.input<typeof updateMemberProfileSchema>;
+export const memberProfileResponseSchema = z.object({
+  memberId: z.uuid(),
+  role: z.enum(MEMBER_ROLES),
+  profession: z.enum(PROFESSIONS).nullable(),
+  licenseNumber: z.string().nullable(),
+  title: z.string().nullable(),
+});
+export type MemberProfileResponse = z.infer<typeof memberProfileResponseSchema>;
+
 export const subscriptionResponseSchema = z.object({
   subscription: z
     .object({

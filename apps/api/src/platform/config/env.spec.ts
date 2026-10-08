@@ -17,7 +17,10 @@ describe('06 §4 · las variables de entorno se validan con Zod al arrancar', ()
   });
 
   it.each(['development', 'test', 'production'] as const)('acepta NODE_ENV=%s', (nodeEnv) => {
-    const cookie = nodeEnv === 'production' ? { SESSION_COOKIE_NAME: '__Host-nc_session' } : {};
+    const cookie =
+      nodeEnv === 'production'
+        ? { SESSION_COOKIE_NAME: '__Host-nc_session', APP_URL: 'https://app.ejemplo.pe' }
+        : {};
     expect(loadEnv({ ...VALID, ...cookie, NODE_ENV: nodeEnv }).NODE_ENV).toBe(nodeEnv);
   });
 
@@ -81,8 +84,22 @@ describe('P5 · acceso: origen, cookie, correo y límite de intentos', () => {
   it('en producción la cookie de sesión lleva el prefijo __Host-', () => {
     expect(() => loadEnv({ ...VALID, NODE_ENV: 'production' })).toThrow(/__Host-/);
     expect(
-      loadEnv({ ...VALID, NODE_ENV: 'production', SESSION_COOKIE_NAME: '__Host-nc_session' })
-        .SESSION_COOKIE_NAME,
+      loadEnv({
+        ...VALID,
+        NODE_ENV: 'production',
+        SESSION_COOKIE_NAME: '__Host-nc_session',
+        APP_URL: 'https://app.ejemplo.pe',
+      }).SESSION_COOKIE_NAME,
     ).toBe('__Host-nc_session');
+  });
+
+  it('ADR-035 · APP_URL con https en staging y producción, y con una cookie __Host-', () => {
+    expect(loadEnv(VALID).APP_ENV).toBe('local');
+    expect(() => loadEnv({ ...VALID, APP_ENV: 'staging' })).toThrow(/https/);
+    expect(() => loadEnv({ ...VALID, APP_ENV: 'production' })).toThrow(/https/);
+    expect(() => loadEnv({ ...VALID, SESSION_COOKIE_NAME: '__Host-nc_session' })).toThrow(/https/);
+    expect(
+      loadEnv({ ...VALID, APP_ENV: 'staging', APP_URL: 'https://staging.ejemplo.pe' }).APP_URL,
+    ).toBe('https://staging.ejemplo.pe');
   });
 });

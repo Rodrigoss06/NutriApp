@@ -33,6 +33,16 @@ export interface MemberRecord {
   readonly role: MemberRole;
   readonly status: MemberStatus;
   readonly profession: Profession | null;
+  readonly licenseNumber: string | null;
+  readonly title: string | null;
+}
+
+export interface MemberChanges {
+  readonly role?: MemberRole;
+  readonly status?: MemberStatus;
+  readonly profession?: Profession | null;
+  readonly licenseNumber?: string | null;
+  readonly title?: string | null;
 }
 
 export interface PlanRecord {
@@ -98,10 +108,7 @@ export interface TenancyStore {
   countActiveMembers(organizationId: OrganizationId): Promise<number>;
   countActiveOwners(organizationId: OrganizationId): Promise<number>;
   insertMember(member: MemberRecord): Promise<void>;
-  updateMember(
-    memberId: string,
-    changes: { role?: MemberRole; status?: MemberStatus; profession?: Profession | null },
-  ): Promise<void>;
+  updateMember(memberId: string, changes: MemberChanges): Promise<void>;
   activeSubscription(organizationId: OrganizationId): Promise<SubscriptionRecord | null>;
   insertSubscription(subscription: {
     id: string;

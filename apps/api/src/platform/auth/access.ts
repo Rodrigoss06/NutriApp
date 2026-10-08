@@ -12,6 +12,8 @@ export const PERMISSIONS = {
   'members.manage': ['OWNER', 'ADMIN'],
   'invitations.manage': ['OWNER', 'ADMIN'],
   'subscription.read': ['OWNER', 'ADMIN'],
+  /** El perfil profesional propio: profesión, colegiatura y título. */
+  'profile.self': ['OWNER', 'ADMIN', 'PROFESSIONAL'],
 } as const satisfies Record<string, readonly MemberRole[]>;
 
 export type Permission = keyof typeof PERMISSIONS;

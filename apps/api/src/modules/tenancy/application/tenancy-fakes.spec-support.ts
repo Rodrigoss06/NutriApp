@@ -11,8 +11,9 @@ import {
   type UserId,
 } from '@nutricoach/shared-kernel';
 import { v7 as uuidv7 } from 'uuid';
-import type { MemberRole, MemberStatus, Profession } from '../domain/tenancy-rules.js';
+import type { MemberRole, MemberStatus } from '../domain/tenancy-rules.js';
 import type {
+  MemberChanges,
   MemberRecord,
   MembershipRecord,
   OrganizationChanges,
@@ -109,7 +110,16 @@ export class MemoryTenancyStore implements TenancyStore {
     status: MemberStatus = 'ACTIVE',
     userId: UserId = newUserId(),
   ): MemberRecord {
-    const member = { id: uuidv7(), organizationId, userId, role, status, profession: null };
+    const member = {
+      id: uuidv7(),
+      organizationId,
+      userId,
+      role,
+      status,
+      profession: null,
+      licenseNumber: null,
+      title: null,
+    };
     this.members.set(member.id, member);
     return member;
   }
@@ -205,10 +215,7 @@ export class MemoryTenancyStore implements TenancyStore {
     this.members.set(member.id, { ...member });
     return Promise.resolve();
   }
-  updateMember(
-    memberId: string,
-    changes: { role?: MemberRole; status?: MemberStatus; profession?: Profession | null },
-  ) {
+  updateMember(memberId: string, changes: MemberChanges) {
     const row = this.members.get(memberId);
     if (row) Object.assign(row, changes);
     return Promise.resolve();

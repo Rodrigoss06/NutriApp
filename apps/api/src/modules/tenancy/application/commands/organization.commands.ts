@@ -145,6 +145,29 @@ export class OrganizationCommands {
     });
   }
 
+  /** El perfil profesional propio (profesión, colegiatura y título): cada miembro edita solo el suyo. */
+  updateOwnProfile(
+    context: SecurityContext,
+    profile: { profession: Profession | null; licenseNumber: string | null; title: string | null },
+  ): Promise<Result<void, DomainError>> {
+    const organizationId = this.#organization(context);
+    return this.uow.run(context, async () => {
+      const member = context.userId
+        ? await this.store.findMemberByUser(organizationId, context.userId)
+        : null;
+      if (member?.status !== 'ACTIVE') return err(MEMBER_NOT_FOUND);
+      await this.store.updateMember(member.id, profile);
+      await this.#emit(
+        context,
+        'tenancy.member.changed',
+        organizationId,
+        { memberId: member.id, fields: Object.keys(profile) },
+        member.id,
+      );
+      return ok(undefined);
+    });
+  }
+
   /** Ajustes que edita la organización; los de plataforma responden 422. */
   setSetting(
     context: SecurityContext,

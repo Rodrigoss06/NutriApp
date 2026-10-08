@@ -350,3 +350,30 @@ describe('RF-02 y RF-03 · consultas', () => {
     expect(uow.contexts.every((c) => c.role === 'ACCOUNT')).toBe(true);
   });
 });
+
+describe('Perfil profesional propio', () => {
+  it('cada miembro activo edita su profesión, colegiatura y título; sin membresía activa, no encontrado', async () => {
+    const professional = store.addMember(org, 'PROFESSIONAL');
+    const context = contextFor(org, 'PROFESSIONAL', professional.userId);
+    const profile = {
+      profession: 'NUTRITIONIST' as const,
+      licenseNumber: 'CNP 1234',
+      title: 'Lic.',
+    };
+    expect(isOk(await commands().updateOwnProfile(context, profile))).toBe(true);
+    expect(store.members.get(professional.id)).toMatchObject(profile);
+    const queries = new OrganizationQueries(
+      uow,
+      store,
+      { profiles: () => Promise.resolve(new Map()) },
+      { count: () => Promise.resolve(0) },
+      { count: () => Promise.resolve(0) },
+    );
+    expect((await queries.ownMember(context))?.licenseNumber).toBe('CNP 1234');
+
+    const stranger = contextFor(org, 'PROFESSIONAL');
+    const missing = await commands().updateOwnProfile(stranger, profile);
+    expect(isErr(missing) && missing.error.code).toBe('NC-TEN-021');
+    expect(await queries.ownMember(stranger)).toBeNull();
+  });
+});

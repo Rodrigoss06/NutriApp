@@ -665,3 +665,28 @@ describe('RF-39 · panel de plataforma por HTTP', () => {
     expect(renewMissing.status).toBe(404);
   });
 });
+
+describe('Perfil profesional propio por HTTP', () => {
+  it('el profesional lee y edita su perfil; textos vacíos quedan en null', async () => {
+    const { ownerCookie } = await createOrganization();
+    const professional = await inviteAndAccept(ownerCookie);
+    const empty = await get('/organization/profile', professional.cookie);
+    expect(empty.body).toMatchObject({
+      role: 'PROFESSIONAL',
+      profession: null,
+      licenseNumber: null,
+    });
+    const updated = await put(
+      '/organization/profile',
+      { profession: 'TRAINER', licenseNumber: ' ', title: 'Entrenador' },
+      professional.cookie,
+    );
+    expect(updated.status).toBe(200);
+    expect(updated.body).toMatchObject({
+      profession: 'TRAINER',
+      licenseNumber: null,
+      title: 'Entrenador',
+    });
+    expect((await get('/organization/profile', platformCookie)).status).toBe(403);
+  });
+});
