@@ -235,3 +235,33 @@ insumos, y la validez de la fila «GET con PAL» de 03. Motor 1.1.0. Etiqueta: �
 (TMR × PAL + ejercicio)». Reemplaza en esto a ADR-023.
 Consecuencias: el GET guardado lleva método, versión e insumos con hash como cualquier resultado. P7 agrega
 tee_method_code y tee_method_version a nutrition.energy_prescription en su migración.
+
+## ADR-030 · Límite de intentos en la base, solo por funciones — aceptada (2026-10-07)
+Contexto: RN-A07 pide limitar intentos y 01 §1 que la aplicación no guarde estado en memoria. Usar el rol SYSTEM en
+una petición anónima le daría acceso al outbox y a los catálogos globales.
+Decisión: tabla platform.rate_limit sin permisos para app_user y con RLS forzada sin políticas. El acceso es solo por
+app.hit_rate_limit(clave, ventana, máximo) y app.purge_rate_limits(), SECURITY DEFINER de app_owner. Ventana fija
+con un UPSERT atómico. Clave = SHA-256 de «alcance:valor» calculado en la API: correo normalizado e IPv6 agrupada
+por /64. IP real con trust proxy 'loopback, uniquelocal'. Valores iniciales: entrar 30 por IP cada 15 min;
+recuperar 5 por IP cada 15 min y 3 por correo por hora; enlaces con token 30 por IP cada 15 min.
+RATE_LIMIT_FACTOR los multiplica en E2E y k6. Pasado el máximo: 429 con Retry-After.
+Consecuencias: ni el correo ni la IP quedan en claro en la base. Caddy no debe confiar en X-Forwarded-For ajeno (P4).
+
+## ADR-031 · Sesiones opacas con tres tipos y entrada que no delata cuentas — aceptada (2026-10-07)
+Contexto: RN-A07, RN-A08 y RNF-13; el panel interno (P15) necesita sesiones separadas de las de una organización.
+Decisión: token de 256 bits en cookie httpOnly, Secure, SameSite=Lax y Path=/ (__Host-nc_session en staging y
+producción); en la base solo su SHA-256. Tipos STAFF, PATIENT y PLATFORM: una cuenta con is_platform_admin entra
+como PLATFORM, con las expiraciones de STAFF; TenantGuard rechaza PLATFORM y las rutas de plataforma rechazan STAFF.
+Se niega por defecto: cada ruta declara @Public, @Authenticated, @PlatformOnly o un permiso, y una prueba recorre
+las rutas. Origin obligatorio e igual a APP_URL en toda escritura. Contraseñas NFKC de 10 a 128 code points con
+argon2id; toda falla al entrar responde igual y verifica un hash señuelo; el bloqueo usa locked_until y un UPDATE
+atómico. La inactividad se desliza como mucho una vez por minuto.
+Consecuencias: quitar una cuenta o un miembro corta el acceso en la petición siguiente.
+
+## ADR-032 · Correos de cuenta desde el worker con el token cifrado — aceptada (2026-10-07)
+Contexto: recuperar la contraseña debe responder igual y al instante exista o no la cuenta, y un fallo de Resend
+no debe perder el enlace.
+Decisión: la petición escribe un evento con el id y el token cifrado con EncryptionPort (datos asociados del pedido);
+el worker busca el correo, descifra y envía con MailerPort (SMTP en local, Resend en staging y producción). El
+token va en el fragmento del enlace (/recuperar/nueva#TOKEN), armado con APP_URL. Resend sin seguimiento de clics.
+Consecuencias: el token nunca queda en claro en la base ni en los logs. Si el pedido ya se usó, no se envía nada.

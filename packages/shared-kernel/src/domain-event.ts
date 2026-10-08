@@ -18,7 +18,8 @@ export interface DomainEvent<TType extends EventType = EventType, TPayload = unk
   /** Versión del esquema del payload, desde 1. */
   readonly version: number;
   readonly occurredAt: Date;
-  readonly organizationId: OrganizationId;
+  /** null en los hechos de la plataforma que no son de una organización (cuentas de iam). */
+  readonly organizationId: OrganizationId | null;
   readonly aggregateId: string;
   readonly payload: TPayload;
 }

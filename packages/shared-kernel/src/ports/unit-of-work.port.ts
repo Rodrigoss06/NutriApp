@@ -1,6 +1,10 @@
 import type { Id, OrganizationId, PatientId, UserId } from '../id.js';
 
-/** Roles del contexto de seguridad (RN-A04). SYSTEM es el worker: despacho, consumidores y mantenimiento. */
+/**
+ * Roles del contexto de seguridad (RN-A04). SYSTEM es el worker: despacho, consumidores y mantenimiento.
+ * ANONYMOUS es una petición sin sesión (entrar, recuperar la contraseña) y ACCOUNT una sesión sin organización
+ * activa (su propia cuenta). Ninguna política de la RLS les da acceso a datos de una organización.
+ */
 export const ACTOR_ROLES = [
   'OWNER',
   'ADMIN',
@@ -8,6 +12,8 @@ export const ACTOR_ROLES = [
   'PATIENT',
   'PLATFORM_ADMIN',
   'SYSTEM',
+  'ACCOUNT',
+  'ANONYMOUS',
 ] as const;
 export type ActorRole = (typeof ACTOR_ROLES)[number];
 
@@ -23,6 +29,11 @@ export interface SecurityContext {
   readonly patientId: PatientId | null;
   /** Solo con PLATFORM_ADMIN: el permiso de soporte vigente con que actúa (RN-A09); se audita. */
   readonly supportGrantId?: Id<'SupportGrantId'> | null;
+}
+
+/** Petición sin sesión. */
+export function anonymousContext(): SecurityContext {
+  return Object.freeze({ organizationId: null, userId: null, role: 'ANONYMOUS', patientId: null });
 }
 
 /** Contexto del worker: sin usuario; con organización cuando procesa un evento de una. */

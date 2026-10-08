@@ -236,7 +236,7 @@ describe('02 §6 · los consumidores toleran el desorden', () => {
 });
 
 describe('01 §4 · mantenimiento diario del worker', () => {
-  it('limpia outbox publicado de más de 7 días, eventos procesados de más de 30 y claves vencidas', async () => {
+  it('limpia outbox publicado de más de 7 días, eventos procesados de más de 30, claves vencidas y ventanas viejas del límite de intentos', async () => {
     const [oldEvent, recentEvent] = [id(), id()];
     const insertEvent = `INSERT INTO platform.outbox_event (id, organization_id, aggregate_type, aggregate_id, event_type,
                            payload, occurred_at, published_at)
@@ -253,11 +253,16 @@ describe('01 §4 · mantenimiento diario del worker', () => {
       [id()],
     );
 
+    await pool('owner').query(
+      `INSERT INTO platform.rate_limit (key, window_start, hits) VALUES ($1, now() - interval '2 days', 1)`,
+      [Buffer.alloc(32, 9)],
+    );
     const removed = await moduleRef.get(MaintenanceService).cleanup();
 
     expect(removed.outboxEvents).toBeGreaterThanOrEqual(1);
     expect(removed.processedEvents).toBeGreaterThanOrEqual(1);
     expect(removed.idempotencyKeys).toBeGreaterThanOrEqual(1);
+    expect(removed.rateLimits).toBeGreaterThanOrEqual(1);
     expect(await outboxRow(oldEvent)).toBeUndefined();
     expect(await outboxRow(recentEvent)).toBeDefined();
   });

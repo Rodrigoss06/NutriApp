@@ -28,10 +28,10 @@ Próxima demo: Demo 1 · Base y evaluación · semana 2
 Leyenda: ⬜ pendiente · 🟨 en curso · ✅ terminado · ⛔ bloqueado
 
 ## En curso
-- P5, PR 1 de 3 en `feat/iam-acceso`: base transversal, iam, guardias y límite de intentos
+- P5, PR 1 de 3 listo en `feat/iam-acceso`: base transversal, iam, guardias y límite de intentos (falta subirlo)
 
 ## Siguiente paso
-- Migración de platform.rate_limit e índice de invitaciones; luego el dominio de iam con pruebas primero
+- PR 2 de P5: tenancy, invitaciones de staff, API de plataforma (backoffice), trabajo de RN-A02 y semilla
 
 ## Bloqueos y preguntas al cliente
 - [ ] Cuenta de Hetzner y dominio a nombre de Jeremy: bloquea P4
@@ -54,11 +54,12 @@ Leyenda: ⬜ pendiente · 🟨 en curso · ✅ terminado · ⛔ bloqueado
 - La marca y la organización activa son provisionales hasta la sesión (P5) y la personalización (P19)
 - db:seed y seed:load llaman scripts que llegan en P7
 - La imagen de la API debe copiar apps/api/prisma/migrations: /api/health/ready las compara (ADR-026)
-- No hay filtro global RFC 9457: la idempotencia arma su problema a mano hasta que llegue el filtro
 - TypeScript fijado en 6.0 hasta que typescript-eslint soporte TypeScript 7 (ADR-018)
 - Jackson y Pollock 7 deja de crecer con la suma de pliegues sobre 395 mm (hombres) y 419 mm (mujeres): consultar si se advierte
 
 ## Registro de sesiones (solo las 5 últimas)
+- 2026-10-07 · P5 (1/3) · filtro RFC 9457, guardias con negación por defecto, Origin, límite de intentos en la
+  base, iam con argon2id, sesiones, bloqueo, recuperar y cambiar la contraseña, correos por el worker; ADR-030 a 032
 - 2026-10-07 · P3 y Notion · TEE_PAL en el motor (1.1.0, ADR-029), G-10 con valores exactos, ADR-028 y
   /notion-sync de P0 a P3 aplicado (32 cambios) · PR #4
 - 2026-10-06 · P3 · tokens y marca en ejecución con contraste AA, 12 componentes base, layouts del panel y de la
@@ -67,6 +68,3 @@ Leyenda: ⬜ pendiente · 🟨 en curso · ✅ terminado · ⛔ bloqueado
   UnitOfWork, outbox con pg-boss, idempotencia, auditoría, cifrado, salud y CI; ADR-024 a ADR-026 · falta el PR
 - 2026-10-06 · P1 · motor con los 39 métodos de 02 §9, validez por método, sobre con hash, G-01 a G-28,
   propiedades, paridad con la referencia y prueba en el navegador; ADR-022 y ADR-023 · falta el PR
-- 2026-10-03 · P0 · monorepo pnpm y Turborepo, configuración compartida, reglas de arquitectura con su prueba,
-  shared-kernel, API NestJS con salud y worker, web con cuatro grupos, compose local, CI y README; ADR-017 a
-  ADR-021 · PR #1 con CI en verde; pendiente aplicar /notion-sync

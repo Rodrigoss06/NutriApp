@@ -23,6 +23,7 @@ export interface CleanupResult {
   readonly outboxEvents: number;
   readonly processedEvents: number;
   readonly idempotencyKeys: number;
+  readonly rateLimits: number;
 }
 
 /** Trabajos diarios del worker como SYSTEM (01 §4): particiones y limpieza. */
@@ -46,7 +47,10 @@ export class MaintenanceService {
     });
   }
 
-  /** Outbox publicado de más de 7 días, eventos procesados de más de 30 y claves de idempotencia vencidas. */
+  /**
+   * Outbox publicado de más de 7 días, eventos procesados de más de 30, claves de idempotencia vencidas y ventanas
+   * del límite de intentos de más de un día (ADR-030).
+   */
   cleanup(): Promise<CleanupResult> {
     return this.uow.run(systemContext(), async () => ({
       outboxEvents: await this.db.tx.$executeRaw`
@@ -55,6 +59,12 @@ export class MaintenanceService {
         DELETE FROM platform.processed_event WHERE processed_at < now() - interval '30 days'`,
       idempotencyKeys: await this.db.tx.$executeRaw`
         DELETE FROM platform.idempotency_key WHERE expires_at < now()`,
+      rateLimits:
+        (
+          await this.db.tx.$queryRaw<
+            { removed: number }[]
+          >`SELECT app.purge_rate_limits() AS removed`
+        )[0]?.removed ?? 0,
     }));
   }
 }

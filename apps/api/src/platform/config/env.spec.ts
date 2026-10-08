@@ -7,6 +7,8 @@ const VALID = {
   DATABASE_URL: 'postgresql://app_user:clave@127.0.0.1:5432/nutricoach',
   ENCRYPTION_KEYS: `v1:${KEY}`,
   BLIND_INDEX_KEY: KEY,
+  APP_URL: 'http://localhost:3000',
+  SMTP_URL: 'smtp://127.0.0.1:1025',
 };
 
 describe('06 §4 · las variables de entorno se validan con Zod al arrancar', () => {
@@ -15,7 +17,8 @@ describe('06 §4 · las variables de entorno se validan con Zod al arrancar', ()
   });
 
   it.each(['development', 'test', 'production'] as const)('acepta NODE_ENV=%s', (nodeEnv) => {
-    expect(loadEnv({ ...VALID, NODE_ENV: nodeEnv }).NODE_ENV).toBe(nodeEnv);
+    const cookie = nodeEnv === 'production' ? { SESSION_COOKIE_NAME: '__Host-nc_session' } : {};
+    expect(loadEnv({ ...VALID, ...cookie, NODE_ENV: nodeEnv }).NODE_ENV).toBe(nodeEnv);
   });
 
   it('falla al arrancar con un valor desconocido', () => {
@@ -46,5 +49,40 @@ describe('06 §4 · las variables de entorno se validan con Zod al arrancar', ()
     } catch (error) {
       expect(String(error)).not.toContain('secreto');
     }
+  });
+});
+
+describe('P5 · acceso: origen, cookie, correo y límite de intentos', () => {
+  it('APP_URL queda como origen, sin ruta ni barra final', () => {
+    expect(loadEnv({ ...VALID, APP_URL: 'https://app.ejemplo.pe/panel/' }).APP_URL).toBe(
+      'https://app.ejemplo.pe',
+    );
+    expect(() => loadEnv({ ...VALID, APP_URL: undefined })).toThrow();
+  });
+
+  it('valores por defecto: cookie nc_session, SMTP y factor 1', () => {
+    expect(loadEnv(VALID)).toMatchObject({
+      SESSION_COOKIE_NAME: 'nc_session',
+      MAIL_DRIVER: 'smtp',
+      RATE_LIMIT_FACTOR: 1,
+    });
+    expect(loadEnv({ ...VALID, RATE_LIMIT_FACTOR: '50' }).RATE_LIMIT_FACTOR).toBe(50);
+  });
+
+  it('smtp exige SMTP_URL; resend exige RESEND_API_KEY y MAIL_FROM', () => {
+    expect(() => loadEnv({ ...VALID, SMTP_URL: undefined })).toThrow(/SMTP_URL/);
+    expect(() => loadEnv({ ...VALID, MAIL_DRIVER: 'resend' })).toThrow(/RESEND_API_KEY/);
+    expect(
+      loadEnv({ ...VALID, MAIL_DRIVER: 'resend', RESEND_API_KEY: 're_x', MAIL_FROM: 'A <a@b.pe>' })
+        .MAIL_DRIVER,
+    ).toBe('resend');
+  });
+
+  it('en producción la cookie de sesión lleva el prefijo __Host-', () => {
+    expect(() => loadEnv({ ...VALID, NODE_ENV: 'production' })).toThrow(/__Host-/);
+    expect(
+      loadEnv({ ...VALID, NODE_ENV: 'production', SESSION_COOKIE_NAME: '__Host-nc_session' })
+        .SESSION_COOKIE_NAME,
+    ).toBe('__Host-nc_session');
   });
 });

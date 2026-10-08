@@ -11,3 +11,44 @@ export { HealthModule } from './health/health.module.js';
 export { PlatformModule } from './platform.module.js';
 export { WorkerPlatformModule } from './worker/worker-platform.module.js';
 export { WorkerRuntime } from './worker/worker-runtime.js';
+export {
+  ACCESS_RULE,
+  AllowedWhenReadOnly,
+  Authenticated,
+  PERMISSIONS,
+  PlatformOnly,
+  Public,
+  RequirePermission,
+  type AccessRule,
+  type Permission,
+} from './auth/access.js';
+export { AuthModule } from './auth/auth.module.js';
+export {
+  SESSION_AUTHENTICATOR,
+  type SessionAuthenticator,
+  type SessionKind,
+  type SessionPrincipal,
+} from './auth/session-authenticator.port.js';
+export {
+  clearSessionCookie,
+  hashToken,
+  readSessionToken,
+  setSessionCookie,
+} from './auth/session-cookie.js';
+export {
+  TENANT_DIRECTORY,
+  type MemberRole,
+  type MembershipView,
+  type OrganizationStatus,
+  type TenantDirectory,
+} from './auth/tenant-directory.port.js';
+export { loadEnv } from './config/env.js';
+export { parseBody } from './http/parse-body.js';
+export { problemFromDomainError, ProblemException } from './http/problem.js';
+export { MAILER, type MailerPort, type MailMessage } from './mail/mailer.port.js';
+export {
+  RATE_LIMITS,
+  RateLimiter,
+  rateLimitEmail,
+  rateLimitIp,
+} from './rate-limit/rate-limiter.js';

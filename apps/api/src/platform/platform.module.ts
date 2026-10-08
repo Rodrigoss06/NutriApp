@@ -7,6 +7,9 @@ import { loadEnv } from './config/env.js';
 import { DatabaseModule } from './database/database.module.js';
 import { EventsModule } from './events/events.module.js';
 import { UuidV7IdGenerator } from './ids/uuid-v7.id-generator.js';
+import { createMailer } from './mail/mailers.js';
+import { MAILER } from './mail/mailer.port.js';
+import { RateLimiter } from './rate-limit/rate-limiter.js';
 import { buildLoggerParams } from './logging/logger.options.js';
 
 /**
@@ -24,7 +27,9 @@ import { buildLoggerParams } from './logging/logger.options.js';
   providers: [
     { provide: CLOCK, useClass: SystemClock },
     { provide: ID_GENERATOR, useClass: UuidV7IdGenerator },
+    { provide: MAILER, useFactory: () => createMailer() },
+    RateLimiter,
   ],
-  exports: [CLOCK, ID_GENERATOR],
+  exports: [CLOCK, ID_GENERATOR, MAILER, RateLimiter],
 })
 export class PlatformModule {}

@@ -900,6 +900,7 @@ model Invitation {
   invitedBy      String    @map("invited_by") @db.Uuid
   createdAt      DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
 
+  @@unique([organizationId, email], map: "invitation_one_pending", where: raw("((accepted_at IS NULL) AND (revoked_at IS NULL))"))
   @@map("invitation")
   @@schema("iam")
 }
@@ -1835,4 +1836,14 @@ model TrainingSession {
 
   @@map("session")
   @@schema("training")
+}
+
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model RateLimit {
+  key         Bytes    @id
+  windowStart DateTime @map("window_start") @db.Timestamptz(6)
+  hits        Int
+
+  @@map("rate_limit")
+  @@schema("platform")
 }

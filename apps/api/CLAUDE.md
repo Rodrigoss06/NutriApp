@@ -9,7 +9,11 @@
 - Eventos: el agregado los acumula; el handler los guarda en platform.outbox_event en la misma transacción,
   con INSERT sin RETURNING. Consumidores idempotentes con platform.processed_event.
 - Controladores: validan con @nutricoach/contracts, no tienen lógica, responden errores RFC 9457 con code y rule.
-- Guardias en orden: SessionGuard, TenantGuard, PolicyGuard. El paciente usa /api/v1/me/... y nunca envía su id.
+- Guardias en orden: OriginGuard, SessionGuard, TenantGuard, PolicyGuard. Se niega por defecto: cada ruta declara
+  @Public, @Authenticated, @PlatformOnly o @RequirePermission (test/access-rules.api.spec.ts lo verifica). Las
+  escrituras permitidas en solo lectura llevan @AllowedWhenReadOnly. El paciente usa /api/v1/me/... y nunca envía su id.
+- Errores: casos de uso devuelven Result con DomainError; el controlador usa problemFromDomainError. Cuerpos con
+  parseBody y su contrato. Entradas sensibles al abuso pasan por RateLimiter (ADR-030).
 - Lectura de expediente clínico y exportaciones: AuditPort.record().
 - Migraciones: prisma/migrations/AAAAMMDDHHMM_nombre/migration.sql. Toda tabla nueva con organization_id lleva
   en la misma migración `SELECT app.enable_tenant_rls(...)` (o `app.enable_catalog_rls` si NULL es global) y
