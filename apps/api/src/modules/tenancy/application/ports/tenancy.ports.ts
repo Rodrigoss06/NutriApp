@@ -72,6 +72,7 @@ export interface SubscriptionRecord {
 }
 
 export interface MembershipRecord {
+  readonly memberId: string;
   readonly organizationId: OrganizationId;
   readonly organizationName: string;
   readonly organizationStatus: OrganizationStatus;

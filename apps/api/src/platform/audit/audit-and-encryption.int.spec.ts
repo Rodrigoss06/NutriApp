@@ -25,10 +25,11 @@ let uow: UnitOfWork;
 let a: Tenant;
 let b: Tenant;
 
+/** El miembro del fixture es OWNER: ve a todos los pacientes de su organización (RN-A05). */
 const professional = (t: Tenant): SecurityContext => ({
   organizationId: t.orgId as OrganizationId,
   userId: asId(t.memberUserId),
-  role: 'PROFESSIONAL',
+  role: 'OWNER',
   patientId: null,
 });
 
@@ -73,7 +74,7 @@ describe('RN-B03 · auditoría de lecturas y exportaciones', () => {
       {
         organization_id: a.orgId,
         actor_user_id: a.memberUserId,
-        actor_role: 'PROFESSIONAL',
+        actor_role: 'OWNER',
         support_grant_id: null,
         action: 'READ',
         resource_type: 'clinical.patient',
@@ -153,7 +154,7 @@ describe('RN-B06 · documento cifrado con índice ciego por organización', () =
     const normalized = normalizeDocumentNumber(document);
     return withContext(
       'user',
-      { orgId: t.orgId, userId: t.memberUserId, role: 'PROFESSIONAL' },
+      { orgId: t.orgId, userId: t.memberUserId, role: 'OWNER' },
       (client) =>
         errorCode(
           client,

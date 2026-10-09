@@ -99,7 +99,19 @@ describe('P5 · acceso: origen, cookie, correo y límite de intentos', () => {
     expect(() => loadEnv({ ...VALID, APP_ENV: 'production' })).toThrow(/https/);
     expect(() => loadEnv({ ...VALID, SESSION_COOKIE_NAME: '__Host-nc_session' })).toThrow(/https/);
     expect(
-      loadEnv({ ...VALID, APP_ENV: 'staging', APP_URL: 'https://staging.ejemplo.pe' }).APP_URL,
+      loadEnv({
+        ...VALID,
+        APP_ENV: 'staging',
+        APP_URL: 'https://staging.ejemplo.pe',
+        STORAGE_LOCAL_PATH: '/srv/data/uploads',
+      }).APP_URL,
     ).toBe('https://staging.ejemplo.pe');
+  });
+
+  it('01 §12 · fuera de local STORAGE_LOCAL_PATH es obligatoria; en local tiene valor por defecto', () => {
+    expect(loadEnv(VALID).STORAGE_DRIVER).toBe('local');
+    expect(() =>
+      loadEnv({ ...VALID, APP_ENV: 'staging', APP_URL: 'https://staging.ejemplo.pe' }),
+    ).toThrow(/STORAGE_LOCAL_PATH/);
   });
 });

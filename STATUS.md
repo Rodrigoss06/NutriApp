@@ -13,7 +13,7 @@ Próxima demo: Demo 1 · Base y evaluación · semana 2
 | P3 Sistema de diseño | ✅ | Rodrigo | #4 | Lighthouse móvil 99 en Hoy; axe sin violaciones graves |
 | P4 Servidor y staging | ⛔ | Iván | | En espera de la cuenta de Hetzner de Jeremy |
 | P5 Identidad y organizaciones | ✅ | Rodrigo | #6, #7, #8 | 4 criterios en verde; despliegue a staging pendiente de P4 |
-| P6 Pacientes e historia clínica | ⬜ | Rodrigo | | |
+| P6 Pacientes e historia clínica | 🟨 | Rodrigo | | 3 PR: clinical y consentimiento · historia, auditoría e invitación · web, E2E |
 | P7 Evaluación y cálculo, Demo 1 | ⬜ | Rodrigo e Iván | | |
 | P8 Datos maestros de alimentos | ⬜ | Rodrigo | | |
 | P9 Dieta por intercambios | ⬜ | Rodrigo | | |
@@ -28,15 +28,17 @@ Próxima demo: Demo 1 · Base y evaluación · semana 2
 Leyenda: ⬜ pendiente · 🟨 en curso · ✅ terminado · ⛔ bloqueado
 
 ## En curso
-- Nada en curso. P5 cerrado: #6 (base e iam), #7 (tenancy y plataforma) y #8 (web, E2E y CI)
+- P6, PR 1 de 3 listo en `feat/cli-pacientes` (sobre `chore/cierre-p5`): care_team_scope en la base, StoragePort,
+  Patient, equipo de atención y consentimiento con evidencia (falta subirlo)
 
 ## Siguiente paso
-- P6 · Pacientes, consentimiento e historia clínica (Rodrigo). Conecta ACTIVE_PATIENT_COUNTER de tenancy al
-  conteo real de clinical y usa TenancyApi.ensurePatientCapacity (RN-A03)
+- PR 2 de P6: historia clínica v1, condiciones, objetivos y notas, expediente con línea de tiempo, auditoría
+  (/audit-events) e invitación del paciente con sus consentimientos
 
 ## Bloqueos y preguntas al cliente
 - [ ] Cuenta de Hetzner y dominio a nombre de Jeremy: bloquea P4
 - [ ] N9: límites y precio de los tramos de membresía; qué pasa al superar el límite
+- [ ] ⚠️ Historia clínica v1 en texto libre por bloque: provisional hasta tener la ficha que usa Jeremy
 - [ ] Antes de P16: cargar en producción los valores definitivos de TRAMO_5 y TRAMO_50 (la semilla no corre en
   producción): migración de datos o panel interno de P15
 - [ ] N22: caducidad del enlace de acceso del paciente
@@ -47,6 +49,8 @@ Leyenda: ⬜ pendiente · 🟨 en curso · ✅ terminado · ⛔ bloqueado
 - [ ] Textos legales revisados por el abogado del cliente
 
 ## Deuda técnica
+- P14: medir care_team_scope con seed:load. Si el costo por fila pesa en tracking, pasar a
+  patient_id = ANY((SELECT app.visible_patient_ids())), que se evalúa una vez por consulta (ADR-037)
 - P5 sin desplegar a staging (06 §9): queda pendiente de P4. Al desplegar: APP_URL con https,
   SESSION_COOKIE_NAME=__Host-nc_session, API_INTERNAL_URL al compilar, SEED_DEMO_PASSWORD y la CLI
   create-platform-admin para el primer PLATFORM_ADMIN
@@ -65,6 +69,8 @@ Leyenda: ⬜ pendiente · 🟨 en curso · ✅ terminado · ⛔ bloqueado
 - Jackson y Pollock 7 deja de crecer con la suma de pliegues sobre 395 mm (hombres) y 419 mm (mujeres): consultar si se advierte
 
 ## Registro de sesiones (solo las 5 últimas)
+- 2026-10-09 · P6 (1/3) · care_team_scope en la base, StoragePort local, pacientes con documento cifrado e índice
+  ciego, equipo de atención, consentimiento con evidencia y cupo real; ADR-037 a 039
 - 2026-10-08 · P5 cerrado · PR 3 fusionado (#8): web de acceso, organización y cuenta, E2E con Mailpit en
   escritorio y celular, CI con la pila completa; ADR-035 y 036; P5 ✅ con sus 4 criterios; /notion-sync de P5
   aplicado (23 cambios en 01, 02, 03, 05, 05.1, 05.3, 06, Documento técnico y Archivos del repositorio)
@@ -74,5 +80,3 @@ Leyenda: ⬜ pendiente · 🟨 en curso · ✅ terminado · ⛔ bloqueado
   base, iam con argon2id, sesiones, bloqueo, recuperar y cambiar la contraseña, correos por el worker; ADR-030 a 032
 - 2026-10-07 · P3 y Notion · TEE_PAL en el motor (1.1.0, ADR-029), G-10 con valores exactos, ADR-028 y
   /notion-sync de P0 a P3 aplicado (32 cambios) · PR #4
-- 2026-10-06 · P3 · tokens y marca en ejecución con contraste AA, 12 componentes base, layouts del panel y de la
-  app, catálogo, PWA, Playwright con axe y Lighthouse móvil 99; ADR-027 · falta el PR

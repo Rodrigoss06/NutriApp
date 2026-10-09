@@ -272,6 +272,7 @@ export class MemoryTenancyStore implements TenancyStore {
   #membership(member: MemberRecord): MembershipRecord {
     const organization = this.organizations.get(member.organizationId);
     return {
+      memberId: member.id,
       organizationId: member.organizationId,
       organizationName: organization?.name ?? '',
       organizationStatus: organization?.status ?? 'ACTIVE',

@@ -37,7 +37,8 @@ export class PrismaUnitOfWork implements UnitOfWork {
           set_config('app.org_id', ${context.organizationId ?? ''}, true),
           set_config('app.user_id', ${context.userId ?? ''}, true),
           set_config('app.role', ${context.role}, true),
-          set_config('app.patient_id', ${context.patientId ?? ''}, true)`;
+          set_config('app.patient_id', ${context.patientId ?? ''}, true),
+          set_config('app.member_id', ${context.memberId ?? ''}, true)`;
         return work();
       });
     };

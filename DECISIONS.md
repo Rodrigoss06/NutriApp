@@ -312,3 +312,42 @@ página de (admin)/admin/plataforma, con su guardia en un layout anidado para qu
 Cambiar de organización o salir vacía la caché de consultas y refresca. Los tokens de invitación y recuperación se
 leen del fragmento y se borran con history.replaceState. La interfaz oculta lo que el rol no puede; decide la API.
 Consecuencias: no hay proxy.ts; la protección de rutas en la web es solo comodidad.
+
+## ADR-037 · Equipo de atención en la base: care_team_scope — aceptada (2026-10-09)
+Contexto: RN-A05 pide que, con visibilidad CARE_TEAM, cada profesional vea solo a sus pacientes; como RN-A01, debe
+valer también si una consulta olvida el filtro.
+Decisión: la UnitOfWork fija app.member_id. app.can_see_patient(patient_id) es SECURITY DEFINER de app_owner (search_path
+fijo, filtra por app.org_id(); sin ella la política de care_team_member se llamaría a sí misma) y deja pasar a OWNER; a
+toda la organización si la visibilidad es ORGANIZATION; al responsable y al equipo; a PATIENT, SYSTEM y PLATFORM_ADMIN,
+que tienen sus propias políticas; y a ACCOUNT solo para el paciente cuya invitación aceptó o al que ya está vinculado.
+ADMIN sigue RN-A05 como PROFESSIONAL (puede no ser clínico: proporcionalidad de la Ley 29733). ACCOUNT existe solo dentro
+de la transacción de aceptación, nunca en una sesión, y tiene su lista de lo permitido (account_scope, como
+restrict_patient): en los datos clínicos solo la ficha y los consentimientos. app.enable_care_team_scope
+crea políticas restrictivas en SELECT, UPDATE y DELETE (en INSERT basta la organización) en toda tabla con patient_id,
+salvo audit.audit_log e iam.invitation; una prueba recorre el catálogo. Las notas AUTHOR_ONLY las ve solo su autor,
+también frente a OWNER. El cupo (app.count_active_patients) y el documento repetido (app.patient_document_taken) se
+consultan con funciones SECURITY DEFINER que solo devuelven un número o un sí/no de la organización; como ese sí/no
+dice si alguien es paciente, cada coincidencia deja en la auditoría el intento, con el paciente y el actor.
+Consecuencias: un profesional fuera del equipo recibe 404 y no puede esquivar el cupo. Las tablas nuevas con
+patient_id usan el mismo helper en su migración.
+
+## ADR-038 · StoragePort local y evidencia de consentimientos — aceptada (2026-10-09)
+Contexto: el consentimiento en papel necesita su escaneo; P11 y P15 también guardan archivos.
+Decisión: StoragePort con driver local en STORAGE_LOCAL_PATH (obligatoria fuera de local; en el servidor, el volumen
+cifrado). Clave ORG/UUIDv7: el nombre original nunca va en la ruta ni en la base. El tipo se decide por bytes mágicos
+(PDF, PNG, JPEG) y el parser multipart corta en 5 MB antes de leer más. Evidencia y consentimiento van en un solo
+pedido: los bytes se escriben antes de la transacción y se descartan si esta falla. La descarga es solo por la API,
+con la visibilidad del paciente, auditoría READ, Content-Disposition: attachment y nosniff. La evidencia de un
+consentimiento nunca se borra.
+Consecuencias: cambiar a S3 es otro adaptador del puerto. Los archivos de P11 y P15 usan FileRegistry.
+
+## ADR-039 · Consentimiento informado provisional — aceptada (2026-10-09)
+Contexto: RN-B01; los textos legales del abogado del cliente aún no llegan.
+Decisión: textos de plataforma HEALTH_DATA y APP_ACCESS cargados por una migración de datos idempotente, versión
+«0.1-provisional» con su sha256 y el aviso «Texto provisional, pendiente de revisión legal» donde se muestren. En
+consulta se otorga con canal IN_PERSON_DIGITAL (profesional, IP, agente y versión del texto) o PAPER_SCANNED con
+escaneo obligatorio. La población OBESITY es dato de salud: solo con HEALTH_DATA vigente. ConsentPolicy en la API
+pública de clinical. ⚠️ Un menor de 18 no consiente desde la app: se registra en consulta con su padre, madre o tutor
+hasta que el abogado lo defina. Pacientes solo ACTIVE o ARCHIVED en la versión 1.0 (INACTIVE serviría para esquivar el
+cupo).
+Consecuencias: los textos definitivos entran como versión nueva; los consentimientos dados quedan atados a su versión.

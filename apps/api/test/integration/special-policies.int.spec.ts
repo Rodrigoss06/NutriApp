@@ -13,10 +13,11 @@ beforeAll(async () => {
 });
 
 const owner = (sql: string, params: unknown[] = []) => pool('owner').query(sql, params);
+/** El miembro del fixture es OWNER: ve a todos los pacientes de su organización (RN-A05). */
 const professional = (t: Tenant) => ({
   orgId: t.orgId,
   userId: t.memberUserId,
-  role: 'PROFESSIONAL' as const,
+  role: 'OWNER' as const,
 });
 const patient = (t: Tenant) => ({
   orgId: t.orgId,

@@ -54,3 +54,6 @@ export {
   rateLimitIp,
 } from './rate-limit/rate-limiter.js';
 export { JobRegistry, type ScheduledJob } from './jobs/job-registry.js';
+export { EXTENSIONS, MAX_UPLOAD_BYTES, sniffMime, type AllowedMime } from './storage/file-type.js';
+export { FileRegistry, UNSUPPORTED_FILE, type StoredFile } from './storage/file-registry.js';
+export { STORAGE, type StoragePort } from './storage/storage.port.js';

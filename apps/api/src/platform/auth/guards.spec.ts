@@ -41,6 +41,7 @@ const directoryWith = (membership: Partial<MembershipView> | null): TenantDirect
   membership: () =>
     Promise.resolve(
       membership && {
+        memberId: 'm',
         organizationId: ORG as never,
         organizationName: 'Org',
         organizationStatus: 'ACTIVE',
