@@ -89,6 +89,41 @@ describe('RNF-12 · RN-A01 · el catálogo de PostgreSQL prueba el aislamiento',
     ]);
   });
 
+  it('RN-A05 · toda tabla con patient_id tiene care_team_scope en SELECT, UPDATE y DELETE, salvo las excepciones', async () => {
+    const missing = await rows<{ name: string }>(
+      `SELECT format('%I.%I', c.table_schema, c.table_name) AS name
+       FROM information_schema.columns c
+       JOIN information_schema.tables t USING (table_schema, table_name)
+       WHERE c.column_name = 'patient_id' AND t.table_type = 'BASE TABLE' AND c.table_schema <> 'part'
+         AND format('%I.%I', c.table_schema, c.table_name) <> ALL (ARRAY['audit.audit_log', 'iam.invitation'])
+         AND (SELECT count(*) FROM pg_policies p
+              WHERE p.schemaname = c.table_schema AND p.tablename = c.table_name
+                AND p.permissive = 'RESTRICTIVE'
+                AND p.policyname IN ('care_team_scope_select', 'care_team_scope_update', 'care_team_scope_delete')) <> 3
+       ORDER BY 1`,
+    );
+    const patient = await rows<{ policies: string }>(
+      `SELECT string_agg(policyname, ',' ORDER BY policyname) AS policies FROM pg_policies
+       WHERE schemaname = 'clinical' AND tablename = 'patient' AND policyname LIKE 'care_team_scope_%'`,
+    );
+    expect(missing).toEqual([]);
+    expect(patient[0]?.policies).toBe(
+      'care_team_scope_delete,care_team_scope_select,care_team_scope_update',
+    );
+  });
+
+  it('ACCOUNT · toda tabla con care_team_scope tiene además account_scope', async () => {
+    const missing = await rows<{ name: string }>(
+      `SELECT DISTINCT format('%I.%I', schemaname, tablename) AS name FROM pg_policies c
+       WHERE policyname = 'care_team_scope_select'
+         AND NOT EXISTS (SELECT 1 FROM pg_policies a
+                         WHERE a.schemaname = c.schemaname AND a.tablename = c.tablename
+                           AND a.policyname = 'account_scope' AND a.permissive = 'RESTRICTIVE')
+       ORDER BY 1`,
+    );
+    expect(missing).toEqual([]);
+  });
+
   it('toda función SECURITY DEFINER fija su search_path', async () => {
     const unsafe = await rows<{ name: string }>(
       `SELECT p.oid::regprocedure::text AS name
@@ -107,11 +142,14 @@ describe('RNF-12 · RN-A01 · el catálogo de PostgreSQL prueba el aislamiento',
     expect(unsafe).toEqual([]);
     expect(definers).toEqual([
       { name: 'app.applied_migrations()', owner: 'app_owner' },
+      { name: 'app.can_see_patient(uuid)', owner: 'app_owner' },
+      { name: 'app.count_active_patients()', owner: 'app_owner' },
       { name: 'app.ensure_monthly_partitions(regclass,integer,date)', owner: 'app_owner' },
       { name: 'app.find_invitation(bytea)', owner: 'app_owner' },
       { name: 'app.has_clinical_support_grant()', owner: 'app_owner' },
       { name: 'app.hit_rate_limit(bytea,integer,integer)', owner: 'app_owner' },
       { name: 'app.missing_next_month_partitions()', owner: 'app_owner' },
+      { name: 'app.patient_document_taken(bytea,uuid)', owner: 'app_owner' },
       { name: 'app.purge_rate_limits()', owner: 'app_owner' },
     ]);
   });
@@ -126,12 +164,16 @@ describe('RNF-12 · RN-A01 · el catálogo de PostgreSQL prueba el aislamiento',
 
     expect(executable.map((f) => f.name)).toEqual([
       'applied_migrations',
+      'can_see_patient',
+      'count_active_patients',
       'ensure_monthly_partitions',
       'find_invitation',
       'has_clinical_support_grant',
       'hit_rate_limit',
+      'member_id',
       'missing_next_month_partitions',
       'org_id',
+      'patient_document_taken',
       'patient_id',
       'purge_rate_limits',
       'role',

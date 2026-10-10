@@ -42,7 +42,7 @@ class RecordingConsumer implements EventConsumer {
 
   constructor(
     readonly name: string,
-    readonly eventTypes: readonly DomainEvent['type'][] = ['clinical.patient.registered'],
+    readonly eventTypes: readonly DomainEvent['type'][] = ['outbox.probe.registered'],
   ) {}
 
   async handle(event: OutboxEnvelope): Promise<void> {
@@ -64,7 +64,7 @@ let runner: ConsumerRunner;
 let tenant: Tenant;
 const first = new RecordingConsumer('analytics.test-first');
 const second = new RecordingConsumer('tenancy.test-second');
-const flaky = new RecordingConsumer('analytics.test-flaky', ['clinical.patient.archived']);
+const flaky = new RecordingConsumer('analytics.test-flaky', ['outbox.probe.archived']);
 
 const clock = { now: () => new Date() };
 const ids = { newId: <T extends string>() => asId<T>(id()) };
@@ -76,7 +76,7 @@ const context = (t: Tenant): SecurityContext => ({
   patientId: null,
 });
 
-const event = (type: DomainEvent['type'] = 'clinical.patient.registered') =>
+const event = (type: DomainEvent['type'] = 'outbox.probe.registered') =>
   createDomainEvent(
     {
       type,
@@ -184,13 +184,13 @@ describe('02 §6 · outbox: lo confirmado se publica, lo revertido no existe', (
 
   it('un fallo del consumidor revierte su registro y la cola reintenta; agotado, va a la cola de errores', async () => {
     flaky.failures = 1;
-    const retried = event('clinical.patient.archived');
+    const retried = event('outbox.probe.archived');
     await uow.run(context(tenant), () => outbox.append([retried]));
     await waitFor(() => flaky.seen.includes(retried.eventId), 20_000);
     expect(flaky.seen).toEqual([retried.eventId]);
 
     flaky.failures = 10;
-    const doomed = event('clinical.patient.archived');
+    const doomed = event('outbox.probe.archived');
     await uow.run(context(tenant), () => outbox.append([doomed]));
     const boss = moduleRef.get<PgBoss>(PG_BOSS);
     await waitFor(async () => {
@@ -283,7 +283,7 @@ function envelopeOf(domainEvent: DomainEvent): OutboxEnvelope {
     version: domainEvent.version,
     occurredAt: domainEvent.occurredAt.toISOString(),
     organizationId: domainEvent.organizationId,
-    aggregateType: 'clinical.patient',
+    aggregateType: 'outbox.probe',
     aggregateId: domainEvent.aggregateId,
     payload: domainEvent.payload,
     metadata: {},

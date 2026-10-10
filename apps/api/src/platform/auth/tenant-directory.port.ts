@@ -5,6 +5,7 @@ export type MemberStatus = 'ACTIVE' | 'SUSPENDED' | 'REMOVED';
 export type OrganizationStatus = 'ACTIVE' | 'READ_ONLY' | 'SUSPENDED' | 'CLOSED';
 
 export interface MembershipView {
+  readonly memberId: string;
   readonly organizationId: OrganizationId;
   readonly organizationName: string;
   readonly organizationStatus: OrganizationStatus;

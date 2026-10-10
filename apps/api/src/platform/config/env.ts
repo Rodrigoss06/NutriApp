@@ -51,6 +51,9 @@ const envSchema = z
       .optional(),
     RESEND_API_KEY: z.string().min(1).optional(),
     MAIL_FROM: z.string().min(3).optional(),
+    /** Archivos subidos (01 §12): disco local; en el servidor, el volumen cifrado /srv/data/uploads. */
+    STORAGE_DRIVER: z.enum(['local']).default('local'),
+    STORAGE_LOCAL_PATH: z.string().min(1).optional(),
     /** Multiplica los máximos del límite de intentos (E2E y k6). En producción, 1. */
     RATE_LIMIT_FACTOR: z.coerce.number().positive().max(1000).default(1),
   })
@@ -80,6 +83,13 @@ const envSchema = z
         message: 'APP_URL debe ser https en staging y producción, y con una cookie __Host-',
       });
     }
+    if (env.APP_ENV !== 'local' && !env.STORAGE_LOCAL_PATH) {
+      ctx.addIssue({
+        code: 'custom',
+        path: ['STORAGE_LOCAL_PATH'],
+        message: 'Fuera de local, STORAGE_LOCAL_PATH es obligatoria',
+      });
+    }
     if (env.NODE_ENV === 'production' && !env.SESSION_COOKIE_NAME.startsWith('__Host-')) {
       ctx.addIssue({
         code: 'custom',
@@ -90,6 +100,9 @@ const envSchema = z
   });
 
 export type Env = z.infer<typeof envSchema>;
+
+/** En local, los archivos van a var/uploads junto al proceso (fuera de git). */
+export const LOCAL_STORAGE_PATH = 'var/uploads';
 export type NodeEnv = Env['NODE_ENV'];
 
 export function loadEnv(source: Record<string, string | undefined> = process.env): Env {

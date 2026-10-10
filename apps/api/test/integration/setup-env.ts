@@ -10,3 +10,6 @@ process.env['APP_URL'] = 'http://localhost:3000';
 process.env['SMTP_URL'] = 'smtp://127.0.0.1:1';
 // Muchas entradas desde 127.0.0.1 en la misma ventana: el límite de intentos se prueba aparte.
 process.env['RATE_LIMIT_FACTOR'] = '100';
+// Archivos subidos de las pruebas (StoragePort local) en un directorio temporal propio de la corrida.
+process.env['STORAGE_LOCAL_PATH'] =
+  `${process.env['TMPDIR'] ?? '/tmp'}/nutricoach-int-uploads-${String(process.pid)}`;

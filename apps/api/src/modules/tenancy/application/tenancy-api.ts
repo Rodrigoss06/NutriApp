@@ -82,6 +82,11 @@ export class TenancyApi {
     return error ? err(error) : ok(undefined);
   }
 
+  /** ¿Ese miembro está activo en la organización? Para elegir responsable o equipo de atención (RN-A05). */
+  async isActiveMemberId(organizationId: OrganizationId, memberId: string): Promise<boolean> {
+    return (await this.store.findMember(organizationId, memberId))?.status === 'ACTIVE';
+  }
+
   /** Miembro activo o suspendido: invitarlo de nuevo es 409; quitado, puede volver por invitación. */
   async isMember(organizationId: OrganizationId, userId: UserId): Promise<boolean> {
     const member = await this.store.findMemberByUser(organizationId, userId);

@@ -18,12 +18,15 @@
 - Migraciones: prisma/migrations/AAAAMMDDHHMM_nombre/migration.sql. Toda tabla nueva con organization_id lleva
   en la misma migración `SELECT app.enable_tenant_rls(...)` (o `app.enable_catalog_rls` si NULL es global) y
   `SELECT app.restrict_patient(...)` con lo que el paciente puede ver y escribir (ADR-025). Luego
-  pnpm db:migrate && pnpm db:pull. schema.prisma no se edita a mano.
+  pnpm db:migrate && pnpm db:pull. schema.prisma no se edita a mano. Toda tabla con patient_id lleva además
+  `SELECT app.enable_care_team_scope(...)` (RN-A05, ADR-037); la prueba del catálogo lo verifica.
 - Permisos: app_user nace con SELECT, INSERT y UPDATE; DELETE y UPDATE por columna se conceden explícitos.
 - Tablas particionadas: se crea la padre y se llama app.ensure_monthly_partitions en la migración. Sin FK hacia
   ni desde ellas: un disparador de restricción (ADR-024). Una tabla particionada nueva entra en la lista
   cerrada de la función y en PARTITIONED_TABLES.
 - Auditoría con AUDIT_PORT (transacción propia, falla cerrado); campos sensibles con ENCRYPTION_PORT.
+- Archivos con FileRegistry y StoragePort (ADR-038): tipo por bytes, 5 MB en el parser, clave aleatoria, descarga
+  solo por la API como adjunto y auditada.
 - Logs con pino: nunca cuerpos de petición ni datos personales.
 - Pruebas de integración (*.int.spec.ts, Testcontainers, rol app_user) por repositorio y por política RLS nueva.
   Junto al código si prueban archivos internos; en test/integration si solo usan la API pública.

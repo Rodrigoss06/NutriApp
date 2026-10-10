@@ -6,6 +6,7 @@ import {
   type ExecutionContext,
 } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
+import type { Id } from '@nutricoach/shared-kernel';
 import { ProblemException } from '../http/problem.js';
 import type { ContextualRequest } from '../http/request-context.js';
 import { ACCESS_RULE, ALLOWED_WHEN_READ_ONLY, type AccessRule } from './access.js';
@@ -85,6 +86,7 @@ export class TenantGuard implements CanActivate {
       userId: session.userId,
       role: membership.role,
       patientId: null,
+      memberId: membership.memberId as Id<'MemberId'>,
     };
     return true;
   }

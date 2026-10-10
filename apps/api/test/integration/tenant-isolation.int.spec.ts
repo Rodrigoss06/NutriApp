@@ -15,10 +15,11 @@ beforeAll(async () => {
   b = await createTenant('B');
 });
 
+/** El miembro del fixture es OWNER: ve a todos los pacientes de su organización (RN-A05). */
 const professional = (t: Tenant) => ({
   orgId: t.orgId,
   userId: t.memberUserId,
-  role: 'PROFESSIONAL' as const,
+  role: 'OWNER' as const,
 });
 
 describe('RN-A01 · dos organizaciones no se ven entre sí', () => {

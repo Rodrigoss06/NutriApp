@@ -8,8 +8,10 @@ export {
 } from './domain/tenancy-rules.js';
 export { PlatformTenancy } from './application/platform-tenancy.js';
 export {
+  ACTIVE_PATIENT_COUNTER,
   MEMBER_PROFILES,
   PENDING_STAFF_INVITATIONS,
+  type ActivePatientCounter,
   type MemberProfiles,
   type PendingStaffInvitations,
 } from './application/ports/tenancy.ports.js';

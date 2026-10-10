@@ -3,7 +3,7 @@ import { TENANT_DIRECTORY } from '../../platform/index.js';
 import { ExpireSubscriptionsHandler } from './application/commands/expire-subscriptions.handler.js';
 import { OrganizationCommands } from './application/commands/organization.commands.js';
 import { PlatformTenancy } from './application/platform-tenancy.js';
-import { ACTIVE_PATIENT_COUNTER, TENANCY_STORE } from './application/ports/tenancy.ports.js';
+import { TENANCY_STORE } from './application/ports/tenancy.ports.js';
 import {
   DirectoryQueries,
   OrganizationQueries,
@@ -31,8 +31,6 @@ import { PrismaTenancyStore } from './adapters/out/persistence/prisma-tenancy.st
     PlatformTenancy,
     { provide: TENANCY_STORE, useClass: PrismaTenancyStore },
     { provide: TENANT_DIRECTORY, useClass: TenancyTenantDirectory },
-    // clinical cuenta los pacientes activos desde P6; hasta entonces el uso del cupo de pacientes es cero.
-    { provide: ACTIVE_PATIENT_COUNTER, useValue: { count: () => Promise.resolve(0) } },
   ],
   exports: [TenancyApi, PlatformTenancy, TENANT_DIRECTORY],
 })

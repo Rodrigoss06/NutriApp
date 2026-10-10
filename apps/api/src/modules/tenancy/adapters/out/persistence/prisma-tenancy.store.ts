@@ -357,6 +357,7 @@ export class PrismaTenancyStore implements TenancyStore {
   ): Promise<MembershipRecord[]> {
     const rows = await this.db.tx.$queryRaw<
       {
+        member_id: string;
         organization_id: string;
         organization_name: string;
         organization_status: string;
@@ -364,7 +365,7 @@ export class PrismaTenancyStore implements TenancyStore {
         status: string;
       }[]
     >`
-      SELECT m.organization_id, o.name AS organization_name, o.status AS organization_status, m.role, m.status
+      SELECT m.id AS member_id, m.organization_id, o.name AS organization_name, o.status AS organization_status, m.role, m.status
       FROM tenancy.member m
       JOIN tenancy.organization o ON o.id = m.organization_id
       WHERE m.user_id = ${userId}::uuid
@@ -372,6 +373,7 @@ export class PrismaTenancyStore implements TenancyStore {
         AND (${organizationId}::uuid IS NULL OR m.organization_id = ${organizationId}::uuid)
       ORDER BY o.name`;
     return rows.map((row) => ({
+      memberId: row.member_id,
       organizationId: row.organization_id as OrganizationId,
       organizationName: row.organization_name,
       organizationStatus: row.organization_status as OrganizationStatus,

@@ -7,6 +7,7 @@ import {
   type EventType,
   type Id,
   type OrganizationId,
+  type PatientId,
   type UserId,
 } from '@nutricoach/shared-kernel';
 import { ConsumerRegistry, type EventConsumer } from '../events/event-consumer.js';
@@ -63,6 +64,25 @@ export const AUDITED_EVENTS: Readonly<Record<string, AuditMapping>> = {
     resourceType: 'tenancy.subscription',
     fields: () => ['status'],
   },
+  'clinical.patient.registered': { action: 'CREATE', resourceType: 'clinical.patient' },
+  'clinical.patient.updated': {
+    action: 'UPDATE',
+    resourceType: 'clinical.patient',
+    fields: (p) => namesOf(p.fields),
+  },
+  'clinical.patient.archived': {
+    action: 'UPDATE',
+    resourceType: 'clinical.patient',
+    fields: () => ['status'],
+  },
+  'clinical.patient.reactivated': {
+    action: 'UPDATE',
+    resourceType: 'clinical.patient',
+    fields: () => ['status'],
+  },
+  'clinical.careteam.changed': { action: 'UPDATE', resourceType: 'clinical.care_team_member' },
+  'clinical.consent.granted': { action: 'GRANT', resourceType: 'clinical.consent' },
+  'clinical.consent.revoked': { action: 'REVOKE', resourceType: 'clinical.consent' },
   'tenancy.setting.changed': {
     action: 'UPDATE',
     resourceType: 'tenancy.organization_setting',
@@ -103,6 +123,9 @@ export class AuditEventsConsumer implements EventConsumer, OnModuleInit {
         action: mapping.action,
         resourceType: mapping.resourceType,
         resourceId: event.aggregateId as Id<string>,
+        ...(typeof payload.patientId === 'string'
+          ? { patientId: payload.patientId as PatientId }
+          : {}),
         ...(mapping.fields ? { changedFields: mapping.fields(payload) } : {}),
       },
     );

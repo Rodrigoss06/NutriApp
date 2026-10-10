@@ -19,7 +19,7 @@ export type ActorRole = (typeof ACTOR_ROLES)[number];
 
 /**
  * Quién actúa y sobre qué organización (02 §6, 05 §3). La unidad de trabajo lo fija en cada transacción con
- * set_config(..., true) y la RLS lo lee: app.org_id, app.user_id, app.role y app.patient_id.
+ * set_config(..., true) y la RLS lo lee: app.org_id, app.user_id, app.role, app.patient_id y app.member_id.
  */
 export interface SecurityContext {
   readonly organizationId: OrganizationId | null;
@@ -27,6 +27,8 @@ export interface SecurityContext {
   readonly role: ActorRole;
   /** Solo con el rol PATIENT: sale de la sesión, nunca de la petición (02 §10). */
   readonly patientId: PatientId | null;
+  /** Con un rol de miembro: su fila de tenancy.member. El equipo de atención y las notas AUTHOR_ONLY lo usan (RN-A05). */
+  readonly memberId?: Id<'MemberId'> | null;
   /** Solo con PLATFORM_ADMIN: el permiso de soporte vigente con que actúa (RN-A09); se audita. */
   readonly supportGrantId?: Id<'SupportGrantId'> | null;
 }

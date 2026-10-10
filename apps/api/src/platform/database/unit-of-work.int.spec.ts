@@ -20,10 +20,11 @@ let db: Db;
 let a: Tenant;
 let b: Tenant;
 
+/** El miembro del fixture es OWNER: ve a todos los pacientes de su organización (RN-A05). */
 const professional = (t: Tenant): SecurityContext => ({
   organizationId: t.orgId as OrganizationId,
   userId: asId(t.memberUserId),
-  role: 'PROFESSIONAL',
+  role: 'OWNER',
   patientId: null,
 });
 
@@ -49,7 +50,7 @@ describe('02 §6 · UnitOfWork: una transacción por comando con el contexto de 
   it('fija app.org_id, app.user_id, app.role y app.patient_id dentro de la transacción', async () => {
     const [row] = await uow.run(professional(a), settings);
 
-    expect(row).toEqual({ org: a.orgId, role: 'PROFESSIONAL', patient: '', ro: 'off' });
+    expect(row).toEqual({ org: a.orgId, role: 'OWNER', patient: '', ro: 'off' });
   });
 
   it('RN-A01 · la RLS lee ese contexto: el comando solo ve su organización', async () => {
@@ -93,7 +94,7 @@ describe('02 §6 · UnitOfWork: una transacción por comando con el contexto de 
 
   it('las consultas corren en una transacción de solo lectura con el mismo contexto', async () => {
     const [row] = await uow.query(professional(b), settings);
-    expect(row).toEqual({ org: b.orgId, role: 'PROFESSIONAL', patient: '', ro: 'on' });
+    expect(row).toEqual({ org: b.orgId, role: 'OWNER', patient: '', ro: 'on' });
 
     await expect(
       uow.query(professional(b), () =>

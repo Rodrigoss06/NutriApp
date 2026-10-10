@@ -8,8 +8,10 @@ export type DbRole = 'owner' | 'user' | 'readonly';
 export interface SecurityContext {
   readonly orgId?: string;
   readonly userId?: string;
-  readonly role?: 'OWNER' | 'ADMIN' | 'PROFESSIONAL' | 'PATIENT' | 'PLATFORM_ADMIN' | 'SYSTEM';
+  readonly role?:
+    'OWNER' | 'ADMIN' | 'PROFESSIONAL' | 'PATIENT' | 'PLATFORM_ADMIN' | 'SYSTEM' | 'ACCOUNT';
   readonly patientId?: string;
+  readonly memberId?: string;
 }
 
 const pools = new Map<DbRole, pg.Pool>();
@@ -44,8 +46,15 @@ export async function withContext<T>(
     await client.query('BEGIN');
     await client.query(
       `SELECT set_config('app.org_id', $1, true), set_config('app.user_id', $2, true),
-              set_config('app.role', $3, true), set_config('app.patient_id', $4, true)`,
-      [context.orgId ?? '', context.userId ?? '', context.role ?? '', context.patientId ?? ''],
+              set_config('app.role', $3, true), set_config('app.patient_id', $4, true),
+              set_config('app.member_id', $5, true)`,
+      [
+        context.orgId ?? '',
+        context.userId ?? '',
+        context.role ?? '',
+        context.patientId ?? '',
+        context.memberId ?? '',
+      ],
     );
     const result = await fn(client);
     await client.query(commit ? 'COMMIT' : 'ROLLBACK');
