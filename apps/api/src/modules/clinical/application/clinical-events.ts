@@ -15,8 +15,15 @@ export type ClinicalEventType =
   | 'clinical.patient.archived'
   | 'clinical.patient.reactivated'
   | 'clinical.careteam.changed'
+  | 'clinical.patient.linked'
   | 'clinical.consent.granted'
-  | 'clinical.consent.revoked';
+  | 'clinical.consent.revoked'
+  | 'clinical.history.revised'
+  | 'clinical.condition.recorded'
+  | 'clinical.condition.changed'
+  | 'clinical.goal.recorded'
+  | 'clinical.goal.changed'
+  | 'clinical.note.written';
 
 export function clinicalEvent<TPayload extends { patientId: string }>(
   type: ClinicalEventType,

@@ -54,6 +54,10 @@ import {
   type SessionStore,
 } from '../ports/iam.ports.js';
 import type { OpenedSession } from './login.handler.js';
+import {
+  PatientInvitationHandlers,
+  type PatientInspection,
+} from './patient-invitation.handlers.js';
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 
@@ -86,14 +90,20 @@ export interface InvitationView {
 export interface InspectedInvitation {
   readonly organizationName: string;
   readonly email: string;
-  readonly role: MemberRole;
+  readonly role: MemberRole | 'PATIENT';
   readonly accountExists: boolean;
+  /** Solo pacientes: los textos que faltan aceptar, si es menor con pendientes y su nombre de pila. */
+  readonly consents: PatientInspection['consents'];
+  readonly minorNeedsInPerson: boolean;
+  readonly firstName: string | null;
 }
 
 export interface AcceptCommand {
   readonly token: string;
   readonly password: string;
   readonly displayName?: string | undefined;
+  /** Paciente: los textos que aceptó, uno por casilla marcada (RN-B01). */
+  readonly acceptedConsentDocumentIds: readonly string[];
   readonly currentTokenHash: Uint8Array | null;
   readonly ip: string | null;
   readonly userAgent: string | null;
@@ -103,7 +113,8 @@ const isPending = (invitation: InvitationRecord, now: Date): boolean =>
   invitation.acceptedAt === null && invitation.revokedAt === null && invitation.expiresAt > now;
 
 /**
- * Invitaciones de staff (RF-01, RF-02, RN-A03). El enlace lleva el token en el fragmento; aquí llega en el cuerpo.
+ * Invitaciones de staff (RF-01, RF-02, RN-A03); las de paciente las atiende PatientInvitationHandlers (RN-A06). El
+ * enlace lleva el token en el fragmento; aquí llega en el cuerpo.
  * Una invitación pendiente por correo y organización: reenviar revoca la anterior y crea otra. Aceptar es una sola
  * transacción en el contexto de la organización: marca el uso, crea o reutiliza la cuenta, da de alta al miembro
  * con el cupo de tenancy y abre la sesión.
@@ -124,6 +135,7 @@ export class InvitationHandlers {
     @Inject(COMMON_PASSWORDS) private readonly common: CommonPasswords,
     @Inject(SECRET_TOKENS) private readonly tokens: SecretTokens,
     private readonly tenancy: TenancyApi,
+    private readonly patients: PatientInvitationHandlers,
   ) {}
 
   /** Invitar (o volver a invitar) a un correo. Cupo: staff activo + invitaciones vigentes (RN-A03). */
@@ -188,6 +200,10 @@ export class InvitationHandlers {
     const now = this.clock.now();
     const invitation = await this.#pending(token, now);
     if (!invitation) return err(INVALID_INVITATION);
+    if (invitation.role === 'PATIENT') {
+      const patient = await this.patients.inspect(invitation, this.tokens.hash(token));
+      return patient.ok ? ok({ ...patient.value, role: 'PATIENT' }) : patient;
+    }
     const organization = await this.uow.query(
       this.#joinContext(invitation.organizationId, null),
       () => this.tenancy.organization(invitation.organizationId),
@@ -199,8 +215,11 @@ export class InvitationHandlers {
     return ok({
       organizationName: organization.name,
       email: invitation.email,
-      role: invitation.role as MemberRole,
+      role: invitation.role,
       accountExists: account?.status === 'ACTIVE' && account.passwordHash !== null,
+      consents: [],
+      minorNeedsInPerson: false,
+      firstName: null,
     });
   }
 
@@ -213,6 +232,9 @@ export class InvitationHandlers {
     const password = normalizePassword(command.password);
     const invitation = await this.#pending(command.token, now);
     if (!invitation) return err(INVALID_INVITATION);
+    if (invitation.role === 'PATIENT') {
+      return this.patients.accept(command, invitation, this.tokens.hash(command.token));
+    }
     const account = await this.uow.query(anonymousContext(), () =>
       this.accounts.findByEmail(invitation.email),
     );
@@ -328,6 +350,7 @@ export class InvitationHandlers {
       organizationId,
       email,
       role,
+      patientId: null,
       tokenHash: hash,
       expiresAt: new Date(now.getTime() + ttlDays * DAY_MS),
       invitedBy: context.userId as UserId,
@@ -362,9 +385,7 @@ export class InvitationHandlers {
     const invitation = await this.uow.query(anonymousContext(), () =>
       this.invitations.findByToken(this.tokens.hash(token)),
     );
-    return invitation && invitation.role !== 'PATIENT' && isPending(invitation, now)
-      ? invitation
-      : null;
+    return invitation && isPending(invitation, now) ? invitation : null;
   }
 
   /** Valida la cuenta que acepta y prepara su escritura (el hash se calcula fuera de la transacción). */

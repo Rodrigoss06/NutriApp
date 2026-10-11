@@ -13,6 +13,7 @@ import {
   type UnitOfWork,
 } from '@nutricoach/shared-kernel';
 import { FileRegistry } from '../../../../platform/index.js';
+import { IamApi } from '../../../iam/index.js';
 import {
   ageYears,
   normalizeDocument,
@@ -36,6 +37,8 @@ export interface PatientView extends PatientRecord {
   readonly documentLast4: string | null;
   readonly ageYears: number;
   readonly careTeam: readonly CareTeamRecord[];
+  /** Acceso a la app (RN-A06): la invitación pendiente, si la hay; vinculado es userId no nulo. */
+  readonly invitation: { email: string; expiresAt: Date } | null;
 }
 
 export interface PatientPage {
@@ -73,6 +76,7 @@ export class PatientQueries {
     @Inject(PATIENT_STORE) private readonly patients: PatientStore,
     @Inject(CONSENT_STORE) private readonly consentStore: ConsentStore,
     private readonly files: FileRegistry,
+    private readonly iam: IamApi,
   ) {}
 
   /** Por nombre sin tildes o por documento exacto: el número se busca por su índice ciego, nunca en claro. */
@@ -117,7 +121,11 @@ export class PatientQueries {
     const view = await this.uow.query(context, async () => {
       const patient = await this.patients.find(patientId);
       if (!patient) return null;
-      return { patient, careTeam: await this.patients.careTeam(patientId) };
+      return {
+        patient,
+        careTeam: await this.patients.careTeam(patientId),
+        invitation: patient.userId ? null : await this.iam.pendingPatientInvitation(patientId),
+      };
     });
     if (!view) return null;
     await this.audit.record(context, {
@@ -126,7 +134,7 @@ export class PatientQueries {
       resourceId: patientId as Id<string>,
       patientId: patientId as PatientId,
     });
-    const { patient, careTeam } = view;
+    const { patient, careTeam, invitation } = view;
     const document = patient.documentNumberEnc
       ? this.encryption.decrypt(patient.documentNumberEnc, documentAad(patient.id))
       : null;
@@ -135,6 +143,7 @@ export class PatientQueries {
       documentLast4: document ? document.slice(-4) : null,
       ageYears: ageYears(patient.birthDate, localToday(this.clock.now(), patient.timezone)),
       careTeam,
+      invitation,
     };
   }
 

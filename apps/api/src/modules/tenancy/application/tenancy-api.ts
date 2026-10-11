@@ -158,6 +158,14 @@ export class TenancyApi {
     return this.store.findOrganization(organizationId);
   }
 
+  /** Días de vida del enlace de acceso del paciente (RN-A06, N22). */
+  async patientInvitationTtlDays(organizationId: OrganizationId): Promise<number> {
+    return settingValue(
+      'patient_invitation.ttl_days',
+      await this.store.getSetting(organizationId, 'patient_invitation.ttl_days'),
+    );
+  }
+
   async invitationTtlDays(organizationId: OrganizationId): Promise<number> {
     return settingValue(
       'invitation.ttl_days',

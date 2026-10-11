@@ -6,17 +6,20 @@ import {
   type AuditEntry,
   type AuditPort,
   type Clock,
+  type DomainError,
   type DomainEvent,
   type EncryptionPort,
   type IdGenerator,
   type OrganizationId,
   type Outbox,
+  type Result,
   type SecurityContext,
   type UnitOfWork,
   type UserId,
 } from '@nutricoach/shared-kernel';
 import { v7 as uuidv7 } from 'uuid';
 import type { FileRegistry } from '../../../platform/index.js';
+import type { IamApi } from '../../iam/index.js';
 import type { TenancyApi } from '../../tenancy/index.js';
 import type { ConsentPurpose } from '../domain/clinical-rules.js';
 import type {
@@ -28,6 +31,13 @@ import type {
   PatientRecord,
   PatientSearch,
   PatientStore,
+  InvitationPreviewRecord,
+  ClinicalRecordStore,
+  ConditionRecord,
+  GoalRecord,
+  HistoryRevisionRecord,
+  NoteRecord,
+  TimelineRecord,
 } from './ports/clinical.ports.js';
 
 /** Puertos falsos en memoria para los casos de uso de clinical (06 §6). Sin RLS: la prueban las de integración. */
@@ -161,6 +171,43 @@ export class MemoryPatients implements PatientStore {
     );
     return Promise.resolve(team.some((m) => m.memberId === memberId));
   }
+  /** La cuenta del contexto: las pruebas la fijan aquí. */
+  accountUserId: string | null = null;
+  readonly previews = new Map<string, InvitationPreviewRecord>();
+  linkAccount(patientId: string, userId: UserId) {
+    const row = this.rows.get(patientId);
+    if (!row || row.userId || row.status !== 'ACTIVE') return Promise.resolve(false);
+    row.userId = userId;
+    return Promise.resolve(true);
+  }
+  previewInvitation(tokenHash: Uint8Array) {
+    return Promise.resolve(this.previews.get(Buffer.from(tokenHash).toString('hex')) ?? null);
+  }
+  /** has_access como app.patient_of_account: activo y con APP_ACCESS y HEALTH_DATA vigentes (en consents). */
+  consents: MemoryConsents | null = null;
+  async patientOfAccount() {
+    const row = [...this.rows.values()].find(
+      (p) => p.userId !== null && p.userId === this.accountUserId,
+    );
+    if (!row) return null;
+    const active = this.consents
+      ? (await this.consents.list(row.id)).filter((c) => !c.revokedAt)
+      : [];
+    const has = (purpose: ConsentPurpose) => active.some((c) => c.purpose === purpose);
+    return {
+      patientId: row.id,
+      organizationId: row.organizationId,
+      hasAccess: row.status === 'ACTIVE' && has('APP_ACCESS') && has('HEALTH_DATA'),
+    };
+  }
+  labels(ids: readonly string[]) {
+    return Promise.resolve(
+      ids.flatMap((id) => {
+        const row = this.rows.get(id);
+        return row ? [{ id, code: row.code }] : [];
+      }),
+    );
+  }
 }
 
 export const DOCUMENTS: ConsentDocumentRecord[] = [
@@ -259,3 +306,136 @@ export const staffContext = (
   patientId: null,
   memberId: memberId as SecurityContext['memberId'],
 });
+
+/** Expediente en memoria. Sin RLS: AUTHOR_ONLY lo prueba la integración. */
+export class MemoryRecords implements ClinicalRecordStore {
+  readonly history: (HistoryRevisionRecord & { patientId: string })[] = [];
+  readonly conditionRows: Mutable<ConditionRecord>[] = [];
+  readonly goalRows: Mutable<GoalRecord>[] = [];
+  readonly noteRows: NoteRecord[] = [];
+  locks = 0;
+  lockPatient() {
+    this.locks += 1;
+    return Promise.resolve();
+  }
+  latestHistory(patientId: string) {
+    return Promise.resolve(
+      this.history
+        .filter((h) => h.patientId === patientId)
+        .sort((a, b) => b.revision - a.revision)[0] ?? null,
+    );
+  }
+  historyRevisions(patientId: string) {
+    return Promise.resolve(
+      this.history
+        .filter((h) => h.patientId === patientId)
+        .sort((a, b) => b.revision - a.revision)
+        .map(({ revision, recordedAt, recordedBy }) => ({ revision, recordedAt, recordedBy })),
+    );
+  }
+  insertHistory(revision: Parameters<ClinicalRecordStore['insertHistory']>[0]) {
+    this.history.push({ ...revision });
+    return Promise.resolve();
+  }
+  conditions(patientId: string) {
+    return Promise.resolve(this.conditionRows.filter((c) => c.patientId === patientId));
+  }
+  insertCondition(condition: ConditionRecord) {
+    this.conditionRows.push({ ...condition });
+    return Promise.resolve();
+  }
+  updateCondition(patientId: string, id: string, changes: Partial<ConditionRecord>) {
+    const row = this.conditionRows.find((c) => c.id === id && c.patientId === patientId);
+    if (row) Object.assign(row, changes);
+    return Promise.resolve(Boolean(row));
+  }
+  goals(patientId: string) {
+    return Promise.resolve(this.goalRows.filter((g) => g.patientId === patientId));
+  }
+  insertGoal(goal: GoalRecord) {
+    this.goalRows.push({ ...goal });
+    return Promise.resolve();
+  }
+  updateGoal(patientId: string, id: string, changes: Partial<GoalRecord>) {
+    const row = this.goalRows.find((g) => g.id === id && g.patientId === patientId);
+    if (row) Object.assign(row, changes);
+    return Promise.resolve(Boolean(row));
+  }
+  notes(patientId: string) {
+    return Promise.resolve(this.noteRows.filter((n) => n.patientId === patientId));
+  }
+  findNote(patientId: string, id: string) {
+    return Promise.resolve(
+      this.noteRows.find((n) => n.id === id && n.patientId === patientId) ?? null,
+    );
+  }
+  insertNote(note: NoteRecord) {
+    this.noteRows.push(note);
+    return Promise.resolve();
+  }
+  timeline(patientId: string, before: { occurredAt: Date; refId: string } | null, limit: number) {
+    const items: TimelineRecord[] = [
+      ...this.history
+        .filter((h) => h.patientId === patientId)
+        .map((h) => ({
+          kind: 'HISTORY_REVISED' as const,
+          occurredAt: h.recordedAt,
+          refId: h.id,
+          label: String(h.revision),
+          detail: null,
+        })),
+      ...this.conditionRows
+        .filter((c) => c.patientId === patientId)
+        .map((c) => ({
+          kind: 'CONDITION_RECORDED' as const,
+          occurredAt: c.createdAt,
+          refId: c.id,
+          label: c.kind,
+          detail: c.label,
+        })),
+      ...this.noteRows
+        .filter((n) => n.patientId === patientId)
+        .map((n) => ({
+          kind: 'NOTE_WRITTEN' as const,
+          occurredAt: n.createdAt,
+          refId: n.id,
+          label: n.visibility,
+          detail: null,
+        })),
+    ]
+      .sort(
+        (a, b) => b.occurredAt.getTime() - a.occurredAt.getTime() || b.refId.localeCompare(a.refId),
+      )
+      .filter(
+        (i) =>
+          !before ||
+          i.occurredAt.getTime() < before.occurredAt.getTime() ||
+          (i.occurredAt.getTime() === before.occurredAt.getTime() && i.refId < before.refId),
+      );
+    return Promise.resolve(items.slice(0, limit));
+  }
+}
+
+/** IamApi falsa para clinical: invitaciones de paciente en memoria. */
+export class FakeIam {
+  readonly invited: { patientId: string; email: string }[] = [];
+  result: Result<{ id: string }, DomainError> | null = null;
+  invitePatientWithin(
+    _context: SecurityContext,
+    _org: OrganizationId,
+    patientId: string,
+    email: string,
+  ) {
+    this.invited.push({ patientId, email });
+    return Promise.resolve(this.result ?? ok({ id: uuidv7() }));
+  }
+  pendingPatientInvitation(patientId: string) {
+    const last = [...this.invited].reverse().find((i) => i.patientId === patientId);
+    return Promise.resolve(
+      last ? { email: last.email, expiresAt: new Date('2026-10-16T15:00:00Z') } : null,
+    );
+  }
+  asApi(): IamApi {
+    return this as unknown as IamApi;
+  }
+}

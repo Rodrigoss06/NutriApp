@@ -111,6 +111,8 @@ export type SubscriptionResponse = z.infer<typeof subscriptionResponseSchema>;
 
 export const settingsResponseSchema = z.object({
   'invitation.ttl_days': z.number().int(),
+  /** ⚠️ N22: caducidad del enlace de acceso del paciente (RN-A06). */
+  'patient_invitation.ttl_days': z.number().int(),
   'subscription.grace_days': z.number().int(),
 });
 export type SettingsResponse = z.infer<typeof settingsResponseSchema>;
@@ -138,9 +140,28 @@ export const inspectInvitationSchema = z.object({ token: secretTokenSchema });
 export const inspectInvitationResponseSchema = z.object({
   organizationName: z.string(),
   email: z.string(),
-  role: z.enum(MEMBER_ROLES),
-  /** true: entra con su contraseña actual; false: elige nombre y contraseña. */
+  role: z.enum([...MEMBER_ROLES, 'PATIENT']),
+  /**
+   * Staff: true entra con su contraseña actual; false elige nombre y contraseña. Paciente: true significa que ese
+   * correo ya tiene cuenta y la invitación no sirve (una cuenta por paciente en la versión 1.0).
+   */
   accountExists: z.boolean(),
+  /** Paciente: los textos que faltan aceptar, cada uno con su casilla, sin marcar (RN-B01). */
+  consents: z
+    .array(
+      z.object({
+        id: z.uuid(),
+        purpose: z.string(),
+        version: z.string(),
+        bodyMarkdown: z.string(),
+        provisional: z.boolean(),
+      }),
+    )
+    .default([]),
+  /** Paciente menor de 18 con consentimientos pendientes: se registran en consulta con su tutor (⚠️). */
+  minorNeedsInPerson: z.boolean().default(false),
+  /** Paciente: su nombre de pila, para saludarle. */
+  firstName: z.string().nullable().default(null),
 });
 export type InspectInvitationResponse = z.infer<typeof inspectInvitationResponseSchema>;
 
@@ -148,6 +169,8 @@ export const acceptInvitationSchema = z.object({
   token: secretTokenSchema,
   password: passwordInputSchema,
   displayName: z.string().trim().min(1).max(120).optional(),
+  /** Paciente: los textos que aceptó, uno por casilla marcada. */
+  acceptedConsentDocumentIds: z.array(z.uuid()).max(10).default([]),
 });
 export type AcceptInvitation = z.infer<typeof acceptInvitationSchema>;
 

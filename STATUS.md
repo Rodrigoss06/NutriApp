@@ -1,6 +1,6 @@
 # STATUS — NutriCoach v1.0
 
-Actualizado: 2026-10-08 · Por: Rodrigo, con Claude Code
+Actualizado: 2026-10-11 · Por: Rodrigo, con Claude Code
 Inicio del proyecto: POR CONFIRMAR (día siguiente al Pago 1) · Semana actual: 0 de 9
 Próxima demo: Demo 1 · Base y evaluación · semana 2
 
@@ -13,7 +13,7 @@ Próxima demo: Demo 1 · Base y evaluación · semana 2
 | P3 Sistema de diseño | ✅ | Rodrigo | #4 | Lighthouse móvil 99 en Hoy; axe sin violaciones graves |
 | P4 Servidor y staging | ⛔ | Iván | | En espera de la cuenta de Hetzner de Jeremy |
 | P5 Identidad y organizaciones | ✅ | Rodrigo | #6, #7, #8 | 4 criterios en verde; despliegue a staging pendiente de P4 |
-| P6 Pacientes e historia clínica | 🟨 | Rodrigo | | 3 PR: clinical y consentimiento · historia, auditoría e invitación · web, E2E |
+| P6 Pacientes e historia clínica | 🟨 | Rodrigo | #10 | 3 PR: clinical y consentimiento (#10) · historia, auditoría e invitación · web, E2E |
 | P7 Evaluación y cálculo, Demo 1 | ⬜ | Rodrigo e Iván | | |
 | P8 Datos maestros de alimentos | ⬜ | Rodrigo | | |
 | P9 Dieta por intercambios | ⬜ | Rodrigo | | |
@@ -28,12 +28,15 @@ Próxima demo: Demo 1 · Base y evaluación · semana 2
 Leyenda: ⬜ pendiente · 🟨 en curso · ✅ terminado · ⛔ bloqueado
 
 ## En curso
-- P6, PR 1 de 3 listo en `feat/cli-pacientes` (sobre `chore/cierre-p5`): care_team_scope en la base, StoragePort,
-  Patient, equipo de atención y consentimiento con evidencia (falta subirlo)
+- P6, PR 2 de 3 listo en `feat/cli-historia` (falta subirlo): historia clínica v1 con revisiones, condiciones,
+  objetivos y notas, línea de tiempo, READ en cada lectura, /audit-events para OWNER e invitación del paciente con
+  sus consentimientos y sesión PATIENT (ADR-040 y 041). El criterio «sin consentimiento, guardar historia clínica
+  devuelve 422 con rule RN-B01» está en verde en la integración
 
 ## Siguiente paso
-- PR 2 de P6: historia clínica v1, condiciones, objetivos y notas, expediente con línea de tiempo, auditoría
-  (/audit-events) e invitación del paciente con sus consentimientos
+- PR 3 de P6: web (lista con búsqueda por nombre sin tildes y por documento, ficha, historia, consentimiento, equipo,
+  auditoría y la aceptación del paciente con una casilla por finalidad en /invitacion) y E2E en escritorio y celular;
+  luego /cierre de P6 y /notion-sync
 
 ## Bloqueos y preguntas al cliente
 - [ ] Cuenta de Hetzner y dominio a nombre de Jeremy: bloquea P4
@@ -41,7 +44,8 @@ Leyenda: ⬜ pendiente · 🟨 en curso · ✅ terminado · ⛔ bloqueado
 - [ ] ⚠️ Historia clínica v1 en texto libre por bloque: provisional hasta tener la ficha que usa Jeremy
 - [ ] Antes de P16: cargar en producción los valores definitivos de TRAMO_5 y TRAMO_50 (la semilla no corre en
   producción): migración de datos o panel interno de P15
-- [ ] N22: caducidad del enlace de acceso del paciente
+- [ ] N22: caducidad del enlace de acceso del paciente (provisional: 7 días, ajustable por organización en
+  patient_invitation.ttl_days, de 1 a 30)
 - [ ] N19: confirmar la carga manual de bioimpedancia
 - [ ] N13: confirmar regresiones y progresiones en la biblioteca
 - [ ] N7: confirmar el estado diario (estrés, sueño, energía)
@@ -69,6 +73,9 @@ Leyenda: ⬜ pendiente · 🟨 en curso · ✅ terminado · ⛔ bloqueado
 - Jackson y Pollock 7 deja de crecer con la suma de pliegues sobre 395 mm (hombres) y 419 mm (mujeres): consultar si se advierte
 
 ## Registro de sesiones (solo las 5 últimas)
+- 2026-10-11 · P6 (2/3) · historia clínica versionada, condiciones, objetivos y notas inmutables, línea de tiempo,
+  READ en cada lectura, módulo audit con /audit-events, invitación y aceptación del paciente con PATIENT_ENROLLMENT,
+  sesión PATIENT y cierre de sesiones al revocar o archivar; ADR-040 y 041
 - 2026-10-09 · P6 (1/3) · care_team_scope en la base, StoragePort local, pacientes con documento cifrado e índice
   ciego, equipo de atención, consentimiento con evidencia y cupo real; ADR-037 a 039
 - 2026-10-08 · P5 cerrado · PR 3 fusionado (#8): web de acceso, organización y cuenta, E2E con Mailpit en
@@ -78,5 +85,3 @@ Leyenda: ⬜ pendiente · 🟨 en curso · ✅ terminado · ⛔ bloqueado
   backoffice, vencimiento RN-A02, auditoría desde eventos, semilla y CLI; ADR-033 y 034
 - 2026-10-07 · P5 (1/3) · filtro RFC 9457, guardias con negación por defecto, Origin, límite de intentos en la
   base, iam con argon2id, sesiones, bloqueo, recuperar y cambiar la contraseña, correos por el worker; ADR-030 a 032
-- 2026-10-07 · P3 y Notion · TEE_PAL en el motor (1.1.0, ADR-029), G-10 con valores exactos, ADR-028 y
-  /notion-sync de P0 a P3 aplicado (32 cambios) · PR #4

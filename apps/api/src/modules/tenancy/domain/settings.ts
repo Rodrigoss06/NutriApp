@@ -13,6 +13,8 @@ export interface IntegerSetting {
 /** Ajustes de tenancy.organization_setting registrados con su rango, su valor por defecto y su editor. */
 export const ORGANIZATION_SETTINGS = {
   'invitation.ttl_days': { min: 1, max: 30, defaultValue: 7, editor: 'ORGANIZATION' },
+  /** ⚠️ N22: caducidad del enlace de acceso del paciente (RN-A06), aparte de la del staff. */
+  'patient_invitation.ttl_days': { min: 1, max: 30, defaultValue: 7, editor: 'ORGANIZATION' },
   'subscription.grace_days': { min: 0, max: 30, defaultValue: 7, editor: 'PLATFORM' },
 } as const satisfies Record<string, IntegerSetting>;
 

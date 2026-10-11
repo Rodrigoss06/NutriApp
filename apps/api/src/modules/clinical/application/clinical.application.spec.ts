@@ -8,6 +8,7 @@ import {
   FakeAudit,
   FakeClock,
   FakeFiles,
+  FakeIam,
   fakeEncryption,
   fakeIds,
   FakeOutbox,
@@ -59,7 +60,16 @@ const commands = () =>
 const consentCommands = () =>
   new ConsentCommands(uow, clock, fakeIds, outbox, patients, consents, files.asRegistry());
 const queries = () =>
-  new PatientQueries(uow, clock, audit, fakeEncryption, patients, consents, files.asRegistry());
+  new PatientQueries(
+    uow,
+    clock,
+    audit,
+    fakeEncryption,
+    patients,
+    consents,
+    files.asRegistry(),
+    new FakeIam().asApi(),
+  );
 
 async function registered(input: object = {}): Promise<string> {
   const result = await commands().register(responsible, { ...PERSON, ...input });

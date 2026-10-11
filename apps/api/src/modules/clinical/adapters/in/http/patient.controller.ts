@@ -117,6 +117,12 @@ const toResponse = (view: PatientView): PatientResponse => ({
   timezone: view.timezone,
   ageYears: view.ageYears,
   careTeam: view.careTeam.map((m) => ({ memberId: m.memberId, role: m.role, access: m.access })),
+  appAccess: {
+    linked: view.userId !== null,
+    invitation: view.invitation
+      ? { email: view.invitation.email, expiresAt: view.invitation.expiresAt.toISOString() }
+      : null,
+  },
   version: view.version,
 });
 

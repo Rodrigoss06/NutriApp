@@ -1,4 +1,5 @@
 import { Injectable } from '@nestjs/common';
+import type { PatientId } from '@nutricoach/shared-kernel';
 import type { SessionAuthenticator, SessionPrincipal } from '../../../../../platform/index.js';
 import { AuthenticateSessionHandler } from '../../../application/commands/authenticate-session.handler.js';
 
@@ -15,7 +16,7 @@ export class IamSessionAuthenticator implements SessionAuthenticator {
           userId: session.userId,
           kind: session.kind,
           activeOrganizationId: session.activeOrganizationId,
-          patientId: null,
+          patientId: session.patientId as PatientId | null,
         }
       : null;
   }

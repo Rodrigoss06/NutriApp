@@ -575,6 +575,7 @@ describe('RF-02 y RF-03 · organización, suscripción y ajustes por HTTP', () =
       (await put('/organization/settings/invitation.ttl_days', { value: 10 }, ownerCookie)).body,
     ).toEqual({
       'invitation.ttl_days': 10,
+      'patient_invitation.ttl_days': 7,
       'subscription.grace_days': 7,
     });
     const grace = await put(

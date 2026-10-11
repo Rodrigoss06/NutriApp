@@ -81,8 +81,27 @@ export const AUDITED_EVENTS: Readonly<Record<string, AuditMapping>> = {
     fields: () => ['status'],
   },
   'clinical.careteam.changed': { action: 'UPDATE', resourceType: 'clinical.care_team_member' },
+  'clinical.patient.linked': {
+    action: 'UPDATE',
+    resourceType: 'clinical.patient',
+    fields: () => ['user_id'],
+  },
   'clinical.consent.granted': { action: 'GRANT', resourceType: 'clinical.consent' },
   'clinical.consent.revoked': { action: 'REVOKE', resourceType: 'clinical.consent' },
+  'clinical.history.revised': { action: 'CREATE', resourceType: 'clinical.clinical_history' },
+  'clinical.condition.recorded': { action: 'CREATE', resourceType: 'clinical.condition' },
+  'clinical.condition.changed': {
+    action: 'UPDATE',
+    resourceType: 'clinical.condition',
+    fields: (p) => namesOf(p.fields),
+  },
+  'clinical.goal.recorded': { action: 'CREATE', resourceType: 'clinical.goal' },
+  'clinical.goal.changed': {
+    action: 'UPDATE',
+    resourceType: 'clinical.goal',
+    fields: (p) => namesOf(p.fields),
+  },
+  'clinical.note.written': { action: 'CREATE', resourceType: 'clinical.clinical_note' },
   'tenancy.setting.changed': {
     action: 'UPDATE',
     resourceType: 'tenancy.organization_setting',

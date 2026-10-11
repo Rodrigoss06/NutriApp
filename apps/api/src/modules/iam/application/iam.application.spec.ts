@@ -7,6 +7,7 @@ import { PasswordHandlers, RESET_TTL_MS } from './commands/password.handlers.js'
 import { UpdateAccountHandler } from './commands/update-account.handler.js';
 import {
   FakeAudit,
+  FakeEnrollment,
   FakeClock,
   fakeCommon,
   fakeEncryption,
@@ -35,6 +36,7 @@ let sessions: MemorySessions;
 let resets: MemoryResets;
 let hasher: FakeHasher;
 let tokens: FakeTokens;
+let enrollment: FakeEnrollment;
 
 const loginWith = (memberships: MembershipSummary[] = []) =>
   new LoginHandler(
@@ -47,6 +49,7 @@ const loginWith = (memberships: MembershipSummary[] = []) =>
     hasher,
     tokens,
     membershipsOf(memberships),
+    enrollment,
   );
 const passwords = () =>
   new PasswordHandlers(
@@ -78,6 +81,7 @@ beforeEach(() => {
   accounts = new MemoryAccounts(clock);
   sessions = new MemorySessions(accounts);
   resets = new MemoryResets();
+  enrollment = new FakeEnrollment();
   hasher = new FakeHasher();
   tokens = new FakeTokens();
 });
@@ -184,7 +188,7 @@ describe('RN-A08 · sesiones', () => {
     const account = accounts.add({ email: 'ana@demo.test', passwordHash: `h:${PASSWORD}` });
     const login = await loginWith().execute(command('ana@demo.test'));
     const hash = tokens.hash(isOk(login) ? login.value.token : '');
-    const authenticate = new AuthenticateSessionHandler(uow, clock, sessions);
+    const authenticate = new AuthenticateSessionHandler(uow, clock, sessions, enrollment);
 
     expect(await authenticate.execute(hash)).not.toBeNull();
     clock.advance(2 * 60_000);

@@ -1,6 +1,8 @@
 import { createHash } from 'node:crypto';
 import type {
+  DomainError,
   OrganizationId,
+  Result,
   AuditEntry,
   AuditPort,
   Clock,
@@ -21,6 +23,9 @@ import type {
   InvitationRecord,
   InvitationRole,
   InvitationStore,
+  PatientAccessPurpose,
+  PatientEnrollment,
+  PatientInvitationPreview,
   MembershipDirectory,
   MembershipSummary,
   NewSession,
@@ -312,6 +317,7 @@ export class MemoryInvitations implements InvitationStore {
     organizationId: OrganizationId;
     email: string;
     role: InvitationRole;
+    patientId: string | null;
     tokenHash: Uint8Array;
     expiresAt: Date;
   }) {
@@ -320,6 +326,7 @@ export class MemoryInvitations implements InvitationStore {
       organizationId: invitation.organizationId,
       email: invitation.email,
       role: invitation.role,
+      patientId: invitation.patientId,
       expiresAt: invitation.expiresAt,
       tokenHash: hex(invitation.tokenHash),
       createdAt: invitation.expiresAt,
@@ -344,6 +351,13 @@ export class MemoryInvitations implements InvitationStore {
   findPendingByEmail(organizationId: OrganizationId, email: string) {
     return Promise.resolve(this.#pending(organizationId).find((r) => r.email === email) ?? null);
   }
+  findPendingForPatient(patientId: string) {
+    return Promise.resolve(
+      [...this.rows.values()].find(
+        (r) => r.patientId === patientId && r.role === 'PATIENT' && !r.acceptedAt && !r.revokedAt,
+      ) ?? null,
+    );
+  }
   listPendingStaff(organizationId: OrganizationId) {
     return Promise.resolve(this.#pending(organizationId).filter((r) => r.role !== 'PATIENT'));
   }
@@ -364,5 +378,33 @@ export class MemoryInvitations implements InvitationStore {
       return Promise.resolve(false);
     row.acceptedAt = now;
     return Promise.resolve(true);
+  }
+}
+
+/** PatientEnrollment falsa: lo que clinical respondería, configurable por prueba. */
+export class FakeEnrollment implements PatientEnrollment {
+  previewValue: PatientInvitationPreview | null = null;
+  enrollResult: Result<void, DomainError> = { ok: true, value: undefined };
+  readonly enrolled: Parameters<PatientEnrollment['enroll']>[0][] = [];
+  patient: { patientId: string; organizationId: OrganizationId; hasAccess: boolean } | null = null;
+  preview() {
+    return Promise.resolve(this.previewValue);
+  }
+  consentTexts(purposes: readonly PatientAccessPurpose[]) {
+    return Promise.resolve(
+      purposes.map((purpose) => ({
+        id: `doc-${purpose}`,
+        purpose,
+        version: '0.1-provisional',
+        bodyMarkdown: purpose,
+      })),
+    );
+  }
+  enroll(input: Parameters<PatientEnrollment['enroll']>[0]) {
+    this.enrolled.push(input);
+    return Promise.resolve(this.enrollResult);
+  }
+  patientOfAccount() {
+    return Promise.resolve(this.patient);
   }
 }

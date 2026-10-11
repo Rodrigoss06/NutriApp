@@ -48,11 +48,24 @@ export function invitationMail(
   role: string,
   link: string,
   expiresAt: Date,
+  timeZone = 'America/Lima',
 ): MailMessage {
-  const until = expiresAt.toLocaleDateString('es-PE', {
-    dateStyle: 'long',
-    timeZone: 'America/Lima',
-  });
+  const until = expiresAt.toLocaleDateString('es-PE', { dateStyle: 'long', timeZone });
+  if (role === 'PATIENT') {
+    return {
+      to,
+      subject: `Tu acceso a la app de ${organizationName}`,
+      text: [
+        'Hola:',
+        '',
+        `${organizationName} te invita a usar la app para ver tu plan y registrar tu día. Abre este enlace para crear tu contraseña:`,
+        link,
+        '',
+        `El enlace vale hasta el ${until} y solo funciona una vez. Nadie del equipo conoce tu contraseña.`,
+        'Si no esperabas este correo, ignóralo.',
+      ].join('\n'),
+    };
+  }
   return {
     to,
     subject: `Te invitaron a ${organizationName}`,

@@ -124,6 +124,7 @@ export class IamMailConsumer implements EventConsumer, OnModuleInit {
         invitation.role,
         `${this.#appUrl}/invitacion#${token}`,
         invitation.expiresAt,
+        organization.timezone,
       ),
     );
   }

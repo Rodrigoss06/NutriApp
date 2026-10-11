@@ -4,7 +4,14 @@ import { hash } from '@node-rs/argon2';
 import request from 'supertest';
 import type { App } from 'supertest/types.js';
 import { AppModule } from '../../../src/app.module.js';
-import { configureHttp, MAILER, type MailMessage } from '../../../src/platform/index.js';
+import {
+  configureHttp,
+  ConsumerRegistry,
+  ConsumerRunner,
+  MAILER,
+  type MailMessage,
+  type OutboxEnvelope,
+} from '../../../src/platform/index.js';
 import { id, pool } from './database.js';
 
 /**
@@ -48,6 +55,55 @@ export class ApiHarness {
     this.app = moduleRef.createNestApplication({ logger: false });
     configureHttp(this.app);
     await this.app.init();
+  }
+
+  /**
+   * Entrega al consumidor los eventos pendientes del outbox, como el worker (contexto SYSTEM del evento). Los ya
+   * procesados, también los de otros archivos de prueba, quedan como duplicados en platform.processed_event.
+   */
+  async deliver(consumerName: string): Promise<void> {
+    const consumer = this.app
+      .get(ConsumerRegistry)
+      .all()
+      .find((c) => c.name === consumerName);
+    if (!consumer) throw new Error(`Falta el consumidor ${consumerName}`);
+    const runner = this.app.get(ConsumerRunner);
+    const { rows } = await pool('owner').query<{
+      id: string;
+      organization_id: string | null;
+      aggregate_type: string;
+      aggregate_id: string;
+      event_type: string;
+      payload: unknown;
+      metadata: OutboxEnvelope['metadata'];
+      occurred_at: Date;
+    }>(
+      `SELECT id, organization_id, aggregate_type, aggregate_id, event_type, payload, metadata, occurred_at
+       FROM platform.outbox_event WHERE event_type = ANY($1) ORDER BY id`,
+      [consumer.eventTypes],
+    );
+    for (const row of rows) {
+      await runner.process(consumer, {
+        eventId: row.id,
+        type: row.event_type,
+        version: 1,
+        occurredAt: row.occurred_at.toISOString(),
+        organizationId: row.organization_id,
+        aggregateType: row.aggregate_type,
+        aggregateId: row.aggregate_id,
+        payload: row.payload,
+        metadata: row.metadata,
+      });
+    }
+  }
+
+  /** El token del último correo de invitación a ese correo: el E2E lo lee de Mailpit; aquí, del mailer falso. */
+  async invitationTokenFor(email: string): Promise<string> {
+    await this.deliver('iam.mailer');
+    const message = this.sent.filter((m) => m.to === email).at(-1);
+    const token = /\/invitacion#([\w-]+)/.exec(message?.text ?? '')?.[1];
+    if (!token) throw new Error(`Sin correo de invitación para ${email}`);
+    return token;
   }
 
   stop(): Promise<void> {

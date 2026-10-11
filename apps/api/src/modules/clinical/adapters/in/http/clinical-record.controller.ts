@@ -1,0 +1,334 @@
+import {
+  Body,
+  Controller,
+  Get,
+  Header,
+  HttpCode,
+  HttpStatus,
+  Param,
+  ParseUUIDPipe,
+  Patch,
+  Post,
+  Put,
+  Query,
+  Req,
+} from '@nestjs/common';
+import {
+  clinicalHistoryAnswersV1Schema,
+  createClinicalNoteSchema,
+  createConditionSchema,
+  createGoalSchema,
+  invitePatientSchema,
+  saveClinicalHistorySchema,
+  timelineQuerySchema,
+  updateConditionSchema,
+  updateGoalSchema,
+  type ClinicalHistoryResponse,
+  type ClinicalNoteListResponse,
+  type ConditionListResponse,
+  type GoalListResponse,
+  type TimelineResponse,
+} from '@nutricoach/contracts';
+import { isErr, type DomainError, type SecurityContext } from '@nutricoach/shared-kernel';
+import {
+  parseBody,
+  problemFromDomainError,
+  ProblemException,
+  RequirePermission,
+  type ContextualRequest,
+} from '../../../../../platform/index.js';
+import { ACCOUNT_EXISTS_FOR_PATIENT, EMAIL_HAS_PENDING_INVITATION } from '../../../../iam/index.js';
+import { ClinicalRecordCommands } from '../../../application/commands/clinical-record.commands.js';
+import { PatientInvitationCommands } from '../../../application/commands/patient-invitation.commands.js';
+import { ClinicalRecordQueries } from '../../../application/queries/clinical-record.queries.js';
+import {
+  CONDITION_NOT_FOUND,
+  GOAL_NOT_FOUND,
+  HISTORY_REVISION_CONFLICT,
+  NOTE_NOT_FOUND,
+  PATIENT_ALREADY_LINKED,
+  PATIENT_ARCHIVED,
+  PATIENT_EMAIL_REQUIRED,
+  PATIENT_NOT_FOUND,
+  WRITE_ACCESS_REQUIRED,
+} from '../../../domain/clinical-rules.js';
+
+const STATUS_BY_CODE: Readonly<Record<string, number>> = {
+  [PATIENT_NOT_FOUND.code]: 404,
+  [CONDITION_NOT_FOUND.code]: 404,
+  [GOAL_NOT_FOUND.code]: 404,
+  [NOTE_NOT_FOUND.code]: 404,
+  [HISTORY_REVISION_CONFLICT.code]: 409,
+  [PATIENT_ARCHIVED.code]: 409,
+  [PATIENT_ALREADY_LINKED.code]: 409,
+  [ACCOUNT_EXISTS_FOR_PATIENT.code]: 409,
+  [EMAIL_HAS_PENDING_INVITATION.code]: 409,
+  [WRITE_ACCESS_REQUIRED.code]: 403,
+  // Regla del caso de uso sin código RN: también es 422 (06 §5).
+  [PATIENT_EMAIL_REQUIRED.code]: 422,
+};
+
+const problem = (error: DomainError) => problemFromDomainError(error, STATUS_BY_CODE[error.code]);
+const notFound = () =>
+  new ProblemException(404, { title: 'No encontrado.', code: PATIENT_NOT_FOUND.code });
+
+const contextOf = (request: ContextualRequest): SecurityContext => {
+  if (!request.securityContext?.organizationId) {
+    throw new ProblemException(403, {
+      title: 'Elige con qué organización trabajas.',
+      code: 'NC-TEN-011',
+    });
+  }
+  return request.securityContext;
+};
+
+/**
+ * Expediente del paciente (RF-09, RF-10): historia clínica versionada, condiciones, objetivos, notas, línea de tiempo
+ * e invitación a la app (RN-A06). Escribir datos de salud exige HEALTH_DATA (RN-B01); leer deja un READ (RN-B03).
+ */
+@Controller('patients/:patientId')
+export class ClinicalRecordController {
+  constructor(
+    private readonly commands: ClinicalRecordCommands,
+    private readonly queries: ClinicalRecordQueries,
+    private readonly invitations: PatientInvitationCommands,
+  ) {}
+
+  @Get('clinical-history')
+  @RequirePermission('patients.read')
+  @Header('Cache-Control', 'no-store')
+  async history(
+    @Req() request: ContextualRequest,
+    @Param('patientId', ParseUUIDPipe) patientId: string,
+  ): Promise<ClinicalHistoryResponse> {
+    const view = await this.queries.history(contextOf(request), patientId);
+    if (!view) throw notFound();
+    return {
+      current: view.current && {
+        revision: view.current.revision,
+        formCode: view.current.formCode,
+        formVersion: view.current.formVersion,
+        // Las respuestas se guardaron validadas con este mismo esquema.
+        answers: clinicalHistoryAnswersV1Schema.parse(view.current.answers),
+        recordedAt: view.current.recordedAt.toISOString(),
+        recordedBy: view.current.recordedBy,
+      },
+      revisions: view.revisions.map((r) => ({
+        revision: r.revision,
+        recordedAt: r.recordedAt.toISOString(),
+        recordedBy: r.recordedBy,
+      })),
+    };
+  }
+
+  /** Cada guardado es una revisión nueva sobre expectedRevision; si alguien guardó antes, 409. */
+  @Put('clinical-history')
+  @RequirePermission('patients.write')
+  async saveHistory(
+    @Req() request: ContextualRequest,
+    @Param('patientId', ParseUUIDPipe) patientId: string,
+    @Body() body: unknown,
+  ): Promise<{ revision: number }> {
+    const input = parseBody(saveClinicalHistorySchema, body);
+    const result = await this.commands.saveHistory(
+      contextOf(request),
+      patientId,
+      input.expectedRevision,
+      input.answers,
+    );
+    if (isErr(result)) throw problem(result.error);
+    return result.value;
+  }
+
+  @Get('conditions')
+  @RequirePermission('patients.read')
+  async conditions(
+    @Req() request: ContextualRequest,
+    @Param('patientId', ParseUUIDPipe) patientId: string,
+  ): Promise<ConditionListResponse> {
+    const conditions = await this.queries.conditions(contextOf(request), patientId);
+    if (!conditions) throw notFound();
+    return {
+      conditions: conditions.map((c) => ({
+        id: c.id,
+        kind: c.kind,
+        label: c.label,
+        codeSystem: c.codeSystem,
+        code: c.code,
+        status: c.status,
+        since: c.since,
+        notes: c.notes,
+        createdAt: c.createdAt.toISOString(),
+      })),
+    };
+  }
+
+  @Post('conditions')
+  @RequirePermission('patients.write')
+  async addCondition(
+    @Req() request: ContextualRequest,
+    @Param('patientId', ParseUUIDPipe) patientId: string,
+    @Body() body: unknown,
+  ): Promise<{ id: string }> {
+    const result = await this.commands.addCondition(
+      contextOf(request),
+      patientId,
+      parseBody(createConditionSchema, body),
+    );
+    if (isErr(result)) throw problem(result.error);
+    return result.value;
+  }
+
+  @Patch('conditions/:conditionId')
+  @RequirePermission('patients.write')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  async updateCondition(
+    @Req() request: ContextualRequest,
+    @Param('patientId', ParseUUIDPipe) patientId: string,
+    @Param('conditionId', ParseUUIDPipe) conditionId: string,
+    @Body() body: unknown,
+  ): Promise<void> {
+    const result = await this.commands.updateCondition(
+      contextOf(request),
+      patientId,
+      conditionId,
+      parseBody(updateConditionSchema, body),
+    );
+    if (isErr(result)) throw problem(result.error);
+  }
+
+  @Get('goals')
+  @RequirePermission('patients.read')
+  async goals(
+    @Req() request: ContextualRequest,
+    @Param('patientId', ParseUUIDPipe) patientId: string,
+  ): Promise<GoalListResponse> {
+    const goals = await this.queries.goals(contextOf(request), patientId);
+    if (!goals) throw notFound();
+    return {
+      goals: goals.map((g) => ({
+        id: g.id,
+        kind: g.kind,
+        metricCode: g.metricCode,
+        targetValue: g.targetValue,
+        targetDate: g.targetDate,
+        status: g.status,
+        notes: g.notes,
+        createdAt: g.createdAt.toISOString(),
+      })),
+    };
+  }
+
+  @Post('goals')
+  @RequirePermission('patients.write')
+  async addGoal(
+    @Req() request: ContextualRequest,
+    @Param('patientId', ParseUUIDPipe) patientId: string,
+    @Body() body: unknown,
+  ): Promise<{ id: string }> {
+    const result = await this.commands.addGoal(
+      contextOf(request),
+      patientId,
+      parseBody(createGoalSchema, body),
+    );
+    if (isErr(result)) throw problem(result.error);
+    return result.value;
+  }
+
+  @Patch('goals/:goalId')
+  @RequirePermission('patients.write')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  async updateGoal(
+    @Req() request: ContextualRequest,
+    @Param('patientId', ParseUUIDPipe) patientId: string,
+    @Param('goalId', ParseUUIDPipe) goalId: string,
+    @Body() body: unknown,
+  ): Promise<void> {
+    const result = await this.commands.updateGoal(
+      contextOf(request),
+      patientId,
+      goalId,
+      parseBody(updateGoalSchema, body),
+    );
+    if (isErr(result)) throw problem(result.error);
+  }
+
+  @Get('notes')
+  @RequirePermission('patients.read')
+  async notes(
+    @Req() request: ContextualRequest,
+    @Param('patientId', ParseUUIDPipe) patientId: string,
+  ): Promise<ClinicalNoteListResponse> {
+    const notes = await this.queries.notes(contextOf(request), patientId);
+    if (!notes) throw notFound();
+    return {
+      notes: notes.map((n) => ({
+        id: n.id,
+        authorMemberId: n.authorMemberId,
+        body: n.body,
+        visibility: n.visibility,
+        amendsNoteId: n.amendsNoteId,
+        createdAt: n.createdAt.toISOString(),
+      })),
+    };
+  }
+
+  @Post('notes')
+  @RequirePermission('patients.write')
+  async addNote(
+    @Req() request: ContextualRequest,
+    @Param('patientId', ParseUUIDPipe) patientId: string,
+    @Body() body: unknown,
+  ): Promise<{ id: string }> {
+    const result = await this.commands.addNote(
+      contextOf(request),
+      patientId,
+      parseBody(createClinicalNoteSchema, body),
+    );
+    if (isErr(result)) throw problem(result.error);
+    return result.value;
+  }
+
+  @Get('timeline')
+  @RequirePermission('patients.read')
+  @Header('Cache-Control', 'no-store')
+  async timeline(
+    @Req() request: ContextualRequest,
+    @Param('patientId', ParseUUIDPipe) patientId: string,
+    @Query() query: unknown,
+  ): Promise<TimelineResponse> {
+    const page = await this.queries.timeline(
+      contextOf(request),
+      patientId,
+      parseBody(timelineQuerySchema, query),
+    );
+    if (!page) throw notFound();
+    return {
+      items: page.items.map((i) => ({
+        kind: i.kind,
+        occurredAt: i.occurredAt.toISOString(),
+        refId: i.refId,
+        label: i.label,
+        detail: i.detail,
+      })),
+      nextCursor: page.nextCursor,
+    };
+  }
+
+  /** Invitar (o reenviar) el acceso a la app: el correo lo envía el worker con el enlace de un solo uso. */
+  @Post('invitation')
+  @RequirePermission('patients.write')
+  async invite(
+    @Req() request: ContextualRequest,
+    @Param('patientId', ParseUUIDPipe) patientId: string,
+    @Body() body: unknown,
+  ): Promise<{ id: string }> {
+    const result = await this.invitations.invite(
+      contextOf(request),
+      patientId,
+      parseBody(invitePatientSchema, body ?? {}),
+    );
+    if (isErr(result)) throw problem(result.error);
+    return result.value;
+  }
+}

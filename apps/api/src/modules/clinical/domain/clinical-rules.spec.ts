@@ -3,6 +3,7 @@ import {
   ageYears,
   canManagePatient,
   canWriteClinical,
+  canWriteRecord,
   checkGrant,
   checkPopulation,
   isMinor,
@@ -73,7 +74,32 @@ describe('RN-A05 · quién gestiona y quién escribe', () => {
     expect(canWriteClinical({ role: 'ADMIN', memberId: 'x' }, team)).toBe(false);
     expect(canWriteClinical({ role: 'OWNER', memberId: 'x' }, team)).toBe(true);
   });
+  it('el expediente lo escribe solo el equipo con WRITE, también frente a OWNER', () => {
+    expect(canWriteRecord({ memberId: 'w' }, team)).toBe(true);
+    expect(canWriteRecord({ memberId: 'v' }, team)).toBe(false);
+    expect(canWriteRecord({ memberId: 'x' }, team)).toBe(false);
+    expect(canWriteRecord({ memberId: null }, team)).toBe(false);
+  });
   it('código correlativo', () => {
     expect(patientCode(123)).toBe('P-000123');
+  });
+});
+
+describe('RN-A06 · aceptar la invitación del paciente', () => {
+  it('solo pide lo que falta; exige APP_ACCESS y HEALTH_DATA; un menor no consiente desde la app', async () => {
+    const { checkAppEnrollment, pendingAppPurposes } = await import('./clinical-rules.js');
+    expect(pendingAppPurposes(['HEALTH_DATA'])).toEqual(['APP_ACCESS']);
+    expect(pendingAppPurposes(['HEALTH_DATA', 'APP_ACCESS'])).toEqual([]);
+    const pending = pendingAppPurposes([]);
+    expect(checkAppEnrollment({ pending, accepted: ['APP_ACCESS'], minor: false })?.code).toBe(
+      'NC-CLI-025',
+    );
+    expect(
+      checkAppEnrollment({ pending, accepted: ['APP_ACCESS', 'HEALTH_DATA'], minor: false }),
+    ).toBeNull();
+    expect(
+      checkAppEnrollment({ pending, accepted: ['APP_ACCESS', 'HEALTH_DATA'], minor: true })?.code,
+    ).toBe('NC-CLI-010');
+    expect(checkAppEnrollment({ pending: [], accepted: [], minor: true })).toBeNull();
   });
 });

@@ -2,9 +2,14 @@ import type { OrganizationId, UserId } from '@nutricoach/shared-kernel';
 import type {
   CareTeamAccess,
   CareTeamRole,
+  ConditionKind,
+  ConditionStatus,
   ConsentChannel,
   ConsentPurpose,
   DocumentType,
+  GoalKind,
+  GoalStatus,
+  NoteVisibility,
   PatientStatus,
   Population,
   Sex,
@@ -86,6 +91,29 @@ export interface PatientStore {
     addedBy: UserId,
   ): Promise<void>;
   removeCareTeamMember(patientId: string, memberId: string): Promise<boolean>;
+  /** Vincula la cuenta de la app solo si el paciente sigue activo y sin cuenta (UPDATE condicional). */
+  linkAccount(patientId: string, userId: UserId): Promise<boolean>;
+  /** Vista previa de una invitación pendiente por el hash del token (app.patient_invitation_preview). */
+  previewInvitation(tokenHash: Uint8Array): Promise<InvitationPreviewRecord | null>;
+  /** El paciente de la cuenta del contexto (app.patient_of_account). */
+  patientOfAccount(): Promise<{
+    patientId: string;
+    organizationId: OrganizationId;
+    hasAccess: boolean;
+  } | null>;
+  /** El código de los pacientes que el contexto ve (OWNER los ve a todos), para la auditoría. */
+  labels(patientIds: readonly string[]): Promise<readonly { id: string; code: string }[]>;
+}
+
+export interface InvitationPreviewRecord {
+  readonly patientId: string;
+  readonly organizationId: OrganizationId;
+  readonly firstName: string;
+  readonly birthDate: string;
+  readonly timezone: string;
+  readonly status: PatientStatus;
+  readonly linked: boolean;
+  readonly activePurposes: readonly ConsentPurpose[];
 }
 
 export interface ConsentDocumentRecord {
@@ -128,5 +156,118 @@ export interface ConsentStore {
   revoke(consentId: string, at: Date): Promise<boolean>;
 }
 
+export interface HistoryRevisionRecord {
+  readonly id: string;
+  readonly revision: number;
+  readonly formCode: string;
+  readonly formVersion: string;
+  readonly answers: unknown;
+  readonly recordedAt: Date;
+  readonly recordedBy: UserId;
+}
+
+export interface ConditionRecord {
+  readonly id: string;
+  readonly patientId: string;
+  readonly kind: ConditionKind;
+  readonly label: string;
+  readonly codeSystem: string | null;
+  readonly code: string | null;
+  readonly status: ConditionStatus;
+  readonly since: string | null;
+  readonly notes: string | null;
+  readonly createdAt: Date;
+}
+
+export interface GoalRecord {
+  readonly id: string;
+  readonly patientId: string;
+  readonly kind: GoalKind;
+  readonly metricCode: string | null;
+  readonly targetValue: number | null;
+  readonly targetDate: string | null;
+  readonly status: GoalStatus;
+  readonly notes: string | null;
+  readonly createdAt: Date;
+}
+
+export interface NoteRecord {
+  readonly id: string;
+  readonly patientId: string;
+  readonly authorMemberId: string;
+  readonly body: string;
+  readonly visibility: NoteVisibility;
+  readonly amendsNoteId: string | null;
+  readonly createdAt: Date;
+}
+
+export type TimelineKind =
+  | 'PATIENT_REGISTERED'
+  | 'CONSENT_GRANTED'
+  | 'CONSENT_REVOKED'
+  | 'HISTORY_REVISED'
+  | 'CONDITION_RECORDED'
+  | 'GOAL_RECORDED'
+  | 'NOTE_WRITTEN';
+
+export interface TimelineRecord {
+  readonly kind: TimelineKind;
+  readonly occurredAt: Date;
+  readonly refId: string;
+  readonly label: string;
+  readonly detail: string | null;
+}
+
+/**
+ * Historia clínica, condiciones, objetivos, notas y línea de tiempo (RF-09, RF-10), con la transacción de la
+ * UnitOfWork: la RLS aplica RN-A05 y las notas AUTHOR_ONLY.
+ */
+export interface ClinicalRecordStore {
+  /** Bloquea la ficha del paciente hasta el fin de la transacción: las revisiones de la historia van de a una. */
+  lockPatient(patientId: string): Promise<void>;
+  latestHistory(patientId: string): Promise<HistoryRevisionRecord | null>;
+  historyRevisions(
+    patientId: string,
+  ): Promise<readonly Omit<HistoryRevisionRecord, 'answers' | 'id' | 'formCode' | 'formVersion'>[]>;
+  insertHistory(revision: {
+    id: string;
+    organizationId: OrganizationId;
+    patientId: string;
+    revision: number;
+    formCode: string;
+    formVersion: string;
+    answers: unknown;
+    recordedBy: UserId;
+    recordedAt: Date;
+  }): Promise<void>;
+  conditions(patientId: string): Promise<readonly ConditionRecord[]>;
+  insertCondition(
+    condition: ConditionRecord & { organizationId: OrganizationId; createdBy: UserId },
+  ): Promise<void>;
+  updateCondition(
+    patientId: string,
+    conditionId: string,
+    changes: { status?: ConditionStatus; notes?: string | null },
+  ): Promise<boolean>;
+  goals(patientId: string): Promise<readonly GoalRecord[]>;
+  insertGoal(
+    goal: GoalRecord & { organizationId: OrganizationId; createdBy: UserId },
+  ): Promise<void>;
+  updateGoal(
+    patientId: string,
+    goalId: string,
+    changes: { status?: GoalStatus; notes?: string | null },
+  ): Promise<boolean>;
+  notes(patientId: string): Promise<readonly NoteRecord[]>;
+  findNote(patientId: string, noteId: string): Promise<NoteRecord | null>;
+  insertNote(note: NoteRecord & { organizationId: OrganizationId }): Promise<void>;
+  timeline(
+    patientId: string,
+    before: { occurredAt: Date; refId: string } | null,
+    limit: number,
+  ): Promise<readonly TimelineRecord[]>;
+}
+
 export const PATIENT_STORE = Symbol.for('nutricoach.clinical.PatientStore');
+export const CLINICAL_RECORD_STORE = Symbol.for('nutricoach.clinical.ClinicalRecordStore');
 export const CONSENT_STORE = Symbol.for('nutricoach.clinical.ConsentStore');

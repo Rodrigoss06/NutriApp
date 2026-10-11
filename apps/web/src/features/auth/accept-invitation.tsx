@@ -80,8 +80,17 @@ export function AcceptInvitation() {
         }),
       )}
     >
-      <Notice tone="info" title={`Te invitaron a ${invitation.organizationName}`}>
-        Como {ROLE_LABELS[invitation.role].toLowerCase()}.
+      <Notice
+        tone="info"
+        title={
+          invitation.role === 'PATIENT'
+            ? `Tu acceso a la app de ${invitation.organizationName}`
+            : `Te invitaron a ${invitation.organizationName}`
+        }
+      >
+        {invitation.role === 'PATIENT'
+          ? null
+          : `Como ${ROLE_LABELS[invitation.role].toLowerCase()}.`}
         {invitation.accountExists
           ? ' Ya tienes una cuenta con este correo: confirma con tu contraseña actual.'
           : ' Crea tu cuenta para aceptar.'}

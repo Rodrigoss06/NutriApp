@@ -11,6 +11,25 @@ export type ConsentPurpose =
   'HEALTH_DATA' | 'APP_ACCESS' | 'IMAGES' | 'ANONYMIZED_RESEARCH' | 'MARKETING';
 export type ConsentChannel = 'APP' | 'IN_PERSON_DIGITAL' | 'PAPER_SCANNED';
 export type ActorRole = 'OWNER' | 'ADMIN' | 'PROFESSIONAL';
+export type ConditionKind =
+  | 'DISEASE'
+  | 'ALLERGY'
+  | 'INTOLERANCE'
+  | 'MEDICATION'
+  | 'SUPPLEMENT'
+  | 'SURGERY'
+  | 'INJURY'
+  | 'OTHER';
+export type ConditionStatus = 'ACTIVE' | 'RESOLVED';
+export type GoalKind =
+  'FAT_LOSS' | 'MUSCLE_GAIN' | 'MAINTENANCE' | 'RECOMPOSITION' | 'PERFORMANCE' | 'HEALTH' | 'OTHER';
+export type GoalStatus = 'ACTIVE' | 'ACHIEVED' | 'ABANDONED';
+export type NoteVisibility = 'CARE_TEAM' | 'AUTHOR_ONLY';
+/** Las finalidades sin las que la app del paciente no funciona: obligatorias al aceptar la invitación. */
+export const APP_PURPOSES = [
+  'APP_ACCESS',
+  'HEALTH_DATA',
+] as const satisfies readonly ConsentPurpose[];
 
 export const OBESITY_NEEDS_HEALTH_DATA = domainError({
   code: 'NC-CLI-001',
@@ -89,6 +108,28 @@ export const PATIENT_ARCHIVED = domainError({
   message: 'El paciente está archivado: reactívalo para registrar algo nuevo.',
 });
 
+export const HISTORY_REVISION_CONFLICT = domainError({
+  code: 'NC-CLI-019',
+  message: 'Alguien guardó la historia clínica mientras la editabas. Vuelve a cargarla.',
+});
+export const CONDITION_NOT_FOUND = domainError({ code: 'NC-CLI-020', message: 'No encontrado.' });
+export const GOAL_NOT_FOUND = domainError({ code: 'NC-CLI-021', message: 'No encontrado.' });
+export const NOTE_NOT_FOUND = domainError({ code: 'NC-CLI-022', message: 'No encontrado.' });
+export const PATIENT_ALREADY_LINKED = domainError({
+  code: 'NC-CLI-023',
+  message: 'El paciente ya tiene su acceso a la app.',
+});
+export const PATIENT_EMAIL_REQUIRED = domainError({
+  code: 'NC-CLI-024',
+  message: 'Indica el correo del paciente para invitarlo.',
+});
+export const APP_CONSENTS_REQUIRED = domainError({
+  code: 'NC-CLI-025',
+  rule: 'RN-B01',
+  message:
+    'Para crear tu cuenta acepta cada finalidad: el uso de la app y el tratamiento de tus datos de salud.',
+});
+
 /** DNI: 8 dígitos. Los demás: letras y dígitos sin espacios ni guiones, de 4 a 20. En mayúsculas. */
 export function normalizeDocument(type: DocumentType, number: string): string | null {
   const compact = number.replace(/[\s.-]/g, '').toUpperCase();
@@ -149,5 +190,43 @@ export function canWriteClinical(
   );
 }
 
+/**
+ * Escribir el expediente (historia, condiciones, objetivos y notas): solo el equipo con acceso WRITE. OWNER ve a todos
+ * (RN-A05), pero lo clínico lo escribe quien atiende: si el dueño atiende, está en el equipo.
+ */
+export function canWriteRecord(
+  actor: { memberId: string | null },
+  team: readonly { memberId: string; access: CareTeamAccess }[],
+): boolean {
+  return (
+    actor.memberId !== null &&
+    team.some((m) => m.memberId === actor.memberId && m.access === 'WRITE')
+  );
+}
+
 /** Correlativo legible por organización: P-000123. */
 export const patientCode = (n: number): string => `P-${String(n).padStart(6, '0')}`;
+
+/** APP_ACCESS y HEALTH_DATA que aún no están vigentes: lo que se pide al aceptar la invitación, sin repetir. */
+export function pendingAppPurposes(active: readonly ConsentPurpose[]): ConsentPurpose[] {
+  return APP_PURPOSES.filter((purpose) => !active.includes(purpose));
+}
+
+/**
+ * Aceptar la invitación del paciente (RN-A06, RN-B01): APP_ACCESS y HEALTH_DATA son obligatorias, cada una aceptada
+ * por separado. Un menor no consiente desde la app: solo entra si ambas ya se registraron en consulta (⚠️).
+ */
+export function checkAppEnrollment(input: {
+  pending: readonly ConsentPurpose[];
+  accepted: readonly ConsentPurpose[];
+  minor: boolean;
+}): DomainError | null {
+  if (input.pending.length === 0) return null;
+  if (input.minor) return MINOR_CONSENT_IN_PERSON;
+  return input.pending.every((purpose) => input.accepted.includes(purpose))
+    ? null
+    : APP_CONSENTS_REQUIRED;
+}
+
+/** Formulario de la historia clínica vigente: v1 de texto libre por bloque (⚠️ provisional). */
+export const HISTORY_FORM = { code: 'ANAMNESIS', version: '1' } as const;

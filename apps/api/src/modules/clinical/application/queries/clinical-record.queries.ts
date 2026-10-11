@@ -1,0 +1,127 @@
+import { Inject, Injectable } from '@nestjs/common';
+import {
+  AUDIT_PORT,
+  UNIT_OF_WORK,
+  type AuditPort,
+  type Id,
+  type PatientId,
+  type SecurityContext,
+  type UnitOfWork,
+  type UserId,
+} from '@nutricoach/shared-kernel';
+import {
+  CLINICAL_RECORD_STORE,
+  PATIENT_STORE,
+  type ClinicalRecordStore,
+  type ConditionRecord,
+  type GoalRecord,
+  type HistoryRevisionRecord,
+  type NoteRecord,
+  type PatientStore,
+  type TimelineRecord,
+} from '../ports/clinical.ports.js';
+
+export interface HistoryView {
+  readonly current: HistoryRevisionRecord | null;
+  readonly revisions: readonly { revision: number; recordedAt: Date; recordedBy: UserId }[];
+}
+
+export interface TimelinePage {
+  readonly items: readonly TimelineRecord[];
+  readonly nextCursor: string | null;
+}
+
+const encodeCursor = (item: TimelineRecord): string =>
+  Buffer.from(JSON.stringify([item.occurredAt.toISOString(), item.refId])).toString('base64url');
+function decodeCursor(cursor: string | undefined): { occurredAt: Date; refId: string } | null {
+  if (!cursor) return null;
+  try {
+    const [at, refId] = JSON.parse(Buffer.from(cursor, 'base64url').toString()) as [
+      unknown,
+      unknown,
+    ];
+    const occurredAt = typeof at === 'string' ? new Date(at) : null;
+    return occurredAt && !Number.isNaN(occurredAt.getTime()) && typeof refId === 'string'
+      ? { occurredAt, refId }
+      : null;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Lecturas del expediente (RF-09, RF-10). La RLS deja ver solo lo que RN-A05 y AUTHOR_ONLY permiten. Toda lectura
+ * de datos clínicos deja un READ en la auditoría (RN-B03); si no se ve al paciente, no hay nada que auditar.
+ */
+@Injectable()
+export class ClinicalRecordQueries {
+  constructor(
+    @Inject(UNIT_OF_WORK) private readonly uow: UnitOfWork,
+    @Inject(AUDIT_PORT) private readonly audit: AuditPort,
+    @Inject(PATIENT_STORE) private readonly patients: PatientStore,
+    @Inject(CLINICAL_RECORD_STORE) private readonly records: ClinicalRecordStore,
+  ) {}
+
+  history(context: SecurityContext, patientId: string): Promise<HistoryView | null> {
+    return this.#read(context, patientId, 'clinical.clinical_history', async () => ({
+      current: await this.records.latestHistory(patientId),
+      revisions: await this.records.historyRevisions(patientId),
+    }));
+  }
+
+  conditions(
+    context: SecurityContext,
+    patientId: string,
+  ): Promise<readonly ConditionRecord[] | null> {
+    return this.#read(context, patientId, 'clinical.condition', () =>
+      this.records.conditions(patientId),
+    );
+  }
+
+  goals(context: SecurityContext, patientId: string): Promise<readonly GoalRecord[] | null> {
+    return this.#read(context, patientId, 'clinical.goal', () => this.records.goals(patientId));
+  }
+
+  notes(context: SecurityContext, patientId: string): Promise<readonly NoteRecord[] | null> {
+    return this.#read(context, patientId, 'clinical.clinical_note', () =>
+      this.records.notes(patientId),
+    );
+  }
+
+  /** La línea de tiempo del expediente, de lo más reciente a lo más antiguo. */
+  timeline(
+    context: SecurityContext,
+    patientId: string,
+    params: { cursor?: string | undefined; limit: number },
+  ): Promise<TimelinePage | null> {
+    return this.#read(context, patientId, 'clinical.timeline', async () => {
+      const rows = await this.records.timeline(
+        patientId,
+        decodeCursor(params.cursor),
+        params.limit + 1,
+      );
+      const items = rows.slice(0, params.limit);
+      const last = items.at(-1);
+      return { items, nextCursor: rows.length > params.limit && last ? encodeCursor(last) : null };
+    });
+  }
+
+  async #read<T>(
+    context: SecurityContext,
+    patientId: string,
+    resourceType: string,
+    work: () => Promise<T>,
+  ): Promise<T | null> {
+    const result = await this.uow.query(context, async () =>
+      (await this.patients.find(patientId)) ? { value: await work() } : null,
+    );
+    if (!result) return null;
+    await this.audit.record(context, {
+      action: 'READ',
+      resourceType,
+      resourceId: patientId as Id<string>,
+      patientId: patientId as PatientId,
+    });
+    return result.value;
+  }
+}
