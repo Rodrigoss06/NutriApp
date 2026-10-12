@@ -15,6 +15,8 @@ export const PERMISSIONS = {
   /** Pacientes (RF-08): la RLS decide a quién se ve (RN-A05); el caso de uso, quién escribe o gestiona. */
   'patients.read': ['OWNER', 'ADMIN', 'PROFESSIONAL'],
   'patients.write': ['OWNER', 'ADMIN', 'PROFESSIONAL'],
+  /** La auditoría de la organización la consulta solo el dueño (RF-06). */
+  'audit.read': ['OWNER'],
   /** El perfil profesional propio: profesión, colegiatura y título. */
   'profile.self': ['OWNER', 'ADMIN', 'PROFESSIONAL'],
 } as const satisfies Record<string, readonly MemberRole[]>;

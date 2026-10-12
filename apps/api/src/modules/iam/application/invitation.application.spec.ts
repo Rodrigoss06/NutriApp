@@ -13,9 +13,11 @@ import type { TenancyApi } from '../../tenancy/index.js';
 import { ActiveOrganizationHandler } from './commands/active-organization.handler.js';
 import { InvitationHandlers } from './commands/invitation.handlers.js';
 import { PasswordHandlers } from './commands/password.handlers.js';
+import { PatientInvitationHandlers } from './commands/patient-invitation.handlers.js';
 import { IamApi } from './iam-api.js';
 import {
   FakeAudit,
+  FakeEnrollment,
   FakeClock,
   fakeCommon,
   fakeEncryption,
@@ -63,6 +65,24 @@ const tenancy = () =>
     },
   }) as unknown as TenancyApi;
 
+const patientHandlers = () =>
+  new PatientInvitationHandlers(
+    uow,
+    clock,
+    fakeIds,
+    outbox,
+    new FakeAudit(),
+    fakeEncryption,
+    invitations,
+    accounts,
+    sessions,
+    hasher,
+    fakeCommon(),
+    tokens,
+    tenancy(),
+    new FakeEnrollment(),
+  );
+
 const handlers = () =>
   new InvitationHandlers(
     uow,
@@ -78,6 +98,7 @@ const handlers = () =>
     fakeCommon(),
     tokens,
     tenancy(),
+    patientHandlers(),
   );
 
 const owner: SecurityContext = {
@@ -91,6 +112,7 @@ const accept = (token: string, extra: { password?: string; displayName?: string 
     token,
     password: extra.password ?? PASSWORD,
     displayName: extra.displayName,
+    acceptedConsentDocumentIds: [],
     currentTokenHash: null,
     ip: null,
     userAgent: null,
@@ -163,6 +185,21 @@ describe('RF-01 · invitar', () => {
     expect(outbox.events.filter((e) => e.type === 'iam.invitation.revoked')).toHaveLength(1);
   });
 
+  it('RN-A06 · la invitación pendiente de un paciente no se pisa con una de staff (409)', async () => {
+    await invitations.create({
+      id: 'inv-paciente',
+      organizationId: ORG,
+      email: 'familia@demo.test',
+      role: 'PATIENT',
+      patientId: 'paciente-1',
+      tokenHash: new Uint8Array([7]),
+      expiresAt: new Date(clock.now().getTime() + 60_000),
+    });
+    const staff = await handlers().invite(owner, { email: 'familia@demo.test', role: 'ADMIN' });
+    expect(isErr(staff) && staff.error.code).toBe('NC-IAM-045');
+    expect(invitations.rows.get('inv-paciente')?.revokedAt).toBeNull();
+  });
+
   it('reenviar y revocar: solo invitaciones pendientes de staff de la organización', async () => {
     const first = await handlers().invite(owner, { email: 'a@demo.test', role: 'PROFESSIONAL' });
     if (!first.ok) throw new Error('sin invitación');
@@ -194,6 +231,9 @@ describe('RF-01 · abrir y aceptar', () => {
       email: 'nueva@demo.test',
       role: 'PROFESSIONAL',
       accountExists: false,
+      consents: [],
+      needsGuardianConsent: false,
+      firstName: null,
     });
     const noName = await accept(token);
     expect(isErr(noName) && noName.error.code).toBe('NC-IAM-042');
@@ -313,7 +353,7 @@ describe('IamApi · primer administrador de plataforma', () => {
       fakeCommon(),
       tokens,
     );
-    const api = new IamApi(handlers(), passwords);
+    const api = new IamApi(handlers(), patientHandlers(), passwords, accounts);
     expect(isOk(await api.createPlatformAdmin('Admin@Demo.test', 'Admin'))).toBe(true);
     const account = await accounts.findByEmail('admin@demo.test');
     expect(account).toMatchObject({ isPlatformAdmin: true, passwordHash: null, status: 'ACTIVE' });

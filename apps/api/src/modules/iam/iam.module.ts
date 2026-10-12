@@ -11,6 +11,7 @@ import { AuthenticateSessionHandler } from './application/commands/authenticate-
 import { EndSessionsHandler } from './application/commands/end-sessions.handler.js';
 import { InvitationHandlers } from './application/commands/invitation.handlers.js';
 import { LoginHandler } from './application/commands/login.handler.js';
+import { PatientInvitationHandlers } from './application/commands/patient-invitation.handlers.js';
 import { PasswordHandlers } from './application/commands/password.handlers.js';
 import { UpdateAccountHandler } from './application/commands/update-account.handler.js';
 import {
@@ -27,6 +28,7 @@ import {
 import { IamApi } from './application/iam-api.js';
 import { AccountQueries } from './application/queries/account.queries.js';
 import { IamMailConsumer } from './adapters/in/events/iam-mail.consumer.js';
+import { PatientSessionsConsumer } from './adapters/in/events/patient-sessions.consumer.js';
 import { AccountController } from './adapters/in/http/account.controller.js';
 import { AuthController } from './adapters/in/http/auth.controller.js';
 import {
@@ -86,10 +88,12 @@ function membershipDirectory(directory?: TenantDirectory): MembershipDirectory {
     PasswordHandlers,
     UpdateAccountHandler,
     InvitationHandlers,
+    PatientInvitationHandlers,
     ActiveOrganizationHandler,
     IamApi,
     AccountQueries,
     IamMailConsumer,
+    PatientSessionsConsumer,
     { provide: ACCOUNT_STORE, useClass: PrismaAccountStore },
     { provide: SESSION_STORE, useClass: PrismaSessionStore },
     { provide: PASSWORD_RESET_STORE, useClass: PrismaPasswordResetStore },

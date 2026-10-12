@@ -36,6 +36,11 @@ export class ClinicalApi {
       : err(HEALTH_DATA_REQUIRED);
   }
 
+  /** Códigos legibles (P-000123) de los pacientes que el contexto ve: la auditoría los muestra (RF-06). */
+  async patientCodes(patientIds: readonly string[]): Promise<ReadonlyMap<string, string>> {
+    return new Map((await this.patients.labels(patientIds)).map((p) => [p.id, p.code]));
+  }
+
   /** Activos de la organización del contexto (RN-A03), para el uso del cupo en tenancy. */
   countActivePatients(): Promise<number> {
     return this.patients.countActivePatients();

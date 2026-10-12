@@ -23,12 +23,14 @@ import {
   ALREADY_IN_STATUS,
   canManagePatient,
   canWriteClinical,
+  canWriteRecord,
   CANNOT_REMOVE_RESPONSIBLE,
   checkPopulation,
   DOCUMENT_TAKEN,
   INVALID_DOCUMENT,
   normalizeDocument,
   NOT_RESPONSIBLE,
+  OBESITY_NEEDS_CARE_TEAM,
   PATIENT_NOT_FOUND,
   patientCode,
   RESPONSIBLE_NOT_MEMBER,
@@ -218,6 +220,11 @@ export class PatientCommands {
             }),
       };
       if (change.population !== undefined) {
+        // OBESITY es un dato de salud: ponerla o quitarla es del equipo con WRITE, también frente a OWNER.
+        const touchesObesity =
+          change.population !== patient.population &&
+          (change.population === 'OBESITY' || patient.population === 'OBESITY');
+        if (touchesObesity && !canWriteRecord(actor, team)) return err(OBESITY_NEEDS_CARE_TEAM);
         const hasHealthData = (await this.consents.active(patientId, 'HEALTH_DATA')) !== null;
         const population = checkPopulation(change.population, hasHealthData);
         if (population) return err(population);

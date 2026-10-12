@@ -330,6 +330,7 @@ describe('RF-02 y RF-03 · consultas', () => {
     expect(bare.readOnlyFrom).toBeNull();
     expect(await queries().settings(contextFor(org, 'OWNER'))).toEqual({
       'invitation.ttl_days': 7,
+      'patient_invitation.ttl_days': 7,
       'subscription.grace_days': 7,
     });
     expect((await queries().organization(contextFor(org, 'OWNER')))?.id).toBe(org);

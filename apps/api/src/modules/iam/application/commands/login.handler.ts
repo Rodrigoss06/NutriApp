@@ -3,6 +3,7 @@ import {
   anonymousContext,
   AUDIT_PORT,
   CLOCK,
+  domainError,
   err,
   ID_GENERATOR,
   ok,
@@ -24,14 +25,26 @@ import {
   ACCOUNT_STORE,
   MEMBERSHIP_DIRECTORY,
   PASSWORD_HASHER,
+  PATIENT_ENROLLMENT,
   SECRET_TOKENS,
   SESSION_STORE,
   type AccountStore,
   type MembershipDirectory,
   type PasswordHasher,
+  type PatientEnrollment,
   type SecretTokens,
   type SessionStore,
 } from '../ports/iam.ports.js';
+
+/**
+ * La cuenta de un paciente sin APP_ACCESS o HEALTH_DATA vigentes, o archivado (RN-B02). Ya verificó su contraseña:
+ * decirle por qué no revela nada a un tercero.
+ */
+export const PATIENT_ACCESS_SUSPENDED = domainError({
+  code: 'NC-IAM-046',
+  rule: 'RN-B02',
+  message: 'Tu acceso a la app está suspendido. Habla con tu profesional.',
+});
 
 export interface LoginCommand {
   readonly email: string;
@@ -67,6 +80,7 @@ export class LoginHandler {
     @Inject(PASSWORD_HASHER) private readonly hasher: PasswordHasher,
     @Inject(SECRET_TOKENS) private readonly tokens: SecretTokens,
     @Inject(MEMBERSHIP_DIRECTORY) private readonly memberships: MembershipDirectory,
+    @Inject(PATIENT_ENROLLMENT) private readonly enrollment: PatientEnrollment,
   ) {}
 
   async execute(command: LoginCommand): Promise<Result<OpenedSession, DomainError>> {
@@ -91,12 +105,24 @@ export class LoginHandler {
       return err(INVALID_CREDENTIALS);
     }
 
-    const kind: SessionKind = account.isPlatformAdmin ? 'PLATFORM' : 'STAFF';
+    // Una cuenta vinculada a un paciente entra a la app; las demás, al panel (o al panel interno).
+    const patient = account.isPlatformAdmin
+      ? null
+      : await this.uow.query(accountContext(account.id), () => this.enrollment.patientOfAccount());
+    if (patient && !patient.hasAccess) {
+      await this.#failed(account.id);
+      return err(PATIENT_ACCESS_SUSPENDED);
+    }
+    const kind: SessionKind = account.isPlatformAdmin ? 'PLATFORM' : patient ? 'PATIENT' : 'STAFF';
     const active =
       kind === 'STAFF'
         ? (await this.memberships.membershipsOf(account.id)).filter((m) => m.active)
         : [];
-    const activeOrganizationId = active.length === 1 ? (active[0]?.organizationId ?? null) : null;
+    const activeOrganizationId = patient
+      ? patient.organizationId
+      : active.length === 1
+        ? (active[0]?.organizationId ?? null)
+        : null;
     const { token, hash } = this.tokens.generate();
     const sessionId = this.ids.newId<'SessionId'>();
     const expiry = newSessionExpiry(kind, now);

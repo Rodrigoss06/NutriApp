@@ -116,6 +116,11 @@ export const patientResponseSchema = patientSummarySchema.extend({
   timezone: z.string(),
   ageYears: z.number().int(),
   careTeam: z.array(careTeamMemberSchema),
+  /** Acceso a la app (RN-A06): vinculado, o la invitación pendiente si la hay. */
+  appAccess: z.object({
+    linked: z.boolean(),
+    invitation: z.object({ email: z.string(), expiresAt: z.iso.datetime() }).nullable(),
+  }),
   version: z.number().int(),
 });
 export type PatientResponse = z.infer<typeof patientResponseSchema>;

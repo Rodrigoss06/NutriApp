@@ -1,4 +1,4 @@
-import type { OrganizationId, UserId } from '@nutricoach/shared-kernel';
+import type { DomainError, OrganizationId, Result, UserId } from '@nutricoach/shared-kernel';
 import type { SessionKind } from '../../domain/session-policy.js';
 
 export type AccountStatus = 'PENDING' | 'ACTIVE' | 'LOCKED' | 'DISABLED';
@@ -152,6 +152,8 @@ export interface InvitationRecord {
   readonly organizationId: OrganizationId;
   readonly email: string;
   readonly role: InvitationRole;
+  /** Solo con el rol PATIENT: el paciente que se vincula al aceptar (RN-A06). */
+  readonly patientId: string | null;
   readonly expiresAt: Date;
   readonly acceptedAt: Date | null;
   readonly revokedAt: Date | null;
@@ -167,6 +169,7 @@ export interface InvitationStore {
     organizationId: OrganizationId;
     email: string;
     role: InvitationRole;
+    patientId: string | null;
     tokenHash: Uint8Array;
     expiresAt: Date;
     invitedBy: UserId;
@@ -177,6 +180,8 @@ export interface InvitationStore {
     organizationId: OrganizationId,
     email: string,
   ): Promise<InvitationRecord | null>;
+  /** La invitación pendiente (sin aceptar ni revocar) de un paciente, si la hay. */
+  findPendingForPatient(patientId: string): Promise<InvitationRecord | null>;
   listPendingStaff(
     organizationId: OrganizationId,
   ): Promise<readonly (InvitationRecord & { createdAt: Date })[]>;
@@ -189,3 +194,58 @@ export interface InvitationStore {
 }
 
 export const INVITATION_STORE = Symbol.for('nutricoach.iam.InvitationStore');
+
+export type PatientAccessPurpose = 'APP_ACCESS' | 'HEALTH_DATA';
+
+/** Lo que la página de aceptación necesita del paciente invitado, antes de que exista cuenta o sesión. */
+export interface PatientInvitationPreview {
+  readonly patientId: string;
+  readonly organizationId: OrganizationId;
+  readonly firstName: string;
+  /** Menor de 14: no consiente desde la app; su padre, madre o tutor firma en consulta (⚠️). */
+  readonly needsGuardian: boolean;
+  readonly linked: boolean;
+  readonly active: boolean;
+  /** APP_ACCESS y HEALTH_DATA que aún no están vigentes: se piden, una casilla por finalidad. */
+  readonly pendingPurposes: readonly PatientAccessPurpose[];
+}
+
+export interface ConsentText {
+  readonly id: string;
+  readonly purpose: PatientAccessPurpose;
+  readonly version: string;
+  readonly bodyMarkdown: string;
+}
+
+/**
+ * La cuenta del paciente vista desde iam. La implementa clinical (iam no importa clinical: sin ciclos, 02 §4); todo
+ * proceso que cargue iam carga también clinical.
+ */
+export interface PatientEnrollment {
+  /** Por el hash del token, sin cuenta ni sesión (app.patient_invitation_preview). Null si no está pendiente. */
+  preview(tokenHash: Uint8Array): Promise<PatientInvitationPreview | null>;
+  /** Textos vigentes de esas finalidades, con el contexto de la organización de la invitación. */
+  consentTexts(purposes: readonly PatientAccessPurpose[]): Promise<readonly ConsentText[]>;
+  /**
+   * Dentro de la transacción de aceptación (rol ACCOUNT, organización de la invitación): vincula la cuenta al paciente
+   * y registra con canal APP los consentimientos aceptados. Exige APP_ACCESS y HEALTH_DATA (RN-B01).
+   */
+  enroll(
+    input: {
+      patientId: string;
+      userId: UserId;
+      acceptedConsentDocumentIds: readonly string[];
+      ip: string | null;
+      userAgent: string | null;
+    },
+    metadata: { actorUserId: UserId; actorRole: 'ACCOUNT' },
+  ): Promise<Result<void, DomainError>>;
+  /** El paciente vinculado a la cuenta del contexto (app.patient_of_account), con o sin acceso vigente. */
+  patientOfAccount(): Promise<{
+    patientId: string;
+    organizationId: OrganizationId;
+    hasAccess: boolean;
+  } | null>;
+}
+
+export const PATIENT_ENROLLMENT = Symbol.for('nutricoach.iam.PatientEnrollment');

@@ -25,7 +25,10 @@ import {
   type ContextualRequest,
 } from '../../../../../platform/index.js';
 import { EndSessionsHandler } from '../../../application/commands/end-sessions.handler.js';
-import { LoginHandler } from '../../../application/commands/login.handler.js';
+import {
+  LoginHandler,
+  PATIENT_ACCESS_SUSPENDED,
+} from '../../../application/commands/login.handler.js';
 import { PasswordHandlers } from '../../../application/commands/password.handlers.js';
 import { AccountQueries } from '../../../application/queries/account.queries.js';
 import { toAccountResponse } from './account-response.js';
@@ -59,7 +62,12 @@ export class AuthController {
       currentTokenHash: currentToken ? hashToken(currentToken) : null,
       ...clientOf(request),
     });
-    if (isErr(result)) throw problemFromDomainError(result.error, 401);
+    if (isErr(result)) {
+      throw problemFromDomainError(
+        result.error,
+        result.error.code === PATIENT_ACCESS_SUSPENDED.code ? 403 : 401,
+      );
+    }
     const session = result.value;
     setSessionCookie(response, session.token, session.absoluteExpiresAt);
     const account = await this.queries.account(session.userId, session);

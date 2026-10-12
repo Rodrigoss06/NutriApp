@@ -15,6 +15,11 @@
 - Errores: casos de uso devuelven Result con DomainError; el controlador usa problemFromDomainError. Cuerpos con
   parseBody y su contrato. Entradas sensibles al abuso pasan por RateLimiter (ADR-030).
 - Lectura de expediente clínico y exportaciones: AuditPort.record().
+- Datos de salud: todo caso de uso que los guarde exige HEALTH_DATA vigente con ClinicalApi.ensureHealthDataConsent
+  dentro de su transacción (RN-B01).
+- Sin ciclos entre módulos: si un módulo necesita algo de otro que ya lo importa, define un puerto y el otro lo
+  implementa (MEMBERSHIP_DIRECTORY, PATIENT_ENROLLMENT, ADR-040). Un proceso que no carga ese módulo (la CLI)
+  registra un adaptador explícito que falla si se usa.
 - Migraciones: prisma/migrations/AAAAMMDDHHMM_nombre/migration.sql. Toda tabla nueva con organization_id lleva
   en la misma migración `SELECT app.enable_tenant_rls(...)` (o `app.enable_catalog_rls` si NULL es global) y
   `SELECT app.restrict_patient(...)` con lo que el paciente puede ver y escribir (ADR-025). Luego

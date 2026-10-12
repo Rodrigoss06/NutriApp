@@ -15,6 +15,7 @@ interface InvitationRow {
   organizationId: string;
   email: string;
   role: string;
+  patientId: string | null;
   expiresAt: Date;
   acceptedAt: Date | null;
   revokedAt: Date | null;
@@ -25,6 +26,7 @@ const INVITATION_FIELDS = {
   organizationId: true,
   email: true,
   role: true,
+  patientId: true,
   expiresAt: true,
   acceptedAt: true,
   revokedAt: true,
@@ -49,6 +51,7 @@ export class PrismaInvitationStore implements InvitationStore {
     organizationId: OrganizationId;
     email: string;
     role: InvitationRole;
+    patientId: string | null;
     tokenHash: Uint8Array;
     expiresAt: Date;
     invitedBy: UserId;
@@ -66,11 +69,12 @@ export class PrismaInvitationStore implements InvitationStore {
         organization_id: string;
         email: string;
         role: string;
+        patient_id: string | null;
         expires_at: Date;
         accepted_at: Date | null;
         revoked_at: Date | null;
       }[]
-    >`SELECT id, organization_id, email::text AS email, role, expires_at, accepted_at, revoked_at
+    >`SELECT id, organization_id, email::text AS email, role, patient_id, expires_at, accepted_at, revoked_at
       FROM app.find_invitation(${bytes(tokenHash)})`;
     return row
       ? toInvitation({
@@ -78,6 +82,7 @@ export class PrismaInvitationStore implements InvitationStore {
           organizationId: row.organization_id,
           email: row.email,
           role: row.role,
+          patientId: row.patient_id,
           expiresAt: row.expires_at,
           acceptedAt: row.accepted_at,
           revokedAt: row.revoked_at,
@@ -100,6 +105,15 @@ export class PrismaInvitationStore implements InvitationStore {
     const row = await this.db.tx.invitation.findFirst({
       where: { organizationId, email, ...PENDING },
       select: INVITATION_FIELDS,
+    });
+    return row ? toInvitation(row) : null;
+  }
+
+  async findPendingForPatient(patientId: string): Promise<InvitationRecord | null> {
+    const row = await this.db.tx.invitation.findFirst({
+      where: { patientId, role: 'PATIENT', ...PENDING },
+      select: INVITATION_FIELDS,
+      orderBy: { createdAt: 'desc' },
     });
     return row ? toInvitation(row) : null;
   }

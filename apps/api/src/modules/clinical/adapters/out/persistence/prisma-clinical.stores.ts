@@ -17,6 +17,7 @@ import type {
   ConsentDocumentRecord,
   ConsentRecord,
   ConsentStore,
+  InvitationPreviewRecord,
   PatientChanges,
   PatientRecord,
   PatientSearch,
@@ -232,6 +233,69 @@ export class PrismaPatientStore implements PatientStore {
       where: { patientId, memberId },
     });
     return count === 1;
+  }
+
+  async linkAccount(patientId: string, userId: UserId): Promise<boolean> {
+    const { count } = await this.db.tx.patient.updateMany({
+      where: { id: patientId, userId: null, status: 'ACTIVE' },
+      data: { userId, updatedAt: new Date() },
+    });
+    return count === 1;
+  }
+
+  async previewInvitation(tokenHash: Uint8Array): Promise<InvitationPreviewRecord | null> {
+    const [row] = await this.db.tx.$queryRaw<
+      {
+        patient_id: string;
+        organization_id: string;
+        first_name: string;
+        birth_date: Date;
+        timezone: string;
+        patient_status: string;
+        linked: boolean;
+        health_data_active: boolean;
+        app_access_active: boolean;
+      }[]
+    >`SELECT * FROM app.patient_invitation_preview(${bytes(tokenHash)})`;
+    if (!row) return null;
+    return {
+      patientId: row.patient_id,
+      organizationId: row.organization_id as OrganizationId,
+      firstName: row.first_name,
+      birthDate: isoDate(row.birth_date),
+      timezone: row.timezone,
+      status: row.patient_status as PatientStatus,
+      linked: row.linked,
+      activePurposes: [
+        ...(row.health_data_active ? (['HEALTH_DATA'] as const) : []),
+        ...(row.app_access_active ? (['APP_ACCESS'] as const) : []),
+      ],
+    };
+  }
+
+  async patientOfAccount(): Promise<{
+    patientId: string;
+    organizationId: OrganizationId;
+    hasAccess: boolean;
+  } | null> {
+    const [row] = await this.db.tx.$queryRaw<
+      { patient_id: string; organization_id: string; has_access: boolean }[]
+    >`SELECT * FROM app.patient_of_account()`;
+    return row
+      ? {
+          patientId: row.patient_id,
+          organizationId: row.organization_id as OrganizationId,
+          hasAccess: row.has_access,
+        }
+      : null;
+  }
+
+  async labels(patientIds: readonly string[]): Promise<readonly { id: string; code: string }[]> {
+    if (patientIds.length === 0) return [];
+    return this.db.tx.patient.findMany({
+      where: { id: { in: [...patientIds] } },
+      select: { id: true, code: true },
+    });
   }
 }
 

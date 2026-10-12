@@ -51,10 +51,14 @@ import {
 } from '../../../application/commands/active-organization.handler.js';
 import {
   ACCOUNT_CANNOT_JOIN,
-  INVALID_INVITATION,
   INVITATION_NOT_FOUND,
   InvitationHandlers,
 } from '../../../application/commands/invitation.handlers.js';
+import {
+  ACCOUNT_EXISTS_FOR_PATIENT,
+  EMAIL_HAS_PENDING_INVITATION,
+  INVALID_INVITATION,
+} from '../../../domain/invitation-errors.js';
 import { INVALID_CREDENTIALS } from '../../../domain/login-policy.js';
 import { AccountQueries } from '../../../application/queries/account.queries.js';
 import { toAccountResponse } from './account-response.js';
@@ -67,6 +71,8 @@ const STATUS_BY_CODE: Readonly<Record<string, number>> = {
   [INVALID_CREDENTIALS.code]: 401,
   [ACCOUNT_CANNOT_JOIN.code]: 409,
   [ALREADY_MEMBER.code]: 409,
+  [ACCOUNT_EXISTS_FOR_PATIENT.code]: 409,
+  [EMAIL_HAS_PENDING_INVITATION.code]: 409,
 };
 
 const problem = (error: DomainError) => problemFromDomainError(error, STATUS_BY_CODE[error.code]);
@@ -156,7 +162,7 @@ export class InvitationController {
     const { token } = parseBody(inspectInvitationSchema, body);
     const result = await this.invitations.inspect(token);
     if (isErr(result)) throw problem(result.error);
-    return result.value;
+    return { ...result.value, consents: [...result.value.consents] };
   }
 
   @Post('accept')
