@@ -6,7 +6,7 @@ import {
   canWriteRecord,
   checkGrant,
   checkPopulation,
-  isMinor,
+  needsGuardian,
   normalizeDocument,
   patientCode,
 } from './clinical-rules.js';
@@ -28,8 +28,12 @@ describe('Edad y menores', () => {
   it('cuenta los años cumplidos a la fecha local', () => {
     expect(ageYears('2008-10-09', '2026-10-09')).toBe(18);
     expect(ageYears('2008-10-10', '2026-10-09')).toBe(17);
-    expect(isMinor('2008-10-10', '2026-10-09')).toBe(true);
-    expect(isMinor('2008-10-09', '2026-10-09')).toBe(false);
+  });
+
+  it('⚠️ RN-B01 · desde los 14 años consiente como un adulto; antes, su padre, madre o tutor', () => {
+    expect(needsGuardian('2012-10-10', '2026-10-09')).toBe(true);
+    expect(needsGuardian('2012-10-09', '2026-10-09')).toBe(false);
+    expect(needsGuardian('2009-01-01', '2026-10-09')).toBe(false);
   });
 });
 
@@ -40,18 +44,21 @@ describe('RN-B01 · consentimiento', () => {
     expect(checkPopulation('ATHLETE', false)).toBeNull();
   });
 
-  it('en papel exige escaneo; un menor no consiente desde la app; uno vigente no se repite', () => {
+  it('en papel exige escaneo; para un menor de 14 solo vale el papel del tutor; uno vigente no se repite', () => {
     const base = {
       channel: 'IN_PERSON_DIGITAL' as const,
       hasEvidence: false,
-      minor: false,
+      needsGuardian: false,
       alreadyActive: false,
     };
     expect(checkGrant(base)).toBeNull();
     expect(checkGrant({ ...base, channel: 'PAPER_SCANNED' })?.code).toBe('NC-CLI-009');
     expect(checkGrant({ ...base, channel: 'PAPER_SCANNED', hasEvidence: true })).toBeNull();
-    expect(checkGrant({ ...base, channel: 'APP', minor: true })?.code).toBe('NC-CLI-010');
-    expect(checkGrant({ ...base, channel: 'IN_PERSON_DIGITAL', minor: true })).toBeNull();
+    const guardian = { ...base, needsGuardian: true };
+    expect(checkGrant(guardian)).toMatchObject({ code: 'NC-CLI-026', rule: 'RN-B01' });
+    expect(checkGrant({ ...guardian, channel: 'APP' })?.code).toBe('NC-CLI-026');
+    expect(checkGrant({ ...guardian, channel: 'PAPER_SCANNED' })?.code).toBe('NC-CLI-009');
+    expect(checkGrant({ ...guardian, channel: 'PAPER_SCANNED', hasEvidence: true })).toBeNull();
     expect(checkGrant({ ...base, alreadyActive: true })?.code).toBe('NC-CLI-008');
   });
 });
@@ -86,20 +93,25 @@ describe('RN-A05 · quién gestiona y quién escribe', () => {
 });
 
 describe('RN-A06 · aceptar la invitación del paciente', () => {
-  it('solo pide lo que falta; exige APP_ACCESS y HEALTH_DATA; un menor no consiente desde la app', async () => {
+  it('solo pide lo que falta; exige APP_ACCESS y HEALTH_DATA; un menor de 14 no consiente desde la app', async () => {
     const { checkAppEnrollment, pendingAppPurposes } = await import('./clinical-rules.js');
     expect(pendingAppPurposes(['HEALTH_DATA'])).toEqual(['APP_ACCESS']);
     expect(pendingAppPurposes(['HEALTH_DATA', 'APP_ACCESS'])).toEqual([]);
     const pending = pendingAppPurposes([]);
-    expect(checkAppEnrollment({ pending, accepted: ['APP_ACCESS'], minor: false })?.code).toBe(
-      'NC-CLI-025',
-    );
     expect(
-      checkAppEnrollment({ pending, accepted: ['APP_ACCESS', 'HEALTH_DATA'], minor: false }),
+      checkAppEnrollment({ pending, accepted: ['APP_ACCESS'], needsGuardian: false })?.code,
+    ).toBe('NC-CLI-025');
+    expect(
+      checkAppEnrollment({
+        pending,
+        accepted: ['APP_ACCESS', 'HEALTH_DATA'],
+        needsGuardian: false,
+      }),
     ).toBeNull();
     expect(
-      checkAppEnrollment({ pending, accepted: ['APP_ACCESS', 'HEALTH_DATA'], minor: true })?.code,
+      checkAppEnrollment({ pending, accepted: ['APP_ACCESS', 'HEALTH_DATA'], needsGuardian: true })
+        ?.code,
     ).toBe('NC-CLI-010');
-    expect(checkAppEnrollment({ pending: [], accepted: [], minor: true })).toBeNull();
+    expect(checkAppEnrollment({ pending: [], accepted: [], needsGuardian: true })).toBeNull();
   });
 });

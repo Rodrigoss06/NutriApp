@@ -185,6 +185,21 @@ describe('RF-01 · invitar', () => {
     expect(outbox.events.filter((e) => e.type === 'iam.invitation.revoked')).toHaveLength(1);
   });
 
+  it('RN-A06 · la invitación pendiente de un paciente no se pisa con una de staff (409)', async () => {
+    await invitations.create({
+      id: 'inv-paciente',
+      organizationId: ORG,
+      email: 'familia@demo.test',
+      role: 'PATIENT',
+      patientId: 'paciente-1',
+      tokenHash: new Uint8Array([7]),
+      expiresAt: new Date(clock.now().getTime() + 60_000),
+    });
+    const staff = await handlers().invite(owner, { email: 'familia@demo.test', role: 'ADMIN' });
+    expect(isErr(staff) && staff.error.code).toBe('NC-IAM-045');
+    expect(invitations.rows.get('inv-paciente')?.revokedAt).toBeNull();
+  });
+
   it('reenviar y revocar: solo invitaciones pendientes de staff de la organización', async () => {
     const first = await handlers().invite(owner, { email: 'a@demo.test', role: 'PROFESSIONAL' });
     if (!first.ok) throw new Error('sin invitación');
@@ -217,7 +232,7 @@ describe('RF-01 · abrir y aceptar', () => {
       role: 'PROFESSIONAL',
       accountExists: false,
       consents: [],
-      minorNeedsInPerson: false,
+      needsGuardianConsent: false,
       firstName: null,
     });
     const noName = await accept(token);

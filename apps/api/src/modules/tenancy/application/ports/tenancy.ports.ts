@@ -158,7 +158,7 @@ export interface PendingStaffInvitations {
 }
 export const PENDING_STAFF_INVITATIONS = Symbol.for('nutricoach.tenancy.PendingStaffInvitations');
 
-/** Pacientes activos: los cuenta clinical desde P6; hasta entonces, cero. */
+/** Pacientes activos de la organización (RN-A03): los cuenta clinical. */
 export interface ActivePatientCounter {
   count(organizationId: OrganizationId): Promise<number>;
 }

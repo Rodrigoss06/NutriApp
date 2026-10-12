@@ -20,7 +20,7 @@ import type {
 } from '../../iam/index.js';
 import {
   checkAppEnrollment,
-  isMinor,
+  needsGuardian,
   PATIENT_ALREADY_LINKED,
   PATIENT_ARCHIVED,
   PATIENT_NOT_FOUND,
@@ -56,7 +56,7 @@ export class PatientEnrollmentService implements PatientEnrollment {
       patientId: row.patientId,
       organizationId: row.organizationId,
       firstName: row.firstName,
-      minor: isMinor(row.birthDate, localToday(this.clock.now(), row.timezone)),
+      needsGuardian: needsGuardian(row.birthDate, localToday(this.clock.now(), row.timezone)),
       linked: row.linked,
       active: row.status === 'ACTIVE',
       pendingPurposes: pendingAppPurposes(row.activePurposes) as PatientAccessPurpose[],
@@ -109,7 +109,7 @@ export class PatientEnrollmentService implements PatientEnrollment {
     const rule = checkAppEnrollment({
       pending,
       accepted: documents.map((d) => d.purpose),
-      minor: isMinor(patient.birthDate, localToday(now, patient.timezone)),
+      needsGuardian: needsGuardian(patient.birthDate, localToday(now, patient.timezone)),
     });
     if (rule) return err(rule);
     if (!(await this.patients.linkAccount(patient.id, input.userId)))

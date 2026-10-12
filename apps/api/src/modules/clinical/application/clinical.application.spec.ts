@@ -201,6 +201,26 @@ describe('RN-A05 · quién edita, gestiona y arma el equipo', () => {
     expect(isErr(invalid) && invalid.error.code).toBe('NC-CLI-003');
   });
 
+  it('OBESITY es dato de salud: la pone o la quita solo el equipo con WRITE, también frente a OWNER', async () => {
+    const id = await registered();
+    await consentCommands().grant(responsible, id, {
+      consentDocumentId: DOCUMENTS[0]?.id ?? '',
+      channel: 'IN_PERSON_DIGITAL',
+      evidence: null,
+      ip: null,
+      userAgent: null,
+    });
+    const byOwner = await commands().update(owner, id, 0, { population: 'OBESITY' });
+    expect(isErr(byOwner) && byOwner.error).toMatchObject({ code: 'NC-CLI-027', rule: 'RN-A05' });
+    expect(isOk(await commands().update(responsible, id, 0, { population: 'OBESITY' }))).toBe(true);
+    const removed = await commands().update(owner, id, 1, { population: 'ADULT' });
+    expect(isErr(removed) && removed.error.code).toBe('NC-CLI-027');
+    // El resto de la ficha es administrativo: OWNER la edita aunque no esté en el equipo.
+    expect(
+      isOk(await commands().update(owner, id, 1, { lastName: 'Huamán', population: 'OBESITY' })),
+    ).toBe(true);
+  });
+
   it('el equipo lo arman el responsable, OWNER o ADMIN; el responsable no se quita; un miembro ajeno no entra', async () => {
     const id = await registered();
     const byOther = await commands().setCareTeamMember(other, id, {

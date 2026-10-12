@@ -358,19 +358,23 @@ consentimientos; iam no puede importar clinical (02 §4).
 Decisión: la invitación del paciente es una fila de iam.invitation con patient_id y su propio plazo,
 patient_invitation.ttl_days (1 a 30, 7 por defecto; N22 sigue abierta). Una pendiente por paciente: reenviar revoca la
 anterior. En la versión 1.0 una cuenta se vincula a un solo paciente: un correo con cuenta, o con otra invitación
-pendiente en la organización, es 409. Invita el equipo con WRITE, a un paciente activo y sin cuenta; un menor, solo si
-APP_ACCESS y HEALTH_DATA ya se registraron en consulta (⚠️). La página de aceptación se arma con
+pendiente en la organización, es 409, también al aceptar si la cuenta apareció entretanto (staff, plataforma u otro
+paciente); una invitación de staff tampoco pisa la pendiente de un paciente (409). Invita el equipo con WRITE, a un
+paciente activo y sin cuenta; un menor de 14, solo si APP_ACCESS y HEALTH_DATA ya se registraron en consulta
+(ADR-042). La página de aceptación se arma con
 app.patient_invitation_preview(token_hash), SECURITY DEFINER que responde solo al hash exacto de una invitación PATIENT
 pendiente, y pide únicamente las finalidades que no están vigentes, una casilla sin marcar por texto. Aceptar es una
 transacción con el rol ACCOUNT: marca la invitación, crea la cuenta, vincula al paciente y registra los consentimientos
 con canal APP (IP, agente y versión del texto) por el puerto PATIENT_ENROLLMENT, que define iam e implementa clinical
-(síncrono, sin ciclos), y abre la sesión PATIENT. Un error de regla (RN-B01) vuelve como 422 y revierte todo; si el
-paciente se archivó o se vinculó entretanto, 410 como una invitación que ya no sirve. La sesión PATIENT resuelve su
+(síncrono, sin ciclos), y abre la sesión PATIENT. Un error de regla (RN-B01) vuelve como 422 y revierte todo. Todo
+enlace que ya no sirve responde 410 con el mismo code (NC-IAM-040) y el mismo mensaje: vencido, usado, revocado, o con
+el paciente archivado o ya vinculado; así no revela la causa. La sesión PATIENT resuelve su
 paciente en cada petición con app.patient_of_account(), SECURITY DEFINER sin parámetros (solo app.user_id()): sin
 paciente activo con APP_ACCESS y HEALTH_DATA vigentes, deja de valer al instante (401), y entrar responde 403
 NC-IAM-046 (RN-B02) después de verificar la contraseña. El consumidor iam.patient-sessions cierra sus sesiones al
-archivar o al revocar APP_ACCESS o HEALTH_DATA y lo audita como SYSTEM con el paciente. Como el puerto es obligatorio
-(ADR-021: sin @Optional en application), la CLI create-platform-admin importa ClinicalModule.
+archivar o al revocar APP_ACCESS o HEALTH_DATA y lo audita como SYSTEM con el paciente. El puerto es obligatorio
+(ADR-021: sin @Optional en application): la CLI create-platform-admin no carga clinical y registra para él, y para
+ACTIVE_PATIENT_COUNTER, un adaptador explícito que falla si alguien lo usa.
 Consecuencias: P13 usa la sesión PATIENT con el paciente que resuelve la sesión; el paciente nunca envía su id (02 §10).
 Atender a la misma persona en dos organizaciones exige otro correo en la versión 1.0.
 
@@ -382,12 +386,25 @@ libre por bloque, con cirugías, y esquema estricto (⚠️ provisional). Condic
 extraen del texto; de ellas solo cambian el estado y las notas (UPDATE por columna). Una nota no se edita: se enmienda
 con otra que cita una nota visible; AUTHOR_ONLY la ve solo su autor. Escribir el expediente exige ver al paciente,
 que esté activo (archivado: 409), acceso WRITE en el equipo (OWNER fuera del equipo lee, pero no escribe lo clínico)
-y HEALTH_DATA vigente (422 RN-B01). La línea de tiempo une alta, consentimientos, revisiones, condiciones, objetivos y
+y HEALTH_DATA vigente (422 RN-B01). La ficha, el consentimiento y la invitación son tareas administrativas y OWNER
+las hace aunque no esté en el equipo, salvo poner o quitar la población OBESITY, que es dato de salud (403). La línea de tiempo une alta, consentimientos, revisiones, condiciones, objetivos y
 notas, de lo más reciente a lo más antiguo, con cursor opaco por (fecha, id) y bajo la misma RLS. Toda lectura del
 expediente deja un READ (RN-B03), solo si se ve al paciente. La consulta de auditoría vive en el módulo audit:
 GET /api/v1/audit-events, solo OWNER (audit.read), rango de fechas obligatorio de 90 días como máximo para usar las
 particiones, filtros por paciente, persona y acción, y cursor. Muestra el nombre de quien actuó (IamApi.displayNames)
 y el código del paciente (ClinicalApi.patientCodes); nunca correos ni datos clínicos. La RLS deja ver solo la
-organización: los eventos sin organización (LOGIN y LOGIN_FAILED) no aparecen.
+organización: los eventos sin organización (LOGIN y LOGIN_FAILED) solo los ve la plataforma.
 Consecuencias: los contextos que guarden datos de salud usan ClinicalApi.ensureHealthDataConsent. La ficha definitiva
 de anamnesis entra como versión 2 del formulario, sin tocar las revisiones guardadas.
+
+## ADR-042 · Consentimiento de menores: umbral de 14 años — aceptada (2026-10-12)
+Contexto: RN-B01 y RN-A06 con pacientes niños y adolescentes; la ADR-039 dejaba a todo menor de 18 sin consentir desde
+la app. El reglamento de la Ley 29733 deja consentir desde los 14 años con información comprensible para ellos.
+Decisión (⚠️ hasta que el abogado lo defina): desde los 14 años el paciente consiente como un adulto, en consulta o
+desde la app, y los textos tienen que estar en lenguaje claro. Un menor de 14 no consiente: en consulta solo vale
+PAPER_SCANNED, firmado por su padre, madre o tutor, porque la tabla no guarda quién es el tutor (NC-CLI-026). No se le
+invita a la app hasta que APP_ACCESS y HEALTH_DATA estén registradas así (NC-CLI-010); si al aceptar falta alguna, la
+página no muestra casillas y explica que se registra en consulta, y la API rechaza las que lleguen (422). La edad se
+calcula a la fecha local del paciente (CONSENT_AGE en el dominio de clinical).
+Consecuencias: reemplaza el punto de menores de ADR-039. Si el abogado fija otra edad o exige registrar al tutor, se
+cambia CONSENT_AGE o se agrega el tutor al consentimiento con una migración nueva.

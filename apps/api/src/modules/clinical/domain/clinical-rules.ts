@@ -71,11 +71,11 @@ export const EVIDENCE_REQUIRED = domainError({
   rule: 'RN-B01',
   message: 'El consentimiento en papel necesita su escaneo (PDF, JPG o PNG de hasta 5 MB).',
 });
-export const MINOR_CONSENT_IN_PERSON = domainError({
+export const GUARDIAN_CONSENT_REQUIRED = domainError({
   code: 'NC-CLI-010',
   rule: 'RN-B01',
   message:
-    'Un menor de 18 años no da su consentimiento desde la aplicación: se registra en consulta con su padre, madre o tutor.',
+    'Un menor de 14 años no da su consentimiento desde la app: su padre, madre o tutor lo firma en papel y se registra en consulta.',
 });
 export const CONSENT_NOT_FOUND = domainError({ code: 'NC-CLI-011', message: 'No encontrado.' });
 export const RESPONSIBLE_NOT_MEMBER = domainError({
@@ -129,6 +129,18 @@ export const APP_CONSENTS_REQUIRED = domainError({
   message:
     'Para crear tu cuenta acepta cada finalidad: el uso de la app y el tratamiento de tus datos de salud.',
 });
+export const GUARDIAN_CONSENT_ON_PAPER = domainError({
+  code: 'NC-CLI-026',
+  rule: 'RN-B01',
+  message:
+    'Para un menor de 14 años solo vale el consentimiento en papel firmado por su padre, madre o tutor, con su escaneo.',
+});
+export const OBESITY_NEEDS_CARE_TEAM = domainError({
+  code: 'NC-CLI-027',
+  rule: 'RN-A05',
+  message:
+    'La población «obesidad» es un dato de salud: la pone o la quita el equipo de atención con permiso de escritura.',
+});
 
 /** DNI: 8 dígitos. Los demás: letras y dígitos sin espacios ni guiones, de 4 a 20. En mayúsculas. */
 export function normalizeDocument(type: DocumentType, number: string): string | null {
@@ -144,8 +156,15 @@ export function ageYears(birthDate: string, today: string): number {
   return ty - by - (tm < bm || (tm === bm && td < bd) ? 1 : 0);
 }
 
-export const isMinor = (birthDate: string, today: string): boolean =>
-  ageYears(birthDate, today) < 18;
+/**
+ * ⚠️ Edad desde la que el paciente consiente por sí mismo, como un adulto y con textos en lenguaje claro: 14 años, como
+ * el reglamento de la Ley 29733, hasta que el abogado lo defina.
+ */
+export const CONSENT_AGE = 14;
+
+/** Menor de 14 años: consiente su padre, madre o tutor, en papel firmado que se escanea en consulta. */
+export const needsGuardian = (birthDate: string, today: string): boolean =>
+  ageYears(birthDate, today) < CONSENT_AGE;
 
 /** OBESITY es un dato de salud: antes de HEALTH_DATA no se permite (RN-B01). */
 export function checkPopulation(
@@ -156,18 +175,18 @@ export function checkPopulation(
 }
 
 /**
- * Otorgar un consentimiento (RN-B01). En papel exige el escaneo; un menor solo consiente en consulta (⚠️ hasta que
- * el abogado lo defina); desde la app solo lo da el propio paciente.
+ * Otorgar un consentimiento (RN-B01). En papel exige el escaneo. Para un menor de 14 solo vale el papel firmado por su
+ * padre, madre o tutor: la tabla no guarda quién es el tutor (⚠️ hasta que el abogado lo defina).
  */
 export function checkGrant(input: {
   channel: ConsentChannel;
   hasEvidence: boolean;
-  minor: boolean;
+  needsGuardian: boolean;
   alreadyActive: boolean;
 }): DomainError | null {
   if (input.alreadyActive) return CONSENT_ALREADY_ACTIVE;
+  if (input.needsGuardian && input.channel !== 'PAPER_SCANNED') return GUARDIAN_CONSENT_ON_PAPER;
   if (input.channel === 'PAPER_SCANNED' && !input.hasEvidence) return EVIDENCE_REQUIRED;
-  if (input.channel === 'APP' && input.minor) return MINOR_CONSENT_IN_PERSON;
   return null;
 }
 
@@ -214,15 +233,16 @@ export function pendingAppPurposes(active: readonly ConsentPurpose[]): ConsentPu
 
 /**
  * Aceptar la invitación del paciente (RN-A06, RN-B01): APP_ACCESS y HEALTH_DATA son obligatorias, cada una aceptada
- * por separado. Un menor no consiente desde la app: solo entra si ambas ya se registraron en consulta (⚠️).
+ * por separado. Desde los 14 años se aceptan como un adulto. Un menor de 14 no consiente desde la app: solo entra si
+ * ambas ya se registraron en consulta, en papel firmado por su padre, madre o tutor (⚠️).
  */
 export function checkAppEnrollment(input: {
   pending: readonly ConsentPurpose[];
   accepted: readonly ConsentPurpose[];
-  minor: boolean;
+  needsGuardian: boolean;
 }): DomainError | null {
   if (input.pending.length === 0) return null;
-  if (input.minor) return MINOR_CONSENT_IN_PERSON;
+  if (input.needsGuardian) return GUARDIAN_CONSENT_REQUIRED;
   return input.pending.every((purpose) => input.accepted.includes(purpose))
     ? null
     : APP_CONSENTS_REQUIRED;

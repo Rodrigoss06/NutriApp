@@ -176,6 +176,31 @@ describe('RF-09 · historia clínica versionada', () => {
   });
 });
 
+describe('RN-A05 · la población OBESITY es dato de salud', () => {
+  it('la pone o la quita solo el equipo con WRITE; OWNER fuera del equipo edita el resto de la ficha', async () => {
+    const { responsible, owner } = org.staff;
+    const id = await register(responsible.cookie);
+    await grantHealthData(responsible.cookie, id);
+    const patch = async (member: StaffMember, body: object) => {
+      const current = (await harness.get(`/patients/${id}`, member.cookie)).body as {
+        version: number;
+      };
+      return harness
+        .patch(`/patients/${id}`, body, member.cookie)
+        .set('If-Match', `"${String(current.version)}"`);
+    };
+
+    const byOwner = await patch(owner, { population: 'OBESITY' });
+    expect(byOwner.status).toBe(403);
+    expect(byOwner.body as Problem).toMatchObject({ code: 'NC-CLI-027', rule: 'RN-A05' });
+    expect((await patch(responsible, { population: 'OBESITY' })).status).toBe(200);
+    const removed = await patch(owner, { population: 'ADULT' });
+    expect(removed.status).toBe(403);
+    expect((removed.body as Problem).code).toBe('NC-CLI-027');
+    expect((await patch(owner, { lastName: 'Rojas Vega' })).status).toBe(200);
+  });
+});
+
 describe('RF-09 · condiciones, objetivos y notas', () => {
   it('condiciones y objetivos son filas propias: solo cambian estado y notas, también en la base', async () => {
     const { responsible } = org.staff;

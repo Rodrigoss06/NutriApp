@@ -158,8 +158,11 @@ export const inspectInvitationResponseSchema = z.object({
       }),
     )
     .default([]),
-  /** Paciente menor de 18 con consentimientos pendientes: se registran en consulta con su tutor (⚠️). */
-  minorNeedsInPerson: z.boolean().default(false),
+  /**
+   * Paciente menor de 14 con consentimientos pendientes: no tiene casillas; su padre, madre o tutor los firma en papel
+   * y se registran en consulta (⚠️).
+   */
+  needsGuardianConsent: z.boolean().default(false),
   /** Paciente: su nombre de pila, para saludarle. */
   firstName: z.string().nullable().default(null),
 });

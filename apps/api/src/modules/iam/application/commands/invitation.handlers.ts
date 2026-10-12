@@ -28,6 +28,10 @@ import {
   TenancyApi,
   type MemberRole,
 } from '../../../tenancy/index.js';
+import {
+  EMAIL_HAS_PENDING_INVITATION,
+  INVALID_INVITATION,
+} from '../../domain/invitation-errors.js';
 import { INVALID_CREDENTIALS, isLocked, normalizeEmail } from '../../domain/login-policy.js';
 import { checkNewPassword, normalizePassword } from '../../domain/password-policy.js';
 import { newSessionExpiry } from '../../domain/session-policy.js';
@@ -61,10 +65,6 @@ import {
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 
-export const INVALID_INVITATION = domainError({
-  code: 'NC-IAM-040',
-  message: 'La invitación venció, ya se usó o fue anulada. Pide una nueva a quien te invitó.',
-});
 export const ACCOUNT_CANNOT_JOIN = domainError({
   code: 'NC-IAM-041',
   message: 'Esta cuenta no puede unirse a una organización. Escribe a soporte.',
@@ -92,9 +92,9 @@ export interface InspectedInvitation {
   readonly email: string;
   readonly role: MemberRole | 'PATIENT';
   readonly accountExists: boolean;
-  /** Solo pacientes: los textos que faltan aceptar, si es menor con pendientes y su nombre de pila. */
+  /** Solo pacientes: los textos que faltan aceptar, si su tutor consiente en consulta y su nombre de pila. */
   readonly consents: PatientInspection['consents'];
-  readonly minorNeedsInPerson: boolean;
+  readonly needsGuardianConsent: boolean;
   readonly firstName: string | null;
 }
 
@@ -218,7 +218,7 @@ export class InvitationHandlers {
       role: invitation.role,
       accountExists: account?.status === 'ACTIVE' && account.passwordHash !== null,
       consents: [],
-      minorNeedsInPerson: false,
+      needsGuardianConsent: false,
       firstName: null,
     });
   }
@@ -327,6 +327,8 @@ export class InvitationHandlers {
     if (account && (await this.tenancy.isMember(organizationId, account.id)))
       return err(ALREADY_MEMBER);
     const previous = await this.invitations.findPendingByEmail(organizationId, email);
+    // La invitación pendiente de un paciente no se pisa con una de staff: un correo, una cuenta (RN-A06).
+    if (previous?.role === 'PATIENT') return err(EMAIL_HAS_PENDING_INVITATION);
     if (previous) {
       await this.invitations.revoke(previous.id, now);
       await this.outbox.append(

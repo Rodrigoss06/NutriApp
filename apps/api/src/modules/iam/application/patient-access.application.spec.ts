@@ -111,7 +111,7 @@ const preview = (overrides: object = {}) => ({
   patientId: PATIENT,
   organizationId: ORG,
   firstName: 'Ana',
-  minor: false,
+  needsGuardian: false,
   linked: false,
   active: true,
   pendingPurposes: ['APP_ACCESS', 'HEALTH_DATA'] as const,
@@ -188,7 +188,7 @@ describe('RN-A06 · invitar al paciente', () => {
 });
 
 describe('RN-A06 · ver y aceptar la invitación del paciente', () => {
-  it('ver: los textos pendientes, una casilla por finalidad; si es menor con pendientes, en consulta', async () => {
+  it('ver: los textos pendientes, una casilla por finalidad; un menor de 14 con pendientes no tiene casillas', async () => {
     await patients().inviteWithin(STAFF, ORG, PATIENT, 'ana@demo.test');
     const token = lastToken();
     expect(isErr(await handlers().inspect(token))).toBe(true);
@@ -198,7 +198,7 @@ describe('RN-A06 · ver y aceptar la invitación del paciente', () => {
       role: 'PATIENT',
       email: 'ana@demo.test',
       accountExists: false,
-      minorNeedsInPerson: false,
+      needsGuardianConsent: false,
       firstName: 'Ana',
     });
     expect(
@@ -207,9 +207,15 @@ describe('RN-A06 · ver y aceptar la invitación del paciente', () => {
       ['APP_ACCESS', true],
       ['HEALTH_DATA', true],
     ]);
-    enrollment.previewValue = preview({ minor: true });
-    const minor = await handlers().inspect(token);
-    expect(isOk(minor) && minor.value.minorNeedsInPerson).toBe(true);
+    enrollment.previewValue = preview({ needsGuardian: true });
+    const child = await handlers().inspect(token);
+    expect(isOk(child) && child.value).toMatchObject({ needsGuardianConsent: true, consents: [] });
+    enrollment.previewValue = preview({ needsGuardian: true, pendingPurposes: [] });
+    const signed = await handlers().inspect(token);
+    expect(isOk(signed) && signed.value).toMatchObject({
+      needsGuardianConsent: false,
+      consents: [],
+    });
     enrollment.previewValue = preview({ linked: true });
     expect(isErr(await handlers().inspect(token))).toBe(true);
   });

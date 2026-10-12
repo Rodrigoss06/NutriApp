@@ -202,7 +202,8 @@ export interface PatientInvitationPreview {
   readonly patientId: string;
   readonly organizationId: OrganizationId;
   readonly firstName: string;
-  readonly minor: boolean;
+  /** Menor de 14: no consiente desde la app; su padre, madre o tutor firma en consulta (⚠️). */
+  readonly needsGuardian: boolean;
   readonly linked: boolean;
   readonly active: boolean;
   /** APP_ACCESS y HEALTH_DATA que aún no están vigentes: se piden, una casilla por finalidad. */

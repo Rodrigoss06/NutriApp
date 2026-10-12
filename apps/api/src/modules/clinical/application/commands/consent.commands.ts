@@ -20,7 +20,7 @@ import {
   checkGrant,
   CONSENT_DOCUMENT_NOT_CURRENT,
   CONSENT_NOT_FOUND,
-  isMinor,
+  needsGuardian,
   PATIENT_ARCHIVED,
   PATIENT_NOT_FOUND,
   UNSUPPORTED_EVIDENCE,
@@ -89,7 +89,7 @@ export class ConsentCommands {
         const rule = checkGrant({
           channel: input.channel,
           hasEvidence: file !== null,
-          minor: isMinor(patient.birthDate, localToday(now, patient.timezone)),
+          needsGuardian: needsGuardian(patient.birthDate, localToday(now, patient.timezone)),
           alreadyActive: (await this.consents.active(patientId, document.purpose)) !== null,
         });
         if (rule) return err(rule);

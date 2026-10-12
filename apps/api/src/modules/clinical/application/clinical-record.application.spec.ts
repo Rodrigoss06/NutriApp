@@ -93,6 +93,20 @@ async function registered(input: object = {}): Promise<string> {
   return result.value.id;
 }
 
+const PNG = new Uint8Array([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]);
+
+/** Firmado en papel por su padre, madre o tutor y escaneado: lo único que vale para un menor de 14 (⚠️). */
+async function signedOnPaper(patientId: string, documentId: string): Promise<void> {
+  const granted = await consentCommands().grant(responsible, patientId, {
+    consentDocumentId: documentId,
+    channel: 'PAPER_SCANNED',
+    evidence: PNG,
+    ip: null,
+    userAgent: null,
+  });
+  if (!granted.ok) throw new Error(granted.error.code);
+}
+
 async function consented(patientId: string, documentId = HEALTH_DATA): Promise<void> {
   const granted = await consentCommands().grant(responsible, patientId, {
     consentDocumentId: documentId,
@@ -357,13 +371,23 @@ describe('RN-A06 · invitar al paciente a la app', () => {
     expect(isErr(missing) && missing.error.code).toBe('NC-CLI-005');
   });
 
-  it('⚠️ un menor solo se invita si APP_ACCESS y HEALTH_DATA ya se registraron en consulta', async () => {
-    const id = await registered({ birthDate: '2012-06-01', population: 'ADOLESCENT' });
-    const early = await invitations().invite(responsible, id, {});
-    expect(isErr(early) && early.error.code).toBe('NC-CLI-010');
-    await consented(id, HEALTH_DATA);
-    await consented(id, APP_ACCESS);
-    expect(isOk(await invitations().invite(responsible, id, {}))).toBe(true);
+  it('⚠️ un menor de 14 se invita con ambas finalidades firmadas en papel por su tutor; desde los 14, como un adulto', async () => {
+    const child = await registered({ birthDate: '2014-03-01', population: 'CHILD' });
+    const early = await invitations().invite(responsible, child, {});
+    expect(isErr(early) && early.error).toMatchObject({ code: 'NC-CLI-010', rule: 'RN-B01' });
+    const digital = await consentCommands().grant(responsible, child, {
+      consentDocumentId: HEALTH_DATA,
+      channel: 'IN_PERSON_DIGITAL',
+      evidence: null,
+      ip: null,
+      userAgent: null,
+    });
+    expect(isErr(digital) && digital.error).toMatchObject({ code: 'NC-CLI-026', rule: 'RN-B01' });
+    await signedOnPaper(child, HEALTH_DATA);
+    await signedOnPaper(child, APP_ACCESS);
+    expect(isOk(await invitations().invite(responsible, child, {}))).toBe(true);
+    const teen = await registered({ birthDate: '2011-05-05', population: 'ADOLESCENT' });
+    expect(isOk(await invitations().invite(responsible, teen, {}))).toBe(true);
   });
 });
 
@@ -378,12 +402,12 @@ describe('RN-A06 y RN-B01 · inscripción desde la invitación', () => {
   });
   const metadata = { actorUserId: ACCOUNT, actorRole: 'ACCOUNT' as const };
 
-  it('la vista previa pide solo lo que falta y marca al menor; los textos vienen en el orden pedido', async () => {
+  it('la vista previa pide solo lo que falta y marca al menor de 14; los textos vienen en el orden pedido', async () => {
     patients.previews.set(Buffer.from(TOKEN).toString('hex'), {
       patientId: 'p-1',
       organizationId: ORG,
       firstName: 'Rosa',
-      birthDate: '2012-06-01',
+      birthDate: '2014-03-01',
       timezone: 'America/Lima',
       status: 'ACTIVE',
       linked: false,
@@ -393,7 +417,7 @@ describe('RN-A06 y RN-B01 · inscripción desde la invitación', () => {
       patientId: 'p-1',
       organizationId: ORG,
       firstName: 'Rosa',
-      minor: true,
+      needsGuardian: true,
       linked: false,
       active: true,
       pendingPurposes: ['APP_ACCESS'],
@@ -431,13 +455,18 @@ describe('RN-A06 y RN-B01 · inscripción desde la invitación', () => {
     expect(isErr(again) && again.error.code).toBe('NC-CLI-023');
   });
 
-  it('sin aceptar cada finalidad, un menor, archivado o inexistente: no se inscribe', async () => {
+  it('sin aceptar cada finalidad, un menor de 14, archivado o inexistente: no se inscribe', async () => {
     const id = await registered();
     const partial = await enrollment().enroll(input(id, [APP_ACCESS]), metadata);
     expect(isErr(partial) && partial.error).toMatchObject({ code: 'NC-CLI-025', rule: 'RN-B01' });
-    const minor = await registered({ birthDate: '2012-06-01', population: 'ADOLESCENT' });
-    const fromApp = await enrollment().enroll(input(minor, [APP_ACCESS, HEALTH_DATA]), metadata);
-    expect(isErr(fromApp) && fromApp.error.code).toBe('NC-CLI-010');
+    const child = await registered({ birthDate: '2014-03-01', population: 'CHILD' });
+    const fromApp = await enrollment().enroll(input(child, [APP_ACCESS, HEALTH_DATA]), metadata);
+    expect(isErr(fromApp) && fromApp.error).toMatchObject({ code: 'NC-CLI-010', rule: 'RN-B01' });
+    // Desde los 14 años acepta desde la app como un adulto.
+    const teen = await registered({ birthDate: '2011-05-05', population: 'ADOLESCENT' });
+    expect(isOk(await enrollment().enroll(input(teen, [APP_ACCESS, HEALTH_DATA]), metadata))).toBe(
+      true,
+    );
     await patientCommands().archive(responsible, id);
     const archived = await enrollment().enroll(input(id, [APP_ACCESS, HEALTH_DATA]), metadata);
     expect(isErr(archived) && archived.error.code).toBe('NC-CLI-018');

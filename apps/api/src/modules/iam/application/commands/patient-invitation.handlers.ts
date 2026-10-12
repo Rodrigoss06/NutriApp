@@ -3,7 +3,6 @@ import {
   anonymousContext,
   AUDIT_PORT,
   CLOCK,
-  domainError,
   ENCRYPTION_PORT,
   err,
   ID_GENERATOR,
@@ -23,6 +22,11 @@ import {
   type UserId,
 } from '@nutricoach/shared-kernel';
 import { TenancyApi } from '../../../tenancy/index.js';
+import {
+  ACCOUNT_EXISTS_FOR_PATIENT,
+  EMAIL_HAS_PENDING_INVITATION,
+  INVALID_INVITATION,
+} from '../../domain/invitation-errors.js';
 import { checkNewPassword, normalizePassword } from '../../domain/password-policy.js';
 import { newSessionExpiry } from '../../domain/session-policy.js';
 import {
@@ -52,20 +56,6 @@ import type { OpenedSession } from './login.handler.js';
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 
-export const ACCOUNT_EXISTS_FOR_PATIENT = domainError({
-  code: 'NC-IAM-044',
-  message: 'Ese correo ya tiene una cuenta. Usa otro correo para el acceso del paciente a la app.',
-});
-export const EMAIL_HAS_PENDING_INVITATION = domainError({
-  code: 'NC-IAM-045',
-  message: 'Ese correo tiene otra invitación pendiente en la organización.',
-});
-/** Mismo texto que la invitación de staff que no sirve (NC-IAM-040): no se distingue por qué. */
-export const INVALID_PATIENT_INVITATION = domainError({
-  code: 'NC-IAM-040',
-  message: 'La invitación venció, ya se usó o fue anulada. Pide una nueva a quien te invitó.',
-});
-
 export interface PatientInspection {
   readonly organizationName: string;
   readonly email: string;
@@ -77,7 +67,8 @@ export interface PatientInspection {
     bodyMarkdown: string;
     provisional: boolean;
   }[];
-  readonly minorNeedsInPerson: boolean;
+  /** Menor de 14 con finalidades pendientes: no consiente desde la app; se registra en consulta (⚠️). */
+  readonly needsGuardianConsent: boolean;
   readonly firstName: string;
 }
 
@@ -190,15 +181,17 @@ export class PatientInvitationHandlers {
   ): Promise<Result<PatientInspection, DomainError>> {
     const enrollment = this.enrollment;
     const preview = await this.uow.query(anonymousContext(), () => enrollment.preview(tokenHash));
-    if (!preview?.active || preview.linked) return err(INVALID_PATIENT_INVITATION);
+    if (!preview?.active || preview.linked) return err(INVALID_INVITATION);
+    // Un menor de 14 no tiene casillas: la página le explica que el consentimiento se registra en consulta.
+    const needsGuardianConsent = preview.needsGuardian && preview.pendingPurposes.length > 0;
     const { organization, texts } = await this.uow.query(
       this.#joinContext(invitation.organizationId, null),
       async () => ({
         organization: await this.tenancy.organization(invitation.organizationId),
-        texts: await enrollment.consentTexts(preview.pendingPurposes),
+        texts: needsGuardianConsent ? [] : await enrollment.consentTexts(preview.pendingPurposes),
       }),
     );
-    if (!organization) return err(INVALID_PATIENT_INVITATION);
+    if (!organization) return err(INVALID_INVITATION);
     const account = await this.uow.query(anonymousContext(), () =>
       this.accounts.findByEmail(invitation.email),
     );
@@ -207,14 +200,14 @@ export class PatientInvitationHandlers {
       email: invitation.email,
       accountExists: account !== null,
       consents: texts.map((t) => ({ ...t, provisional: t.version.endsWith('-provisional') })),
-      minorNeedsInPerson: preview.minor && preview.pendingPurposes.length > 0,
+      needsGuardianConsent,
       firstName: preview.firstName,
     });
   }
 
   /**
    * Aceptar: crea la cuenta, la vincula al paciente y registra los consentimientos aceptados (canal APP), todo o nada.
-   * APP_ACCESS y HEALTH_DATA son obligatorias; un menor solo entra si ya se registraron en consulta.
+   * APP_ACCESS y HEALTH_DATA son obligatorias; un menor de 14 solo entra si ya se registraron en consulta.
    */
   async accept(
     command: PatientAcceptCommand,
@@ -229,7 +222,7 @@ export class PatientInvitationHandlers {
       return err(ACCOUNT_EXISTS_FOR_PATIENT);
     }
     const preview = await this.uow.query(anonymousContext(), () => enrollment.preview(tokenHash));
-    if (!preview?.active || preview.linked) return err(INVALID_PATIENT_INVITATION);
+    if (!preview?.active || preview.linked) return err(INVALID_INVITATION);
     const password = normalizePassword(command.password);
     const policy = checkNewPassword(password, {
       email: invitation.email,
@@ -247,7 +240,7 @@ export class PatientInvitationHandlers {
     try {
       await this.uow.run(this.#joinContext(invitation.organizationId, userId), async () => {
         if (!(await this.invitations.accept(invitation.id, now)))
-          throw new Rollback(INVALID_PATIENT_INVITATION);
+          throw new Rollback(INVALID_INVITATION);
         await this.accounts.createActive({
           id: userId,
           email: invitation.email,
@@ -265,9 +258,9 @@ export class PatientInvitationHandlers {
           },
           metadata,
         );
-        // Una regla (RN-B01) vuelve tal cual; archivado o ya vinculado entretanto: la invitación ya no sirve.
+        // Una regla (RN-B01) vuelve tal cual; archivado o vinculado entretanto: el enlace ya no sirve, sin decir por qué.
         if (!enrolled.ok)
-          throw new Rollback(enrolled.error.rule ? enrolled.error : INVALID_PATIENT_INVITATION);
+          throw new Rollback(enrolled.error.rule ? enrolled.error : INVALID_INVITATION);
         if (command.currentTokenHash) {
           const previous = await this.sessions.findByTokenHash(command.currentTokenHash);
           if (previous && previous.revokedAt === null) await this.sessions.revoke(previous.id, now);

@@ -1,11 +1,8 @@
 import '../env-file.js';
-import { Module } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
 import { isErr } from '@nutricoach/shared-kernel';
-import { ClinicalModule } from '../modules/clinical/index.js';
-import { IamApi, IamModule } from '../modules/iam/index.js';
-import { TenancyModule } from '../modules/tenancy/index.js';
-import { PlatformModule } from '../platform/index.js';
+import { IamApi } from '../modules/iam/index.js';
+import { CliModule } from './cli.module.js';
 
 /**
  * Primer PLATFORM_ADMIN de un entorno (decisión 3 de P5): crea la cuenta sin contraseña y deja en el outbox el
@@ -13,9 +10,6 @@ import { PlatformModule } from '../platform/index.js';
  *
  * Uso: node dist/cli/create-platform-admin.js <correo> "<nombre>"
  */
-@Module({ imports: [PlatformModule, TenancyModule, IamModule, ClinicalModule] })
-class CliModule {}
-
 const [email, displayName] = process.argv.slice(2);
 if (!email || !displayName?.trim()) {
   console.error('Uso: create-platform-admin <correo> "<nombre>"');

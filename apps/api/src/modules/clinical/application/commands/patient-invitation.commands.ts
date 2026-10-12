@@ -12,8 +12,8 @@ import {
 import { IamApi } from '../../../iam/index.js';
 import {
   canWriteClinical,
-  isMinor,
-  MINOR_CONSENT_IN_PERSON,
+  GUARDIAN_CONSENT_REQUIRED,
+  needsGuardian,
   PATIENT_ALREADY_LINKED,
   PATIENT_ARCHIVED,
   PATIENT_EMAIL_REQUIRED,
@@ -33,8 +33,9 @@ import { actorOf } from './patient.commands.js';
 
 /**
  * Invitar al paciente a la app (RN-A06): el equipo con WRITE, a un paciente activo y sin cuenta. Por defecto al correo
- * de su ficha. Un menor solo se invita si APP_ACCESS y HEALTH_DATA ya se registraron en consulta con su tutor (⚠️). La
- * invitación la crea iam dentro de esta misma transacción; reenviar revoca la anterior.
+ * de su ficha. Un menor de 14 solo se invita si APP_ACCESS y HEALTH_DATA ya se registraron en consulta, en papel
+ * firmado por su padre, madre o tutor (⚠️). La invitación la crea iam dentro de esta misma transacción; reenviar
+ * revoca la anterior.
  */
 @Injectable()
 export class PatientInvitationCommands {
@@ -64,8 +65,11 @@ export class PatientInvitationCommands {
       const active = (await this.consents.list(patientId))
         .filter((c) => c.revokedAt === null)
         .map((c) => c.purpose);
-      const minor = isMinor(patient.birthDate, localToday(this.clock.now(), patient.timezone));
-      if (minor && pendingAppPurposes(active).length > 0) return err(MINOR_CONSENT_IN_PERSON);
+      const guardian = needsGuardian(
+        patient.birthDate,
+        localToday(this.clock.now(), patient.timezone),
+      );
+      if (guardian && pendingAppPurposes(active).length > 0) return err(GUARDIAN_CONSENT_REQUIRED);
       return this.iam.invitePatientWithin(context, actor.organizationId, patientId, email);
     });
   }

@@ -28,15 +28,19 @@ Próxima demo: Demo 1 · Base y evaluación · semana 2
 Leyenda: ⬜ pendiente · 🟨 en curso · ✅ terminado · ⛔ bloqueado
 
 ## En curso
-- P6, PR 2 de 3 listo en `feat/cli-historia` (falta subirlo): historia clínica v1 con revisiones, condiciones,
-  objetivos y notas, línea de tiempo, READ en cada lectura, /audit-events para OWNER e invitación del paciente con
-  sus consentimientos y sesión PATIENT (ADR-040 y 041). El criterio «sin consentimiento, guardar historia clínica
+- P6, PR 2 de 3 en revisión (`feat/cli-historia`): historia clínica v1 con revisiones, condiciones, objetivos y
+  notas, línea de tiempo, READ en cada lectura, /audit-events para OWNER e invitación del paciente con sus
+  consentimientos y sesión PATIENT (ADR-040 a 042). El criterio «sin consentimiento, guardar historia clínica
   devuelve 422 con rule RN-B01» está en verde en la integración
 
 ## Siguiente paso
 - PR 3 de P6: web (lista con búsqueda por nombre sin tildes y por documento, ficha, historia, consentimiento, equipo,
   auditoría y la aceptación del paciente con una casilla por finalidad en /invitacion) y E2E en escritorio y celular;
   luego /cierre de P6 y /notion-sync
+- Para el /notion-sync de P6, además de lo anotado en el PR 1: ADR-037 a 042; el 410 en la tabla de 06 §5; RF-06
+  (LOGIN y LOGIN_FAILED solo para la plataforma); patient_invitation.ttl_days junto a N22; la regla de menores
+  (ADR-042) como ajuste pendiente en la sección 9 del Proyecto; 02 §8 (PATIENT_ENROLLMENT síncrono, eventos nuevos
+  de clinical y el consumidor iam.patient-sessions); 03 RN-A06 y RN-B02; las reglas nuevas de apps/api/CLAUDE.md
 
 ## Bloqueos y preguntas al cliente
 - [ ] Cuenta de Hetzner y dominio a nombre de Jeremy: bloquea P4
@@ -50,7 +54,10 @@ Leyenda: ⬜ pendiente · 🟨 en curso · ✅ terminado · ⛔ bloqueado
 - [ ] N13: confirmar regresiones y progresiones en la biblioteca
 - [ ] N7: confirmar el estado diario (estrés, sueño, energía)
 - [ ] R4: permiso de uso de las listas Dextre y ADA
-- [ ] Textos legales revisados por el abogado del cliente
+- [ ] Textos legales revisados por el abogado del cliente, en lenguaje claro: desde los 14 años los acepta el propio
+  paciente (ADR-042)
+- [ ] ⚠️ Menores: desde los 14 consienten como un adulto; antes, solo en papel firmado por su padre, madre o tutor, sin
+  registrar quién es el tutor (ADR-042). Pendiente de confirmar con el abogado
 
 ## Deuda técnica
 - P14: medir care_team_scope con seed:load. Si el costo por fila pesa en tracking, pasar a
@@ -73,6 +80,9 @@ Leyenda: ⬜ pendiente · 🟨 en curso · ✅ terminado · ⛔ bloqueado
 - Jackson y Pollock 7 deja de crecer con la suma de pliegues sobre 395 mm (hombres) y 419 mm (mujeres): consultar si se advierte
 
 ## Registro de sesiones (solo las 5 últimas)
+- 2026-10-12 · P6 (2/3) · revisión del PR 2: menores con umbral de 14 años (ADR-042), OBESITY solo el equipo, 410
+  único para todo enlace que ya no sirve, 409 si una invitación de staff choca con la de un paciente y la CLI sin
+  clinical, con adaptadores explícitos
 - 2026-10-11 · P6 (2/3) · historia clínica versionada, condiciones, objetivos y notas inmutables, línea de tiempo,
   READ en cada lectura, módulo audit con /audit-events, invitación y aceptación del paciente con PATIENT_ENROLLMENT,
   sesión PATIENT y cierre de sesiones al revocar o archivar; ADR-040 y 041
@@ -83,5 +93,3 @@ Leyenda: ⬜ pendiente · 🟨 en curso · ✅ terminado · ⛔ bloqueado
   aplicado (23 cambios en 01, 02, 03, 05, 05.1, 05.3, 06, Documento técnico y Archivos del repositorio)
 - 2026-10-07 · P5 (2/3) · tenancy con QuotaPolicy y candado, invitaciones de un solo uso, organización activa,
   backoffice, vencimiento RN-A02, auditoría desde eventos, semilla y CLI; ADR-033 y 034
-- 2026-10-07 · P5 (1/3) · filtro RFC 9457, guardias con negación por defecto, Origin, límite de intentos en la
-  base, iam con argon2id, sesiones, bloqueo, recuperar y cambiar la contraseña, correos por el worker; ADR-030 a 032

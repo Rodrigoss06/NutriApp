@@ -51,14 +51,14 @@ import {
 } from '../../../application/commands/active-organization.handler.js';
 import {
   ACCOUNT_CANNOT_JOIN,
-  INVALID_INVITATION,
   INVITATION_NOT_FOUND,
   InvitationHandlers,
 } from '../../../application/commands/invitation.handlers.js';
 import {
   ACCOUNT_EXISTS_FOR_PATIENT,
   EMAIL_HAS_PENDING_INVITATION,
-} from '../../../application/commands/patient-invitation.handlers.js';
+  INVALID_INVITATION,
+} from '../../../domain/invitation-errors.js';
 import { INVALID_CREDENTIALS } from '../../../domain/login-policy.js';
 import { AccountQueries } from '../../../application/queries/account.queries.js';
 import { toAccountResponse } from './account-response.js';

@@ -54,6 +54,7 @@ import {
   DOCUMENT_TAKEN,
   INVALID_DOCUMENT,
   NOT_RESPONSIBLE,
+  OBESITY_NEEDS_CARE_TEAM,
   PATIENT_ARCHIVED,
   PATIENT_NOT_FOUND,
   RESPONSIBLE_NOT_MEMBER,
@@ -71,6 +72,7 @@ const STATUS_BY_CODE: Readonly<Record<string, number>> = {
   [ALREADY_IN_STATUS.code]: 409,
   [NOT_RESPONSIBLE.code]: 403,
   [WRITE_ACCESS_REQUIRED.code]: 403,
+  [OBESITY_NEEDS_CARE_TEAM.code]: 403,
   [INVALID_DOCUMENT.code]: 400,
   [UNSUPPORTED_EVIDENCE.code]: 415,
   // Paciente archivado: conflicto de estado (06 §5).

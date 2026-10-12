@@ -2,7 +2,7 @@
 export {
   ACCOUNT_EXISTS_FOR_PATIENT,
   EMAIL_HAS_PENDING_INVITATION,
-} from './application/commands/patient-invitation.handlers.js';
+} from './domain/invitation-errors.js';
 export { IamApi } from './application/iam-api.js';
 export {
   PATIENT_ENROLLMENT,
