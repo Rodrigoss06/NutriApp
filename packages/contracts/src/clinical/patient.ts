@@ -89,7 +89,7 @@ export const patientListResponseSchema = z.object({
 });
 export type PatientListResponse = z.infer<typeof patientListResponseSchema>;
 
-/** Búsqueda: nombre sin tildes (trigramas) o documento exacto (índice ciego). */
+/** Búsqueda: nombre sin tildes (trigramas) o documento exacto (índice ciego); sin tipo, en todos los tipos. */
 export const patientSearchSchema = z.object({
   q: z.string().trim().max(80).optional(),
   documentType: z.enum(DOCUMENT_TYPES).optional(),

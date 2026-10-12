@@ -373,6 +373,19 @@ describe('Consultas', () => {
       documentNumber: '4567 8912',
     });
     expect(byDocument.patients.map((p) => p.id)).toEqual([id]);
+    // Sin tipo, el número se busca exacto en cada tipo que lo admite.
+    const anyType = await queries().search(responsible, {
+      status: 'ACTIVE',
+      limit: 10,
+      documentNumber: '4567-8912',
+    });
+    expect(anyType.patients.map((p) => p.id)).toEqual([id]);
+    const nothing = await queries().search(responsible, {
+      status: 'ACTIVE',
+      limit: 10,
+      documentNumber: 'z',
+    });
+    expect(nothing.patients).toEqual([]);
     const invalid = await queries().search(responsible, {
       status: 'ACTIVE',
       limit: 10,

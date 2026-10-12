@@ -25,3 +25,41 @@ export function todayIn(timeZone: string, now: Date = new Date()): string {
     day: '2-digit',
   }).format(now);
 }
+
+/** Minutos que la zona adelanta a UTC en ese instante (Lima: −300). */
+function offsetMinutes(at: Date, timeZone: string): number {
+  const parts = new Intl.DateTimeFormat('en-US', {
+    timeZone,
+    hourCycle: 'h23',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit',
+  }).formatToParts(at);
+  const part = (type: Intl.DateTimeFormatPartTypes) =>
+    Number(parts.find((p) => p.type === type)?.value ?? 0);
+  const local = Date.UTC(
+    part('year'),
+    part('month') - 1,
+    part('day'),
+    part('hour'),
+    part('minute'),
+    part('second'),
+  );
+  return Math.round((local - at.getTime()) / 60_000);
+}
+
+/** El instante en que empieza ese día (YYYY-MM-DD) en la zona de la organización: los filtros por fecha (RF-06). */
+export function dayStartIn(isoDate: string, timeZone: string): Date {
+  const utcMidnight = new Date(`${isoDate}T00:00:00Z`);
+  return new Date(utcMidnight.getTime() - offsetMinutes(utcMidnight, timeZone) * 60_000);
+}
+
+/** Suma días a una fecha de calendario (YYYY-MM-DD). */
+export function addDays(isoDate: string, days: number): string {
+  const date = new Date(`${isoDate}T12:00:00Z`);
+  date.setUTCDate(date.getUTCDate() + days);
+  return date.toISOString().slice(0, 10);
+}

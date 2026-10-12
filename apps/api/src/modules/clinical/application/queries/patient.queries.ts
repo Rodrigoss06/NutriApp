@@ -16,6 +16,7 @@ import { FileRegistry } from '../../../../platform/index.js';
 import { IamApi } from '../../../iam/index.js';
 import {
   ageYears,
+  DOCUMENT_TYPES,
   normalizeDocument,
   type DocumentType,
   type PatientStatus,
@@ -93,16 +94,22 @@ export class PatientQueries {
   ): Promise<PatientPage> {
     const organizationId = context.organizationId;
     if (!organizationId) throw new Error('Consulta clínica sin organización activa.');
-    let documentBidx: Uint8Array | null = null;
-    if (params.documentType && params.documentNumber) {
-      const normalized = normalizeDocument(params.documentType, params.documentNumber);
-      if (!normalized) return Promise.resolve({ patients: [], nextCursor: null });
-      documentBidx = this.encryption.blindIndex(organizationId, params.documentType, normalized);
+    // Sin tipo, el número se busca exacto en cada tipo que lo admita: el buscador no pregunta el tipo.
+    const number = params.documentNumber;
+    let documentBidxes: Uint8Array[] | null = null;
+    if (number) {
+      documentBidxes = (params.documentType ? [params.documentType] : DOCUMENT_TYPES).flatMap(
+        (type) => {
+          const normalized = normalizeDocument(type, number);
+          return normalized ? [this.encryption.blindIndex(organizationId, type, normalized)] : [];
+        },
+      );
+      if (documentBidxes.length === 0) return Promise.resolve({ patients: [], nextCursor: null });
     }
     return this.uow.query(context, async () => {
       const rows = await this.patients.search({
         nameQuery: params.q?.trim() || null,
-        documentBidx,
+        documentBidxes,
         status: params.status,
         after: decodeCursor(params.cursor),
         limit: params.limit + 1,

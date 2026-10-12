@@ -143,7 +143,9 @@ export class MemoryPatients implements PatientStore {
             `${p.firstName} ${p.lastName}`.toLowerCase().includes(search.nameQuery),
         )
         .filter(
-          (p) => !search.documentBidx || hex(p.documentNumberBidx) === hex(search.documentBidx),
+          (p) =>
+            !search.documentBidxes ||
+            search.documentBidxes.some((bidx) => hex(bidx) === hex(p.documentNumberBidx)),
         )
         .sort((a, b) => a.lastName.localeCompare(b.lastName) || a.id.localeCompare(b.id))
         .filter(

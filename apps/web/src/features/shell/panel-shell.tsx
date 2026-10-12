@@ -9,6 +9,8 @@ export interface PanelShellProps {
   readonly displayName: string;
   readonly logoUrl: string | null;
   readonly patientLabel: string;
+  /** El dueño ve la auditoría en el menú (RF-06). */
+  readonly showAudit?: boolean;
   readonly organizations: readonly OrganizationOption[];
   readonly activeOrganizationId: string;
   readonly notices?: ReactNode;
@@ -20,6 +22,7 @@ export function PanelShell({
   displayName,
   logoUrl,
   patientLabel,
+  showAudit = false,
   organizations,
   activeOrganizationId,
   notices,
@@ -28,6 +31,7 @@ export function PanelShell({
   return (
     <PanelFrame
       patientLabel={patientLabel}
+      showAudit={showAudit}
       brand={<BrandMark displayName={displayName} logoUrl={logoUrl} />}
       notices={notices}
       tools={

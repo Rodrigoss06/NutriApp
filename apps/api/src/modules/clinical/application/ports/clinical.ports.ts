@@ -61,7 +61,8 @@ export interface CareTeamRecord {
 
 export interface PatientSearch {
   readonly nameQuery: string | null;
-  readonly documentBidx: Uint8Array | null;
+  /** Índices ciegos del documento buscado: uno por tipo si no se indicó el tipo. null: sin filtro de documento. */
+  readonly documentBidxes: readonly Uint8Array[] | null;
   readonly status: PatientStatus;
   readonly after: { lastName: string; id: string } | null;
   readonly limit: number;

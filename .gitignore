@@ -33,5 +33,6 @@ test-results/
 # Cliente de Prisma: se genera con `prisma generate` (postinstall)
 apps/api/src/platform/database/generated/
 
-# Archivos subidos en local (StoragePort)
+# Archivos subidos en local (StoragePort): var/uploads relativo a donde arranca la API (apps/api o la raíz)
 apps/api/var/
+/var/
