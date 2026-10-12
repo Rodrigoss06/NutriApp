@@ -420,8 +420,11 @@ nombre sin tildes. La historia guarda sobre la revisión que se editó: ante un 
 versión actual para compararla bloque por bloque y se guarda encima. La evidencia en papel se valida en el navegador
 por sus primeros bytes y 5 MB antes de subirla, y otra vez en la API. /panel/auditoria aparece solo en el menú del
 dueño; la API decide (403). /mi pide la cuenta en cada petición y solo deja pasar sesiones PATIENT; entrar lleva al
-paciente a /mi/hoy. La palabra «Paciente» sale de la organización en títulos, botones y menú. El E2E lee la base como
-app_owner solo para comprobar lo que la interfaz no muestra (el documento cifrado), nunca para preparar datos: los
-pacientes del E2E se preparan por la API, como en producción.
+paciente a /mi/hoy. La palabra «Paciente» sale de la organización en títulos, botones y menú. La web nunca toca la
+base, tampoco en sus pruebas: dependency-cruiser lo impide (web-no-database: ni pg ni Prisma). Que el documento se
+guarde cifrado lo prueba la integración de la API; el E2E prueba la búsqueda y los 4 últimos dígitos, y sus pacientes
+se preparan por la API, como en producción. STORAGE_LOCAL_PATH pasa a ser obligatoria y absoluta en todo entorno (un
+directorio temporal en local y en CI): una ruta relativa dependía de dónde arrancaba el proceso y dejaba archivos
+dentro del repositorio. Reemplaza «obligatoria fuera de local» de ADR-038.
 Consecuencias: P13 construye la app del paciente sobre esa sesión. Las pruebas de /mi entran con un paciente creado por
-la API.
+la API. Quien use un .env local agrega STORAGE_LOCAL_PATH con una ruta absoluta.

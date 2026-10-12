@@ -141,6 +141,8 @@ jobs:
       MAIL_DRIVER: smtp
       SMTP_URL: smtp://127.0.0.1:1025
       RATE_LIMIT_FACTOR: 100
+      # Archivos subidos en un directorio temporal del runner, fuera del repositorio (01 §12).
+      STORAGE_LOCAL_PATH: /tmp/nutricoach-uploads
     steps:
       - uses: actions/checkout@v7
 

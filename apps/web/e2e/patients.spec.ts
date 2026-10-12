@@ -1,6 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
 import { seriousViolations } from './support/axe';
-import { patientDocumentColumns } from './support/database';
 import {
   acceptByApi,
   createOrganization,
@@ -41,7 +40,7 @@ async function staffMember(ownerEmail: string, name: string): Promise<string> {
 }
 
 test.describe('P6 · criterios de aceptación', () => {
-  test('alta con DNI cifrado, búsqueda exacta, READ en la auditoría y fuera del equipo no existe', async ({
+  test('alta con DNI, búsqueda exacta y 4 últimos dígitos, READ en la auditoría y fuera del equipo no existe', async ({
     page,
     browser,
   }) => {
@@ -69,18 +68,14 @@ test.describe('P6 · criterios de aceptación', () => {
     await expect(page.getByText('45678912')).toHaveCount(0);
     expect(await seriousViolations(page)).toEqual([]);
 
-    // Criterio: buscar por DNI encuentra al paciente y la columna en la base no contiene el número en claro.
+    // Criterio: buscar por DNI encuentra al paciente. Que la columna en la base no tenga el número en claro lo prueba
+    // la integración de la API (clinical-patients.int.spec.ts): la web nunca toca la base (02 §4).
     await page.goto('/panel/pacientes');
     expect(await seriousViolations(page)).toEqual([]);
     await page.getByLabel('Nombre o documento', { exact: true }).fill('45678912');
     await page.getByRole('button', { name: 'Buscar', exact: true }).click();
     await expect(page.getByRole('link', { name: 'Quispe Mamani, Rosa' })).toBeVisible();
-    const columns = await patientDocumentColumns(patientId);
-    expect(columns).not.toBeNull();
-    for (const column of [columns?.enc, columns?.bidx]) {
-      expect(column?.toString('latin1')).not.toContain('45678912');
-      expect(column?.toString('hex')).not.toContain(Buffer.from('45678912').toString('hex'));
-    }
+    await expect(page.getByText('45678912')).toHaveCount(0);
 
     // Criterio: abrir el expediente deja un READ en la auditoría, que el dueño ve con quién y qué.
     const ownerContext = await browser.newContext();

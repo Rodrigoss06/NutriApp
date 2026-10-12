@@ -9,6 +9,7 @@ const VALID = {
   BLIND_INDEX_KEY: KEY,
   APP_URL: 'http://localhost:3000',
   SMTP_URL: 'smtp://127.0.0.1:1025',
+  STORAGE_LOCAL_PATH: '/tmp/nutricoach-uploads',
 };
 
 describe('06 §4 · las variables de entorno se validan con Zod al arrancar', () => {
@@ -108,10 +109,20 @@ describe('P5 · acceso: origen, cookie, correo y límite de intentos', () => {
     ).toBe('https://staging.ejemplo.pe');
   });
 
-  it('01 §12 · fuera de local STORAGE_LOCAL_PATH es obligatoria; en local tiene valor por defecto', () => {
-    expect(loadEnv(VALID).STORAGE_DRIVER).toBe('local');
+  it('01 §12 · STORAGE_LOCAL_PATH es obligatoria y absoluta en todo entorno, también en local', () => {
+    expect(loadEnv(VALID)).toMatchObject({
+      STORAGE_DRIVER: 'local',
+      STORAGE_LOCAL_PATH: '/tmp/nutricoach-uploads',
+    });
+    expect(() => loadEnv({ ...VALID, STORAGE_LOCAL_PATH: undefined })).toThrow(/obligatoria/);
+    expect(() => loadEnv({ ...VALID, STORAGE_LOCAL_PATH: 'var/uploads' })).toThrow(/absoluta/);
     expect(() =>
-      loadEnv({ ...VALID, APP_ENV: 'staging', APP_URL: 'https://staging.ejemplo.pe' }),
+      loadEnv({
+        ...VALID,
+        APP_ENV: 'staging',
+        APP_URL: 'https://staging.ejemplo.pe',
+        STORAGE_LOCAL_PATH: undefined,
+      }),
     ).toThrow(/STORAGE_LOCAL_PATH/);
   });
 });

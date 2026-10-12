@@ -1,3 +1,5 @@
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 import { baseConfig, SOURCE_CONDITION } from '@nutricoach/config/vitest';
 import swc from 'unplugin-swc';
 import { defineConfig, mergeConfig } from 'vitest/config';
@@ -33,6 +35,7 @@ const config = mergeConfig(
         BLIND_INDEX_KEY: Buffer.alloc(32, 2).toString('base64'),
         APP_URL: 'http://localhost:3000',
         SMTP_URL: 'smtp://127.0.0.1:1025',
+        STORAGE_LOCAL_PATH: join(tmpdir(), 'nutricoach-unit-uploads'),
       },
       coverage: {
         // Arranque de los procesos: lo cubren el humo de `pnpm dev` y las pruebas de API.

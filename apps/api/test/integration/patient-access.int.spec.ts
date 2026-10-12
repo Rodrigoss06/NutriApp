@@ -228,10 +228,18 @@ describe('RN-A06 · invitar y aceptar el acceso a la app', () => {
     expect(early.status).toBe(422);
     expect(early.body as Problem).toMatchObject({ code: 'NC-CLI-010', rule: 'RN-B01' });
 
-    // En consulta solo vale el papel firmado por su padre, madre o tutor, con su escaneo.
-    const digital = await grant(patientId, 'HEALTH_DATA', 'IN_PERSON_DIGITAL');
-    expect(digital.status).toBe(422);
-    expect(digital.body as Problem).toMatchObject({ code: 'NC-CLI-026', rule: 'RN-B01' });
+    // En consulta solo vale el papel firmado por su padre, madre o tutor, con su escaneo: la API rechaza el digital
+    // de cualquier finalidad y no guarda nada.
+    for (const purpose of ['HEALTH_DATA', 'APP_ACCESS'] as const) {
+      const digital = await grant(patientId, purpose, 'IN_PERSON_DIGITAL');
+      expect(digital.status).toBe(422);
+      expect(digital.body as Problem).toMatchObject({ code: 'NC-CLI-026', rule: 'RN-B01' });
+    }
+    const none = await pool('owner').query(
+      `SELECT count(*)::int AS consents FROM clinical.consent WHERE patient_id = $1`,
+      [patientId],
+    );
+    expect(none.rows[0]).toEqual({ consents: 0 });
     expect((await grant(patientId, 'HEALTH_DATA', 'PAPER_SCANNED')).status).toBe(201);
     expect((await grant(patientId, 'APP_ACCESS', 'PAPER_SCANNED')).status).toBe(201);
     expect((await invite(patientId)).status).toBe(201);
@@ -242,9 +250,20 @@ describe('RN-A06 · invitar y aceptar el acceso a la app', () => {
     await revoke(patientId, 'APP_ACCESS');
     const page = (await inspect(token)).body as Inspected;
     expect(page).toMatchObject({ needsGuardianConsent: true, consents: [] });
-    const refused = await accept(token, [(await documentIds())['APP_ACCESS'] ?? '']);
+    const ids = await documentIds();
+    const refused = await accept(token, [ids['APP_ACCESS'] ?? '', ids['HEALTH_DATA'] ?? '']);
     expect(refused.status).toBe(422);
     expect(refused.body as Problem).toMatchObject({ code: 'NC-CLI-010', rule: 'RN-B01' });
+    // La API, no solo la página: sin cuenta, sin consentimiento desde la app, sin vínculo y con el enlace intacto.
+    const untouched = await pool('owner').query(
+      `SELECT (SELECT count(*)::int FROM iam.user_account WHERE email = $1) AS accounts,
+              (SELECT count(*)::int FROM clinical.consent WHERE patient_id = $2 AND channel = 'APP') AS from_app,
+              (SELECT user_id FROM clinical.patient WHERE id = $2) AS linked,
+              (SELECT count(*)::int FROM iam.invitation
+                WHERE email = $1 AND accepted_at IS NULL AND revoked_at IS NULL) AS pending`,
+      [email, patientId],
+    );
+    expect(untouched.rows[0]).toEqual({ accounts: 0, from_app: 0, linked: null, pending: 1 });
 
     // Con las dos firmadas en papel, entra sin casillas.
     expect((await grant(patientId, 'APP_ACCESS', 'PAPER_SCANNED')).status).toBe(201);

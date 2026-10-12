@@ -41,7 +41,9 @@ Leyenda: ⬜ pendiente · 🟨 en curso · ✅ terminado · ⛔ bloqueado
 - Para el /notion-sync de P6, además de lo anotado en el PR 1: ADR-037 a 043; el 410 en la tabla de 06 §5; RF-06
   (LOGIN y LOGIN_FAILED solo para la plataforma); patient_invitation.ttl_days junto a N22; la regla de menores
   (ADR-042) como ajuste pendiente en la sección 9 del Proyecto; 02 §8 (PATIENT_ENROLLMENT síncrono, eventos nuevos
-  de clinical y el consumidor iam.patient-sessions); 03 RN-A06 y RN-B02; las reglas nuevas de apps/api/CLAUDE.md
+  de clinical y el consumidor iam.patient-sessions); 02 §4 (la web no importa pg ni Prisma: web-no-database); 01 §12
+  (STORAGE_LOCAL_PATH obligatoria y absoluta en todo entorno); 03 RN-A06 y RN-B02; las reglas nuevas de
+  apps/api/CLAUDE.md y apps/web/CLAUDE.md
 
 ## Bloqueos y preguntas al cliente
 - [ ] Cuenta de Hetzner y dominio a nombre de Jeremy: bloquea P4

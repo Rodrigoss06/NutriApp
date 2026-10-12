@@ -31,7 +31,7 @@
   cerrada de la función y en PARTITIONED_TABLES.
 - Auditoría con AUDIT_PORT (transacción propia, falla cerrado); campos sensibles con ENCRYPTION_PORT.
 - Archivos con FileRegistry y StoragePort (ADR-038): tipo por bytes, 5 MB en el parser, clave aleatoria, descarga
-  solo por la API como adjunto y auditada.
+  solo por la API como adjunto y auditada. STORAGE_LOCAL_PATH es una ruta absoluta en todo entorno (ADR-043).
 - Logs con pino: nunca cuerpos de petición ni datos personales.
 - Pruebas de integración (*.int.spec.ts, Testcontainers, rol app_user) por repositorio y por política RLS nueva.
   Junto al código si prueban archivos internos; en test/integration si solo usan la API pública.
