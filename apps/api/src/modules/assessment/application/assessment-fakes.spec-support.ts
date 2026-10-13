@@ -23,9 +23,15 @@ import type {
   TimelineEntry,
 } from '../../clinical/index.js';
 import type { TenancyApi } from '../../tenancy/index.js';
+import type { Population } from '@nutricoach/engine';
 import type { SiteDefinition } from '../domain/assessment-rules.js';
+import type { MethodPurpose, PreferenceRow } from '../domain/calculation-plan.js';
+import type { ReferenceRange } from '../domain/interpretation.js';
 import type {
   BiaReadingRecord,
+  CalculationStore,
+  MetricRow,
+  StoredResult,
   EvaluationChanges,
   EvaluationRecord,
   EvaluationStore,
@@ -141,7 +147,9 @@ export class FakeClinical {
       ): Promise<Result<PatientRef, DomainError>> => {
         const patient = this.patients.get(id);
         if (!patient)
-          return Promise.resolve(err(domainError({ code: 'NC-CLI-001', message: 'No.' })));
+          return Promise.resolve(
+            err(domainError({ code: 'NC-CLI-005', message: 'No encontrado.' })),
+          );
         if (!this.writers.get(id)?.has(context.memberId ?? '')) return Promise.resolve(err(DENIED));
         if (!this.consented.has(id)) return Promise.resolve(err(NO_CONSENT));
         return Promise.resolve(ok(patient));
@@ -153,11 +161,16 @@ export class FakeClinical {
   }
 }
 
-export function fakeTenancy(members: Set<string>, timezone = 'America/Lima'): TenancyApi {
+export function fakeTenancy(
+  members: Set<string>,
+  options: { timezone?: string; leeCoefficient?: number | null } = {},
+): TenancyApi {
   return {
     isActiveMemberId: (_org: OrganizationId, memberId: string) =>
       Promise.resolve(members.has(memberId)),
-    organization: () => Promise.resolve({ timezone }),
+    organization: () => Promise.resolve({ timezone: options.timezone ?? 'America/Lima' }),
+    leeReferenceGroupCoefficient: () =>
+      Promise.resolve(options.leeCoefficient === undefined ? 0 : options.leeCoefficient),
   } as unknown as TenancyApi;
 }
 
@@ -319,5 +332,81 @@ export class MemoryTechnicalErrors implements TechnicalErrorStore {
     return Promise.resolve(
       [...latest.values()].sort((a, b) => a.siteCode.localeCompare(b.siteCode)),
     );
+  }
+}
+
+export class MemoryCalculations implements CalculationStore {
+  rows: StoredResult[] = [];
+  metrics: { resultId: string; metric: MetricRow }[] = [];
+  preferences: (PreferenceRow & { patientId: string | null })[] = [];
+  ranges: ReferenceRange[] = [];
+
+  snapshot(): () => void {
+    const saved = clone({ rows: this.rows, metrics: this.metrics, preferences: this.preferences });
+    return () => {
+      this.rows = saved.rows;
+      this.metrics = saved.metrics;
+      this.preferences = saved.preferences;
+    };
+  }
+  results(evaluationIds: readonly string[]) {
+    return Promise.resolve(this.rows.filter((r) => evaluationIds.includes(r.evaluationId)));
+  }
+  insertResult(_org: OrganizationId, result: StoredResult, metrics: readonly MetricRow[]) {
+    if (
+      this.rows.some(
+        (r) =>
+          r.evaluationId === result.evaluationId &&
+          r.methodCode === result.methodCode &&
+          r.methodVersion === result.methodVersion &&
+          r.inputsHash === result.inputsHash,
+      )
+    ) {
+      return Promise.reject(new Error('calculation_result_unique'));
+    }
+    this.rows.push(result);
+    this.metrics.push(...metrics.map((metric) => ({ resultId: result.id, metric })));
+    return Promise.resolve();
+  }
+  setStatus(id: string, status: StoredResult['status'], supersededBy: string | null) {
+    this.rows = this.rows.map((r) => (r.id === id ? { ...r, status, supersededBy } : r));
+    return Promise.resolve();
+  }
+  preferenceRows(patientId: string | null) {
+    return Promise.resolve(
+      this.preferences.filter((p) => p.patientId === null || p.patientId === patientId),
+    );
+  }
+  savePreference(
+    _org: OrganizationId,
+    _id: string,
+    target: { readonly patientId: string } | { readonly population: string },
+    purpose: MethodPurpose,
+    methodCode: string,
+  ) {
+    const patientId = 'patientId' in target ? target.patientId : null;
+    const population = 'population' in target ? (target.population as Population) : null;
+    this.preferences = [
+      ...this.preferences.filter(
+        (p) => !(p.patientId === patientId && p.population === population && p.purpose === purpose),
+      ),
+      { organizationLevel: patientId === null, patientId, population, purpose, methodCode },
+    ];
+    return Promise.resolve();
+  }
+  deletePreference(
+    target: { readonly patientId: string } | { readonly population: string },
+    purpose: MethodPurpose,
+  ) {
+    const before = this.preferences.length;
+    this.preferences = this.preferences.filter((p) =>
+      'patientId' in target
+        ? !(p.patientId === target.patientId && p.purpose === purpose)
+        : !(p.patientId === null && p.population === target.population && p.purpose === purpose),
+    );
+    return Promise.resolve(this.preferences.length < before);
+  }
+  referenceRanges() {
+    return Promise.resolve(this.ranges);
   }
 }

@@ -128,8 +128,17 @@ export const calculationResultSchema = z.object({
 });
 export type CalculationResultResponse = z.infer<typeof calculationResultSchema>;
 
-/** Por qué un método no se calculó: sitios sin medir (RN-D04), nivel (RN-C01), población (RN-D05) o validez (RN-D06). */
-export const UNAVAILABLE_REASONS = ['MISSING_SITES', 'LEVEL', 'POPULATION', 'VALIDITY'] as const;
+/**
+ * Por qué un método no se calculó: sitios sin medir (RN-D04), nivel (RN-C01), población (RN-D05), validez (RN-D06) o
+ * dependencia: 4 componentes usa la masa grasa del método principal de % de grasa, que no se calculó.
+ */
+export const UNAVAILABLE_REASONS = [
+  'MISSING_SITES',
+  'LEVEL',
+  'POPULATION',
+  'VALIDITY',
+  'DEPENDENCY',
+] as const;
 export const unavailableMethodSchema = z.object({
   methodCode: z.string(),
   reason: z.enum(UNAVAILABLE_REASONS),
@@ -149,6 +158,19 @@ export const evaluationResultsResponseSchema = z.object({
   unavailable: z.array(unavailableMethodSchema),
   /** Aviso de la población cuando no tiene ecuación de pliegues por defecto (RN-D05). */
   populationNote: z.string().nullable(),
+  /**
+   * Medidas con su propio punto de corte, como la cintura (OMS 2008): el consolidado de la evaluación con su
+   * interpretación; su método es la consolidación de tomas (CONSOLIDATE_ISAK).
+   */
+  siteInterpretations: z.array(
+    z.object({
+      siteCode: z.string(),
+      value: z.number(),
+      unit: z.enum(SITE_UNITS),
+      methodCode: z.literal('CONSOLIDATE_ISAK'),
+      interpretation: interpretationSchema,
+    }),
+  ),
 });
 export type EvaluationResultsResponse = z.infer<typeof evaluationResultsResponseSchema>;
 
