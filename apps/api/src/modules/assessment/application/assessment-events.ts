@@ -18,7 +18,9 @@ export type AssessmentEventType =
   | 'assessment.bia.removed'
   | 'assessment.evaluation.closed'
   | 'assessment.evaluation.amended'
-  | 'assessment.technicalerror.recorded';
+  | 'assessment.technicalerror.recorded'
+  | 'assessment.result.computed'
+  | 'assessment.preference.changed';
 
 export function assessmentEvent<TPayload extends object>(
   type: AssessmentEventType,

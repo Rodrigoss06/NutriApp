@@ -127,6 +127,17 @@ export const TECHNICAL_ERROR_INVALID = (siteCode: string): DomainError =>
     details: { siteCode },
   });
 
+export const RECALCULATE_ONLY_CLOSED = domainError({
+  code: 'NC-ASM-018',
+  rule: 'RN-D08',
+  message: 'Solo se recalcula una evaluación cerrada vigente; una enmendada queda como histórico.',
+});
+export const INVALID_PREFERENCE = domainError({
+  code: 'NC-ASM-019',
+  rule: 'RN-D05',
+  message: 'Ese método no se puede elegir para ese propósito o esa población.',
+});
+
 /** Sitios que exige el nivel (RN-C01); una evaluación de bioimpedancia sin nivel no exige ninguno. */
 export function requiredSiteCodes(
   level: EvaluationLevel | null,

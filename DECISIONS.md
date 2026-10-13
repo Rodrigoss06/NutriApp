@@ -493,3 +493,37 @@ Decisión:
   bloques de dominio sin dependencias (02 §5).
 Consecuencias: nutrition y tracking sumarán sus hechos a la línea de tiempo de la misma forma. Las tres copias de
 atomically en iam y backoffice quedan como deuda.
+
+## ADR-046 · Cálculo de P7: plan de métodos, resultados inmutables, interpretación y comparación — aceptada (2026-10-13)
+Contexto: P7 (PR 2). Al cerrar, el worker calcula la evaluación; los resultados no se recalculan en silencio (RN-D08)
+y cada número lleva su método (RN-D02) y su interpretación con fuente (RN-D10).
+Decisión:
+- Plan (dominio): los métodos del nivel (RN-C01) y, según la población (RN-D05), todos los de pliegues y masas o solo
+  los elegidos: niños, adolescentes y obesidad no tienen ninguno por defecto. Después, sitios y validez los decide el
+  motor (RN-D04, RN-D06). 4 componentes usa la masa grasa del método principal de % de grasa; si no se calculó, queda
+  «no disponible» por dependencia (NC-ASM-017).
+- Principal por propósito: la preferencia del paciente, si no la de su organización para su población, si no la de
+  la plataforma (METHODS_BY_POPULATION del motor). En músculo, si el preferido no se calculó, el primero de la
+  plataforma que sí. El hueso de Rocha es el de 4 componentes.
+- Guardar: con el mismo método, versión y hash no se crea nada. Si cambian, se crea un resultado nuevo y el anterior
+  queda SUPERSEDED con superseded_by. Un método que deja de calcularse queda SUPERSEDED sin reemplazo. Si los insumos
+  vuelven a ser los de un resultado reemplazado, ese vuelve a ser el vigente (la UNIQUE no admite otro igual).
+- Indicadores: result_metric guarda cada número con su método; en 4 componentes la masa ósea es de Rocha y la
+  residual de Würch. La masa grasa de 4 componentes no se guarda otra vez: es la del método de 2 componentes. Un
+  indicador no se edita (REVOKE UPDATE). Las series (P14) tienen que unir con los resultados vigentes.
+- Coeficiente de Lee (RN-D11): el del recálculo; si no, el que quedó en los insumos del Lee vigente; si no, el de la
+  organización. Así la elección hecha en la evaluación se mantiene.
+- Lo que se muestra: de una cerrada, sus vigentes; de una enmendada, el último de cada método; «calculando» mientras
+  el worker no calcula. Al cerrar una revisión, los vigentes de la original pasan a SUPERSEDED, reemplazados por los
+  del mismo método.
+- Interpretación: rangos de assessment.reference_range (globales por migración; los de la organización ganan), con
+  intervalos semiabiertos y sobre el valor sin redondear. ⚠️ Desde los 18 años. ⚠️ La cintura/talla no tiene fuente
+  en la guía. La cintura se interpreta como medida (OMS 2008), con el método de la consolidación.
+- Comparación: con la evaluación cerrada vigente anterior, o la que se indique. CMD95 por sitio con el ETM del
+  evaluador de la actual en su fecha; sobre la suma de 6 pliegues, con el %ETM agrupado de sus pares (G-04). Solo
+  indicadores del mismo método (RN-D03).
+- Preferencias: la organización (OWNER y ADMIN) por población; el paciente, su equipo con escritura. Cambiarlas no
+  recalcula.
+- Semilla: el caso Luis entra por SQL con sus eventos de cierre en el outbox; sus resultados los calcula el worker.
+Consecuencias: RNF-04 se cumple con holgura (el cálculo completo es puro y lleva milisegundos). P14 arma la evolución
+sobre result_metric unido a los resultados vigentes.

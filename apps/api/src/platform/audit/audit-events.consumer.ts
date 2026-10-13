@@ -135,6 +135,15 @@ export const AUDITED_EVENTS: Readonly<Record<string, AuditMapping>> = {
     resourceType: 'assessment.evaluator_error',
     fields: (p) => namesOf(p.siteCodes),
   },
+  'assessment.result.computed': {
+    action: 'CREATE',
+    resourceType: 'assessment.calculation_result',
+  },
+  'assessment.preference.changed': {
+    action: 'UPDATE',
+    resourceType: 'assessment.method_preference',
+    fields: (p) => (typeof p.purpose === 'string' ? [p.purpose] : []),
+  },
   'tenancy.setting.changed': {
     action: 'UPDATE',
     resourceType: 'tenancy.organization_setting',

@@ -166,6 +166,14 @@ export class TenancyApi {
     );
   }
 
+  /** RN-D11: el coeficiente de grupo de referencia de Lee que fijó la organización; null si no lo fijó. */
+  async leeReferenceGroupCoefficient(organizationId: OrganizationId): Promise<number | null> {
+    return settingValue(
+      'assessment.lee_reference_group_coefficient',
+      await this.store.getSetting(organizationId, 'assessment.lee_reference_group_coefficient'),
+    );
+  }
+
   async invitationTtlDays(organizationId: OrganizationId): Promise<number> {
     return settingValue(
       'invitation.ttl_days',

@@ -9,6 +9,8 @@ import type {
   MeasurementSide,
   SiteDefinition,
 } from '../../domain/assessment-rules.js';
+import type { MethodPurpose, PreferenceRow } from '../../domain/calculation-plan.js';
+import type { ReferenceRange } from '../../domain/interpretation.js';
 
 /** Sexo, edad decimal y población al medir (patient_snapshot). */
 export interface PatientSnapshot {
@@ -150,3 +152,66 @@ export interface TechnicalErrorStore {
 export const EVALUATION_STORE = Symbol.for('nutricoach.assessment.EvaluationStore');
 export const SITE_CATALOG = Symbol.for('nutricoach.assessment.SiteCatalog');
 export const TECHNICAL_ERROR_STORE = Symbol.for('nutricoach.assessment.TechnicalErrorStore');
+
+/** Un resultado guardado (assessment.calculation_result): inmutable salvo su estado (RN-D01, RN-D08). */
+export interface StoredResult {
+  readonly id: string;
+  readonly evaluationId: string;
+  readonly patientId: string;
+  readonly methodCode: string;
+  readonly methodVersion: string;
+  readonly engineVersion: string;
+  readonly inputs: Readonly<Record<string, unknown>>;
+  /** SHA-256 del JSON canónico, en hexadecimal. */
+  readonly inputsHash: string;
+  readonly outputs: Readonly<Record<string, unknown>>;
+  readonly warnings: readonly {
+    readonly rule: string;
+    readonly severity: 'ERROR' | 'WARNING' | 'INFO';
+    readonly code: string;
+    readonly message: string;
+  }[];
+  readonly status: 'CURRENT' | 'SUPERSEDED';
+  readonly supersededBy: string | null;
+  readonly measuredAt: Date;
+  readonly computedAt: Date;
+}
+
+/** Un indicador de un resultado (formato largo, 05 §1). */
+export interface MetricRow {
+  readonly metricCode: string;
+  readonly value: number;
+  readonly unit: string;
+  readonly methodCode: string;
+  readonly zScore: number | null;
+}
+
+/** Resultados, preferencias de métodos y rangos de referencia, con la RLS del contexto. */
+export interface CalculationStore {
+  /** Todos los resultados de esas evaluaciones, vigentes y reemplazados. */
+  results(evaluationIds: readonly string[]): Promise<readonly StoredResult[]>;
+  insertResult(
+    organizationId: OrganizationId,
+    result: StoredResult,
+    metrics: readonly MetricRow[],
+  ): Promise<void>;
+  /** Lo único que cambia de un resultado: su estado y quién lo reemplazó. */
+  setStatus(id: string, status: StoredResult['status'], supersededBy: string | null): Promise<void>;
+  /** Las preferencias de la organización (por población) y las del paciente. */
+  preferenceRows(patientId: string | null): Promise<readonly PreferenceRow[]>;
+  savePreference(
+    organizationId: OrganizationId,
+    id: string,
+    target: { readonly patientId: string } | { readonly population: string },
+    purpose: MethodPurpose,
+    methodCode: string,
+  ): Promise<void>;
+  deletePreference(
+    target: { readonly patientId: string } | { readonly population: string },
+    purpose: MethodPurpose,
+  ): Promise<boolean>;
+  /** Globales y de la organización del contexto. */
+  referenceRanges(): Promise<readonly ReferenceRange[]>;
+}
+
+export const CALCULATION_STORE = Symbol.for('nutricoach.assessment.CalculationStore');
