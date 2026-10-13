@@ -1,6 +1,6 @@
 # STATUS — NutriCoach v1.0
 
-Actualizado: 2026-10-12 · Por: Rodrigo, con Claude Code
+Actualizado: 2026-10-13 · Por: Rodrigo, con Claude Code
 Inicio del proyecto: POR CONFIRMAR (día siguiente al Pago 1) · Semana actual: 0 de 9
 Próxima demo: Demo 1 · Base y evaluación · semana 2
 
@@ -8,13 +8,13 @@ Próxima demo: Demo 1 · Base y evaluación · semana 2
 | Prompt | Estado | Responsable | PR | Notas |
 |---|---|---|---|---|
 | P0 Andamiaje | ✅ | Rodrigo | #1 | CI en verde |
-| P1 Motor de cálculo | ✅ | Rodrigo | #2 | G-01 a G-28 en verde; motor 1.1.0 con TEE_PAL (#4) |
+| P1 Motor de cálculo | ✅ | Rodrigo | #2 | G-01 a G-28 en verde; motor 1.1.0 con TEE_PAL (#4); 1.2.0 en P7 (ADR-044) |
 | P2 Base de datos y plataforma | ✅ | Rodrigo | #3 | 61 pruebas de integración |
 | P3 Sistema de diseño | ✅ | Rodrigo | #4 | Lighthouse móvil 99 en Hoy; axe sin violaciones graves |
 | P4 Servidor y staging | ⛔ | Iván | | En espera de la cuenta de Hetzner de Jeremy |
 | P5 Identidad y organizaciones | ✅ | Rodrigo | #6, #7, #8 | 4 criterios en verde; despliegue a staging pendiente de P4 |
 | P6 Pacientes e historia clínica | ✅ | Rodrigo | #10, #11, #12 | 4 criterios en verde (E2E en escritorio y celular, e integración); despliegue a staging pendiente de P4 |
-| P7 Evaluación y cálculo, Demo 1 | ⬜ | Rodrigo e Iván | | |
+| P7 Evaluación y cálculo, Demo 1 | 🟨 | Rodrigo e Iván | | Contratos y datos de Luis primero; RF-18 se adelanta aquí |
 | P8 Datos maestros de alimentos | ⬜ | Rodrigo | | |
 | P9 Dieta por intercambios | ⬜ | Rodrigo | | |
 | P10 Composición, menú y recetario | ⬜ | Rodrigo | | |
@@ -28,10 +28,16 @@ Próxima demo: Demo 1 · Base y evaluación · semana 2
 Leyenda: ⬜ pendiente · 🟨 en curso · ✅ terminado · ⛔ bloqueado
 
 ## En curso
-- Nada: P6 cerrado y sincronizado con Notion
+- P7 en 4 PR, con los contratos de cada uno publicados antes: (0) contratos de P7, catálogo de sitios y datos de Luis
+  en seeds/; (1) evaluación y su API; (2) cálculo en el worker e interpretación; (3) prescripción energética; las
+  pantallas las hace Iván en paralelo. Decisiones del plan en ADR-044
+- RF-18 se adelanta a P7: la prescripción energética guarda los macronutrientes (RN-E07, G-17); P9 solo hace
+  intercambios
+- Para el /notion-sync del cierre de P7: lo que difiera de Notion según ADR-044, RN-D09 (cintura/talla y
+  cintura/cadera con 2 decimales), RN-D11 (ajuste assessment.lee_reference_group_coefficient) y el motor 1.2.0
 
 ## Siguiente paso
-- P7 Evaluación y cálculo, Demo 1: /prompt P7 (el prompt y sus páginas de Notion; plan primero)
+- P7 PR 1: evaluación, tomas, cierre y enmienda, bioimpedancia y ETM (RF-11 a RF-14), con la migración del catálogo
 - Desde P6, cada apps/api/.env local necesita STORAGE_LOCAL_PATH con una ruta absoluta (ADR-043)
 
 ## Bloqueos y preguntas al cliente
@@ -42,7 +48,11 @@ Leyenda: ⬜ pendiente · 🟨 en curso · ✅ terminado · ⛔ bloqueado
   producción): migración de datos o panel interno de P15
 - [ ] N22: caducidad del enlace de acceso del paciente (provisional: 7 días, ajustable por organización en
   patient_invitation.ttl_days, de 1 a 30)
-- [ ] N19: confirmar la carga manual de bioimpedancia
+- [ ] N19: confirmar la carga manual de bioimpedancia (lista cerrada de 8 indicadores, ADR-044)
+- [ ] ⚠️ Noveno diámetro de ISAK 2: confirmarlo con la guía de acreditación ISAK (2023); hoy el catálogo tiene 42 sitios
+- [ ] ⚠️ Rangos de rechazo de perímetros, diámetros y longitudes, y condiciones de la evaluación con umbral de 2 h:
+  validarlos con quien revisa los cálculos clínicos
+- [ ] P7: «etiqueta v0.1.0 desplegada en staging» queda pendiente de P4; la Demo 1 se hace en local con la semilla
 - [ ] N13: confirmar regresiones y progresiones en la biblioteca
 - [ ] N7: confirmar el estado diario (estrés, sueño, energía)
 - [ ] R4: permiso de uso de las listas Dextre y ADA

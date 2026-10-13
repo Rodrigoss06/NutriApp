@@ -8,6 +8,8 @@ describe('RN-D09 · se redondea solo al presentar', () => {
     [12.25, 'length', '12.3'],
     [1.052613, 'density', '1.05261'],
     [52.0, 'index', '52.0'],
+    [0.4914, 'waistRatio', '0.49'],
+    [0.8776, 'waistRatio', '0.88'],
     [-0.6914, 'zScore', '-0.69'],
     [1834.536, 'kcal', '1,835'],
     [183.7, 'grams', '184'],

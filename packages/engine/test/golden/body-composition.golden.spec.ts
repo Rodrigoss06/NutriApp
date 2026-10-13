@@ -108,7 +108,7 @@ describe('G-09 · RN-D01 · músculo esquelético de Lee', () => {
         ageYears: LUIS.ageYears,
         weightKg: LUIS.weightKg,
         heightCm: LUIS.heightCm,
-        ethnicityCoefficient: 0,
+        referenceGroupCoefficient: 0,
         girthsCm: {
           armRelaxed: LUIS.girthsCm.armRelaxed,
           thigh: LUIS.girthsCm.thigh,

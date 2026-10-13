@@ -428,3 +428,38 @@ directorio temporal en local y en CI): una ruta relativa dependía de dónde arr
 dentro del repositorio. Reemplaza «obligatoria fuera de local» de ADR-038.
 Consecuencias: P13 construye la app del paciente sobre esa sesión. Las pruebas de /mi entran con un paciente creado por
 la API. Quien use un .env local agrega STORAGE_LOCAL_PATH con una ruta absoluta.
+
+## ADR-044 · Evaluación, cálculo y energía de P7: datos y contratos primero — aceptada (2026-10-13)
+Contexto: P7 (Demo 1). Notion no lista los 43 sitios ISAK uno por uno ni sus rangos, no fija el nivel básico ni cómo
+se agrupa el ETM, y 05.2 pide los macronutrientes NOT NULL en la prescripción energética aunque RF-18 sea de P9. Las
+pantallas las hace Iván en paralelo.
+Decisión:
+- Catálogo como dato (ADR-014) en seeds/assessment/measurement-sites.json: 42 sitios de ISAK 2 (⚠️ el noveno diámetro
+  espera la guía de acreditación ISAK 2023), 21 de ISAK 1, nivel básico con peso, talla, cintura y cadera, y los 3
+  pliegues extra de Jackson y Pollock sin nivel. Códigos del motor (ADR-023). Rangos de rechazo (RN-C04) que dejan
+  pasar desde un niño de 100 cm hasta un adulto con obesidad severa; ⚠️ los de perímetros, diámetros y longitudes son
+  provisionales. La migración del catálogo se genera una sola vez desde el JSON y queda fija (db:seed no corre en
+  producción); todo cambio posterior, como el noveno diámetro, va en una migración nueva que también actualiza el
+  JSON, y una prueba de integración compara el catálogo de la base con el JSON.
+- seeds/luis/luis.json guarda el caso Luis completo (dos evaluaciones ISAK 2, estudio de ETM de G-04, prescripción y
+  valores esperados); lo usan la semilla, el E2E y las pantallas, y una prueba de contratos lo ata al motor.
+- Los contratos de cada PR se publican antes que su API.
+- ETM (RN-C05): estudio de repetibilidad del evaluador con pares por sitio (se guardan los pares) o ETM declarado por
+  sitio. El CMD95 de un sitio usa su ETM; sobre la suma de 6 pliegues, el %ETM agrupado de esos sitios (TEM_ISAK
+  sobre todos sus pares). No se traslada a % de grasa.
+- Condiciones v1 (RN-C09, ⚠️): hora (de measuredAt), ayuno, actividad intensa en las 24 h previas e hidratación;
+  difieren si cambia el evaluador, el ayuno o la actividad, o la hora del día se aleja más de 2 h.
+- Bioimpedancia (RN-C08, ⚠️ N19): lista cerrada de 8 indicadores con las unidades de cada equipo y el nombre que les
+  da el equipo; queda como lectura, sin series.
+- Cálculo: edad decimal al medir; Rocha y Würch dentro de 4 componentes, cada masa con su método; interpretaciones con
+  intervalos semiabiertos.
+- Coeficiente de grupo de referencia de Lee (RN-D11): ajuste de la organización
+  assessment.lee_reference_group_coefficient, de lista cerrada (0, −2 o 1.1) y sin valor por defecto. Ningún nombre
+  del código, de la interfaz ni de los logs alude al dato sensible que la ficha no guarda (Ley 29733): el insumo del
+  motor pasa a referenceGroupCoefficient (MUSCLE_LEE2000 1.1.0, motor 1.2.0, sin cambiar ningún número).
+- RN-D09: cintura/talla y cintura/cadera se muestran con 2 decimales (con 1, 0.491 se vería 0.5, el umbral); los
+  demás índices siguen con 1, como el SFR (RN-F07). La interpretación usa siempre el valor sin redondear.
+- La prescripción energética incluye los macronutrientes (RN-E07, G-17): RF-18 se adelanta a P7 y P9 solo hace
+  intercambios.
+Consecuencias: lo que difiera de Notion va al /notion-sync del cierre de P7. Agregar el noveno diámetro es una
+migración de datos; el cierre de una evaluación usa in_isak2 del catálogo, así que no se bloquea.

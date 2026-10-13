@@ -111,8 +111,8 @@ export const COMP4_DEROSE_GUIMARAES = defineMethod<FourComponentInput, FourCompo
 });
 
 /** Coeficientes de grupo de referencia de Lee (RN-D11): blanco o hispano, asiático, afroamericano. */
-export const LEE_ETHNICITY_COEFFICIENTS = [0, -2, 1.1] as const;
-export type LeeEthnicityCoefficient = (typeof LEE_ETHNICITY_COEFFICIENTS)[number];
+export const LEE_REFERENCE_GROUP_COEFFICIENTS = [0, -2, 1.1] as const;
+export type LeeReferenceGroupCoefficient = (typeof LEE_REFERENCE_GROUP_COEFFICIENTS)[number];
 
 export interface LeeInput {
   readonly sex: Sex;
@@ -120,7 +120,7 @@ export interface LeeInput {
   readonly weightKg: Kg;
   readonly heightCm: Cm;
   /** Sin valor por defecto: lo fija la organización y queda en los insumos (RN-D11). */
-  readonly ethnicityCoefficient: LeeEthnicityCoefficient;
+  readonly referenceGroupCoefficient: LeeReferenceGroupCoefficient;
   readonly girthsCm: { readonly armRelaxed: Cm; readonly thigh: Cm; readonly calf: Cm };
   readonly skinfoldsMm: { readonly triceps: Mm; readonly frontThigh: Mm; readonly medialCalf: Mm };
 }
@@ -137,7 +137,7 @@ const bmiOf = (weightKg: Kg, heightCm: Cm): number => weightKg / cmToM(heightCm)
 /** Lee et al. (2000): músculo esquelético con perímetros corregidos. */
 export const MUSCLE_LEE2000 = defineMethod<LeeInput, LeeOutput>({
   code: 'MUSCLE_LEE2000',
-  version: '1.0.0',
+  version: '1.1.0',
   kind: 'BODY_COMPOSITION',
   population: ['ADULT', 'OLDER_ADULT'],
   requiredInputs: [
@@ -145,7 +145,7 @@ export const MUSCLE_LEE2000 = defineMethod<LeeInput, LeeOutput>({
     'ageYears',
     'weightKg',
     'heightCm',
-    'ethnicityCoefficient',
+    'referenceGroupCoefficient',
     'girthsCm',
     'skinfoldsMm',
   ],
@@ -167,8 +167,10 @@ export const MUSCLE_LEE2000 = defineMethod<LeeInput, LeeOutput>({
       code: 'NC-ENG-107',
       message:
         'Lee exige el coeficiente de grupo de referencia (0, −2.0 o +1.1) fijado por la organización.',
-      when: ({ ethnicityCoefficient }) =>
-        !(LEE_ETHNICITY_COEFFICIENTS as readonly number[]).includes(ethnicityCoefficient),
+      when: ({ referenceGroupCoefficient }) =>
+        !(LEE_REFERENCE_GROUP_COEFFICIENTS as readonly number[]).includes(
+          referenceGroupCoefficient,
+        ),
     },
     {
       severity: 'WARNING',
@@ -185,7 +187,7 @@ export const MUSCLE_LEE2000 = defineMethod<LeeInput, LeeOutput>({
       ([site, value]) => ({ field: `skinfoldsMm.${site}`, kind: 'SKINFOLD_MM', value }) as const,
     ),
   ],
-  compute: ({ sex, ageYears, heightCm, ethnicityCoefficient, girthsCm, skinfoldsMm }) => {
+  compute: ({ sex, ageYears, heightCm, referenceGroupCoefficient, girthsCm, skinfoldsMm }) => {
     const arm = correctedGirthCm(girthsCm.armRelaxed, skinfoldsMm.triceps);
     const thigh = correctedGirthCm(girthsCm.thigh, skinfoldsMm.frontThigh);
     const calf = correctedGirthCm(girthsCm.calf, skinfoldsMm.medialCalf);
@@ -193,7 +195,7 @@ export const MUSCLE_LEE2000 = defineMethod<LeeInput, LeeOutput>({
       cmToM(heightCm) * (0.00744 * arm ** 2 + 0.00088 * thigh ** 2 + 0.00441 * calf ** 2) +
       2.4 * (sex === 'M' ? 1 : 0) -
       0.048 * ageYears +
-      ethnicityCoefficient +
+      referenceGroupCoefficient +
       7.8;
     return {
       outputs: {

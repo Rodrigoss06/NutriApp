@@ -3,6 +3,7 @@ import { domainError, type DomainError } from '@nutricoach/shared-kernel';
 export type SettingEditor = 'ORGANIZATION' | 'PLATFORM';
 
 export interface IntegerSetting {
+  readonly kind: 'INTEGER';
   readonly min: number;
   readonly max: number;
   readonly defaultValue: number;
@@ -10,15 +11,57 @@ export interface IntegerSetting {
   readonly editor: SettingEditor;
 }
 
-/** Ajustes de tenancy.organization_setting registrados con su rango, su valor por defecto y su editor. */
+/** Un valor de una lista cerrada, sin valor por defecto: hasta que la organización lo fija, vale null. */
+export interface ChoiceSetting {
+  readonly kind: 'CHOICE';
+  readonly values: readonly number[];
+  readonly defaultValue: null;
+  readonly editor: SettingEditor;
+}
+
+export type OrganizationSetting = IntegerSetting | ChoiceSetting;
+
+/** Ajustes de tenancy.organization_setting registrados con su rango o sus opciones, su valor por defecto y su editor. */
 export const ORGANIZATION_SETTINGS = {
-  'invitation.ttl_days': { min: 1, max: 30, defaultValue: 7, editor: 'ORGANIZATION' },
+  'invitation.ttl_days': {
+    kind: 'INTEGER',
+    min: 1,
+    max: 30,
+    defaultValue: 7,
+    editor: 'ORGANIZATION',
+  },
   /** ⚠️ N22: caducidad del enlace de acceso del paciente (RN-A06), aparte de la del staff. */
-  'patient_invitation.ttl_days': { min: 1, max: 30, defaultValue: 7, editor: 'ORGANIZATION' },
-  'subscription.grace_days': { min: 0, max: 30, defaultValue: 7, editor: 'PLATFORM' },
-} as const satisfies Record<string, IntegerSetting>;
+  'patient_invitation.ttl_days': {
+    kind: 'INTEGER',
+    min: 1,
+    max: 30,
+    defaultValue: 7,
+    editor: 'ORGANIZATION',
+  },
+  'subscription.grace_days': {
+    kind: 'INTEGER',
+    min: 0,
+    max: 30,
+    defaultValue: 7,
+    editor: 'PLATFORM',
+  },
+  /**
+   * RN-D11: coeficiente de grupo de referencia de Lee (0 blanco o hispano, −2.0 asiático, +1.1 afroamericano). El
+   * motor no tiene valor por defecto: sin él, Lee no se calcula. La ficha del paciente no guarda ese dato (Ley 29733).
+   */
+  'assessment.lee_reference_group_coefficient': {
+    kind: 'CHOICE',
+    values: [0, -2, 1.1],
+    defaultValue: null,
+    editor: 'ORGANIZATION',
+  },
+} as const satisfies Record<string, OrganizationSetting>;
 
 export type SettingKey = keyof typeof ORGANIZATION_SETTINGS;
+
+/** El tipo del valor de un ajuste: número, o número o null si no tiene valor por defecto. */
+export type SettingValue<K extends SettingKey> =
+  (typeof ORGANIZATION_SETTINGS)[K]['defaultValue'] extends null ? number | null : number;
 
 export function isSettingKey(key: string): key is SettingKey {
   return Object.hasOwn(ORGANIZATION_SETTINGS, key);
@@ -32,32 +75,26 @@ export const SETTING_NOT_EDITABLE = domainError({
   message: 'Este ajuste solo lo cambia la plataforma.',
 });
 
+function isValid(setting: OrganizationSetting, value: unknown): value is number {
+  if (typeof value !== 'number') return false;
+  return setting.kind === 'CHOICE'
+    ? setting.values.includes(value)
+    : Number.isInteger(value) && value >= setting.min && value <= setting.max;
+}
+
 /** Valida un valor contra su registro; devuelve el error o null. */
 export function checkSetting(
   key: SettingKey,
   value: unknown,
   editor: SettingEditor,
 ): DomainError | null {
-  const setting: IntegerSetting = ORGANIZATION_SETTINGS[key];
+  const setting: OrganizationSetting = ORGANIZATION_SETTINGS[key];
   if (setting.editor === 'PLATFORM' && editor !== 'PLATFORM') return SETTING_NOT_EDITABLE;
-  if (
-    typeof value !== 'number' ||
-    !Number.isInteger(value) ||
-    value < setting.min ||
-    value > setting.max
-  ) {
-    return INVALID_SETTING(key);
-  }
-  return null;
+  return isValid(setting, value) ? null : INVALID_SETTING(key);
 }
 
 /** El valor guardado si es válido; si no, el valor por defecto. */
-export function settingValue(key: SettingKey, stored: unknown): number {
-  const setting: IntegerSetting = ORGANIZATION_SETTINGS[key];
-  return typeof stored === 'number' &&
-    Number.isInteger(stored) &&
-    stored >= setting.min &&
-    stored <= setting.max
-    ? stored
-    : setting.defaultValue;
+export function settingValue<K extends SettingKey>(key: K, stored: unknown): SettingValue<K> {
+  const setting: OrganizationSetting = ORGANIZATION_SETTINGS[key];
+  return (isValid(setting, stored) ? stored : setting.defaultValue) as SettingValue<K>;
 }

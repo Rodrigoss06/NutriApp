@@ -318,7 +318,7 @@ export class PrismaTenancyStore implements TenancyStore {
   ): Promise<void> {
     await this.db.tx.$executeRaw`
       INSERT INTO tenancy.organization_setting (organization_id, key, value, updated_by, updated_at)
-      VALUES (${organizationId}::uuid, ${key}, to_jsonb(${value}::int), ${updatedBy}::uuid, now())
+      VALUES (${organizationId}::uuid, ${key}, to_jsonb(${value}::numeric), ${updatedBy}::uuid, now())
       ON CONFLICT (organization_id, key) DO UPDATE
         SET value = EXCLUDED.value, updated_by = EXCLUDED.updated_by, updated_at = now()`;
   }

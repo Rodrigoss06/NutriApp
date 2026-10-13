@@ -3,6 +3,13 @@
 Cambiar una fórmula o una constante sube la versión del método afectado y la del motor (02 §9).
 Los resultados guardados conservan la versión con que se calcularon (RN-D01, RN-D08).
 
+## 1.2.0 — 2026-10-13
+
+- `MUSCLE_LEE2000` 1.1.0: el insumo del coeficiente de grupo de referencia se llama `referenceGroupCoefficient`, y
+  la lista de valores, `LEE_REFERENCE_GROUP_COEFFICIENTS`, como lo nombra RN-D11. El nombre anterior aludía a un dato
+  que la ficha del paciente no guarda (Ley 29733). Cambia el nombre de un insumo y con él el hash; ningún número
+  cambia: G-09 (32.58 kg) sigue igual.
+
 ## 1.1.0 — 2026-10-07
 
 - Nuevo método `TEE_PAL` 1.0.0: gasto energético total, GET = TMR × PAL más el ejercicio neto en la estrategia
