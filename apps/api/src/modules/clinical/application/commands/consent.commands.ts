@@ -13,9 +13,8 @@ import {
   type Result,
   type SecurityContext,
   type UnitOfWork,
-  atomically,
 } from '@nutricoach/shared-kernel';
-import { FileRegistry } from '../../../../platform/index.js';
+import { atomically, FileRegistry } from '../../../../platform/index.js';
 import {
   canWriteClinical,
   checkGrant,

@@ -25,7 +25,6 @@ export {
 } from './ports/encryption.port.js';
 export { ID_GENERATOR, type IdGenerator } from './ports/id-generator.port.js';
 export { OUTBOX, type EventMetadata, type Outbox } from './ports/outbox.port.js';
-export { atomically } from './ports/atomically.js';
 export {
   ACTOR_ROLES,
   anonymousContext,

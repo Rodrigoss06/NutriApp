@@ -1,8 +1,14 @@
 import { describe, expect, it } from 'vitest';
-import { domainError } from '../domain-error.js';
-import { err, isErr, isOk, ok } from '../result.js';
+import {
+  anonymousContext,
+  domainError,
+  err,
+  isErr,
+  isOk,
+  ok,
+  type UnitOfWork,
+} from '@nutricoach/shared-kernel';
 import { atomically } from './atomically.js';
-import { anonymousContext, type UnitOfWork } from './unit-of-work.port.js';
 
 /** Una unidad de trabajo que anota si la transacción terminó confirmada o revertida. */
 function recordingUow() {

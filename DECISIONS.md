@@ -477,16 +477,19 @@ Decisión:
   media (RN-D09). Se aceptan sitios fuera del nivel; el nivel decide los métodos (PR 2).
 - Cierre: sitios del nivel consolidados, ninguna tercera toma pendiente y, en BIA o mixta, una lectura. Enmienda:
   una revisión en borrador con motivo que copia encabezado, tomas y bioimpedancia; cada evaluación se enmienda una
-  sola vez (índice único) y la original pasa a AMENDED cuando cierra su revisión.
+  sola vez (índice único) y la original pasa a AMENDED cuando cierra su revisión. La restricción es por evaluación,
+  no por cadena: la revisión vigente se vuelve a enmendar (original → revisión 2 → revisión 3).
 - measurement y bia_reading no tienen patient_id: una política restrictiva las ata a la RLS de su evaluación, que sí
   tiene care_team_scope. El catálogo de sitios es de solo lectura para app_user y la API lo lee una vez por proceso.
-- ETM: evaluator_error guarda los pares del estudio (columna pairs, solo en CALCULATED) y no se edita. Lo registra el
+- ETM: evaluator_error guarda los pares del estudio (columna pairs, solo en CALCULATED) y no se edita. Los pares son
+  números del evaluador, sin patient_id: no son datos de salud. Lo registra el
   propio evaluador, el dueño o un administrador. El vigente de cada sitio es el de vigencia más reciente hasta hoy en
   la zona de la organización; el agrupado por familia sale de TEM_ISAK sobre los pares (los declarados no entran).
 - Toda escritura emite su evento (assessment.evaluation.*, measurement.*, bia.*, technicalerror.recorded) y se audita
   desde él; leer una evaluación deja un READ.
 - Línea de tiempo: clinical define TimelineSource y un registro; assessment se registra al iniciar y aporta sus
   evaluaciones cerradas (EVALUATION_CLOSED). clinical mezcla las páginas en el mismo orden que su SQL.
-- atomically pasa al shared-kernel, junto a la UnitOfWork.
-Consecuencias: nutrition y tracking sumarán sus hechos a la línea de tiempo de la misma forma. Las copias de
+- atomically pasa de clinical a apps/api/src/platform/database: usa la UnitOfWork, y el shared-kernel solo guarda
+  bloques de dominio sin dependencias (02 §5).
+Consecuencias: nutrition y tracking sumarán sus hechos a la línea de tiempo de la misma forma. Las tres copias de
 atomically en iam y backoffice quedan como deuda.

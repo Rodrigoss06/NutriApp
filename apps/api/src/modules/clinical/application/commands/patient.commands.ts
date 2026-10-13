@@ -17,8 +17,8 @@ import {
   type SecurityContext,
   type UnitOfWork,
   type UserId,
-  atomically,
 } from '@nutricoach/shared-kernel';
+import { atomically } from '../../../../platform/index.js';
 import { TenancyApi } from '../../../tenancy/index.js';
 import {
   ALREADY_IN_STATUS,

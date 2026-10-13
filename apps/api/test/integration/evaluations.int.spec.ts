@@ -261,6 +261,42 @@ describe('RF-11 · RF-14 · captura, cierre y enmienda por HTTP', () => {
     expect(kinds).toEqual([revision.id, original.id]);
   });
 
+  it('RN-C07 · la revisión vigente se vuelve a enmendar y la base acepta la cadena', async () => {
+    const { cookie } = org.staff.responsible;
+    const original = await measureAll(
+      cookie,
+      await evaluation(cookie, await patient(cookie)),
+      BASIC,
+    );
+    expect((await close(cookie, original)).status).toBe(200);
+    const amend = async (id: string, reason: string) => {
+      const response = await harness.post(`/evaluations/${id}/amendments`, { reason }, cookie);
+      expect(response.status, JSON.stringify(response.body)).toBe(201);
+      return response.body as Evaluation;
+    };
+    const second = await amend(original.id, 'Peso mal digitado en la consulta');
+    expect(
+      (await close(cookie, await measureAll(cookie, second, { BASIC_WEIGHT: [81, 81] }))).status,
+    ).toBe(200);
+    const third = await amend(second.id, 'Cintura mal digitada en la consulta');
+    expect(third).toMatchObject({ revision: 3, amendsEvaluationId: second.id });
+    expect(
+      (await close(cookie, await measureAll(cookie, third, { GIRTH_WAIST: [87, 87] }))).status,
+    ).toBe(200);
+    const statuses = await Promise.all(
+      [original.id, second.id, third.id].map(
+        async (id) => ((await harness.get(`/evaluations/${id}`, cookie)).body as Evaluation).status,
+      ),
+    );
+    expect(statuses).toEqual(['AMENDED', 'AMENDED', 'CLOSED']);
+    const again = await harness.post(
+      `/evaluations/${original.id}/amendments`,
+      { reason: 'Otra vez la original' },
+      cookie,
+    );
+    expect(again.status).toBe(409);
+  });
+
   it('RN-C08 · bioimpedancia en una evaluación mixta, con marca, modelo y el nombre del equipo', async () => {
     const { cookie } = org.staff.responsible;
     const created = await evaluation(cookie, await patient(cookie), { kind: 'MIXED' });
@@ -398,6 +434,12 @@ describe('RN-C05 · RF-12 · ETM del evaluador por HTTP', () => {
       pooled: { temAbs: number; temRelPct: number; mdc95: number }[];
     };
     expect(view.current).toHaveLength(6);
+    // Los pares son números del evaluador, no de un paciente: sin patient_id no son datos de salud.
+    const { rows: columns } = await pool('owner').query(
+      `SELECT column_name FROM information_schema.columns
+       WHERE table_schema = 'assessment' AND table_name = 'evaluator_error' AND column_name = 'patient_id'`,
+    );
+    expect(columns).toEqual([]);
     expect(view.pooled[0]?.temAbs).toBeCloseTo(0.374, 3);
     expect(view.pooled[0]?.temRelPct).toBeCloseTo(2.35, 2);
     expect(view.pooled[0]?.mdc95).toBeCloseTo(1.04, 2);

@@ -8,8 +8,8 @@ import {
   type Result,
   type SecurityContext,
   type UnitOfWork,
-  atomically,
 } from '@nutricoach/shared-kernel';
+import { atomically } from '../../../../platform/index.js';
 import { IamApi } from '../../../iam/index.js';
 import {
   canWriteClinical,

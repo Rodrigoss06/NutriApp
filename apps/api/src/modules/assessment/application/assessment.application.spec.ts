@@ -300,6 +300,35 @@ describe('RF-14 · cerrar y enmendar', () => {
     expect(list?.find((e) => e.id === id)?.amendedByEvaluationId).toBe(revision);
   });
 
+  it('RN-C07 · la revisión vigente se vuelve a enmendar: original → revisión 2 → revisión 3', async () => {
+    const original = await created();
+    await measuredAll(original, {
+      BASIC_WEIGHT: [80, 80],
+      BASIC_HEIGHT: [175, 175],
+      GIRTH_WAIST: [86, 86],
+      GIRTH_HIP: [98, 98],
+    });
+    value(await commands().close(responsible, original, await versionOf(original)));
+    const second = value(await commands().amend(responsible, original, 'Peso mal digitado')).id;
+    value(await record(second, 'BASIC_WEIGHT', [81, 81]));
+    value(await commands().close(responsible, second, await versionOf(second)));
+    const third = value(await commands().amend(responsible, second, 'Cintura mal digitada')).id;
+    expect(await evaluations.find(third)).toMatchObject({
+      revision: 3,
+      amendsEvaluationId: second,
+      status: 'DRAFT',
+    });
+    value(await record(third, 'GIRTH_WAIST', [87, 87]));
+    value(await commands().close(responsible, third, await versionOf(third)));
+    expect((await evaluations.find(original))?.status).toBe('AMENDED');
+    expect((await evaluations.find(second))?.status).toBe('AMENDED');
+    expect((await evaluations.find(third))?.status).toBe('CLOSED');
+    // Una evaluación ya enmendada no se enmienda otra vez: se enmienda la revisión vigente.
+    expect(
+      errorOf(await commands().amend(responsible, original, 'Otra vez la original'))?.code,
+    ).toBe('NC-ASM-009');
+  });
+
   it('RF-10 · las cerradas entran a la línea de tiempo, con el motivo si es una enmienda', async () => {
     const id = await created();
     await measuredAll(id, {

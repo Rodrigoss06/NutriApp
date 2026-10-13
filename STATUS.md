@@ -83,7 +83,7 @@ Leyenda: ⬜ pendiente · 🟨 en curso · ✅ terminado · ⛔ bloqueado
 - Jackson y Pollock 7 deja de crecer con la suma de pliegues sobre 395 mm (hombres) y 419 mm (mujeres): consultar si se advierte
 - RF-06: LOGIN y LOGIN_FAILED (sin organización) solo los ve la plataforma; su vista llega con el panel interno (P15)
 - La app del paciente (/mi) ya exige la sesión PATIENT, pero sus pantallas son de muestra hasta P13
-- iam (dos casos de uso) y backoffice tienen su propia copia de atomically: usar la del shared-kernel (ADR-045)
+- Tres copias de atomically (dos en iam, una en backoffice): usar la de apps/api/src/platform (ADR-045)
 - La pila del E2E se levanta a mano en local (compose, build, API y worker con env.local.example y
   RATE_LIMIT_FACTOR=100; WebKit en la imagen de Playwright): conviene un script para Iván
 

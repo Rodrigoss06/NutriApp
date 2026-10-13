@@ -1,6 +1,5 @@
 import { Inject, Injectable } from '@nestjs/common';
 import {
-  atomically,
   CLOCK,
   err,
   ID_GENERATOR,
@@ -17,6 +16,7 @@ import {
   type UnitOfWork,
   type UserId,
 } from '@nutricoach/shared-kernel';
+import { atomically } from '../../../../platform/index.js';
 import { ClinicalApi, type PatientRef } from '../../../clinical/index.js';
 import { TenancyApi } from '../../../tenancy/index.js';
 import {

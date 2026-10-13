@@ -13,8 +13,8 @@ import {
   type Result,
   type SecurityContext,
   type UnitOfWork,
-  atomically,
 } from '@nutricoach/shared-kernel';
+import { atomically } from '../../../../platform/index.js';
 import {
   canWriteRecord,
   CONDITION_NOT_FOUND,

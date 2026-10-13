@@ -1,6 +1,5 @@
 import { Inject, Injectable } from '@nestjs/common';
 import {
-  atomically,
   CLOCK,
   err,
   ID_GENERATOR,
@@ -15,6 +14,7 @@ import {
   type SecurityContext,
   type UnitOfWork,
 } from '@nutricoach/shared-kernel';
+import { atomically } from '../../../../platform/index.js';
 import { TenancyApi } from '../../../tenancy/index.js';
 import {
   canRecordTechnicalError,
