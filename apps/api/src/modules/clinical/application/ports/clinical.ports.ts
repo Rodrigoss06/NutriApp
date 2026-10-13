@@ -211,7 +211,9 @@ export type TimelineKind =
   | 'GOAL_RECORDED'
   | 'NOTE_WRITTEN'
   /** Evaluación cerrada; la aporta assessment por TimelineSources. */
-  | 'EVALUATION_CLOSED';
+  | 'EVALUATION_CLOSED'
+  /** Prescripción energética; la aporta nutrition. */
+  | 'ENERGY_PRESCRIBED';
 
 export interface TimelineRecord {
   readonly kind: TimelineKind;

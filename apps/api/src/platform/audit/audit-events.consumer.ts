@@ -144,6 +144,10 @@ export const AUDITED_EVENTS: Readonly<Record<string, AuditMapping>> = {
     resourceType: 'assessment.method_preference',
     fields: (p) => (typeof p.purpose === 'string' ? [p.purpose] : []),
   },
+  'nutrition.prescription.created': {
+    action: 'CREATE',
+    resourceType: 'nutrition.energy_prescription',
+  },
   'tenancy.setting.changed': {
     action: 'UPDATE',
     resourceType: 'tenancy.organization_setting',

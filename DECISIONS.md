@@ -527,3 +527,27 @@ Decisión:
 - Semilla: el caso Luis entra por SQL con sus eventos de cierre en el outbox; sus resultados los calcula el worker.
 Consecuencias: RNF-04 se cumple con holgura (el cálculo completo es puro y lleva milisegundos). P14 arma la evolución
 sobre result_metric unido a los resultados vigentes.
+
+## ADR-047 · Prescripción energética de P7 y actividades — aceptada (2026-10-13)
+Contexto: P7 (PR 3), RF-17 con RF-18 adelantado (ADR-044). 05.2 guarda la prescripción con métodos de TMR, pero cada
+componente debe citar el suyo (02 §7) y ADR-029 pide las columnas del GET.
+Decisión:
+- nutrition.energy_prescription suma evaluation_id (la evaluación cerrada de la que salen peso, talla, edad y masa
+  libre de grasa; sin FK), tee_method_code y tee_method_version (ADR-029) y components: el sobre del motor de cada
+  componente (TMR, ejercicio, GET, objetivo, proyección y macronutrientes) con método, versión, insumos, hash, salidas
+  y avisos. Las columnas numéricas guardan lo mismo redondeado para consultas; la API muestra los valores del sobre.
+  No se edita (REVOKE UPDATE): una prescripción nueva reemplaza a la anterior.
+- Composición: nutrition la pide con AssessmentApi.compositionBasis y la traduce a su BodyCompositionInput (02 §3):
+  peso y talla consolidados, edad decimal al medir y la masa libre de grasa del método principal de % de grasa con su
+  método y su resultado. Cunningham y Katch-McArdle sin esa masa no se calculan (NC-ENG-203).
+- Objetivo (RN-E04): en kg de grasa por mes, o en kcal por día convertidas a kg por mes con 7700 kcal y 30 días, para
+  mostrar el ritmo semanal con FAT_LOSS_7700. Fecha estimada: la fecha local del paciente más meses × 30 días, como
+  estimación inicial (RN-E05).
+- Actividades: exercise.physical_activity es del contexto exercise; un módulo exercise mínimo la expone por ExerciseApi
+  y GET /physical-activities (búsqueda sin tildes). Semilla mínima por migración con códigos y MET oficiales del 2024
+  Adult Compendium (12050, correr a 6–6.3 mph, 9.3 MET: G-15); catálogo de solo lectura para app_user. P8 carga el
+  resto encima.
+- La vista previa calcula lo mismo sin guardar. Leer la base o una prescripción deja un READ; crear una emite
+  nutrition.prescription.created (auditada) y aparece en la línea de tiempo (ENERGY_PRESCRIBED).
+Consecuencias: P9 toma las metas (kcal y macronutrientes) de la prescripción. Lo que difiere de 05.2 va al
+/notion-sync del cierre.

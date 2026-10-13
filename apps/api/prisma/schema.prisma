@@ -997,6 +997,10 @@ model EnergyPrescription {
   inputsHash          Bytes           @map("inputs_hash")
   createdBy           String          @map("created_by") @db.Uuid
   createdAt           DateTime        @default(now()) @map("created_at") @db.Timestamptz(6)
+  evaluationId        String          @map("evaluation_id") @db.Uuid
+  teeMethodCode       String          @map("tee_method_code")
+  teeMethodVersion    String          @map("tee_method_version")
+  components          Json
   nutritionPlans      NutritionPlan[]
 
   @@index([organizationId, patientId, createdAt(sort: Desc)], map: "prescription_by_patient")

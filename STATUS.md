@@ -37,7 +37,8 @@ Leyenda: ⬜ pendiente · 🟨 en curso · ✅ terminado · ⛔ bloqueado
   cintura/cadera con 2 decimales), RN-D11 (ajuste assessment.lee_reference_group_coefficient) y el motor 1.2.0
 
 ## Siguiente paso
-- P7 PR 3: prescripción energética con macronutrientes y actividades (RF-17, RF-18 adelantado)
+- P7 Demo 1: E2E del recorrido (Playwright, escritorio y celular) cuando estén las pantallas de Iván, guion en
+  docs/demos/demo-1.md y etiqueta v0.1.0 al fusionar el PR 4 (con confirmación)
 - db:seed carga el caso Luis: sus resultados aparecen cuando corre el worker
 - Desde P6, cada apps/api/.env local necesita STORAGE_LOCAL_PATH con una ruta absoluta (ADR-043)
 
