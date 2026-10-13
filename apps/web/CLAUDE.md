@@ -9,8 +9,8 @@
   con Server Actions. Errores con errorMessage: español según el code y, en un 5xx, el requestId.
 - Sesión: el layout de (panel) pide /account en cada petición; sin sesión, /entrar?next= (safeNext: solo rutas
   internas). PLATFORM va a /admin/plataforma, con la guardia en su layout anidado. El de (paciente) solo deja pasar
-  sesiones PATIENT (ADR-043); entrar lleva al paciente a /mi/hoy. Al cambiar de organización o
-  salir: queryClient.clear() y router.refresh(). La interfaz oculta lo que el rol no puede; decide la API.
+  sesiones PATIENT (ADR-043); entrar lleva al paciente a /mi/hoy. Al cambiar de organización o salir:
+  queryClient.clear() y router.refresh(). La interfaz oculta lo que el rol no puede; decide la API.
 - Tokens de invitación y recuperación: del fragmento con useFragmentToken (se borran con history.replaceState)
   y por POST.
 - Formularios: react-hook-form con los esquemas Zod de @nutricoach/contracts. Mensajes en español.

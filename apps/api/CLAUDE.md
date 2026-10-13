@@ -4,7 +4,8 @@
   domain/ · application/(commands, queries, ports, event-handlers) · adapters/(in/http, in/jobs, in/events, out/persistence)
   · CONTEXTO.module.ts · index.ts (API pública)
 - Comandos: un handler por caso de uso dentro de `UnitOfWork.run()`: transacción + set_config de app.org_id,
-  app.user_id, app.role y app.patient_id. Consultas: transacción de solo lectura con el mismo contexto.
+  app.user_id, app.role, app.patient_id y app.member_id (ADR-037). Consultas: transacción de solo lectura con el
+  mismo contexto.
 - Repositorios: cargan y guardan agregados completos, con bloqueo optimista por `version`.
 - Eventos: el agregado los acumula; el handler los guarda en platform.outbox_event en la misma transacción,
   con INSERT sin RETURNING. Consumidores idempotentes con platform.processed_event.

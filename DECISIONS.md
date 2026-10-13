@@ -361,20 +361,19 @@ anterior. En la versión 1.0 una cuenta se vincula a un solo paciente: un correo
 pendiente en la organización, es 409, también al aceptar si la cuenta apareció entretanto (staff, plataforma u otro
 paciente); una invitación de staff tampoco pisa la pendiente de un paciente (409). Invita el equipo con WRITE, a un
 paciente activo y sin cuenta; un menor de 14, solo si APP_ACCESS y HEALTH_DATA ya se registraron en consulta
-(ADR-042). La página de aceptación se arma con
-app.patient_invitation_preview(token_hash), SECURITY DEFINER que responde solo al hash exacto de una invitación PATIENT
-pendiente, y pide únicamente las finalidades que no están vigentes, una casilla sin marcar por texto. Aceptar es una
-transacción con el rol ACCOUNT: marca la invitación, crea la cuenta, vincula al paciente y registra los consentimientos
-con canal APP (IP, agente y versión del texto) por el puerto PATIENT_ENROLLMENT, que define iam e implementa clinical
-(síncrono, sin ciclos), y abre la sesión PATIENT. Un error de regla (RN-B01) vuelve como 422 y revierte todo. Todo
-enlace que ya no sirve responde 410 con el mismo code (NC-IAM-040) y el mismo mensaje: vencido, usado, revocado, o con
-el paciente archivado o ya vinculado; así no revela la causa. La sesión PATIENT resuelve su
-paciente en cada petición con app.patient_of_account(), SECURITY DEFINER sin parámetros (solo app.user_id()): sin
-paciente activo con APP_ACCESS y HEALTH_DATA vigentes, deja de valer al instante (401), y entrar responde 403
-NC-IAM-046 (RN-B02) después de verificar la contraseña. El consumidor iam.patient-sessions cierra sus sesiones al
-archivar o al revocar APP_ACCESS o HEALTH_DATA y lo audita como SYSTEM con el paciente. El puerto es obligatorio
-(ADR-021: sin @Optional en application): la CLI create-platform-admin no carga clinical y registra para él, y para
-ACTIVE_PATIENT_COUNTER, un adaptador explícito que falla si alguien lo usa.
+(ADR-042). La página de aceptación se arma con app.patient_invitation_preview(token_hash), SECURITY DEFINER que
+responde solo al hash exacto de una invitación PATIENT pendiente, y pide únicamente las finalidades que no están
+vigentes, una casilla sin marcar por texto. Aceptar es una transacción con el rol ACCOUNT: marca la invitación, crea
+la cuenta, vincula al paciente y registra los consentimientos con canal APP (IP, agente y versión del texto) por el
+puerto PATIENT_ENROLLMENT, que define iam e implementa clinical (síncrono, sin ciclos), y abre la sesión PATIENT. Un
+error de regla (RN-B01) vuelve como 422 y revierte todo. Todo enlace que ya no sirve responde 410 con el mismo code
+(NC-IAM-040) y el mismo mensaje: vencido, usado, revocado, o con el paciente archivado o ya vinculado; así no revela
+la causa. La sesión PATIENT resuelve su paciente en cada petición con app.patient_of_account(), SECURITY DEFINER sin
+parámetros (solo app.user_id()): sin paciente activo con APP_ACCESS y HEALTH_DATA vigentes, deja de valer al instante
+(401), y entrar responde 403 NC-IAM-046 (RN-B02) después de verificar la contraseña. El consumidor
+iam.patient-sessions cierra sus sesiones al archivar o al revocar APP_ACCESS o HEALTH_DATA y lo audita como SYSTEM con
+el paciente. El puerto es obligatorio (ADR-021: sin @Optional en application): la CLI create-platform-admin no carga
+clinical y registra para él, y para ACTIVE_PATIENT_COUNTER, un adaptador explícito que falla si alguien lo usa.
 Consecuencias: P13 usa la sesión PATIENT con el paciente que resuelve la sesión; el paciente nunca envía su id (02 §10).
 Atender a la misma persona en dos organizaciones exige otro correo en la versión 1.0.
 
@@ -382,18 +381,19 @@ Atender a la misma persona en dos organizaciones exige otro correo en la versió
 Contexto: RF-06, RF-09, RF-10, RN-B01 y RN-B03; la ficha de anamnesis del cliente aún no llega.
 Decisión: la historia clínica no se edita: cada guardado es una revisión nueva sobre expectedRevision (409 si alguien
 guardó antes), con la ficha del paciente bloqueada hasta el fin de la transacción. Formulario ANAMNESIS v1 de texto
-libre por bloque, con cirugías, y esquema estricto (⚠️ provisional). Condiciones y objetivos son filas propias, nunca se
-extraen del texto; de ellas solo cambian el estado y las notas (UPDATE por columna). Una nota no se edita: se enmienda
-con otra que cita una nota visible; AUTHOR_ONLY la ve solo su autor. Escribir el expediente exige ver al paciente,
-que esté activo (archivado: 409), acceso WRITE en el equipo (OWNER fuera del equipo lee, pero no escribe lo clínico)
-y HEALTH_DATA vigente (422 RN-B01). La ficha, el consentimiento y la invitación son tareas administrativas y OWNER
-las hace aunque no esté en el equipo, salvo poner o quitar la población OBESITY, que es dato de salud (403). La línea de tiempo une alta, consentimientos, revisiones, condiciones, objetivos y
-notas, de lo más reciente a lo más antiguo, con cursor opaco por (fecha, id) y bajo la misma RLS. Toda lectura del
-expediente deja un READ (RN-B03), solo si se ve al paciente. La consulta de auditoría vive en el módulo audit:
-GET /api/v1/audit-events, solo OWNER (audit.read), rango de fechas obligatorio de 90 días como máximo para usar las
-particiones, filtros por paciente, persona y acción, y cursor. Muestra el nombre de quien actuó (IamApi.displayNames)
-y el código del paciente (ClinicalApi.patientCodes); nunca correos ni datos clínicos. La RLS deja ver solo la
-organización: los eventos sin organización (LOGIN y LOGIN_FAILED) solo los ve la plataforma.
+libre por bloque, con cirugías, y esquema estricto (⚠️ provisional). Condiciones y objetivos son filas propias, nunca
+se extraen del texto; de ellas solo cambian el estado y las notas (UPDATE por columna). Una nota no se edita: se
+enmienda con otra que cita una nota visible; AUTHOR_ONLY la ve solo su autor. Escribir el expediente exige ver al
+paciente, que esté activo (archivado: 409), acceso WRITE en el equipo (OWNER fuera del equipo lee, pero no escribe lo
+clínico) y HEALTH_DATA vigente (422 RN-B01). La ficha, el consentimiento y la invitación son tareas administrativas y
+OWNER las hace aunque no esté en el equipo, salvo poner o quitar la población OBESITY, que es dato de salud (403). La
+línea de tiempo une alta, consentimientos, revisiones, condiciones, objetivos y notas, de lo más reciente a lo más
+antiguo, con cursor opaco por (fecha, id) y bajo la misma RLS. Toda lectura del expediente deja un READ (RN-B03), solo
+si se ve al paciente. La consulta de auditoría vive en el módulo audit: GET /api/v1/audit-events, solo OWNER
+(audit.read), rango de fechas obligatorio de 90 días como máximo para usar las particiones, filtros por paciente,
+persona y acción, y cursor. Muestra el nombre de quien actuó (IamApi.displayNames) y el código del paciente
+(ClinicalApi.patientCodes); nunca correos ni datos clínicos. La RLS deja ver solo la organización: los eventos sin
+organización (LOGIN y LOGIN_FAILED) solo los ve la plataforma.
 Consecuencias: los contextos que guarden datos de salud usan ClinicalApi.ensureHealthDataConsent. La ficha definitiva
 de anamnesis entra como versión 2 del formulario, sin tocar las revisiones guardadas.
 
