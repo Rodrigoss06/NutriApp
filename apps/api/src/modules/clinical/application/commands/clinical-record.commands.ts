@@ -14,6 +14,7 @@ import {
   type SecurityContext,
   type UnitOfWork,
 } from '@nutricoach/shared-kernel';
+import { atomically } from '../../../../platform/index.js';
 import {
   canWriteRecord,
   CONDITION_NOT_FOUND,
@@ -31,7 +32,6 @@ import {
   type GoalStatus,
   type NoteVisibility,
 } from '../../domain/clinical-rules.js';
-import { atomically } from '../atomically.js';
 import { clinicalEvent, type ClinicalEventType } from '../clinical-events.js';
 import {
   CLINICAL_RECORD_STORE,

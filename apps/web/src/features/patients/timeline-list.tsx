@@ -35,8 +35,20 @@ export function timelineDetail(item: TimelineItem): string {
       return label(GOAL_KIND_LABELS, item.label);
     case 'NOTE_WRITTEN':
       return `Visible para: ${label(NOTE_VISIBILITY_LABELS, item.label).toLowerCase()}`;
+    case 'EVALUATION_CLOSED': {
+      const level = label(EVALUATION_TIMELINE_LABELS, item.label);
+      return item.detail ? `${level}, enmienda: ${item.detail}` : level;
+    }
   }
 }
+
+/** Nivel de la evaluación cerrada, o bioimpedancia si no tiene nivel. */
+const EVALUATION_TIMELINE_LABELS = {
+  BASIC: 'Nivel básico',
+  ISAK1: 'ISAK 1',
+  ISAK2: 'ISAK 2',
+  BIA: 'Bioimpedancia',
+} as const;
 
 /** Línea de tiempo del expediente (RF-10), de lo más reciente a lo más antiguo, por páginas. */
 export function TimelineList({ patientId }: { patientId: string }) {

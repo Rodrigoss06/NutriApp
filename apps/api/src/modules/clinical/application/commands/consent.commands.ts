@@ -14,7 +14,7 @@ import {
   type SecurityContext,
   type UnitOfWork,
 } from '@nutricoach/shared-kernel';
-import { FileRegistry } from '../../../../platform/index.js';
+import { atomically, FileRegistry } from '../../../../platform/index.js';
 import {
   canWriteClinical,
   checkGrant,
@@ -27,7 +27,6 @@ import {
   WRITE_ACCESS_REQUIRED,
   type ConsentChannel,
 } from '../../domain/clinical-rules.js';
-import { atomically } from '../atomically.js';
 import { clinicalEvent } from '../clinical-events.js';
 import {
   CONSENT_STORE,

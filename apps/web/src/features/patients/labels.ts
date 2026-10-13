@@ -108,6 +108,7 @@ export const TIMELINE_KIND_LABELS = {
   CONDITION_RECORDED: 'Condición',
   GOAL_RECORDED: 'Objetivo',
   NOTE_WRITTEN: 'Nota',
+  EVALUATION_CLOSED: 'Evaluación',
 } as const satisfies Record<TimelineItem['kind'], string>;
 
 export const AUDIT_ACTION_LABELS = {

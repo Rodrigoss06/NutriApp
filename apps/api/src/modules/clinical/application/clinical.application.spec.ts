@@ -1,6 +1,7 @@
 import { isErr, isOk } from '@nutricoach/shared-kernel';
 import { beforeEach, describe, expect, it } from 'vitest';
 import { ClinicalApi } from './clinical-api.js';
+import { TimelineSources } from './timeline-sources.js';
 import { ConsentCommands } from './commands/consent.commands.js';
 import { PatientCommands } from './commands/patient.commands.js';
 import {
@@ -19,6 +20,11 @@ import {
   staffContext,
 } from './clinical-fakes.spec-support.js';
 import { PatientQueries } from './queries/patient.queries.js';
+import {
+  PATIENT_ARCHIVED,
+  PATIENT_NOT_FOUND,
+  WRITE_ACCESS_REQUIRED,
+} from '../domain/clinical-rules.js';
 
 const RESPONSIBLE = '0192f0a0-0000-7000-8000-0000000000a1';
 const TEAM = '0192f0a0-0000-7000-8000-0000000000a2';
@@ -327,7 +333,7 @@ describe('RF-05 · consentimiento', () => {
   });
 
   it('ConsentPolicy · sin HEALTH_DATA vigente, la API pública lo niega con RN-B01', async () => {
-    const api = new ClinicalApi(patients, consents);
+    const api = new ClinicalApi(patients, consents, new TimelineSources());
     const id = await registered();
     const without = await api.ensureHealthDataConsent(id);
     expect(isErr(without) && without.error.rule).toBe('RN-B01');
@@ -342,6 +348,34 @@ describe('RF-05 · consentimiento', () => {
     const archived = await api.ensureHealthDataConsent(id);
     expect(isErr(archived) && archived.error.code).toBe('NC-CLI-018');
     expect(isErr(await api.ensureHealthDataConsent('no-existe'))).toBe(true);
+  });
+
+  it('RN-A05 · RN-B01 · otro contexto guarda datos de salud solo con escritura en el equipo y HEALTH_DATA', async () => {
+    const api = new ClinicalApi(patients, consents, new TimelineSources());
+    const id = await registered();
+    expect(await api.patientRef(id)).toMatchObject({
+      id,
+      sex: 'M',
+      birthDate: '1990-05-20',
+      population: 'ADULT',
+      status: 'ACTIVE',
+    });
+    const without = await api.ensureRecordWritable(responsible, id);
+    expect(isErr(without) && without.error.rule).toBe('RN-B01');
+    await grant(responsible, id, {
+      consentDocumentId: DOCUMENTS[0]?.id ?? '',
+      evidence: null,
+      channel: 'IN_PERSON_DIGITAL',
+    });
+    expect(isOk(await api.ensureRecordWritable(responsible, id))).toBe(true);
+    const outsider = await api.ensureRecordWritable(owner, id);
+    expect(isErr(outsider) && outsider.error.code).toBe(WRITE_ACCESS_REQUIRED.code);
+    expect(await api.patientRef('no-existe')).toBeNull();
+    const missing = await api.ensureRecordWritable(responsible, 'no-existe');
+    expect(isErr(missing) && missing.error.code).toBe(PATIENT_NOT_FOUND.code);
+    await commands().archive(responsible, id);
+    const archived = await api.ensureRecordWritable(responsible, id);
+    expect(isErr(archived) && archived.error.code).toBe(PATIENT_ARCHIVED.code);
   });
 });
 

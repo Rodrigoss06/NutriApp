@@ -37,7 +37,8 @@ Leyenda: ⬜ pendiente · 🟨 en curso · ✅ terminado · ⛔ bloqueado
   cintura/cadera con 2 decimales), RN-D11 (ajuste assessment.lee_reference_group_coefficient) y el motor 1.2.0
 
 ## Siguiente paso
-- P7 PR 1: evaluación, tomas, cierre y enmienda, bioimpedancia y ETM (RF-11 a RF-14), con la migración del catálogo
+- P7 PR 2: cálculo en el worker al cerrar, resultados inmutables con su interpretación, recálculo, comparación con
+  CMD95 y preferencias de métodos (RF-15, RF-16)
 - Desde P6, cada apps/api/.env local necesita STORAGE_LOCAL_PATH con una ruta absoluta (ADR-043)
 
 ## Bloqueos y preguntas al cliente
@@ -82,6 +83,7 @@ Leyenda: ⬜ pendiente · 🟨 en curso · ✅ terminado · ⛔ bloqueado
 - Jackson y Pollock 7 deja de crecer con la suma de pliegues sobre 395 mm (hombres) y 419 mm (mujeres): consultar si se advierte
 - RF-06: LOGIN y LOGIN_FAILED (sin organización) solo los ve la plataforma; su vista llega con el panel interno (P15)
 - La app del paciente (/mi) ya exige la sesión PATIENT, pero sus pantallas son de muestra hasta P13
+- Tres copias de atomically (dos en iam, una en backoffice): usar la de apps/api/src/platform (ADR-045)
 - La pila del E2E se levanta a mano en local (compose, build, API y worker con env.local.example y
   RATE_LIMIT_FACTOR=100; WebKit en la imagen de Playwright): conviene un script para Iván
 

@@ -1,4 +1,5 @@
 export { AuditModule } from './audit/audit.module.js';
+export { atomically } from './database/atomically.js';
 export { DatabaseModule } from './database/database.module.js';
 export { PRISMA, type Db } from './database/prisma.provider.js';
 export { ConsumerRunner } from './events/consumer-runner.js';

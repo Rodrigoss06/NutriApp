@@ -20,6 +20,7 @@ import {
   type PatientStore,
   type TimelineRecord,
 } from '../ports/clinical.ports.js';
+import { newestFirst, TimelineSources } from '../timeline-sources.js';
 
 export interface HistoryView {
   readonly current: HistoryRevisionRecord | null;
@@ -60,6 +61,7 @@ export class ClinicalRecordQueries {
     @Inject(AUDIT_PORT) private readonly audit: AuditPort,
     @Inject(PATIENT_STORE) private readonly patients: PatientStore,
     @Inject(CLINICAL_RECORD_STORE) private readonly records: ClinicalRecordStore,
+    @Inject(TimelineSources) private readonly sources: TimelineSources,
   ) {}
 
   history(context: SecurityContext, patientId: string): Promise<HistoryView | null> {
@@ -95,11 +97,17 @@ export class ClinicalRecordQueries {
     params: { cursor?: string | undefined; limit: number },
   ): Promise<TimelinePage | null> {
     return this.#read(context, patientId, 'clinical.timeline', async () => {
-      const rows = await this.records.timeline(
-        patientId,
-        decodeCursor(params.cursor),
-        params.limit + 1,
-      );
+      const before = decodeCursor(params.cursor);
+      // Cada fuente da su página, en la misma transacción y una tras otra; la mezcla se ordena igual que el SQL y se
+      // corta en limit + 1.
+      const pages = [await this.records.timeline(patientId, before, params.limit + 1)];
+      for (const source of this.sources.all()) {
+        pages.push(await source.entries(patientId, before, params.limit + 1));
+      }
+      const rows = pages
+        .flat()
+        .sort(newestFirst)
+        .slice(0, params.limit + 1);
       const items = rows.slice(0, params.limit);
       const last = items.at(-1);
       return { items, nextCursor: rows.length > params.limit && last ? encodeCursor(last) : null };
