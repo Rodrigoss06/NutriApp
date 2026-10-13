@@ -114,9 +114,12 @@ export const settingsResponseSchema = z.object({
   /** ⚠️ N22: caducidad del enlace de acceso del paciente (RN-A06). */
   'patient_invitation.ttl_days': z.number().int(),
   'subscription.grace_days': z.number().int(),
+  /** RN-D11: coeficiente de Lee (0, −2 o 1.1); null hasta que la organización lo fija, y sin él Lee no se calcula. */
+  'assessment.lee_ethnicity_coefficient': z.number().nullable(),
 });
 export type SettingsResponse = z.infer<typeof settingsResponseSchema>;
-export const updateSettingSchema = z.object({ value: z.number().int() });
+/** PUT /api/v1/organization/settings/:key. Cada ajuste valida su rango o sus opciones (422 NC-TEN-030). */
+export const updateSettingSchema = z.object({ value: z.number() });
 
 /** Invitaciones de staff (RN-A06 aplicado a profesionales). */
 export const inviteStaffSchema = z.object({

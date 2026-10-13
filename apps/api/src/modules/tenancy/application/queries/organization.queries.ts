@@ -6,7 +6,12 @@ import {
   type UnitOfWork,
   type UserId,
 } from '@nutricoach/shared-kernel';
-import { ORGANIZATION_SETTINGS, settingValue, type SettingKey } from '../../domain/settings.js';
+import {
+  ORGANIZATION_SETTINGS,
+  settingValue,
+  type SettingKey,
+  type SettingValue,
+} from '../../domain/settings.js';
 import { addDays, type MemberRole } from '../../domain/tenancy-rules.js';
 import {
   ACTIVE_PATIENT_COUNTER,
@@ -110,7 +115,7 @@ export class OrganizationQueries {
     });
   }
 
-  settings(context: SecurityContext): Promise<Readonly<Record<SettingKey, number>>> {
+  settings(context: SecurityContext): Promise<{ readonly [K in SettingKey]: SettingValue<K> }> {
     const organizationId = this.#organization(context);
     return this.uow.query(context, async () => {
       const entries = await Promise.all(
@@ -119,7 +124,7 @@ export class OrganizationQueries {
             [key, settingValue(key, await this.store.getSetting(organizationId, key))] as const,
         ),
       );
-      return Object.fromEntries(entries) as Record<SettingKey, number>;
+      return Object.fromEntries(entries) as { [K in SettingKey]: SettingValue<K> };
     });
   }
 

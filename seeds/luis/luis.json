@@ -1,0 +1,290 @@
+{
+  "patient": {
+    "firstName": "Luis",
+    "lastName": "Ejemplo Sintético",
+    "sex": "M",
+    "population": "ADULT",
+    "ageYearsAtCurrentEvaluation": 28
+  },
+  "consent": {
+    "purpose": "HEALTH_DATA",
+    "channel": "IN_PERSON_DIGITAL"
+  },
+  "clinicalHistory": {
+    "answers": {
+      "dietHabits": "Cuatro comidas al día; almuerza fuera de casa entre semana.",
+      "physicalActivity": "Trabajo de oficina. Corre 30 minutos tres veces por semana a unos 10 km/h.",
+      "sleep": "Siete horas por noche.",
+      "goals": "Bajar grasa sin perder músculo."
+    }
+  },
+  "organizationSettings": {
+    "assessment.lee_ethnicity_coefficient": 0
+  },
+  "technicalErrorStudy": {
+    "daysBeforeCurrentEvaluation": 90,
+    "source": "CALCULATED",
+    "sites": [
+      {
+        "siteCode": "SKF_TRICEPS",
+        "pairs": [[12.0, 12.4]]
+      },
+      {
+        "siteCode": "SKF_SUBSCAPULAR",
+        "pairs": [[16.0, 15.6]]
+      },
+      {
+        "siteCode": "SKF_ABDOMINAL",
+        "pairs": [[25.0, 26.0]]
+      },
+      {
+        "siteCode": "SKF_FRONT_THIGH",
+        "pairs": [[18.0, 17.6]]
+      },
+      {
+        "siteCode": "SKF_MEDIAL_CALF",
+        "pairs": [[10.0, 10.2]]
+      },
+      {
+        "siteCode": "SKF_SUPRASPINALE",
+        "pairs": [[14.0, 14.4]]
+      }
+    ]
+  },
+  "evaluations": {
+    "previous": {
+      "daysBeforeCurrentEvaluation": 28,
+      "localTime": "08:30",
+      "kind": "ANTHROPOMETRY",
+      "level": "ISAK2",
+      "conditions": {
+        "schemaVersion": 1,
+        "fasting": true,
+        "intenseActivityLast24h": false,
+        "hydration": "Normal, sin bebidas en la última hora"
+      },
+      "measurements": {
+        "BASIC_WEIGHT": [81.5, 81.5],
+        "BASIC_HEIGHT": [175.0, 175.0],
+        "BASIC_SITTING_HEIGHT": [91.0, 91.0],
+        "BASIC_ARM_SPAN": [178.0, 178.0],
+        "SKF_TRICEPS": [13.4, 13.6],
+        "SKF_SUBSCAPULAR": [17.4, 17.6],
+        "SKF_BICEPS": [6.4, 6.6],
+        "SKF_ILIAC_CREST": [23.3, 23.7],
+        "SKF_SUPRASPINALE": [15.4, 15.6],
+        "SKF_ABDOMINAL": [26.3, 26.7],
+        "SKF_FRONT_THIGH": [18.4, 18.8],
+        "SKF_MEDIAL_CALF": [10.2, 10.4],
+        "GIRTH_HEAD": [57.0, 57.0],
+        "GIRTH_NECK": [38.2, 38.4],
+        "GIRTH_ARM_RELAXED": [33.2, 33.2],
+        "GIRTH_ARM_FLEXED": [35.6, 35.6],
+        "GIRTH_FOREARM": [28.1, 28.1],
+        "GIRTH_WRIST": [17.0, 17.0],
+        "GIRTH_CHEST": [100.8, 101.2],
+        "GIRTH_WAIST": [87.4, 87.6],
+        "GIRTH_HIP": [98.4, 98.6],
+        "GIRTH_THIGH_GLUTEAL": [60.4, 60.6],
+        "GIRTH_THIGH": [55.2, 55.4],
+        "GIRTH_CALF": [37.1, 37.3],
+        "GIRTH_ANKLE": [22.5, 22.5],
+        "LENGTH_ACROMIALE_RADIALE": [33.4, 33.6],
+        "LENGTH_RADIALE_STYLION": [26.0, 26.0],
+        "LENGTH_MIDSTYLION_DACTYLION": [19.5, 19.5],
+        "LENGTH_ILIOSPINALE_HEIGHT": [97.8, 98.2],
+        "LENGTH_TROCHANTERION_HEIGHT": [91.4, 91.6],
+        "LENGTH_TROCHANTERION_TIBIALE_LATERALE": [43.9, 44.1],
+        "LENGTH_TIBIALE_LATERALE_HEIGHT": [47.4, 47.6],
+        "LENGTH_TIBIALE_MEDIALE_SPHYRION_TIBIALE": [38.4, 38.6],
+        "LENGTH_FOOT": [26.5, 26.5],
+        "BREADTH_BIACROMIAL": [39.9, 40.1],
+        "BREADTH_BIILIOCRISTAL": [28.4, 28.6],
+        "BREADTH_TRANSVERSE_CHEST": [29.9, 30.1],
+        "BREADTH_AP_CHEST": [20.0, 20.0],
+        "BREADTH_HUMERUS": [7.0, 7.0],
+        "BREADTH_WRIST": [5.8, 5.8],
+        "BREADTH_FEMUR": [9.8, 9.8],
+        "BREADTH_ANKLE": [7.2, 7.2]
+      }
+    },
+    "current": {
+      "daysBeforeCurrentEvaluation": 0,
+      "localTime": "08:30",
+      "kind": "ANTHROPOMETRY",
+      "level": "ISAK2",
+      "conditions": {
+        "schemaVersion": 1,
+        "fasting": true,
+        "intenseActivityLast24h": false,
+        "hydration": "Normal, sin bebidas en la última hora"
+      },
+      "measurements": {
+        "BASIC_WEIGHT": [80.0, 80.0],
+        "BASIC_HEIGHT": [174.9, 175.1],
+        "BASIC_SITTING_HEIGHT": [91.0, 91.0],
+        "BASIC_ARM_SPAN": [177.8, 178.2],
+        "SKF_TRICEPS": [11.8, 12.2],
+        "SKF_SUBSCAPULAR": [15.8, 16.2],
+        "SKF_BICEPS": [6.0, 6.0],
+        "SKF_ILIAC_CREST": [21.6, 22.4],
+        "SKF_SUPRASPINALE": [13.8, 14.2],
+        "SKF_ABDOMINAL": [24.6, 25.4],
+        "SKF_FRONT_THIGH": [17.6, 18.4],
+        "SKF_MEDIAL_CALF": [10.0, 10.0],
+        "GIRTH_HEAD": [57.0, 57.0],
+        "GIRTH_NECK": [37.9, 38.1],
+        "GIRTH_ARM_RELAXED": [32.9, 33.1],
+        "GIRTH_ARM_FLEXED": [35.4, 35.6],
+        "GIRTH_FOREARM": [28.0, 28.0],
+        "GIRTH_WRIST": [17.0, 17.0],
+        "GIRTH_CHEST": [99.8, 100.2],
+        "GIRTH_WAIST": [85.8, 86.2],
+        "GIRTH_HIP": [97.9, 98.1],
+        "GIRTH_THIGH_GLUTEAL": [59.8, 60.2],
+        "GIRTH_THIGH": [54.9, 55.1],
+        "GIRTH_CALF": [36.9, 37.1],
+        "GIRTH_ANKLE": [22.5, 22.5],
+        "LENGTH_ACROMIALE_RADIALE": [33.4, 33.6],
+        "LENGTH_RADIALE_STYLION": [26.0, 26.0],
+        "LENGTH_MIDSTYLION_DACTYLION": [19.5, 19.5],
+        "LENGTH_ILIOSPINALE_HEIGHT": [97.8, 98.2],
+        "LENGTH_TROCHANTERION_HEIGHT": [91.4, 91.6],
+        "LENGTH_TROCHANTERION_TIBIALE_LATERALE": [43.9, 44.1],
+        "LENGTH_TIBIALE_LATERALE_HEIGHT": [47.4, 47.6],
+        "LENGTH_TIBIALE_MEDIALE_SPHYRION_TIBIALE": [38.4, 38.6],
+        "LENGTH_FOOT": [26.5, 26.5],
+        "BREADTH_BIACROMIAL": [39.9, 40.1],
+        "BREADTH_BIILIOCRISTAL": [28.4, 28.6],
+        "BREADTH_TRANSVERSE_CHEST": [29.9, 30.1],
+        "BREADTH_AP_CHEST": [20.0, 20.0],
+        "BREADTH_HUMERUS": [7.0, 7.0],
+        "BREADTH_WRIST": [5.8, 5.8],
+        "BREADTH_FEMUR": [9.8, 9.8],
+        "BREADTH_ANKLE": [7.2, 7.2]
+      }
+    }
+  },
+  "energyPrescription": {
+    "rmrMethodCode": "RMR_MIFFLIN1990",
+    "strategy": "ADDITIVE",
+    "pal": 1.4,
+    "activities": [
+      {
+        "activityCode": "12050",
+        "minutesPerSession": 30,
+        "sessionsPerWeek": 3
+      }
+    ],
+    "goal": "LOSE_FAT",
+    "adjustment": {
+      "kind": "FAT_KG_PER_MONTH",
+      "fatKgPerMonth": -3
+    },
+    "targetFatPct": 15,
+    "proteinGPerKg": 2,
+    "fatPctKcal": 25
+  },
+  "expected": {
+    "G-01": {
+      "attempts": [12.0, 12.4],
+      "diffPct": 3.33,
+      "consolidatedValue": 12.2
+    },
+    "G-02": {
+      "attempts": [12.0, 13.0],
+      "diffPct": 8.33,
+      "needsThird": true
+    },
+    "G-03": {
+      "attempts": [12.0, 13.0, 12.6],
+      "consolidatedValue": 12.6
+    },
+    "G-04": {
+      "temAbs": 0.374,
+      "temRelPct": 2.35,
+      "mdc95": 1.04,
+      "skinfoldSum6Mm": 95,
+      "skinfoldSum6Mdc95": 6.18
+    },
+    "G-05": {
+      "bmi": 26.12,
+      "waistHeightRatio": 0.491,
+      "waistHipRatio": 0.88
+    },
+    "G-06": {
+      "skinfoldSum4Mm": 56,
+      "density": 1.05261,
+      "fatPct": 20.26,
+      "fatMassKg": 16.21,
+      "fatFreeMassKg": 63.79
+    },
+    "G-07": {
+      "faulknerFatPct": 16.03,
+      "faulknerSumMm": 67,
+      "yuhaszFatPct": 12.57,
+      "yuhaszSumMm": 95
+    },
+    "G-08": {
+      "boneMassKg": 12.02,
+      "residualMassKg": 19.28,
+      "muscleMassKg": 32.49
+    },
+    "G-09": {
+      "correctedArmGirthCm": 29.23,
+      "skeletalMuscleMassKg": 32.58
+    },
+    "G-10": {
+      "bodySurfaceAreaM2": 1.8599,
+      "skinMassKg": 4.04,
+      "adiposeMassKg": 23.44,
+      "adiposeZ": -0.691,
+      "muscleMassKg": 35.92,
+      "muscleZ": 1.58,
+      "boneMassKg": 8.722,
+      "headBoneMassKg": 1.325,
+      "bodyBoneMassKg": 7.397,
+      "residualMassKg": 9.46,
+      "residualZ": 2.44,
+      "structuredMassKg": 81.59,
+      "structuredMassDiffPct": 1.98
+    },
+    "G-11": {
+      "cormicIndex": 52.0,
+      "manouvrierIndex": 92.31,
+      "acromioiliacIndex": 71.25
+    },
+    "G-12": {
+      "targetFatPct": 15,
+      "targetWeightKg": 75.05,
+      "weightChangeKg": -4.95
+    },
+    "G-13": {
+      "RMR_MIFFLIN1990": 1759,
+      "RMR_HB1919": 1853,
+      "BMR_SCHOFIELD1985": 1897,
+      "RMR_CUNNINGHAM1980": 1903,
+      "RMR_KATCH_MCARDLE": 1748
+    },
+    "G-14": {
+      "baseKcal": 2462
+    },
+    "G-15": {
+      "grossKcalPerSession": 372,
+      "netKcalPerSession": 332,
+      "dailyAverageNetKcal": 142,
+      "teeKcal": 2605
+    },
+    "G-16": {
+      "deficitKcal": 770,
+      "targetKcal": 1835,
+      "weeklyRatePct": 0.86,
+      "monthsToTarget": 1.65
+    },
+    "G-17": {
+      "proteinG": 160,
+      "fatG": 51,
+      "choG": 184
+    }
+  }
+}

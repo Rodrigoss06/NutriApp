@@ -145,6 +145,27 @@ describe('Ajustes registrados', () => {
     const unknown = await commands().setSetting(owner, 'otra.cosa', 3);
     expect(isErr(unknown) && unknown.error.code).toBe('NC-TEN-030');
   });
+
+  it('RN-D11 · la organización fija el coeficiente de Lee de una lista cerrada; no tiene valor por defecto', async () => {
+    const owner = contextFor(org, 'OWNER');
+    const lee = async () =>
+      (
+        await new OrganizationQueries(
+          uow,
+          store,
+          { profiles: () => Promise.resolve(new Map()) },
+          { count: () => Promise.resolve(0) },
+          { count: () => Promise.resolve(0) },
+        ).settings(owner)
+      )['assessment.lee_ethnicity_coefficient'];
+    expect(await lee()).toBeNull();
+    expect(
+      isOk(await commands().setSetting(owner, 'assessment.lee_ethnicity_coefficient', 1.1)),
+    ).toBe(true);
+    expect(await lee()).toBe(1.1);
+    const other = await commands().setSetting(owner, 'assessment.lee_ethnicity_coefficient', 0.5);
+    expect(isErr(other) && other.error.code).toBe('NC-TEN-030');
+  });
 });
 
 describe('RN-A03 · QuotaPolicy de la API pública', () => {
@@ -332,6 +353,7 @@ describe('RF-02 y RF-03 · consultas', () => {
       'invitation.ttl_days': 7,
       'patient_invitation.ttl_days': 7,
       'subscription.grace_days': 7,
+      'assessment.lee_ethnicity_coefficient': null,
     });
     expect((await queries().organization(contextFor(org, 'OWNER')))?.id).toBe(org);
     expect(() =>
