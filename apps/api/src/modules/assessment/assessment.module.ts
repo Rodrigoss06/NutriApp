@@ -1,5 +1,6 @@
 import { Module, type OnModuleInit } from '@nestjs/common';
 import { ClinicalApi } from '../clinical/index.js';
+import { AssessmentApi } from './application/assessment-api.js';
 import { AssessmentTimelineSource } from './application/assessment-timeline.js';
 import { CalculationService } from './application/calculation.service.js';
 import { CalculationCommands } from './application/commands/calculation.commands.js';
@@ -52,6 +53,7 @@ import {
     TechnicalErrorCommands,
     EvaluationQueries,
     CalculationService,
+    AssessmentApi,
     CalculationCommands,
     ResultsQueries,
     CalculationConsumer,
@@ -61,6 +63,7 @@ import {
     { provide: TECHNICAL_ERROR_STORE, useClass: PrismaTechnicalErrorStore },
     { provide: CALCULATION_STORE, useClass: PrismaCalculationStore },
   ],
+  exports: [AssessmentApi],
 })
 export class AssessmentModule implements OnModuleInit {
   constructor(

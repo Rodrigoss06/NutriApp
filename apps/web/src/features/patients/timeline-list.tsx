@@ -39,8 +39,19 @@ export function timelineDetail(item: TimelineItem): string {
       const level = label(EVALUATION_TIMELINE_LABELS, item.label);
       return item.detail ? `${level}, enmienda: ${item.detail}` : level;
     }
+    case 'ENERGY_PRESCRIBED':
+      return `Objetivo: ${label(ENERGY_GOAL_LABELS, item.label).toLowerCase()}`;
   }
 }
+
+/** Objetivo de la prescripción energética. */
+const ENERGY_GOAL_LABELS = {
+  LOSE_FAT: 'Perder grasa',
+  GAIN_MUSCLE: 'Ganar músculo',
+  MAINTAIN: 'Mantener',
+  RECOMPOSITION: 'Recomposición corporal',
+  PERFORMANCE: 'Rendimiento',
+} as const;
 
 /** Nivel de la evaluación cerrada, o bioimpedancia si no tiene nivel. */
 const EVALUATION_TIMELINE_LABELS = {

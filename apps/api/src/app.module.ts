@@ -1,6 +1,8 @@
 import { Module } from '@nestjs/common';
 import { AssessmentModule } from './modules/assessment/index.js';
 import { AuditLogModule } from './modules/audit/index.js';
+import { ExerciseModule } from './modules/exercise/index.js';
+import { NutritionModule } from './modules/nutrition/index.js';
 import { BackofficeModule } from './modules/backoffice/index.js';
 import { ClinicalModule } from './modules/clinical/index.js';
 import { IamModule } from './modules/iam/index.js';
@@ -18,6 +20,8 @@ import { AuthModule, HealthModule, IdempotencyModule, PlatformModule } from './p
     IamModule,
     ClinicalModule,
     AssessmentModule,
+    ExerciseModule,
+    NutritionModule,
     AuditLogModule,
     BackofficeModule,
   ],
