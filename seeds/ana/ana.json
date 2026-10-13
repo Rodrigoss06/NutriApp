@@ -1,0 +1,66 @@
+{
+  "patient": {
+    "firstName": "Ana",
+    "lastName": "Ejemplo Sintético",
+    "sex": "F",
+    "population": "ADULT",
+    "ageYearsAtSeed": 34
+  },
+  "consent": {
+    "purpose": "HEALTH_DATA",
+    "channel": "IN_PERSON_DIGITAL"
+  },
+  "clinicalHistory": {
+    "answers": {
+      "dietHabits": "Tres comidas al día; cena tarde por el trabajo.",
+      "physicalActivity": "Camina 40 minutos casi todos los días.",
+      "sleep": "Seis horas por noche entre semana.",
+      "goals": "Ordenar sus comidas y conocer su punto de partida."
+    }
+  },
+  "liveCapture": {
+    "kind": "ANTHROPOMETRY",
+    "level": "BASIC",
+    "conditions": {
+      "schemaVersion": 1,
+      "fasting": true,
+      "intenseActivityLast24h": false,
+      "hydration": "Normal"
+    },
+    "measurements": {
+      "BASIC_WEIGHT": [58.4, 58.4],
+      "BASIC_HEIGHT": [160.0, 160.2],
+      "GIRTH_WAIST": [72.5, 72.7],
+      "GIRTH_HIP": [96.0, 96.2]
+    },
+    "extraSite": {
+      "siteCode": "SKF_TRICEPS",
+      "steps": [
+        { "goldenCase": "G-01", "attempts": [12.0, 12.4] },
+        { "goldenCase": "G-02", "attempts": [12.0, 13.0] },
+        { "goldenCase": "G-03", "attempts": [12.0, 13.0, 12.6] }
+      ]
+    },
+    "amendment": {
+      "reason": "Peso mal digitado: la balanza marcaba 59.4 kg.",
+      "measurements": {
+        "BASIC_WEIGHT": [59.4, 59.4]
+      }
+    }
+  },
+  "expected": {
+    "original": {
+      "weightKg": 58.4,
+      "heightCm": 160.1,
+      "waistCm": 72.6,
+      "hipCm": 96.1,
+      "bmi": 22.78,
+      "waistHeightRatio": 0.4535,
+      "waistHipRatio": 0.7555
+    },
+    "amended": {
+      "weightKg": 59.4,
+      "bmi": 23.17
+    }
+  }
+}

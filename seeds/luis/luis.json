@@ -6,6 +6,10 @@
     "population": "ADULT",
     "ageYearsAtCurrentEvaluation": 28
   },
+  "registration": {
+    "daysBeforeCurrentEvaluation": 35,
+    "localTime": "08:00"
+  },
   "consent": {
     "purpose": "HEALTH_DATA",
     "channel": "IN_PERSON_DIGITAL"
@@ -111,13 +115,41 @@
     "current": {
       "daysBeforeCurrentEvaluation": 0,
       "localTime": "08:30",
-      "kind": "ANTHROPOMETRY",
+      "kind": "MIXED",
       "level": "ISAK2",
       "conditions": {
         "schemaVersion": 1,
         "fasting": true,
         "intenseActivityLast24h": false,
         "hydration": "Normal, sin bebidas en la última hora"
+      },
+      "biaReading": {
+        "deviceBrand": "Marca Demo",
+        "deviceModel": "BIA-200",
+        "readings": [
+          { "metric": "FAT_PCT", "value": 18.4, "unit": "%", "deviceLabel": "Grasa corporal" },
+          { "metric": "FAT_MASS", "value": 14.7, "unit": "kg", "deviceLabel": "Masa grasa" },
+          {
+            "metric": "FAT_FREE_MASS",
+            "value": 65.3,
+            "unit": "kg",
+            "deviceLabel": "Masa libre de grasa"
+          },
+          { "metric": "MUSCLE_MASS", "value": 62.0, "unit": "kg", "deviceLabel": "Masa muscular" },
+          {
+            "metric": "TOTAL_BODY_WATER",
+            "value": 47.8,
+            "unit": "L",
+            "deviceLabel": "Agua corporal total"
+          },
+          {
+            "metric": "VISCERAL_FAT",
+            "value": 6,
+            "unit": "level",
+            "deviceLabel": "Grasa visceral"
+          },
+          { "metric": "PHASE_ANGLE", "value": 7.1, "unit": "deg", "deviceLabel": "Ángulo de fase" }
+        ]
       },
       "measurements": {
         "BASIC_WEIGHT": [80.0, 80.0],

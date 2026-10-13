@@ -46,22 +46,33 @@ export class AssessmentApi {
   ) {}
 
   /**
-   * La evaluación cerrada indicada, o la última cerrada del paciente. null si no hay una con peso y talla. La masa libre
-   * de grasa es null si el método principal de % de grasa no se calculó.
+   * La evaluación cerrada indicada, o la última cerrada del paciente con peso y talla (una solo de bioimpedancia no los
+   * tiene). null si no hay una. La masa libre de grasa es null si el método principal de % de grasa no se calculó.
    */
   async compositionBasis(
     patientId: string,
     evaluationId: string | null,
   ): Promise<CompositionBasis | null> {
-    const evaluation = evaluationId
-      ? await this.evaluations.find(evaluationId)
-      : ((await this.evaluations.listByPatient(patientId)).find((e) => e.status === 'CLOSED') ??
-        null);
-    if (evaluation?.patientId !== patientId || evaluation.status !== 'CLOSED') return null;
-    const values = await this.#values(evaluation);
-    const weightKg = values.get('BASIC_WEIGHT');
-    const heightCm = values.get('BASIC_HEIGHT');
-    if (weightKg === undefined || heightCm === undefined) return null;
+    const candidates = evaluationId
+      ? [await this.evaluations.find(evaluationId)]
+      : (await this.evaluations.listByPatient(patientId)).filter((e) => e.status === 'CLOSED');
+    for (const evaluation of candidates) {
+      if (evaluation?.patientId !== patientId || evaluation.status !== 'CLOSED') continue;
+      const values = await this.#values(evaluation);
+      const weightKg = values.get('BASIC_WEIGHT');
+      const heightCm = values.get('BASIC_HEIGHT');
+      if (weightKg !== undefined && heightCm !== undefined) {
+        return this.#basis(evaluation, weightKg, heightCm);
+      }
+    }
+    return null;
+  }
+
+  async #basis(
+    evaluation: EvaluationRecord,
+    weightKg: number,
+    heightCm: number,
+  ): Promise<CompositionBasis> {
     const outcome = await this.calculation.outcomeOf(evaluation);
     const principal = shownResults(
       evaluation,

@@ -3,9 +3,11 @@
  * profesional y un PLATFORM_ADMIN demo. Idempotente: ids fijos y ON CONFLICT DO NOTHING. Datos sintéticos.
  *
  * P7: el caso Luis de seeds/luis/luis.json para la Demo 1 (ADR-044): paciente con HEALTH_DATA e historia, el
- * coeficiente de Lee de la organización, el estudio de ETM de la dueña y dos evaluaciones ISAK 2 cerradas. Sus
- * resultados los calcula el worker al procesar los eventos de cierre, igual que en producción. Las fechas son
- * relativas a hoy en Lima: la evaluación actual es de hoy y Luis cumple 28 años hoy (G-13).
+ * coeficiente de Lee de la organización, el estudio de ETM de la dueña y dos evaluaciones ISAK 2 cerradas; la actual,
+ * mixta, con una lectura de bioimpedancia sintética (RN-C08). Sus resultados los calcula el worker al procesar los
+ * eventos de cierre, igual que en producción. Las fechas son relativas a hoy en Lima: la evaluación actual es de hoy
+ * y Luis cumple 28 años hoy (G-13). Ana (seeds/ana/ana.json) tiene ficha, HEALTH_DATA e historia, sin evaluaciones:
+ * la captura en vivo del guion (docs/demos/demo-1.md) se hace con ella para no cambiar los números de Luis.
  *
  * Corre como app_owner (DATABASE_OWNER_URL), igual que las migraciones. Nunca en producción. En staging la
  * contraseña demo llega en SEED_DEMO_PASSWORD; en local tiene un valor fijo.
@@ -15,6 +17,7 @@
 import { hash } from '@node-rs/argon2';
 import pg from 'pg';
 import { v7 as uuidv7 } from 'uuid';
+import ana from '../../../seeds/ana/ana.json' with { type: 'json' };
 import luis from '../../../seeds/luis/luis.json' with { type: 'json' };
 
 try {
@@ -59,6 +62,10 @@ const IDS = {
   luisHistory: '01920000-0000-7000-8000-0000000000c3',
   luisPrevious: '01920000-0000-7000-8000-0000000000e1',
   luisCurrent: '01920000-0000-7000-8000-0000000000e2',
+  luisBia: '01920000-0000-7000-8000-0000000000e3',
+  ana: '01920000-0000-7000-8000-0000000000c4',
+  anaConsent: '01920000-0000-7000-8000-0000000000c5',
+  anaHistory: '01920000-0000-7000-8000-0000000000c6',
 } as const;
 
 /** Texto provisional de HEALTH_DATA de la migración de clinical (ADR-039). */
@@ -110,6 +117,7 @@ try {
     [IDS.ownerMember, IDS.professionalMember, IDS.organization, IDS.owner, IDS.professional],
   );
   await seedLuis(client);
+  await seedAna(client);
   await client.query('COMMIT');
 } catch (error) {
   await client.query('ROLLBACK');
@@ -119,13 +127,13 @@ try {
 }
 
 console.log(
-  `Semilla lista (${APP_ENV}): duena@, profesional@ y plataforma@demo.example.com, y el caso Luis` +
+  `Semilla lista (${APP_ENV}): duena@, profesional@ y plataforma@demo.example.com, el caso Luis y Ana` +
     (APP_ENV === 'local'
       ? ' con la contraseña Demostracion-Local-2026.'
       : ' con SEED_DEMO_PASSWORD.'),
 );
 
-// ─── Caso Luis (P7) ──────────────────────────────────────────────────────────────────────────────────────────
+// ─── Casos Luis y Ana (P7) ───────────────────────────────────────────────────────────────────────────────────
 
 /** Hoy en Lima, como YYYY-MM-DD. */
 function todayInLima(): string {
@@ -183,11 +191,24 @@ function technicalError(pairs: [number, number][]): { abs: number; relPct: numbe
   return { abs, relPct: (abs / mean) * 100 };
 }
 
-async function seedLuis(db: pg.Client): Promise<void> {
-  const exists = await db.query('SELECT 1 FROM clinical.patient WHERE id = $1', [IDS.luis]);
-  if (exists.rowCount) return;
-  const today = todayInLima();
-  const birthDate = `${Number(today.slice(0, 4)) - luis.patient.ageYearsAtCurrentEvaluation}${today.slice(4)}`;
+interface SeedPatient {
+  readonly id: string;
+  readonly consentId: string;
+  readonly historyId: string;
+  readonly birthDate: string;
+  /** Alta, consentimiento e historia el mismo día, antes de cualquier evaluación (RN-B01). */
+  readonly registeredAt: Date;
+  readonly patient: {
+    readonly firstName: string;
+    readonly lastName: string;
+    readonly sex: string;
+    readonly population: string;
+  };
+  readonly answers: Record<string, string>;
+}
+
+/** Ficha con correlativo, la dueña como responsable, HEALTH_DATA (RN-B01) e historia clínica v1. */
+async function insertPatient(db: pg.Client, seed: SeedPatient): Promise<void> {
   const [{ value: number } = { value: '1' }] = (
     await db.query<{ value: string }>(
       `INSERT INTO platform.counter AS c (organization_id, name, next_value) VALUES ($1, 'patient', 2)
@@ -198,44 +219,73 @@ async function seedLuis(db: pg.Client): Promise<void> {
   ).rows;
   await db.query(
     `INSERT INTO clinical.patient (id, organization_id, code, first_name, last_name, sex, birth_date, population,
-                                   responsible_member_id, created_by)
-     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)`,
+                                   responsible_member_id, created_by, created_at, updated_at)
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $11)`,
     [
-      IDS.luis,
+      seed.id,
       IDS.organization,
       `P-${number.padStart(6, '0')}`,
-      luis.patient.firstName,
-      luis.patient.lastName,
-      luis.patient.sex,
-      birthDate,
-      luis.patient.population,
+      seed.patient.firstName,
+      seed.patient.lastName,
+      seed.patient.sex,
+      seed.birthDate,
+      seed.patient.population,
       IDS.ownerMember,
       IDS.owner,
+      seed.registeredAt,
     ],
   );
   await db.query(
-    `INSERT INTO clinical.care_team_member (patient_id, member_id, organization_id, role, access, added_by)
-     VALUES ($1, $2, $3, 'RESPONSIBLE', 'WRITE', $4)`,
-    [IDS.luis, IDS.ownerMember, IDS.organization, IDS.owner],
+    `INSERT INTO clinical.care_team_member (patient_id, member_id, organization_id, role, access, added_by, created_at)
+     VALUES ($1, $2, $3, 'RESPONSIBLE', 'WRITE', $4, $5)`,
+    [seed.id, IDS.ownerMember, IDS.organization, IDS.owner, seed.registeredAt],
   );
   await db.query(
     `INSERT INTO clinical.consent (id, organization_id, patient_id, purpose, consent_document_id, granted_at, channel,
-                                   granted_by_user_id)
-     VALUES ($1, $2, $3, 'HEALTH_DATA', $4, now(), 'IN_PERSON_DIGITAL', $5)`,
-    [IDS.luisConsent, IDS.organization, IDS.luis, HEALTH_DATA_DOCUMENT, IDS.owner],
+                                   granted_by_user_id, created_at)
+     VALUES ($1, $2, $3, 'HEALTH_DATA', $4, $6, 'IN_PERSON_DIGITAL', $5, $6)`,
+    [
+      seed.consentId,
+      IDS.organization,
+      seed.id,
+      HEALTH_DATA_DOCUMENT,
+      IDS.owner,
+      new Date(seed.registeredAt.getTime() + 5 * 60_000),
+    ],
   );
   await db.query(
     `INSERT INTO clinical.clinical_history (id, organization_id, patient_id, revision, form_code, form_version, answers,
-                                            recorded_by)
-     VALUES ($1, $2, $3, 1, 'ANAMNESIS', '1', $4, $5)`,
+                                            recorded_by, recorded_at)
+     VALUES ($1, $2, $3, 1, 'ANAMNESIS', '1', $4, $5, $6)`,
     [
-      IDS.luisHistory,
+      seed.historyId,
       IDS.organization,
-      IDS.luis,
-      JSON.stringify(luis.clinicalHistory.answers),
+      seed.id,
+      JSON.stringify(seed.answers),
       IDS.owner,
+      new Date(seed.registeredAt.getTime() + 20 * 60_000),
     ],
   );
+}
+
+async function seedLuis(db: pg.Client): Promise<void> {
+  const exists = await db.query('SELECT 1 FROM clinical.patient WHERE id = $1', [IDS.luis]);
+  if (exists.rowCount) return;
+  const today = todayInLima();
+  const birthDate = `${Number(today.slice(0, 4)) - luis.patient.ageYearsAtCurrentEvaluation}${today.slice(4)}`;
+  const registration = luis.registration;
+  await insertPatient(db, {
+    id: IDS.luis,
+    consentId: IDS.luisConsent,
+    historyId: IDS.luisHistory,
+    birthDate,
+    // Lima no tiene horario de verano: UTC−5.
+    registeredAt: new Date(
+      `${addDays(today, -registration.daysBeforeCurrentEvaluation)}T${registration.localTime}:00-05:00`,
+    ),
+    patient: luis.patient,
+    answers: luis.clinicalHistory.answers,
+  });
   await db.query(
     `INSERT INTO tenancy.organization_setting (organization_id, key, value, updated_by)
      VALUES ($1, 'assessment.lee_reference_group_coefficient', to_jsonb($2::numeric), $3)
@@ -316,6 +366,24 @@ async function seedLuis(db: pg.Client): Promise<void> {
         ],
       );
     }
+    // RN-C08: la lectura del equipo, con marca y modelo, entra en el borrador de la evaluación mixta.
+    if ('biaReading' in evaluation) {
+      await db.query(
+        `INSERT INTO assessment.bia_reading (id, organization_id, evaluation_id, device_brand, device_model, readings,
+                                             entered_by, created_at)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`,
+        [
+          IDS.luisBia,
+          IDS.organization,
+          id,
+          evaluation.biaReading.deviceBrand,
+          evaluation.biaReading.deviceModel,
+          JSON.stringify(evaluation.biaReading.readings),
+          IDS.owner,
+          new Date(measuredAt.getTime() + 40 * 60_000),
+        ],
+      );
+    }
     // Las tomas solo entran en borrador (RN-C07): se cierra al final, como en la consulta.
     await db.query(
       `UPDATE assessment.evaluation SET status = 'CLOSED', closed_at = $2, version = version + 1 WHERE id = $1`,
@@ -340,4 +408,21 @@ async function seedLuis(db: pg.Client): Promise<void> {
       ],
     );
   }
+}
+
+/** Ana: ficha, HEALTH_DATA e historia, sin evaluaciones; la captura en vivo del guion se hace con ella. */
+async function seedAna(db: pg.Client): Promise<void> {
+  const exists = await db.query('SELECT 1 FROM clinical.patient WHERE id = $1', [IDS.ana]);
+  if (exists.rowCount) return;
+  await insertPatient(db, {
+    id: IDS.ana,
+    consentId: IDS.anaConsent,
+    historyId: IDS.anaHistory,
+    // 34 años y unos meses: la edad no entra en ningún número de su evaluación básica.
+    birthDate: addDays(todayInLima(), -Math.round((ana.patient.ageYearsAtSeed + 0.4) * 365.25)),
+    // Media hora antes de la carga: su consentimiento y su historia no quedan en el futuro.
+    registeredAt: new Date(Date.now() - 30 * 60_000),
+    patient: ana.patient,
+    answers: ana.clinicalHistory.answers,
+  });
 }

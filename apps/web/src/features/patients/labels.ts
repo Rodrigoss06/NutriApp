@@ -135,11 +135,22 @@ export const AUDIT_RESOURCE_LABELS: Readonly<Record<string, string>> = {
   'clinical.goal': 'Objetivos',
   'clinical.clinical_note': 'Notas',
   'clinical.timeline': 'Línea de tiempo',
+  'assessment.evaluation': 'Evaluación',
+  'assessment.measurement': 'Medidas de una evaluación',
+  'assessment.bia_reading': 'Bioimpedancia',
+  'assessment.calculation_result': 'Resultados de una evaluación',
+  'assessment.evaluator_error': 'ETM del evaluador',
+  'assessment.method_preference': 'Métodos preferidos',
+  'nutrition.energy_basis': 'Datos para la energía',
+  'nutrition.energy_prescription': 'Prescripción energética',
   'iam.session': 'Sesión',
   'iam.invitation': 'Invitación',
+  'iam.user_account': 'Cuenta',
+  'iam.password_reset': 'Recuperación de contraseña',
   'tenancy.member': 'Miembro',
   'tenancy.organization': 'Organización',
   'tenancy.organization_setting': 'Ajuste',
+  'tenancy.subscription': 'Suscripción',
 };
 
 /** Los bloques de la historia clínica v1, en el orden de la consulta (⚠️ provisional, ADR-041). */

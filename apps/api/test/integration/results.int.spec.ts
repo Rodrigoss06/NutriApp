@@ -29,11 +29,19 @@ interface Results {
       metricCode: string;
       value: number;
       methodCode: string;
-      interpretation: { label: string; source: string } | null;
+      interpretation: { label: string; tone: string; source: string } | null;
+      interpretationNote: string | null;
     }[];
   }[];
-  siteInterpretations: { siteCode: string; interpretation: { label: string; source: string } }[];
+  siteInterpretations: {
+    siteCode: string;
+    interpretation: { label: string; source: string } | null;
+    interpretationNote: string | null;
+  }[];
 }
+
+const NICE = 'NICE, guía de obesidad (recomendaciones de 2022)';
+const NICE_ASHWELL = `${NICE}; Ashwell y Gibson (BMJ Open, 2016)`;
 
 const CONDITIONS = { schemaVersion: 1, fasting: true, intenseActivityLast24h: false };
 
@@ -127,9 +135,10 @@ describe('RF-15 · el worker calcula al cerrar', () => {
       label: 'Sobrepeso',
       source: 'OMS',
     });
-    expect(metric(view, 'WAIST_HEIGHT', 'WAIST_HEIGHT_RATIO')?.interpretation?.label).toBe(
-      'Sin riesgo aumentado',
-    );
+    expect(metric(view, 'WAIST_HEIGHT', 'WAIST_HEIGHT_RATIO')).toMatchObject({
+      interpretation: { label: 'Sin riesgo aumentado', tone: 'NEUTRAL', source: NICE_ASHWELL },
+      interpretationNote: null,
+    });
     expect(metric(view, 'COMP4_DEROSE_GUIMARAES', 'BONE_MASS_KG')).toMatchObject({
       methodCode: 'BONE_ROCHA1975',
     });
@@ -141,6 +150,7 @@ describe('RF-15 · el worker calcula al cerrar', () => {
         unit: 'cm',
         methodCode: 'CONSOLIDATE_ISAK',
         interpretation: { label: 'Sin riesgo aumentado', tone: 'NEUTRAL', source: 'OMS 2008' },
+        interpretationNote: null,
       },
     ]);
     for (const result of view.results) {
@@ -309,9 +319,18 @@ describe('RN-D05 · RF-16 · preferencias por HTTP', () => {
     );
     expect(rows.map((r) => [r.source, Number(r.count)])).toEqual([
       ['ACE', 10],
+      [NICE, 1],
+      [NICE_ASHWELL, 2],
       ['OMS', 8],
       ['OMS 2008', 6],
-      ['Umbral habitual 0.5 (guía de dominio)', 2],
     ]);
+  });
+
+  it('RN-D10 · cintura/talla de NICE: 0.50 exacto de la evaluación anterior ya es riesgo aumentado', async () => {
+    // La anterior es de antes de la primera versión de los rangos: rige esa primera (ADR-048).
+    expect(metric(await results(previousId), 'WAIST_HEIGHT', 'WAIST_HEIGHT_RATIO')).toMatchObject({
+      value: 0.5,
+      interpretation: { label: 'Riesgo aumentado', tone: 'CAUTION', source: NICE_ASHWELL },
+    });
   });
 });

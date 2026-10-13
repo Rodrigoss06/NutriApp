@@ -67,6 +67,7 @@ const resultsOf = (view: ResultsView): EvaluationResultsResponse => ({
       methodCode: m.methodCode,
       zScore: m.zScore,
       interpretation: m.interpretation,
+      interpretationNote: m.interpretationNote,
     })),
     principalFor: [...r.principalFor],
   })),
@@ -83,6 +84,7 @@ const resultsOf = (view: ResultsView): EvaluationResultsResponse => ({
     unit: s.unit,
     methodCode: 'CONSOLIDATE_ISAK',
     interpretation: s.interpretation,
+    interpretationNote: s.interpretationNote,
   })),
 });
 

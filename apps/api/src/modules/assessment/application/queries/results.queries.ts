@@ -32,6 +32,8 @@ import {
 } from '../../domain/comparison.js';
 import {
   interpret,
+  interpretationNote,
+  rangesInForce,
   type Interpretation,
   type ReferenceRange,
 } from '../../domain/interpretation.js';
@@ -55,6 +57,8 @@ import { metricsOf, type MetricValue } from '../result-metrics.js';
 
 export interface InterpretedMetric extends MetricValue {
   readonly interpretation: Interpretation | null;
+  /** Por qué no hay interpretación cuando el indicador tiene rangos: en menores, el aviso de RN-D05. */
+  readonly interpretationNote: string | null;
 }
 
 export interface ResultView extends StoredResult {
@@ -66,7 +70,8 @@ export interface SiteInterpretationView {
   readonly siteCode: string;
   readonly value: number;
   readonly unit: SiteUnit;
-  readonly interpretation: Interpretation;
+  readonly interpretation: Interpretation | null;
+  readonly interpretationNote: string | null;
 }
 
 export interface ResultsView {
@@ -161,16 +166,23 @@ export class ResultsQueries {
       const evaluation = await this.evaluations.find(evaluationId);
       if (!evaluation) return null;
       const shown = shownResults(evaluation, await this.calculations.results([evaluationId]));
-      const ranges = await this.calculations.referenceRanges();
+      // Los rangos de la fecha de la evaluación: una versión nueva no cambia lo ya medido (RN-D10, ADR-048).
+      const ranges = rangesInForce(await this.calculations.referenceRanges(), evaluation.localDate);
       const outcome =
         evaluation.status === 'DRAFT' ? null : await this.calculation.outcomeOf(evaluation);
       const subject = evaluation.patientSnapshot;
       const results = shown.map((result) => ({
         ...result,
-        metrics: metricsOf(result.methodCode, result.outputs, result.inputs).map((metric) => ({
-          ...metric,
-          interpretation: interpret(metric.metricCode, metric.value, subject, ranges),
-        })),
+        metrics: metricsOf(result.methodCode, result.outputs, result.inputs).map((metric) => {
+          const interpretation = interpret(metric.metricCode, metric.value, subject, ranges);
+          return {
+            ...metric,
+            interpretation,
+            interpretationNote: interpretation
+              ? null
+              : interpretationNote(metric.metricCode, subject, ranges),
+          };
+        }),
         principalFor: outcome?.principal.get(result.methodCode as MethodCode) ?? [],
       }));
       const computed = new Set(shown.map((r) => r.methodCode));
@@ -192,8 +204,9 @@ export class ResultsQueries {
   }
 
   /**
-   * Contra otra evaluación cerrada del paciente; por defecto, la anterior vigente. Deltas = actual − anterior. El
-   * CMD95 es el del evaluador de la actual en su fecha; sobre la suma de 6 pliegues, con el %ETM agrupado (G-04).
+   * Contra otra evaluación cerrada del paciente; por defecto, la anterior vigente con antropometría (una solo de
+   * bioimpedancia no comparte serie, RN-C08). Deltas = actual − anterior. El CMD95 es el del evaluador de la actual en
+   * su fecha; sobre la suma de 6 pliegues, con el %ETM agrupado (G-04).
    */
   async comparison(
     context: SecurityContext,
@@ -209,6 +222,7 @@ export class ResultsQueries {
             (e) =>
               e.id !== current.id &&
               e.status === 'CLOSED' &&
+              e.level !== null &&
               e.measuredAt.getTime() < current.measuredAt.getTime(),
           ) ?? null);
       if (previous && (previous.patientId !== current.patientId || previous.status === 'DRAFT')) {
@@ -434,9 +448,18 @@ export class ResultsQueries {
       if (!site || !ranges.some((r) => r.metricCode === m.siteCode)) continue;
       const value = consolidate(site, m.attempts).value;
       if (value === null) continue;
-      const interpretation = interpret(m.siteCode, value, evaluation.patientSnapshot, ranges);
-      if (interpretation)
-        views.push({ siteCode: m.siteCode, value, unit: site.unit, interpretation });
+      const subject = evaluation.patientSnapshot;
+      const interpretation = interpret(m.siteCode, value, subject, ranges);
+      const note = interpretation ? null : interpretationNote(m.siteCode, subject, ranges);
+      if (interpretation || note) {
+        views.push({
+          siteCode: m.siteCode,
+          value,
+          unit: site.unit,
+          interpretation,
+          interpretationNote: note,
+        });
+      }
     }
     return views;
   }

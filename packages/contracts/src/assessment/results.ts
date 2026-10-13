@@ -101,7 +101,13 @@ export const resultMetricSchema = z.object({
    */
   methodCode: z.string(),
   zScore: z.number().nullable(),
+  /** Con los rangos que regían en la fecha de la evaluación (RN-D10): una versión nueva no cambia lo ya medido. */
   interpretation: interpretationSchema.nullable(),
+  /**
+   * Por qué no hay interpretación cuando el indicador tiene rangos: en menores, «Sin interpretación pediátrica en la
+   * versión 1.0» (RN-D05). El valor se muestra igual, con su método.
+   */
+  interpretationNote: z.string().nullable(),
 });
 export type ResultMetric = z.infer<typeof resultMetricSchema>;
 
@@ -160,7 +166,7 @@ export const evaluationResultsResponseSchema = z.object({
   populationNote: z.string().nullable(),
   /**
    * Medidas con su propio punto de corte, como la cintura (OMS 2008): el consolidado de la evaluación con su
-   * interpretación; su método es la consolidación de tomas (CONSOLIDATE_ISAK).
+   * interpretación, o en menores con el aviso de RN-D05; su método es la consolidación de tomas (CONSOLIDATE_ISAK).
    */
   siteInterpretations: z.array(
     z.object({
@@ -168,7 +174,8 @@ export const evaluationResultsResponseSchema = z.object({
       value: z.number(),
       unit: z.enum(SITE_UNITS),
       methodCode: z.literal('CONSOLIDATE_ISAK'),
-      interpretation: interpretationSchema,
+      interpretation: interpretationSchema.nullable(),
+      interpretationNote: z.string().nullable(),
     }),
   ),
 });
@@ -233,8 +240,8 @@ const comparedEvaluationSchema = z.object({
 });
 
 /**
- * GET /api/v1/evaluations/:id/comparison?with=:otherId (por defecto, la evaluación cerrada anterior del paciente).
- * Deltas = actual − anterior. El CMD95 es el del evaluador de la evaluación actual; sobre la suma de 6 pliegues usa
+ * GET /api/v1/evaluations/:id/comparison?with=:otherId (por defecto, la evaluación cerrada anterior del paciente con
+ * antropometría: una solo de bioimpedancia no comparte serie, RN-C08). Deltas = actual − anterior. El CMD95 es el del evaluador de la evaluación actual; sobre la suma de 6 pliegues usa
  * su %ETM agrupado (95 mm de Luis: 6.18 mm, G-04). No se traslada a % de grasa. Solo se comparan resultados del
  * mismo método (RN-D03) y se advierte si difieren las condiciones o el evaluador (RN-C09).
  */
