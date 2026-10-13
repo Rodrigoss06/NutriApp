@@ -24,6 +24,7 @@ import {
 } from './clinical-fakes.spec-support.js';
 import { PatientEnrollmentService } from './patient-enrollment.js';
 import { ClinicalRecordQueries } from './queries/clinical-record.queries.js';
+import { TimelineSources } from './timeline-sources.js';
 import { PatientQueries } from './queries/patient.queries.js';
 
 const RESPONSIBLE = '0192f0a0-0000-7000-8000-0000000000a1';
@@ -77,7 +78,8 @@ const consentCommands = () =>
   );
 const commands = () =>
   new ClinicalRecordCommands(uow, clock, fakeIds, outbox, patients, consents, records);
-const queries = () => new ClinicalRecordQueries(uow, audit, patients, records);
+const sources = new TimelineSources();
+const queries = () => new ClinicalRecordQueries(uow, audit, patients, records, sources);
 const invitations = () =>
   new PatientInvitationCommands(uow, clock, patients, consents, iam.asApi());
 const enrollment = () => new PatientEnrollmentService(clock, fakeIds, outbox, patients, consents);
@@ -322,6 +324,41 @@ describe('RF-10 · lecturas del expediente con READ en auditoría', () => {
     });
     expect(await queries().timeline(reader, 'no-existe', { limit: 5 })).toBeNull();
   });
+
+  it('RF-10 · otro contexto suma sus hechos y la página los mezcla en orden, sin repetir ni saltar', async () => {
+    const id = await registered();
+    await consented(id);
+    for (const [index, label] of ['Maní', 'Gluten'].entries()) {
+      clock.current = new Date(Date.UTC(2026, 9, 9, 16 + 2 * index));
+      await commands().addCondition(responsible, id, { kind: 'INTOLERANCE', label });
+    }
+    const evaluation = {
+      kind: 'EVALUATION_CLOSED' as const,
+      occurredAt: new Date(Date.UTC(2026, 9, 9, 17)),
+      refId: '01920000-0000-7000-8000-00000000e001',
+      label: 'ISAK2',
+      detail: null,
+    };
+    const own = new TimelineSources();
+    own.register({
+      entries: (patientId, before, limit) =>
+        Promise.resolve(
+          [evaluation]
+            .filter(() => patientId === id)
+            .filter((e) => !before || e.occurredAt.getTime() < before.occurredAt.getTime())
+            .slice(0, limit),
+        ),
+    });
+    const merged = () => new ClinicalRecordQueries(uow, audit, patients, records, own);
+    const first = await merged().timeline(reader, id, { limit: 2 });
+    expect(first?.items.map((i) => i.detail ?? i.label)).toEqual(['Gluten', 'ISAK2']);
+    const second = await merged().timeline(reader, id, {
+      limit: 2,
+      cursor: first?.nextCursor ?? undefined,
+    });
+    expect(second?.items.map((i) => i.detail)).toEqual(['Maní']);
+    expect(second?.nextCursor).toBeNull();
+  });
 });
 
 describe('RN-A06 · invitar al paciente a la app', () => {
@@ -479,7 +516,10 @@ describe('RN-A06 y RN-B01 · inscripción desde la invitación', () => {
 describe('RF-06 · códigos de paciente para la auditoría', () => {
   it('la API pública da el código de los pacientes que el contexto ve', async () => {
     const id = await registered();
-    const codes = await new ClinicalApi(patients, consents).patientCodes([id, 'no-existe']);
+    const codes = await new ClinicalApi(patients, consents, sources).patientCodes([
+      id,
+      'no-existe',
+    ]);
     expect([...codes.entries()]).toEqual([[id, 'P-000001']]);
   });
 });

@@ -8,6 +8,7 @@ import {
   type Result,
   type SecurityContext,
   type UnitOfWork,
+  atomically,
 } from '@nutricoach/shared-kernel';
 import { IamApi } from '../../../iam/index.js';
 import {
@@ -21,7 +22,6 @@ import {
   pendingAppPurposes,
   WRITE_ACCESS_REQUIRED,
 } from '../../domain/clinical-rules.js';
-import { atomically } from '../atomically.js';
 import { localToday } from '../local-today.js';
 import {
   CONSENT_STORE,

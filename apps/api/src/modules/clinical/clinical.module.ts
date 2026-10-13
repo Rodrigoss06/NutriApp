@@ -14,6 +14,7 @@ import {
 } from './application/ports/clinical.ports.js';
 import { ClinicalRecordQueries } from './application/queries/clinical-record.queries.js';
 import { PatientQueries } from './application/queries/patient.queries.js';
+import { TimelineSources } from './application/timeline-sources.js';
 import { ClinicalRecordController } from './adapters/in/http/clinical-record.controller.js';
 import { PatientController } from './adapters/in/http/patient.controller.js';
 import { PrismaClinicalRecordStore } from './adapters/out/persistence/prisma-clinical-records.store.js';
@@ -38,6 +39,7 @@ import {
     PatientQueries,
     ClinicalRecordQueries,
     ClinicalApi,
+    TimelineSources,
     PatientEnrollmentService,
     { provide: PATIENT_ENROLLMENT, useExisting: PatientEnrollmentService },
     { provide: CLINICAL_RECORD_STORE, useClass: PrismaClinicalRecordStore },

@@ -183,6 +183,8 @@ export const TIMELINE_KINDS = [
   'CONDITION_RECORDED',
   'GOAL_RECORDED',
   'NOTE_WRITTEN',
+  /** Evaluación cerrada (P7): label es el nivel o BIA; detail, el motivo si es una enmienda. */
+  'EVALUATION_CLOSED',
 ] as const;
 export const timelineItemSchema = z.object({
   kind: z.enum(TIMELINE_KINDS),

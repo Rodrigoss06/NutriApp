@@ -17,6 +17,7 @@ import {
   type SecurityContext,
   type UnitOfWork,
   type UserId,
+  atomically,
 } from '@nutricoach/shared-kernel';
 import { TenancyApi } from '../../../tenancy/index.js';
 import {
@@ -43,7 +44,6 @@ import {
   type Population,
   type Sex,
 } from '../../domain/clinical-rules.js';
-import { atomically } from '../atomically.js';
 import { clinicalEvent, type ClinicalEventType } from '../clinical-events.js';
 import {
   CONSENT_STORE,

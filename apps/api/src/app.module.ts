@@ -1,4 +1,5 @@
 import { Module } from '@nestjs/common';
+import { AssessmentModule } from './modules/assessment/index.js';
 import { AuditLogModule } from './modules/audit/index.js';
 import { BackofficeModule } from './modules/backoffice/index.js';
 import { ClinicalModule } from './modules/clinical/index.js';
@@ -16,6 +17,7 @@ import { AuthModule, HealthModule, IdempotencyModule, PlatformModule } from './p
     TenancyModule,
     IamModule,
     ClinicalModule,
+    AssessmentModule,
     AuditLogModule,
     BackofficeModule,
   ],

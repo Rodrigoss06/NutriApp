@@ -174,7 +174,7 @@ model Evaluation {
   patientSnapshot    Json                @map("patient_snapshot")
   status             String              @default("DRAFT")
   revision           Int                 @default(1) @db.SmallInt
-  amendsEvaluationId String?             @map("amends_evaluation_id") @db.Uuid
+  amendsEvaluationId String?             @unique(map: "evaluation_amended_once", where: raw("(amends_evaluation_id IS NOT NULL)")) @map("amends_evaluation_id") @db.Uuid
   amendReason        String?             @map("amend_reason")
   closedAt           DateTime?           @map("closed_at") @db.Timestamptz(6)
   notes              String?
@@ -185,7 +185,7 @@ model Evaluation {
   biaReadings        BiaReading[]
   calculationResults CalculationResult[]
   amendsEvaluation   Evaluation?         @relation("evaluationToevaluation", fields: [amendsEvaluationId], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  amendments         Evaluation[]        @relation("evaluationToevaluation")
+  amendments         Evaluation?         @relation("evaluationToevaluation")
   measurements       Measurement[]
 
   @@index([organizationId, patientId, measuredAt(sort: Desc)], map: "evaluation_by_patient")
@@ -206,8 +206,10 @@ model EvaluatorError {
   sampleSize      Int?            @map("sample_size")
   validFrom       DateTime        @map("valid_from") @db.Date
   createdAt       DateTime        @default(now()) @map("created_at") @db.Timestamptz(6)
+  pairs           Json?
   measurementSite MeasurementSite @relation(fields: [siteCode], references: [code], onDelete: NoAction, onUpdate: NoAction)
 
+  @@index([organizationId, memberId, siteCode, validFrom(sort: Desc), createdAt(sort: Desc)], map: "evaluator_error_current")
   @@map("evaluator_error")
   @@schema("assessment")
 }

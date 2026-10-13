@@ -13,6 +13,7 @@ import {
   type Result,
   type SecurityContext,
   type UnitOfWork,
+  atomically,
 } from '@nutricoach/shared-kernel';
 import { FileRegistry } from '../../../../platform/index.js';
 import {
@@ -27,7 +28,6 @@ import {
   WRITE_ACCESS_REQUIRED,
   type ConsentChannel,
 } from '../../domain/clinical-rules.js';
-import { atomically } from '../atomically.js';
 import { clinicalEvent } from '../clinical-events.js';
 import {
   CONSENT_STORE,

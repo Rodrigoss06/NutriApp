@@ -102,6 +102,39 @@ export const AUDITED_EVENTS: Readonly<Record<string, AuditMapping>> = {
     fields: (p) => namesOf(p.fields),
   },
   'clinical.note.written': { action: 'CREATE', resourceType: 'clinical.clinical_note' },
+  'assessment.evaluation.created': { action: 'CREATE', resourceType: 'assessment.evaluation' },
+  'assessment.evaluation.updated': {
+    action: 'UPDATE',
+    resourceType: 'assessment.evaluation',
+    fields: (p) => namesOf(p.fields),
+  },
+  'assessment.measurement.recorded': {
+    action: 'UPDATE',
+    resourceType: 'assessment.measurement',
+    fields: (p) => (typeof p.siteCode === 'string' ? [p.siteCode] : []),
+  },
+  'assessment.measurement.removed': {
+    action: 'UPDATE',
+    resourceType: 'assessment.measurement',
+    fields: (p) => (typeof p.siteCode === 'string' ? [p.siteCode] : []),
+  },
+  'assessment.bia.recorded': { action: 'CREATE', resourceType: 'assessment.bia_reading' },
+  'assessment.bia.removed': { action: 'UPDATE', resourceType: 'assessment.bia_reading' },
+  'assessment.evaluation.closed': {
+    action: 'UPDATE',
+    resourceType: 'assessment.evaluation',
+    fields: () => ['status'],
+  },
+  'assessment.evaluation.amended': {
+    action: 'UPDATE',
+    resourceType: 'assessment.evaluation',
+    fields: () => ['status'],
+  },
+  'assessment.technicalerror.recorded': {
+    action: 'CREATE',
+    resourceType: 'assessment.evaluator_error',
+    fields: (p) => namesOf(p.siteCodes),
+  },
   'tenancy.setting.changed': {
     action: 'UPDATE',
     resourceType: 'tenancy.organization_setting',

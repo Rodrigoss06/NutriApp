@@ -209,7 +209,9 @@ export type TimelineKind =
   | 'HISTORY_REVISED'
   | 'CONDITION_RECORDED'
   | 'GOAL_RECORDED'
-  | 'NOTE_WRITTEN';
+  | 'NOTE_WRITTEN'
+  /** Evaluación cerrada; la aporta assessment por TimelineSources. */
+  | 'EVALUATION_CLOSED';
 
 export interface TimelineRecord {
   readonly kind: TimelineKind;

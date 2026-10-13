@@ -463,3 +463,30 @@ Decisión:
   intercambios.
 Consecuencias: lo que difiera de Notion va al /notion-sync del cierre de P7. Agregar el noveno diámetro es una
 migración de datos; el cierre de una evaluación usa in_isak2 del catálogo, así que no se bloquea.
+
+## ADR-045 · Evaluación de P7: tomas, cierre, enmienda, ETM y línea de tiempo — aceptada (2026-10-13)
+Contexto: P7 (PR 1). La evaluación es el primer agregado de assessment y el primer contexto que guarda datos de
+salud fuera de clinical.
+Decisión:
+- Escribir una evaluación exige lo mismo que el expediente: ver al paciente, acceso de escritura en su equipo, también
+  frente al dueño, y HEALTH_DATA vigente. clinical lo expone como ClinicalApi.ensureRecordWritable, y
+  ClinicalApi.patientRef da lo único que cruza (sexo, nacimiento, población, zona horaria y estado; 02 §3).
+- Tomas: PUT por sitio con If-Match sobre la versión de la evaluación; se aceptan de a una (el protocolo recorre la
+  serie y la repite). La tercera solo si las dos primeras superan la tolerancia (NC-ASM-005). El consolidado se guarda
+  para consultas, pero la API y el cálculo lo recalculan desde las tomas con el motor: numeric(7,2) redondearía la
+  media (RN-D09). Se aceptan sitios fuera del nivel; el nivel decide los métodos (PR 2).
+- Cierre: sitios del nivel consolidados, ninguna tercera toma pendiente y, en BIA o mixta, una lectura. Enmienda:
+  una revisión en borrador con motivo que copia encabezado, tomas y bioimpedancia; cada evaluación se enmienda una
+  sola vez (índice único) y la original pasa a AMENDED cuando cierra su revisión.
+- measurement y bia_reading no tienen patient_id: una política restrictiva las ata a la RLS de su evaluación, que sí
+  tiene care_team_scope. El catálogo de sitios es de solo lectura para app_user y la API lo lee una vez por proceso.
+- ETM: evaluator_error guarda los pares del estudio (columna pairs, solo en CALCULATED) y no se edita. Lo registra el
+  propio evaluador, el dueño o un administrador. El vigente de cada sitio es el de vigencia más reciente hasta hoy en
+  la zona de la organización; el agrupado por familia sale de TEM_ISAK sobre los pares (los declarados no entran).
+- Toda escritura emite su evento (assessment.evaluation.*, measurement.*, bia.*, technicalerror.recorded) y se audita
+  desde él; leer una evaluación deja un READ.
+- Línea de tiempo: clinical define TimelineSource y un registro; assessment se registra al iniciar y aporta sus
+  evaluaciones cerradas (EVALUATION_CLOSED). clinical mezcla las páginas en el mismo orden que su SQL.
+- atomically pasa al shared-kernel, junto a la UnitOfWork.
+Consecuencias: nutrition y tracking sumarán sus hechos a la línea de tiempo de la misma forma. Las copias de
+atomically en iam y backoffice quedan como deuda.

@@ -1,10 +1,6 @@
-import {
-  err,
-  type DomainError,
-  type Result,
-  type SecurityContext,
-  type UnitOfWork,
-} from '@nutricoach/shared-kernel';
+import type { DomainError } from '../domain-error.js';
+import { err, type Result } from '../result.js';
+import type { SecurityContext, UnitOfWork } from './unit-of-work.port.js';
 
 /** Error que revierte la transacción y vuelve como Result. */
 class Rollback extends Error {
