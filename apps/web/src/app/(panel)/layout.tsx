@@ -65,6 +65,7 @@ export default async function PanelLayout({ children }: Readonly<{ children: Rea
         displayName={org.name}
         logoUrl={brand.logoUrl}
         patientLabel={org.patientLabel}
+        showAudit={membership.role === 'OWNER'}
         organizations={memberships.map((m) => ({ id: m.organizationId, name: m.organizationName }))}
         activeOrganizationId={org.id}
         notices={

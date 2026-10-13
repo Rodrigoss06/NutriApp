@@ -83,6 +83,9 @@ describe('RF-08 · alta, búsqueda y ficha', () => {
       responsible.cookie,
     );
     expect((byDocument.body as Page).patients.map((p) => p.id)).toEqual([id]);
+    // El buscador no pregunta el tipo: el número se busca exacto en cada tipo que lo admite.
+    const anyType = await harness.get('/patients?documentNumber=4567-8912', responsible.cookie);
+    expect((anyType.body as Page).patients.map((p) => p.id)).toEqual([id]);
     const byName = await harness.get('/patients?q=jose%20quispe', responsible.cookie);
     expect((byName.body as Page).patients.map((p) => p.id)).toContain(id);
 

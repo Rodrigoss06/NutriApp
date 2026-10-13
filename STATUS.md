@@ -13,7 +13,7 @@ Próxima demo: Demo 1 · Base y evaluación · semana 2
 | P3 Sistema de diseño | ✅ | Rodrigo | #4 | Lighthouse móvil 99 en Hoy; axe sin violaciones graves |
 | P4 Servidor y staging | ⛔ | Iván | | En espera de la cuenta de Hetzner de Jeremy |
 | P5 Identidad y organizaciones | ✅ | Rodrigo | #6, #7, #8 | 4 criterios en verde; despliegue a staging pendiente de P4 |
-| P6 Pacientes e historia clínica | 🟨 | Rodrigo | #10 | 3 PR: clinical y consentimiento (#10) · historia, auditoría e invitación · web, E2E |
+| P6 Pacientes e historia clínica | 🟨 | Rodrigo | #10, #11 | 3 PR: clinical y consentimiento (#10) · historia, auditoría e invitación (#11) · web, E2E |
 | P7 Evaluación y cálculo, Demo 1 | ⬜ | Rodrigo e Iván | | |
 | P8 Datos maestros de alimentos | ⬜ | Rodrigo | | |
 | P9 Dieta por intercambios | ⬜ | Rodrigo | | |
@@ -28,19 +28,22 @@ Próxima demo: Demo 1 · Base y evaluación · semana 2
 Leyenda: ⬜ pendiente · 🟨 en curso · ✅ terminado · ⛔ bloqueado
 
 ## En curso
-- P6, PR 2 de 3 en revisión (`feat/cli-historia`): historia clínica v1 con revisiones, condiciones, objetivos y
-  notas, línea de tiempo, READ en cada lectura, /audit-events para OWNER e invitación del paciente con sus
-  consentimientos y sesión PATIENT (ADR-040 a 042). El criterio «sin consentimiento, guardar historia clínica
-  devuelve 422 con rule RN-B01» está en verde en la integración
+- P6, PR 2 de 3 en revisión (#11, CI en verde): historia clínica v1 con revisiones, condiciones, objetivos y notas,
+  línea de tiempo, READ en cada lectura, /audit-events para OWNER e invitación del paciente con sus consentimientos y
+  sesión PATIENT (ADR-040 a 042)
+- P6, PR 3 de 3 listo en `feat/web-pacientes`, sobre `feat/cli-historia` (falta subirlo): lista con búsqueda, alta,
+  expediente con pestañas, consentimiento en consulta y en papel, historia con su 409, condiciones, objetivos, notas,
+  línea de tiempo, auditoría del dueño, aceptación del paciente y /mi con sesión PATIENT (ADR-043). E2E de P6 con
+  los 4 criterios en escritorio y en el celular
 
 ## Siguiente paso
-- PR 3 de P6: web (lista con búsqueda por nombre sin tildes y por documento, ficha, historia, consentimiento, equipo,
-  auditoría y la aceptación del paciente con una casilla por finalidad en /invitacion) y E2E en escritorio y celular;
-  luego /cierre de P6 y /notion-sync
-- Para el /notion-sync de P6, además de lo anotado en el PR 1: ADR-037 a 042; el 410 en la tabla de 06 §5; RF-06
+- Fusionar #11 y el PR 3; luego /cierre de P6 (los 4 criterios ya están en la E2E) y /notion-sync
+- Para el /notion-sync de P6, además de lo anotado en el PR 1: ADR-037 a 043; el 410 en la tabla de 06 §5; RF-06
   (LOGIN y LOGIN_FAILED solo para la plataforma); patient_invitation.ttl_days junto a N22; la regla de menores
   (ADR-042) como ajuste pendiente en la sección 9 del Proyecto; 02 §8 (PATIENT_ENROLLMENT síncrono, eventos nuevos
-  de clinical y el consumidor iam.patient-sessions); 03 RN-A06 y RN-B02; las reglas nuevas de apps/api/CLAUDE.md
+  de clinical y el consumidor iam.patient-sessions); 02 §4 (la web no importa pg ni Prisma: web-no-database); 01 §12
+  (STORAGE_LOCAL_PATH obligatoria y absoluta en todo entorno); 03 RN-A06 y RN-B02; las reglas nuevas de
+  apps/api/CLAUDE.md y apps/web/CLAUDE.md
 
 ## Bloqueos y preguntas al cliente
 - [ ] Cuenta de Hetzner y dominio a nombre de Jeremy: bloquea P4
@@ -80,6 +83,8 @@ Leyenda: ⬜ pendiente · 🟨 en curso · ✅ terminado · ⛔ bloqueado
 - Jackson y Pollock 7 deja de crecer con la suma de pliegues sobre 395 mm (hombres) y 419 mm (mujeres): consultar si se advierte
 
 ## Registro de sesiones (solo las 5 últimas)
+- 2026-10-12 · P6 (3/3) · web del expediente, auditoría y aceptación del paciente, /mi con sesión PATIENT, búsqueda
+  de documento sin tipo; E2E de P6 en escritorio y celular; ADR-043
 - 2026-10-12 · P6 (2/3) · revisión del PR 2: menores con umbral de 14 años (ADR-042), OBESITY solo el equipo, 410
   único para todo enlace que ya no sirve, 409 si una invitación de staff choca con la de un paciente y la CLI sin
   clinical, con adaptadores explícitos
@@ -91,5 +96,3 @@ Leyenda: ⬜ pendiente · 🟨 en curso · ✅ terminado · ⛔ bloqueado
 - 2026-10-08 · P5 cerrado · PR 3 fusionado (#8): web de acceso, organización y cuenta, E2E con Mailpit en
   escritorio y celular, CI con la pila completa; ADR-035 y 036; P5 ✅ con sus 4 criterios; /notion-sync de P5
   aplicado (23 cambios en 01, 02, 03, 05, 05.1, 05.3, 06, Documento técnico y Archivos del repositorio)
-- 2026-10-07 · P5 (2/3) · tenancy con QuotaPolicy y candado, invitaciones de un solo uso, organización activa,
-  backoffice, vencimiento RN-A02, auditoría desde eventos, semilla y CLI; ADR-033 y 034

@@ -7,6 +7,7 @@ import {
   Library,
   Menu,
   Settings,
+  ShieldCheck,
   UserRound,
   Users,
   X,
@@ -22,12 +23,15 @@ import { NavLink, type NavItem } from './nav-link';
  */
 export function PanelFrame({
   patientLabel,
+  showAudit = false,
   brand,
   tools,
   notices,
   children,
 }: {
   patientLabel: string;
+  /** La auditoría solo aparece para el dueño (RF-06); la API decide igual. */
+  showAudit?: boolean;
   brand: ReactNode;
   tools: ReactNode;
   /** Avisos de toda la sesión (RN-A02, perfil incompleto) sobre el contenido. */
@@ -42,6 +46,7 @@ export function PanelFrame({
     { href: '/panel/biblioteca', label: 'Biblioteca', icon: Library },
     { href: '/panel/organizacion', label: 'Organización', icon: Building2 },
     { href: '/panel/ajustes', label: 'Ajustes', icon: Settings },
+    ...(showAudit ? [{ href: '/panel/auditoria', label: 'Auditoría', icon: ShieldCheck }] : []),
     { href: '/panel/cuenta', label: 'Mi cuenta', icon: UserRound },
   ];
 

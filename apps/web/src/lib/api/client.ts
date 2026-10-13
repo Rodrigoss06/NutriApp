@@ -22,6 +22,25 @@ export async function apiFetch<T>(path: string, request: ApiRequest = {}): Promi
     },
     ...(request.body === undefined ? {} : { body: JSON.stringify(request.body) }),
   });
+  return parseResponse<T>(response);
+}
+
+/**
+ * Un multipart desde el navegador (la evidencia del consentimiento va en el mismo pedido, ADR-038). El navegador pone
+ * el Content-Type con su boundary.
+ */
+export async function apiUpload<T>(path: string, form: FormData): Promise<T> {
+  const response = await fetch(`/api/v1${path}`, {
+    method: 'POST',
+    credentials: 'same-origin',
+    cache: 'no-store',
+    headers: { Accept: 'application/json' },
+    body: form,
+  });
+  return parseResponse<T>(response);
+}
+
+async function parseResponse<T>(response: Response): Promise<T> {
   if (response.status === 204 || response.status === 202) return undefined as T;
   const payload: unknown = await response.json().catch(() => ({}));
   if (!response.ok) {

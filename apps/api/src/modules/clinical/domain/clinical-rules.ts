@@ -3,6 +3,12 @@ import { domainError, type DomainError } from '@nutricoach/shared-kernel';
 export type Sex = 'M' | 'F';
 export type Population = 'ADULT' | 'ATHLETE' | 'CHILD' | 'ADOLESCENT' | 'OBESITY' | 'OLDER_ADULT';
 export type DocumentType = 'DNI' | 'CE' | 'PASAPORTE' | 'OTRO';
+export const DOCUMENT_TYPES = [
+  'DNI',
+  'CE',
+  'PASAPORTE',
+  'OTRO',
+] as const satisfies readonly DocumentType[];
 /** En la versión 1.0 solo ACTIVE y ARCHIVED: un estado que no cuente para el cupo serviría para esquivarlo. */
 export type PatientStatus = 'ACTIVE' | 'ARCHIVED';
 export type CareTeamRole = 'RESPONSIBLE' | 'NUTRITION' | 'TRAINING' | 'COLLABORATOR';

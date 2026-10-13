@@ -81,6 +81,8 @@ describe('02 §4 · RNF-21 · reglas de dependencia (pnpm lint:arch)', () => {
       'apps/api/src/modules/patients/domain/patient.ts',
     ],
     ['web-not-to-api', 'apps/web/src/app/page.tsx', 'apps/api/src/modules/patients/index.ts'],
+    ['web-no-database', 'apps/web/e2e/uses-database.ts', 'pg'],
+    ['web-no-database', 'apps/web/src/app/uses-prisma.ts', '@prisma/client'],
     [
       'web-allowed-packages',
       'apps/web/src/app/uses-kernel.ts',

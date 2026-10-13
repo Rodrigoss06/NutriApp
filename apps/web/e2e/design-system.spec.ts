@@ -1,6 +1,23 @@
 import { expect, test } from '@playwright/test';
 import { seriousViolations } from './support/axe';
-import { DEMO_OWNER, DEMO_PASSWORD, loginInPage } from './support/stack';
+import {
+  createOrganization,
+  DEMO_OWNER,
+  DEMO_PASSWORD,
+  loginAsPatientInPage,
+  loginInPage,
+  patientWithAccess,
+} from './support/stack';
+
+let patientEmail: Promise<string> | undefined;
+
+/** Un paciente con acceso a la app: desde P6, /mi pide una sesión PATIENT. Uno por proceso de Playwright. */
+function patientAccount(): Promise<string> {
+  patientEmail ??= createOrganization('App del paciente').then(
+    async (organization) => (await patientWithAccess(organization.ownerEmail)).email,
+  );
+  return patientEmail;
+}
 
 test.describe('RNF-18 · axe sin violaciones graves', () => {
   for (const [name, query] of [
@@ -20,8 +37,10 @@ test.describe('RNF-18 · axe sin violaciones graves', () => {
 
   for (const path of ['/mi/hoy', '/mi/plan', '/panel', '/panel/pacientes']) {
     test(`pantalla ${path}`, async ({ page }) => {
-      // El panel pide sesión (P5): se entra con la dueña de la organización demo de la semilla.
+      // El panel pide sesión (P5): se entra con la dueña de la organización demo de la semilla. La app, con un
+      // paciente (P6).
       if (path.startsWith('/panel')) await loginInPage(page, DEMO_OWNER, DEMO_PASSWORD);
+      else await loginAsPatientInPage(page, await patientAccount());
       await page.goto(path);
 
       expect(await seriousViolations(page)).toEqual([]);
@@ -76,6 +95,7 @@ test.describe('app del paciente', () => {
   test('RN-G06 · la barra inferior tiene objetivos táctiles de 44 px o más y marca la sección activa', async ({
     page,
   }) => {
+    await loginAsPatientInPage(page, await patientAccount());
     await page.goto('/mi/hoy');
     const links = page.getByRole('navigation', { name: 'Secciones de la app' }).getByRole('link');
 
@@ -90,6 +110,7 @@ test.describe('app del paciente', () => {
   test('PWA · manifiesto con alcance /mi/ y service worker que no controla el panel', async ({
     page,
   }) => {
+    await loginAsPatientInPage(page, await patientAccount());
     await page.goto('/mi');
     await expect(page).toHaveURL(/\/mi\/hoy$/);
 
@@ -107,7 +128,8 @@ test.describe('app del paciente', () => {
 
     const scope = await page.evaluate(async () => (await navigator.serviceWorker.ready).scope);
     expect(new URL(scope).pathname).toBe('/mi/');
-    await page.goto('/panel');
+    // El panel, con una sesión de staff en el mismo navegador, queda fuera del alcance del service worker.
+    await loginInPage(page, DEMO_OWNER, DEMO_PASSWORD);
     expect(await page.evaluate(() => navigator.serviceWorker.controller)).toBeNull();
   });
 });

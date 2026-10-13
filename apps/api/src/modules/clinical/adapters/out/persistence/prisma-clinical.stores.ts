@@ -183,13 +183,14 @@ export class PrismaPatientStore implements PatientStore {
 
   /** Nombre sin tildes por trigramas (patient_name_trgm) o documento exacto por índice ciego; cursor por apellido. */
   async search(search: PatientSearch): Promise<readonly PatientRecord[]> {
+    const bidxes = search.documentBidxes?.map((value) => new Uint8Array(value)) ?? null;
     const rows = await this.db.tx.$queryRaw<{ id: string }[]>`
       SELECT id FROM clinical.patient
       WHERE status = ${search.status}
         AND (${search.nameQuery}::text IS NULL
              OR app.unaccent_immutable(lower(first_name || ' ' || last_name))
                 LIKE '%' || app.unaccent_immutable(lower(${search.nameQuery}::text)) || '%')
-        AND (${bytes(search.documentBidx)}::bytea IS NULL OR document_number_bidx = ${bytes(search.documentBidx)}::bytea)
+        AND (${bidxes}::bytea[] IS NULL OR document_number_bidx = ANY(${bidxes}::bytea[]))
         AND (${search.after?.lastName ?? null}::text IS NULL
              OR (last_name, id) > (${search.after?.lastName ?? null}::text, ${search.after?.id ?? null}::uuid))
       ORDER BY last_name, id

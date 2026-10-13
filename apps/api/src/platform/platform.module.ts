@@ -3,7 +3,7 @@ import { CLOCK, ID_GENERATOR } from '@nutricoach/shared-kernel';
 import { LoggerModule } from 'nestjs-pino';
 import { AuditModule } from './audit/audit.module.js';
 import { SystemClock } from './clock/system.clock.js';
-import { LOCAL_STORAGE_PATH, loadEnv } from './config/env.js';
+import { loadEnv } from './config/env.js';
 import { DatabaseModule } from './database/database.module.js';
 import { EventsModule } from './events/events.module.js';
 import { UuidV7IdGenerator } from './ids/uuid-v7.id-generator.js';
@@ -34,7 +34,7 @@ import { STORAGE } from './storage/storage.port.js';
     RateLimiter,
     {
       provide: STORAGE,
-      useFactory: () => new LocalStorage(loadEnv().STORAGE_LOCAL_PATH ?? LOCAL_STORAGE_PATH),
+      useFactory: () => new LocalStorage(loadEnv().STORAGE_LOCAL_PATH),
     },
     FileRegistry,
   ],

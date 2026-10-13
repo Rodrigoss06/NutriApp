@@ -11,9 +11,11 @@ import { PasswordField, TextField, submitWith } from '@/features/forms/fields';
 import { FormError } from '@/features/forms/form-error';
 import { apiFetch } from '@/lib/api/client';
 
-/** Destino tras entrar: la sesión PLATFORM va al panel interno; STAFF, a donde iba. */
+/** Destino tras entrar: PLATFORM va al panel interno; PATIENT, a su app; STAFF, a donde iba. */
 export function destinationFor(account: AccountResponse, next: string): string {
-  return account.kind === 'PLATFORM' ? '/admin/plataforma' : next;
+  if (account.kind === 'PLATFORM') return '/admin/plataforma';
+  if (account.kind === 'PATIENT') return next.startsWith('/mi/') ? next : '/mi/hoy';
+  return next.startsWith('/mi/') ? '/panel' : next;
 }
 
 /** Entrar (RF-01): una sola falla para todo (RN-A07); con 429, cuántos minutos esperar. */

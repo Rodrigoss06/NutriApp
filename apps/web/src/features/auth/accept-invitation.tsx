@@ -12,6 +12,7 @@ import { useFragmentToken } from '@/features/forms/fragment-token';
 import { apiFetch } from '@/lib/api/client';
 import { errorMessage } from '@/lib/api/problem';
 import { ROLE_LABELS } from '@/features/organization/labels';
+import { PatientAcceptance } from './patient-acceptance';
 
 interface AcceptValues {
   readonly displayName: string;
@@ -20,7 +21,8 @@ interface AcceptValues {
 
 /**
  * Aceptar una invitación (RF-01). El token sale del fragmento y viaja en el cuerpo. Con una cuenta existente se
- * acepta con su contraseña actual; si no, nombre y contraseña nueva.
+ * acepta con su contraseña actual; si no, nombre y contraseña nueva. La del paciente tiene su propia página, con sus
+ * consentimientos (RN-A06).
  */
 export function AcceptInvitation() {
   const token = useFragmentToken();
@@ -68,6 +70,9 @@ export function AcceptInvitation() {
   }
   const invitation = inspect.data;
   if (!invitation) return null;
+  if (invitation.role === 'PATIENT') {
+    return <PatientAcceptance invitation={invitation} token={token} />;
+  }
   const { errors } = form.formState;
 
   return (
@@ -80,17 +85,8 @@ export function AcceptInvitation() {
         }),
       )}
     >
-      <Notice
-        tone="info"
-        title={
-          invitation.role === 'PATIENT'
-            ? `Tu acceso a la app de ${invitation.organizationName}`
-            : `Te invitaron a ${invitation.organizationName}`
-        }
-      >
-        {invitation.role === 'PATIENT'
-          ? null
-          : `Como ${ROLE_LABELS[invitation.role].toLowerCase()}.`}
+      <Notice tone="info" title={`Te invitaron a ${invitation.organizationName}`}>
+        Como {ROLE_LABELS[invitation.role].toLowerCase()}.
         {invitation.accountExists
           ? ' Ya tienes una cuenta con este correo: confirma con tu contraseña actual.'
           : ' Crea tu cuenta para aceptar.'}

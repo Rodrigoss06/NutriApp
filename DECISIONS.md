@@ -408,3 +408,23 @@ página no muestra casillas y explica que se registra en consulta, y la API rech
 calcula a la fecha local del paciente (CONSENT_AGE en el dominio de clinical).
 Consecuencias: reemplaza el punto de menores de ADR-039. Si el abogado fija otra edad o exige registrar al tutor, se
 cambia CONSENT_AGE o se agrega el tutor al consentimiento con una migración nueva.
+
+## ADR-043 · Web del expediente y app del paciente con sesión — aceptada (2026-10-12)
+Contexto: P6 (PR 3): el expediente en el panel, la auditoría del dueño y la aceptación del paciente; desde P6 existe la
+sesión PATIENT (ADR-040).
+Decisión: el expediente es un layout con pestañas (ficha, consentimientos, historia clínica, condiciones, objetivos y
+notas, línea de tiempo); cada pestaña es una página de servidor que lee lo suyo, y el layout y la página comparten la
+lectura de la ficha con cache() de React: un solo READ por petición. El buscador decide por lo escrito: con dígitos
+busca el documento exacto por su índice ciego en todos los tipos (la API acepta el número sin tipo); sin dígitos, el
+nombre sin tildes. La historia guarda sobre la revisión que se editó: ante un 409 el texto se conserva, se carga la
+versión actual para compararla bloque por bloque y se guarda encima. La evidencia en papel se valida en el navegador
+por sus primeros bytes y 5 MB antes de subirla, y otra vez en la API. /panel/auditoria aparece solo en el menú del
+dueño; la API decide (403). /mi pide la cuenta en cada petición y solo deja pasar sesiones PATIENT; entrar lleva al
+paciente a /mi/hoy. La palabra «Paciente» sale de la organización en títulos, botones y menú. La web nunca toca la
+base, tampoco en sus pruebas: dependency-cruiser lo impide (web-no-database: ni pg ni Prisma). Que el documento se
+guarde cifrado lo prueba la integración de la API; el E2E prueba la búsqueda y los 4 últimos dígitos, y sus pacientes
+se preparan por la API, como en producción. STORAGE_LOCAL_PATH pasa a ser obligatoria y absoluta en todo entorno (un
+directorio temporal en local y en CI): una ruta relativa dependía de dónde arrancaba el proceso y dejaba archivos
+dentro del repositorio. Reemplaza «obligatoria fuera de local» de ADR-038.
+Consecuencias: P13 construye la app del paciente sobre esa sesión. Las pruebas de /mi entran con un paciente creado por
+la API. Quien use un .env local agrega STORAGE_LOCAL_PATH con una ruta absoluta.

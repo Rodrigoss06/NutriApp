@@ -2,11 +2,14 @@
 
 - Next.js App Router con grupos de rutas: (public), (panel), (paciente), (admin).
 - Componentes de servidor por defecto; "use client" solo para interacción.
+- La web nunca toca la base, tampoco en sus pruebas: ni pg ni Prisma (regla web-no-database de dependency-cruiser).
+  Todo pasa por la API; lo que solo se ve en la base lo prueba la integración de la API.
 - Datos (ADR-036): los componentes de servidor leen con serverApi (cache: 'no-store', cookie y X-Forwarded-For,
   API_INTERNAL_URL en ejecución); toda mutación va del navegador a /api/v1 con TanStack Query (apiFetch), nunca
   con Server Actions. Errores con errorMessage: español según el code y, en un 5xx, el requestId.
 - Sesión: el layout de (panel) pide /account en cada petición; sin sesión, /entrar?next= (safeNext: solo rutas
-  internas). PLATFORM va a /admin/plataforma, con la guardia en su layout anidado. Al cambiar de organización o
+  internas). PLATFORM va a /admin/plataforma, con la guardia en su layout anidado. El de (paciente) solo deja pasar
+  sesiones PATIENT (ADR-043); entrar lleva al paciente a /mi/hoy. Al cambiar de organización o
   salir: queryClient.clear() y router.refresh(). La interfaz oculta lo que el rol no puede; decide la API.
 - Tokens de invitación y recuperación: del fragmento con useFragmentToken (se borran con history.replaceState)
   y por POST.

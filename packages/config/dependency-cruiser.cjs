@@ -80,6 +80,19 @@ module.exports = {
       to: { path: '^apps/api/' },
     },
     {
+      name: 'web-no-database',
+      comment:
+        '02 §4: la web nunca toca la base, ni en sus pruebas: ni pg ni Prisma; todo pasa por la API.',
+      severity: 'error',
+      from: { path: '^apps/web/' },
+      to: {
+        path: [
+          '(^|/)node_modules/(pg|pg-[^/]+|prisma|@prisma/[^/]+)/',
+          '^(pg|pg-[^/]+|prisma|@prisma/.+)$',
+        ],
+      },
+    },
+    {
       name: 'web-allowed-packages',
       comment:
         '02 §4: apps/web usa contracts, ui y engine (vistas previas); shared-kernel es del backend.',

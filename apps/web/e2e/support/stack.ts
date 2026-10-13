@@ -144,3 +144,108 @@ export async function loginInPage(page: Page, email: string, password = PASSWORD
   await page.getByRole('button', { name: 'Entrar' }).click();
   await page.waitForURL(/\/panel/);
 }
+
+/** Entra por la interfaz con una cuenta de paciente: llega a su app. */
+export async function loginAsPatientInPage(
+  page: Page,
+  email: string,
+  password = PASSWORD,
+): Promise<void> {
+  await page.goto('/entrar');
+  await page.getByLabel('Correo').fill(email);
+  await page.getByLabel('Contraseña', { exact: true }).fill(password);
+  await page.getByRole('button', { name: 'Entrar' }).click();
+  await page.waitForURL(/\/mi\/hoy$/);
+}
+
+/** Contexto de API con la sesión del dueño (o de quien sea) de la organización. */
+export async function apiAs(email: string): Promise<APIRequestContext> {
+  const api = await apiContext();
+  await apiLogin(api, email, PASSWORD);
+  return api;
+}
+
+export interface TestPatient {
+  readonly id: string;
+  readonly email: string | null;
+}
+
+/** Alta de un paciente por la API (datos sintéticos); quien lo registra queda como responsable. */
+export async function registerPatientByApi(
+  staffEmail: string,
+  input: { firstName?: string; lastName?: string; email?: string; birthDate?: string } = {},
+): Promise<TestPatient> {
+  const api = await apiAs(staffEmail);
+  const created = await api.post('/api/v1/patients', {
+    data: {
+      firstName: input.firstName ?? 'Paciente',
+      lastName: input.lastName ?? 'Sintético E2E',
+      sex: 'F',
+      birthDate: input.birthDate ?? '1991-03-14',
+      ...(input.email ? { email: input.email } : {}),
+    },
+  });
+  expect(created.status(), 'registrar al paciente').toBe(201);
+  const { id } = (await created.json()) as { id: string };
+  await api.dispose();
+  return { id, email: input.email ?? null };
+}
+
+/** Consentimiento en consulta (digital) por la API. */
+export async function grantInPersonByApi(
+  staffEmail: string,
+  patientId: string,
+  purpose: 'HEALTH_DATA' | 'APP_ACCESS',
+): Promise<void> {
+  const api = await apiAs(staffEmail);
+  const listed = await api.get('/api/v1/patients/consent-documents');
+  const { documents } = (await listed.json()) as { documents: { id: string; purpose: string }[] };
+  const granted = await api.post(`/api/v1/patients/${patientId}/consents`, {
+    multipart: {
+      consentDocumentId: documents.find((d) => d.purpose === purpose)?.id ?? '',
+      channel: 'IN_PERSON_DIGITAL',
+    },
+  });
+  expect(granted.status(), `consentimiento ${purpose}`).toBe(201);
+  await api.dispose();
+}
+
+/**
+ * Paciente con acceso a la app, preparado por la API: alta, HEALTH_DATA en consulta, invitación y aceptación de lo
+ * que falta, como lo haría la persona desde el enlace del correo.
+ */
+export async function patientWithAccess(
+  staffEmail: string,
+): Promise<TestPatient & { email: string }> {
+  const email = uniqueEmail();
+  const patient = await registerPatientByApi(staffEmail, { email });
+  await grantInPersonByApi(staffEmail, patient.id, 'HEALTH_DATA');
+  const seen = await mailCount(email, '/invitacion');
+  const staff = await apiAs(staffEmail);
+  const invited = await staff.post(`/api/v1/patients/${patient.id}/invitation`, { data: {} });
+  expect(invited.status(), 'invitar al paciente').toBe(201);
+  await staff.dispose();
+  const token = tokenOf(await linkFromMail(email, '/invitacion', seen));
+  const guest = await apiContext();
+  const inspected = await guest.post('/api/v1/invitations/inspect', { data: { token } });
+  const { consents } = (await inspected.json()) as { consents: { id: string }[] };
+  const accepted = await guest.post('/api/v1/invitations/accept', {
+    data: { token, password: PASSWORD, acceptedConsentDocumentIds: consents.map((c) => c.id) },
+  });
+  expect(accepted.status(), 'aceptar la invitación del paciente').toBe(200);
+  await guest.dispose();
+  return { id: patient.id, email };
+}
+
+/** Cambia cómo llama la organización a sus pacientes (la palabra «Paciente» sale de aquí). */
+export async function setPatientLabel(ownerEmail: string, patientLabel: string): Promise<void> {
+  const owner = await apiAs(ownerEmail);
+  const current = await owner.get('/api/v1/organization');
+  const { version } = (await current.json()) as { version: number };
+  const updated = await owner.patch('/api/v1/organization', {
+    data: { patientLabel },
+    headers: { 'If-Match': `"${String(version)}"` },
+  });
+  expect(updated.status(), 'cambiar la etiqueta de paciente').toBe(200);
+  await owner.dispose();
+}
