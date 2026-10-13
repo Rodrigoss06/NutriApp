@@ -115,7 +115,7 @@ export const settingsResponseSchema = z.object({
   'patient_invitation.ttl_days': z.number().int(),
   'subscription.grace_days': z.number().int(),
   /** RN-D11: coeficiente de Lee (0, −2 o 1.1); null hasta que la organización lo fija, y sin él Lee no se calcula. */
-  'assessment.lee_ethnicity_coefficient': z.number().nullable(),
+  'assessment.lee_reference_group_coefficient': z.number().nullable(),
 });
 export type SettingsResponse = z.infer<typeof settingsResponseSchema>;
 /** PUT /api/v1/organization/settings/:key. Cada ajuste valida su rango o sus opciones (422 NC-TEN-030). */

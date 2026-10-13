@@ -8,7 +8,7 @@ Próxima demo: Demo 1 · Base y evaluación · semana 2
 | Prompt | Estado | Responsable | PR | Notas |
 |---|---|---|---|---|
 | P0 Andamiaje | ✅ | Rodrigo | #1 | CI en verde |
-| P1 Motor de cálculo | ✅ | Rodrigo | #2 | G-01 a G-28 en verde; motor 1.1.0 con TEE_PAL (#4) |
+| P1 Motor de cálculo | ✅ | Rodrigo | #2 | G-01 a G-28 en verde; motor 1.1.0 con TEE_PAL (#4); 1.2.0 en P7 (ADR-044) |
 | P2 Base de datos y plataforma | ✅ | Rodrigo | #3 | 61 pruebas de integración |
 | P3 Sistema de diseño | ✅ | Rodrigo | #4 | Lighthouse móvil 99 en Hoy; axe sin violaciones graves |
 | P4 Servidor y staging | ⛔ | Iván | | En espera de la cuenta de Hetzner de Jeremy |
@@ -33,6 +33,8 @@ Leyenda: ⬜ pendiente · 🟨 en curso · ✅ terminado · ⛔ bloqueado
   pantallas las hace Iván en paralelo. Decisiones del plan en ADR-044
 - RF-18 se adelanta a P7: la prescripción energética guarda los macronutrientes (RN-E07, G-17); P9 solo hace
   intercambios
+- Para el /notion-sync del cierre de P7: lo que difiera de Notion según ADR-044, RN-D09 (cintura/talla y
+  cintura/cadera con 2 decimales), RN-D11 (ajuste assessment.lee_reference_group_coefficient) y el motor 1.2.0
 
 ## Siguiente paso
 - P7 PR 1: evaluación, tomas, cierre y enmienda, bioimpedancia y ETM (RF-11 a RF-14), con la migración del catálogo

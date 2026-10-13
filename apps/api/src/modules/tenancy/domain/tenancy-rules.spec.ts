@@ -93,16 +93,16 @@ describe('ajustes de la organización', () => {
   it('RN-D11 · el coeficiente de Lee es 0, −2 o 1.1 y no tiene valor por defecto', () => {
     for (const value of [0, -2, 1.1]) {
       expect(
-        checkSetting('assessment.lee_ethnicity_coefficient', value, 'ORGANIZATION'),
+        checkSetting('assessment.lee_reference_group_coefficient', value, 'ORGANIZATION'),
       ).toBeNull();
     }
     for (const value of [1, -2.5, '0', null]) {
       expect(
-        checkSetting('assessment.lee_ethnicity_coefficient', value, 'ORGANIZATION')?.code,
+        checkSetting('assessment.lee_reference_group_coefficient', value, 'ORGANIZATION')?.code,
       ).toBe('NC-TEN-030');
     }
-    expect(settingValue('assessment.lee_ethnicity_coefficient', undefined)).toBeNull();
-    expect(settingValue('assessment.lee_ethnicity_coefficient', -2)).toBe(-2);
-    expect(settingValue('assessment.lee_ethnicity_coefficient', 3)).toBeNull();
+    expect(settingValue('assessment.lee_reference_group_coefficient', undefined)).toBeNull();
+    expect(settingValue('assessment.lee_reference_group_coefficient', -2)).toBe(-2);
+    expect(settingValue('assessment.lee_reference_group_coefficient', 3)).toBeNull();
   });
 });

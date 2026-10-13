@@ -19,7 +19,7 @@
     }
   },
   "organizationSettings": {
-    "assessment.lee_ethnicity_coefficient": 0
+    "assessment.lee_reference_group_coefficient": 0
   },
   "technicalErrorStudy": {
     "daysBeforeCurrentEvaluation": 90,

@@ -451,7 +451,7 @@ describe('Paridad con docs/reference/engine.ts · insumos al azar dentro de cada
                 ageYears: age,
                 weightKg,
                 heightCm: cm(170),
-                ethnicityCoefficient: -2,
+                referenceGroupCoefficient: -2,
                 girthsCm: { armRelaxed: cm(30), thigh: cm(54), calf: cm(36) },
                 skinfoldsMm: { triceps: mm(s1), frontThigh: mm(s2), medialCalf: mm(s3) },
               }),

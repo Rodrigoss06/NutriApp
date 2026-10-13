@@ -14,15 +14,16 @@ Catálogo global de sitios de medición (assessment.measurement_site, RN-C01, RN
 Los rangos son de rechazo (RN-C04): dejan pasar desde un niño de 100 cm hasta un adulto con obesidad severa. ⚠️ Los de
 perímetros, diámetros y longitudes son provisionales hasta validarlos con quien revisa los cálculos clínicos.
 
-Los códigos que usa el motor salen de packages/engine/src/sites.ts (ADR-023). La migración del catálogo carga estas
-mismas filas; si cambia una, cambian las dos, y una prueba de integración lo verifica.
+Los códigos que usa el motor salen de packages/engine/src/sites.ts (ADR-023). La migración del catálogo se genera
+desde este archivo una sola vez y queda fija. Todo cambio posterior, como el noveno diámetro, va en una migración
+nueva y se refleja aquí; una prueba de integración compara el catálogo de la base con este archivo.
 
 ## luis/luis.json
 
 El caso Luis de la guía de dominio, completo para la Demo 1:
 
 - paciente, consentimiento HEALTH_DATA e historia clínica;
-- el coeficiente de Lee de la organización (0, como en docs/reference/examples.ts);
+- el coeficiente de grupo de referencia de Lee de la organización (0, como en docs/reference/examples.ts);
 - el estudio de ETM del evaluador con los pares de G-04, vigente desde 90 días antes de la evaluación actual;
 - dos evaluaciones ISAK 2 completas: la actual, cuyas tomas consolidan exactamente en los insumos del caso dorado de
   03, y una anterior, 28 días antes, con cambios por encima y por debajo del CMD95 (RN-C06);

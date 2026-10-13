@@ -47,9 +47,9 @@ export const ORGANIZATION_SETTINGS = {
   },
   /**
    * RN-D11: coeficiente de grupo de referencia de Lee (0 blanco o hispano, −2.0 asiático, +1.1 afroamericano). El
-   * motor no tiene valor por defecto: sin él, Lee no se calcula. La ficha del paciente no guarda etnia.
+   * motor no tiene valor por defecto: sin él, Lee no se calcula. La ficha del paciente no guarda ese dato (Ley 29733).
    */
-  'assessment.lee_ethnicity_coefficient': {
+  'assessment.lee_reference_group_coefficient': {
     kind: 'CHOICE',
     values: [0, -2, 1.1],
     defaultValue: null,

@@ -153,8 +153,12 @@ export const evaluationResultsResponseSchema = z.object({
 export type EvaluationResultsResponse = z.infer<typeof evaluationResultsResponseSchema>;
 
 /** Coeficientes de grupo de referencia de Lee (RN-D11): blanco o hispano, asiático, afroamericano. */
-export const LEE_ETHNICITY_COEFFICIENTS = [0, -2, 1.1] as const;
-export const leeEthnicityCoefficientSchema = z.union([z.literal(0), z.literal(-2), z.literal(1.1)]);
+export const LEE_REFERENCE_GROUP_COEFFICIENTS = [0, -2, 1.1] as const;
+export const leeReferenceGroupCoefficientSchema = z.union([
+  z.literal(0),
+  z.literal(-2),
+  z.literal(1.1),
+]);
 
 /**
  * POST /api/v1/evaluations/:id/recalculate: acción explícita (RN-D08). Con otros insumos o versiones crea resultados
@@ -162,7 +166,7 @@ export const leeEthnicityCoefficientSchema = z.union([z.literal(0), z.literal(-2
  * evaluación reemplaza al de la organización y queda en los insumos (RN-D11).
  */
 export const recalculateEvaluationSchema = z.object({
-  leeEthnicityCoefficient: leeEthnicityCoefficientSchema.optional(),
+  leeReferenceGroupCoefficient: leeReferenceGroupCoefficientSchema.optional(),
 });
 export type RecalculateEvaluation = z.infer<typeof recalculateEvaluationSchema>;
 export const recalculateResponseSchema = evaluationResultsResponseSchema.extend({

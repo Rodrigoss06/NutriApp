@@ -68,7 +68,7 @@ interface Body {
   activeOrganizationId?: string | null;
   invitations?: unknown[];
   members?: { email: string | null }[];
-  'assessment.lee_ethnicity_coefficient'?: number | null;
+  'assessment.lee_reference_group_coefficient'?: number | null;
 }
 const bodyOf = (response: request.Response | undefined): Body => (response?.body ?? {}) as Body;
 
@@ -578,18 +578,18 @@ describe('RF-02 y RF-03 · organización, suscripción y ajustes por HTTP', () =
       'invitation.ttl_days': 10,
       'patient_invitation.ttl_days': 7,
       'subscription.grace_days': 7,
-      'assessment.lee_ethnicity_coefficient': null,
+      'assessment.lee_reference_group_coefficient': null,
     });
     const lee = await put(
-      '/organization/settings/assessment.lee_ethnicity_coefficient',
+      '/organization/settings/assessment.lee_reference_group_coefficient',
       { value: 1.1 },
       ownerCookie,
     );
-    expect(bodyOf(lee)['assessment.lee_ethnicity_coefficient']).toBe(1.1);
+    expect(bodyOf(lee)['assessment.lee_reference_group_coefficient']).toBe(1.1);
     expect(
       (
         await put(
-          '/organization/settings/assessment.lee_ethnicity_coefficient',
+          '/organization/settings/assessment.lee_reference_group_coefficient',
           { value: 0.5 },
           ownerCookie,
         )

@@ -178,21 +178,21 @@ describe('RN-D06 y RN-D11 · Lee (2000)', () => {
   const lee = (overrides: {
     ageYears?: number;
     weightKg?: number;
-    ethnicityCoefficient?: number;
+    referenceGroupCoefficient?: number;
   }) =>
     runMethod(MUSCLE_LEE2000, {
       sex: 'F',
       ageYears: overrides.ageYears ?? 30,
       weightKg: kg(overrides.weightKg ?? 60),
       heightCm: cm(165),
-      ethnicityCoefficient: (overrides.ethnicityCoefficient ?? -2) as 0,
+      referenceGroupCoefficient: (overrides.referenceGroupCoefficient ?? -2) as 0,
       girthsCm: { armRelaxed: cm(28), thigh: cm(52), calf: cm(35) },
       skinfoldsMm: { triceps: mm(15), frontThigh: mm(20), medialCalf: mm(12) },
     });
 
   it('usa el coeficiente que llega, sin valor por defecto', () => {
-    const asian = expectOk(lee({ ethnicityCoefficient: -2 })).outputs.skeletalMuscleKg;
-    const black = expectOk(lee({ ethnicityCoefficient: 1.1 })).outputs.skeletalMuscleKg;
+    const asian = expectOk(lee({ referenceGroupCoefficient: -2 })).outputs.skeletalMuscleKg;
+    const black = expectOk(lee({ referenceGroupCoefficient: 1.1 })).outputs.skeletalMuscleKg;
     expect(black - asian).toBeCloseTo(3.1, 10);
   });
 
@@ -206,7 +206,7 @@ describe('RN-D06 y RN-D11 · Lee (2000)', () => {
         girthsCm: { armRelaxed: cm(28), thigh: cm(52), calf: cm(35) },
         skinfoldsMm: { triceps: mm(15), frontThigh: mm(20), medialCalf: mm(12) },
       },
-      ethnicityCoefficient: coefficient as 0,
+      referenceGroupCoefficient: coefficient as 0,
     });
     expect(expectErrors(run)).toEqual([{ rule: 'RN-D11', code: 'NC-ENG-107', severity: 'ERROR' }]);
   });

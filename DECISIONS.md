@@ -438,7 +438,9 @@ Decisión:
   espera la guía de acreditación ISAK 2023), 21 de ISAK 1, nivel básico con peso, talla, cintura y cadera, y los 3
   pliegues extra de Jackson y Pollock sin nivel. Códigos del motor (ADR-023). Rangos de rechazo (RN-C04) que dejan
   pasar desde un niño de 100 cm hasta un adulto con obesidad severa; ⚠️ los de perímetros, diámetros y longitudes son
-  provisionales. Una migración de datos los carga: db:seed no corre en producción.
+  provisionales. La migración del catálogo se genera una sola vez desde el JSON y queda fija (db:seed no corre en
+  producción); todo cambio posterior, como el noveno diámetro, va en una migración nueva que también actualiza el
+  JSON, y una prueba de integración compara el catálogo de la base con el JSON.
 - seeds/luis/luis.json guarda el caso Luis completo (dos evaluaciones ISAK 2, estudio de ETM de G-04, prescripción y
   valores esperados); lo usan la semilla, el E2E y las pantallas, y una prueba de contratos lo ata al motor.
 - Los contratos de cada PR se publican antes que su API.
@@ -451,7 +453,12 @@ Decisión:
   da el equipo; queda como lectura, sin series.
 - Cálculo: edad decimal al medir; Rocha y Würch dentro de 4 componentes, cada masa con su método; interpretaciones con
   intervalos semiabiertos.
-- Coeficiente de Lee (RN-D11): ajuste de la organización de lista cerrada (0, −2 o 1.1) sin valor por defecto.
+- Coeficiente de grupo de referencia de Lee (RN-D11): ajuste de la organización
+  assessment.lee_reference_group_coefficient, de lista cerrada (0, −2 o 1.1) y sin valor por defecto. Ningún nombre
+  del código, de la interfaz ni de los logs alude al dato sensible que la ficha no guarda (Ley 29733): el insumo del
+  motor pasa a referenceGroupCoefficient (MUSCLE_LEE2000 1.1.0, motor 1.2.0, sin cambiar ningún número).
+- RN-D09: cintura/talla y cintura/cadera se muestran con 2 decimales (con 1, 0.491 se vería 0.5, el umbral); los
+  demás índices siguen con 1, como el SFR (RN-F07). La interpretación usa siempre el valor sin redondear.
 - La prescripción energética incluye los macronutrientes (RN-E07, G-17): RF-18 se adelanta a P7 y P9 solo hace
   intercambios.
 Consecuencias: lo que difiera de Notion va al /notion-sync del cierre de P7. Agregar el noveno diámetro es una

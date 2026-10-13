@@ -1,7 +1,7 @@
 /**
  * Redondeo solo al presentar (RN-D09): masas y porcentajes con 1 decimal; medidas en mm y cm con 1; densidad
- * con 5; índices con 1; puntajes Z con 2; kcal, gramos e intercambios enteros. Formato es-PE: punto decimal
- * y coma de miles.
+ * con 5; índices con 1; cintura/talla y cintura/cadera con 2; puntajes Z con 2; kcal, gramos e intercambios
+ * enteros. Formato es-PE: punto decimal y coma de miles. La interpretación usa siempre el valor sin redondear.
  */
 export const NUMBER_KINDS = {
   mass: 1,
@@ -9,6 +9,8 @@ export const NUMBER_KINDS = {
   length: 1,
   density: 5,
   index: 1,
+  /** Solo cintura/talla y cintura/cadera: con 1 decimal, 0.491 se vería 0.5, justo el umbral. */
+  waistRatio: 2,
   zScore: 2,
   kcal: 0,
   grams: 0,

@@ -82,7 +82,7 @@ describe('RN-D04 · un método solo se ofrece con sus sitios medidos y su valide
       SITES.GIRTH_CALF,
     ];
     expect(availableMethods(measured, adult)).not.toContain('MUSCLE_LEE2000');
-    expect(availableMethods(measured, { ...adult, ethnicityCoefficient: 0 })).toContain(
+    expect(availableMethods(measured, { ...adult, referenceGroupCoefficient: 0 })).toContain(
       'MUSCLE_LEE2000',
     );
   });
