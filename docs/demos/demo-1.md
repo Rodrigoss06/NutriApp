@@ -13,8 +13,9 @@
 ## Cómo leer las cifras
 
 - Cada número aparece con el método que lo calculó, y cada interpretación con su fuente (OMS, ACE, NICE…).
-- La pantalla redondea solo al mostrar (RN-D09): masas y porcentajes con 1 decimal, cintura/talla y cintura/cadera
-  con 2, kcal y gramos enteros. La interpretación usa siempre el valor completo.
+- La pantalla redondea solo al mostrar (RN-D09): masas y porcentajes con 1 decimal; cintura/talla, cintura/cadera,
+  ETM, CMD95 y superficie corporal con 2; kcal y gramos enteros (ADR-049). La interpretación usa siempre el valor
+  completo.
 - En las tablas, la columna **Caso dorado** trae el valor exacto de la página 03. Si coincide con la pantalla al
   redondear, el cálculo está bien.
 - Luis y Ana son pacientes inventados: ningún dato es de una persona real.
@@ -159,7 +160,7 @@ Se mide a Ana para que los números de Luis no cambien.
 | Jackson & Pollock 7: no disponible, faltan pectoral, axilar medio y suprailíaco | RN-D04 |
 | 4 componentes: ósea 12.0 kg (Rocha 1975), residual 19.3 kg (Würch 1974), muscular 32.5 kg (por diferencia), grasa 16.2 kg (Durnin & Womersley + Siri) | G-08: 12.02; 19.28; 32.49 |
 | Lee: perímetro de brazo corregido 29.2 cm, masa muscular esquelética 32.6 kg | G-09: 29.23; 32.58 |
-| Kerr: superficie corporal 1.86 m²\*, piel 4.0 kg, adiposa 23.4 kg (Z −0.69), muscular 35.9 kg (Z 1.58), ósea 8.7 kg (cabeza 1.3 + cuerpo 7.4), residual 9.5 kg (Z 2.44) | G-10: 1.8599; 4.04; 23.44 (−0.691); 35.92 (1.58); 8.722 (1.325 + 7.397); 9.46 (2.44) |
+| Kerr: superficie corporal 1.86 m², piel 4.0 kg, adiposa 23.4 kg (Z −0.69), muscular 35.9 kg (Z 1.58), ósea 8.7 kg (cabeza 1.3 + cuerpo 7.4), residual 9.5 kg (Z 2.44) | G-10: 1.8599; 4.04; 23.44 (−0.691); 35.92 (1.58); 8.722 (1.325 + 7.397); 9.46 (2.44) |
 | Kerr: masa estructurada 81.6 kg, +2.0 % sobre el peso, sin aviso (el aviso sale sobre 5 %) | G-10: 81.59, +1.98 % |
 | Proporcionalidad: índice córmico 52.0, Manouvrier 92.3, acromio-ilíaco 71.3 | G-11: 52.0; 92.31; 71.25 |
 | Peso objetivo con 15 % de grasa: 75.1 kg, perder 4.9 kg (con la masa libre de grasa de Durnin & Womersley + Siri) | G-12: 75.05; 4.95 |
@@ -171,10 +172,7 @@ Se mide a Ana para que los números de Luis no cambien.
 | «Marca Demo · BIA-200»: grasa corporal 18.4 %, masa grasa 14.7 kg, masa libre de grasa 65.3 kg, masa muscular 62.0 kg, agua corporal total 47.8 L, grasa visceral 6 (nivel), ángulo de fase 7.1° | RN-C08 |
 | Adulto: % de grasa Durnin & Womersley + Siri, músculo Lee, hueso Rocha. Deportista: Yuhasz, Kerr y Rocha. Niños, adolescentes y obesidad: sin ecuación de pliegues por defecto | RN-D05 |
 | Luis usa los de su población (Adulto), sin cambios propios | RF-16 |
-| ETM de Dueña Demo en los 6 pliegues: 0.37 mm (2.35 %)\*, CMD95 1.04 mm\* | G-04: 0.374 mm (2.35 %), 1.04 mm |
-
-\* Con 2 decimales, por confirmar. Con la regla general de RN-D09 (medidas en mm y porcentajes con 1 decimal), el ETM
-se vería 0.4 mm (2.3 %) y los CMD95 1.0, 6.2, 0.8, 2.0 y 0.4 mm. La superficie corporal (m²) no tiene regla.
+| ETM de Dueña Demo en los 6 pliegues: 0.37 mm (2.35 %), CMD95 1.04 mm | G-04: 0.374 mm (2.35 %), 1.04 mm |
 
 **Si sobra tiempo:** elegir Yuhasz como método de % de grasa de Luis. Sus números no cambian; solo cambia cuál es el
 principal. Antes del paso 6, volver a «el de la organización»: la energía usa la masa libre de grasa del método
@@ -198,9 +196,9 @@ En la evaluación de hoy, «Comparar con la anterior».
 
 | En pantalla | Caso dorado o regla |
 |---|---|
-| Suma de 6 pliegues: de 101.9 a 95.0 mm, −6.9 mm frente a un CMD95 de 6.18 mm\*: cambio real | G-04: 95 mm, CMD95 6.18 mm |
-| Tríceps, subescapular y supraespinal: −1.5 mm frente a un CMD95 de 0.78 mm\*: cambio real | RN-C06 |
-| Abdominal −1.5 mm (CMD95 1.96\*), muslo anterior −0.6 mm (0.78\*) y pantorrilla −0.3 mm (0.39\*): sin cambio significativo | RN-C06 |
+| Suma de 6 pliegues: de 101.9 a 95.0 mm, −6.9 mm frente a un CMD95 de 6.18 mm: cambio real | G-04: 95 mm, CMD95 6.18 mm |
+| Tríceps, subescapular y supraespinal: −1.5 mm frente a un CMD95 de 0.78 mm: cambio real | RN-C06 |
+| Abdominal −1.5 mm (CMD95 1.96), muslo anterior −0.6 mm (0.78) y pantorrilla −0.3 mm (0.39): sin cambio significativo | RN-C06 |
 | Bíceps y cresta ilíaca: sin ETM, no se puede saber si el cambio es real | RN-C06 |
 | % de grasa por método: Durnin & Womersley + Siri de 21.3 a 20.3 %; Faulkner de 17.0 a 16.0 %; Yuhasz de 13.3 a 12.6 % | RN-D03 |
 | Sin avisos de condiciones: la misma evaluadora y la misma hora | RN-C09 |
@@ -239,11 +237,9 @@ bajó solo 1.5 cm, y sin un ETM de perímetros no se puede decir que el cambio s
 | Base con PAL 1.4, sin ejercicio: 2,462 kcal | G-14 |
 | Correr: 372 kcal brutas y 332 netas por sesión; 142 kcal por día en promedio; gasto total (GET) 2,605 kcal | G-15 |
 | Déficit 770 kcal por día; objetivo 1,835 kcal; ritmo 0.9 % del peso por semana | G-16: 770; 1835; 0.86 % |
-| Peso objetivo 75.1 kg en 1.6 meses\*\*: fecha estimada 49 días después de hoy | G-12: 75.05 kg; G-16: 1.65 meses |
+| Peso objetivo 75.1 kg en 1.6 meses: fecha estimada 49 días después de hoy | G-12: 75.05 kg; G-16: 1.65 meses |
 | Proteína 160 g, grasa 51 g, carbohidratos 184 g | G-17 |
 | La prescripción aparece en la línea de tiempo de Luis | RF-10 |
-
-\*\* Decimales de los meses por confirmar (RN-D09 no los fija); la fecha estimada no depende de ellos.
 
 ## 7 · Auditoría: quién abrió el expediente (RF-06) · 1 min
 
@@ -283,14 +279,14 @@ y fechas (hasta 90 días).
 | RF-08 | Pacientes y equipo de atención | Pasos 2 y 7 | ✅ Listo (P6) |
 | RF-09 | Historia clínica versionada y notas | Paso 2 | ✅ Listo (P6). Historia v1 en texto libre hasta la ficha de Jeremy |
 | RF-10 | Expediente con línea de tiempo | Pasos 2 y 6 | ✅ Listo (P6); P7 suma evaluaciones y energía |
-| RF-11 | Evaluación y captura con tercera toma | Paso 3 | 🟨 Cálculo y reglas listos y probados; falta la pantalla de captura (Iván) |
-| RF-12 | ETM del evaluador | Pasos 4 y 5 | 🟨 Listo y probado; falta la pantalla (Iván) |
-| RF-13 | Bioimpedancia a mano, con marca y modelo | Paso 4 | 🟨 Listo y probado; falta la pantalla (Iván). Lista de indicadores por confirmar (N19) |
-| RF-14 | Cerrar y enmendar con motivo | Paso 3 | 🟨 Listo y probado; falta la pantalla (Iván) |
-| RF-15 | Composición corporal con método e interpretación con fuente | Pasos 4 y 5 | 🟨 Listo y probado (G-04 a G-12); falta la pantalla (Iván) |
-| RF-16 | Métodos por población, por organización y por paciente | Paso 4 | 🟨 Listo y probado; falta la pantalla (Iván) |
-| RF-17 | Energía: TMR, PAL, ejercicio, GET, objetivo, ritmo, peso objetivo y fecha | Paso 6 | 🟨 Listo y probado (G-12 a G-16); falta la pantalla (Iván) |
-| RF-18 | Macronutrientes (adelantado de la Demo 2) | Paso 6 | 🟨 Listo y probado (G-17); falta la pantalla (Iván) |
+| RF-11 | Evaluación y captura con tercera toma | Paso 3 | 🟨 Cálculo y reglas listos y probados; falta la pantalla de captura (PR 5) |
+| RF-12 | ETM del evaluador | Pasos 4 y 5 | 🟨 Listo y probado; falta la pantalla (PR 5) |
+| RF-13 | Bioimpedancia a mano, con marca y modelo | Paso 4 | 🟨 Listo y probado; falta la pantalla (PR 5). Lista de indicadores por confirmar (N19) |
+| RF-14 | Cerrar y enmendar con motivo | Paso 3 | 🟨 Listo y probado; falta la pantalla (PR 5) |
+| RF-15 | Composición corporal con método e interpretación con fuente | Pasos 4 y 5 | 🟨 Listo y probado (G-04 a G-12); falta la pantalla (PR 5) |
+| RF-16 | Métodos por población, por organización y por paciente | Paso 4 | 🟨 Listo y probado; falta la pantalla (PR 5) |
+| RF-17 | Energía: TMR, PAL, ejercicio, GET, objetivo, ritmo, peso objetivo y fecha | Paso 6 | 🟨 Listo y probado (G-12 a G-16); falta la pantalla (PR 5) |
+| RF-18 | Macronutrientes (adelantado de la Demo 2) | Paso 6 | 🟨 Listo y probado (G-17); falta la pantalla (PR 5) |
 
 Los RF de P7 pasan a ✅ cuando estén sus pantallas y la E2E del recorrido (`apps/web/e2e/demo-1.spec.ts`) esté en
 verde.
@@ -330,7 +326,7 @@ verde.
 
 - **Ensayo:** el 2026-10-13 se recorrieron los siete pasos sobre una base nueva, llamando directamente a la API.
   Todas las cifras de este guion salen de ese ensayo y coinciden con los casos dorados.
-- **Pantallas de Iván:** los nombres de botones entre comillas que todavía no existen son provisionales:
+- **Pantallas (PR 5):** los nombres de botones entre comillas que todavía no existen son provisionales:
   «Nueva evaluación», «Agregar sitio», «Cerrar evaluación», «Enmendar», «Evaluaciones», «Comparar con la anterior» y
   «Energía». Se ajustan cuando estén las pantallas.
 - **La captura (paso 3) necesita:**
@@ -346,7 +342,7 @@ verde.
   - El criterio de P7 pide crear a Luis en la E2E: alta, consentimiento, historia, evaluación ISAK 2, cierre,
     resultados y energía. Por eso la E2E no usa la carga de la demo.
   - Comprueba G-01 a G-17 en escritorio y en celular.
-- **Por confirmar con Rodrigo:**
-  - los decimales marcados con \* y \*\*;
-  - la franja de cintura/talla por debajo de 0.4, que NICE no clasifica;
-  - la condición de NICE de usar la cintura/talla con IMC menor que 35.
+- **Decidido en ADR-049:**
+  - ETM, %ETM, CMD95 y superficie corporal con 2 decimales; los meses hasta la meta, con 1;
+  - por debajo de 0.4, la cintura/talla se muestra sin interpretación: NICE no clasifica esa franja;
+  - NICE usa la cintura/talla con IMC menor que 35; la versión 1.0 la interpreta igual y no agrega aviso.

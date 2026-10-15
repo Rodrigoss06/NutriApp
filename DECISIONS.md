@@ -432,7 +432,7 @@ la API. Quien use un .env local agrega STORAGE_LOCAL_PATH con una ruta absoluta.
 ## ADR-044 · Evaluación, cálculo y energía de P7: datos y contratos primero — aceptada (2026-10-13)
 Contexto: P7 (Demo 1). Notion no lista los 43 sitios ISAK uno por uno ni sus rangos, no fija el nivel básico ni cómo
 se agrupa el ETM, y 05.2 pide los macronutrientes NOT NULL en la prescripción energética aunque RF-18 sea de P9. Las
-pantallas las hace Iván en paralelo.
+pantallas las hace Iván en paralelo (reemplazado en ADR-049: las hace Rodrigo).
 Decisión:
 - Catálogo como dato (ADR-014) en seeds/assessment/measurement-sites.json: 42 sitios de ISAK 2 (⚠️ el noveno diámetro
   espera la guía de acreditación ISAK 2023), 21 de ISAK 1, nivel básico con peso, talla, cintura y cadera, y los 3
@@ -564,7 +564,7 @@ Decisión:
   - [0.5, 0.6): «Riesgo aumentado»;
   - 0.6 o más: «Riesgo mayor».
   Las filas del umbral 0.5 citan también a Ashwell y Gibson (BMJ Open, 2016). Por debajo de 0.4 NICE no clasifica, así
-  que no hay interpretación. ⚠️ NICE la usa con IMC menor que 35; la tabla no expresa esa condición.
+  que no hay interpretación. NICE la usa con IMC menor que 35; la tabla no expresa esa condición (ADR-049).
 - Versiones (RN-D10): valid_from marca la versión. Para cada indicador y alcance (plataforma u organización) rige la
   versión más reciente que no pase de la fecha local de la evaluación, no la de hoy. Así una versión nueva no cambia la
   interpretación de lo ya medido, como pasa con las listas de RN-E11, y una ficha regenerada dice lo mismo (RN-H02).
@@ -588,5 +588,28 @@ Decisión:
 Consecuencias:
 - Cargar una tabla nueva es una migración con otra valid_from y todas sus filas.
 - Las fichas (P11) y la evolución (P14) interpretan con la fecha de cada evaluación.
-- RN-D09 no fija los decimales del ETM, del CMD95, de los meses hasta la meta ni de la superficie corporal: quedan por
-  confirmar.
+- RN-D09 no fija los decimales del ETM, del CMD95, de los meses hasta la meta ni de la superficie corporal: los fija
+  ADR-049.
+
+## ADR-049 · Decisiones abiertas de la Demo 1 y pantallas de P7 — aceptada (2026-10-15)
+Contexto: el PR 4 de P7 dejó cinco preguntas abiertas, y Rodrigo pidió resolverlas con criterio técnico. Rodrigo
+asume también las fases y las partes que Notion asigna a Iván: las pantallas de P7 no se esperan de otra persona.
+Decisión:
+- Rangos (RN-D10): rige la versión vigente en la fecha local de la evaluación, como dice ADR-048. Con la de hoy, una
+  tabla nueva cambiaría lo ya medido y una ficha regenerada no diría lo mismo (RN-H02).
+- Cintura/talla por debajo de 0.4: el valor se muestra con su método y sin interpretación. NICE no clasifica esa
+  franja; extender «Sin riesgo aumentado» hacia abajo sería inventar un punto de corte.
+- Condición de NICE (IMC menor que 35): la versión 1.0 interpreta la cintura/talla con cualquier IMC y no agrega
+  aviso. Con IMC de 35 o más, el IMC ya trae su propia interpretación (OMS); el aviso exigiría un punto de corte en el
+  código (RN-D10 lo prohíbe) o una columna nueva en reference_range. Queda como limitación conocida.
+- Decimales que RN-D09 no fija:
+  - ETM, %ETM y CMD95 con 2: son décimas de milímetro y con 1 decimal se pierden (0.374 mm se vería 0.4 y el CMD95
+    de un pliegue, 0.8 en vez de 0.78);
+  - superficie corporal con 2, como se usa en clínica: 1.8599 m² se ve 1.86;
+  - meses hasta la meta con 1: es una estimación inicial (RN-E05) y la fecha estimada da el detalle.
+- La E2E de la Demo 1 crea su propio Luis en una organización propia, con los datos de seeds/luis/luis.json: alta,
+  consentimiento, historia, evaluaciones ISAK 2, cierre, resultados y energía, como pide el criterio de P7. No
+  depende de la semilla de la demo.
+- Las pantallas de P7 (captura, resultados, comparación, ETM, preferencias de métodos y energía) van en el PR 5.
+Consecuencias: el /notion-sync del cierre de P7 suma esos decimales a RN-D09 y cambia en Notion el responsable de
+las fases de Iván. La condición de IMC de NICE se revisa si quien valida los cálculos clínicos pide el aviso.
