@@ -22,16 +22,30 @@ nueva y se refleja aquí; una prueba de integración compara el catálogo de la 
 
 El caso Luis de la guía de dominio, completo para la Demo 1:
 
-- paciente, consentimiento HEALTH_DATA e historia clínica;
+- paciente, consentimiento HEALTH_DATA e historia clínica, registrados 35 días antes de la evaluación actual: antes
+  de cualquier dato de salud (RN-B01);
 - el coeficiente de grupo de referencia de Lee de la organización (0, como en docs/reference/examples.ts);
 - el estudio de ETM del evaluador con los pares de G-04, vigente desde 90 días antes de la evaluación actual;
 - dos evaluaciones ISAK 2 completas: la actual, cuyas tomas consolidan exactamente en los insumos del caso dorado de
-  03, y una anterior, 28 días antes, con cambios por encima y por debajo del CMD95 (RN-C06);
-- la prescripción energética de G-13 a G-17;
+  03, y una anterior, 28 días antes, con cambios por encima y por debajo del CMD95 (RN-C06). La actual es mixta: trae
+  una lectura de bioimpedancia sintética, con marca y modelo inventados (RN-C08);
+- la prescripción energética de G-13 a G-17, que el guion carga en vivo;
 - `expected`: los valores de G-01 a G-17 tal como los fija 03, sin redondear para presentar (RN-D09).
 
 Las fechas son relativas a la evaluación actual (`daysBeforeCurrentEvaluation`). Luis cumple 28 años ese mismo día: la
 edad decimal al medir es 28.00 y así G-13 cuadra.
 
-Lo usan la semilla de la demo (pnpm db:seed), el E2E de la Demo 1 y las pantallas mientras la API no existe.
-packages/contracts/src/assessment/seeds.spec.ts lo valida contra los contratos y el motor.
+Lo usan la semilla de la demo (pnpm db:seed), el guion (docs/demos/demo-1.md), el E2E de la Demo 1 y las pantallas
+mientras la API no existe. packages/contracts/src/assessment/seeds.spec.ts lo valida contra los contratos y el motor.
+
+## ana/ana.json
+
+La paciente de la captura en vivo del guion, para que los números de Luis no cambien:
+
+- paciente adulta, con consentimiento HEALTH_DATA e historia clínica, sin evaluaciones;
+- `liveCapture`: la evaluación básica que se escribe en vivo, con el pliegue del tríceps como sitio extra para G-01 a
+  G-03 (12.0 y 12.4; la segunda corregida a 13.0 pide tercera; 12.6) y la enmienda que corrige el peso (RN-C07);
+- `expected`: IMC, cintura/talla y cintura/cadera del motor, antes y después de la enmienda, sin redondear.
+
+La semilla carga a Ana sin `liveCapture`; el guion y el E2E de la Demo 1 escriben esas tomas. seeds.spec.ts la valida
+contra los contratos y el motor.

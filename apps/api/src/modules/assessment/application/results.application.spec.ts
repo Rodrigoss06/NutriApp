@@ -1,7 +1,7 @@
 import { type DomainError, type Result } from '@nutricoach/shared-kernel';
 import { beforeEach, describe, expect, it } from 'vitest';
 import luisSeed from '../../../../../../seeds/luis/luis.json' with { type: 'json' };
-import type { ReferenceRange } from '../domain/interpretation.js';
+import { PEDIATRIC_NOTE, type ReferenceRange } from '../domain/interpretation.js';
 import {
   FakeAudit,
   FakeClinical,
@@ -16,6 +16,7 @@ import {
   MemoryTechnicalErrors,
   staffContext,
 } from './assessment-fakes.spec-support.js';
+import { AssessmentApi } from './assessment-api.js';
 import { CalculationService } from './calculation.service.js';
 import { CalculationCommands } from './commands/calculation.commands.js';
 import { EvaluationCommands } from './commands/evaluation.commands.js';
@@ -51,6 +52,7 @@ const range = (
   label,
   tone: 'NEUTRAL',
   source,
+  validFrom: '2026-10-13',
 });
 const RANGES: ReferenceRange[] = [
   range('b1', 'BMI', null, 18.5, 25, 'Normal', 'OMS'),
@@ -122,22 +124,25 @@ function value<T>(result: Result<T, DomainError>): T {
 const errorOf = <T>(result: Result<T, DomainError>) => (result.ok ? null : result.error);
 const versionOf = async (id: string) => (await evaluations.find(id))?.version ?? -1;
 
-/** Una evaluación ISAK 2 de Luis, cerrada y calculada como lo hace el worker. */
+const CONDITIONS = {
+  schemaVersion: 1,
+  fasting: true,
+  intenseActivityLast24h: false,
+  hydration: null,
+} as const;
+
+/** Una evaluación cerrada y calculada como lo hace el worker; ISAK 2 de Luis si no se indica otra cosa. */
 async function closedLuis(
   measuredAt: string,
   measurements: Record<string, number[]>,
+  options: { patientId?: string; level?: 'BASIC' | 'ISAK2' } = {},
 ): Promise<string> {
   const id = value(
-    await evaluationCommands().create(responsible, PATIENT, {
+    await evaluationCommands().create(responsible, options.patientId ?? PATIENT, {
       kind: 'ANTHROPOMETRY',
-      level: 'ISAK2',
+      level: options.level ?? 'ISAK2',
       measuredAt,
-      conditions: {
-        schemaVersion: 1,
-        fasting: true,
-        intenseActivityLast24h: false,
-        hydration: null,
-      },
+      conditions: CONDITIONS,
     }),
   ).id;
   for (const [siteCode, attempts] of Object.entries(measurements)) {
@@ -157,6 +162,27 @@ async function closedLuis(
 
 const current = () =>
   closedLuis('2026-10-13T13:30:00.000Z', luisSeed.evaluations.current.measurements);
+
+/** Una evaluación solo de bioimpedancia, cerrada: sin nivel ni sitios (RN-C08). */
+async function closedBiaOnly(measuredAt: string): Promise<string> {
+  const id = value(
+    await evaluationCommands().create(responsible, PATIENT, {
+      kind: 'BIA',
+      level: null,
+      measuredAt,
+      conditions: CONDITIONS,
+    }),
+  ).id;
+  value(
+    await evaluationCommands().addBiaReading(responsible, id, {
+      deviceBrand: 'Marca Demo',
+      deviceModel: 'BIA-200',
+      readings: [{ metric: 'FAT_PCT', value: 18.4, unit: '%', deviceLabel: 'Grasa corporal' }],
+    }),
+  );
+  value(await evaluationCommands().close(responsible, id, await versionOf(id)));
+  return id;
+}
 const currentResults = (id: string) =>
   calculations.rows.filter((r) => r.evaluationId === id && r.status === 'CURRENT');
 
@@ -308,7 +334,7 @@ describe('RF-15 · resultados con método e interpretación con fuente', () => {
     expect(view?.siteInterpretations).toEqual([
       expect.objectContaining({ siteCode: 'GIRTH_WAIST', unit: 'cm' }),
     ]);
-    expect(view?.siteInterpretations[0]?.interpretation.source).toBe('OMS 2008');
+    expect(view?.siteInterpretations[0]?.interpretation?.source).toBe('OMS 2008');
     expect(view?.unavailable).toEqual([
       {
         methodCode: 'FAT_JP1978_7',
@@ -331,6 +357,71 @@ describe('RF-15 · resultados con método e interpretación con fuente', () => {
     expect(view.fatFreeMassMethodCode).toBe('FAT_DW1974_SIRI1961');
     expect(view.targetWeightKg).toBeCloseTo(75.05, 2);
     expect(view.weightChangeKg).toBeCloseTo(-4.95, 2);
+  });
+
+  it('RN-D10 · rigen los rangos de la fecha de la evaluación: una versión posterior no cambia lo ya medido', async () => {
+    // Primero en la lista: sin elegir la versión, ganaría la nueva.
+    calculations.ranges = [
+      {
+        ...range('b9', 'BMI', null, 25, 30, 'Otra etiqueta', 'Fuente nueva'),
+        validFrom: '2026-10-14',
+      },
+      ...RANGES,
+    ];
+    const id = await current();
+    const bmi = (await queries().results(responsible, id))?.results
+      .find((r) => r.methodCode === 'BMI')
+      ?.metrics.find((m) => m.metricCode === 'BMI');
+    expect(bmi).toMatchObject({
+      interpretation: { label: 'Sobrepeso', source: 'OMS' },
+      interpretationNote: null,
+    });
+  });
+
+  it('RN-D05 · en menores, cada valor con su método y el aviso «Sin interpretación pediátrica en la versión 1.0»', async () => {
+    const TEEN = '0192f0a0-0000-7000-8000-0000000000c2';
+    clinical.add(
+      {
+        id: TEEN,
+        sex: 'M',
+        birthDate: '2010-04-01',
+        population: 'ADOLESCENT',
+        timezone: 'America/Lima',
+        status: 'ACTIVE',
+      },
+      RESPONSIBLE,
+    );
+    const id = await closedLuis(
+      '2026-10-13T13:30:00.000Z',
+      {
+        BASIC_WEIGHT: [61.0, 61.0],
+        BASIC_HEIGHT: [170.0, 170.0],
+        GIRTH_WAIST: [70.0, 70.0],
+        GIRTH_HIP: [88.0, 88.0],
+      },
+      { patientId: TEEN, level: 'BASIC' },
+    );
+    const view = await queries().results(responsible, id);
+    const bmi = view?.results.find((r) => r.methodCode === 'BMI')?.metrics[0];
+    expect(bmi).toMatchObject({
+      metricCode: 'BMI',
+      methodCode: 'BMI',
+      interpretation: null,
+      interpretationNote: PEDIATRIC_NOTE,
+    });
+    expect(bmi?.value).toBeCloseTo(21.11, 2);
+    expect(view?.siteInterpretations).toEqual([
+      {
+        siteCode: 'GIRTH_WAIST',
+        value: 70,
+        unit: 'cm',
+        interpretation: null,
+        interpretationNote: 'Sin interpretación pediátrica en la versión 1.0',
+      },
+    ]);
+    // Sin rangos para el indicador, no hay interpretación ni aviso.
+    const whr = view?.results.find((r) => r.methodCode === 'WAIST_HIP')?.metrics[0];
+    expect(whr).toMatchObject({ interpretation: null, interpretationNote: null });
   });
 });
 
@@ -371,6 +462,18 @@ describe('RN-C06 · RN-D03 · comparación con la evaluación anterior', () => {
     // RN-D03: solo se comparan indicadores del mismo método.
     const fat = view?.metrics.filter((m) => m.metricCode === 'FAT_PCT').map((m) => m.methodCode);
     expect(fat?.sort()).toEqual(['FAT_DW1974_SIRI1961', 'FAT_FAULKNER1968', 'FAT_YUHASZ1974']);
+  });
+
+  it('RN-C08 · por defecto se compara con la anterior con antropometría, no con una solo de bioimpedancia', async () => {
+    const previous = await closedLuis(
+      '2026-09-15T13:30:00.000Z',
+      luisSeed.evaluations.previous.measurements,
+    );
+    await closedBiaOnly('2026-10-01T13:30:00.000Z');
+    const id = await current();
+    const view = await queries().comparison(responsible, id, undefined);
+    expect(view?.previous?.id).toBe(previous);
+    expect(view?.skinfoldSum6?.delta).toBeCloseTo(-6.9, 9);
   });
 
   it('sin evaluación anterior, la comparación viene vacía', async () => {
@@ -460,5 +563,21 @@ describe('RN-D05 · RF-16 · preferencias de métodos', () => {
         source: 'PATIENT',
       },
     );
+  });
+});
+
+describe('RF-17 · la composición que usa la prescripción energética', () => {
+  it('es la última cerrada con peso y talla: una solo de bioimpedancia posterior no la reemplaza', async () => {
+    const id = await current();
+    await closedBiaOnly('2026-10-13T15:00:00.000Z');
+    const api = new AssessmentApi(evaluations, memoryCatalog, calculations, service());
+    const basis = await api.compositionBasis(PATIENT, null);
+    expect(basis?.evaluationId).toBe(id);
+    expect(basis?.weightKg).toBe(80);
+    expect(basis?.heightCm).toBeCloseTo(175, 9);
+    expect(basis?.fatFreeMass?.methodCode).toBe('FAT_DW1974_SIRI1961');
+    const [bia] = await evaluations.listByPatient(PATIENT);
+    expect(bia?.kind).toBe('BIA');
+    expect(await api.compositionBasis(PATIENT, bia?.id ?? '')).toBeNull();
   });
 });

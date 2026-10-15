@@ -1,6 +1,6 @@
 # STATUS — NutriCoach v1.0
 
-Actualizado: 2026-10-13 · Por: Rodrigo, con Claude Code
+Actualizado: 2026-10-15 · Por: Rodrigo, con Claude Code
 Inicio del proyecto: POR CONFIRMAR (día siguiente al Pago 1) · Semana actual: 0 de 9
 Próxima demo: Demo 1 · Base y evaluación · semana 2
 
@@ -11,34 +11,37 @@ Próxima demo: Demo 1 · Base y evaluación · semana 2
 | P1 Motor de cálculo | ✅ | Rodrigo | #2 | G-01 a G-28 en verde; motor 1.1.0 con TEE_PAL (#4); 1.2.0 en P7 (ADR-044) |
 | P2 Base de datos y plataforma | ✅ | Rodrigo | #3 | 61 pruebas de integración |
 | P3 Sistema de diseño | ✅ | Rodrigo | #4 | Lighthouse móvil 99 en Hoy; axe sin violaciones graves |
-| P4 Servidor y staging | ⛔ | Iván | | En espera de la cuenta de Hetzner de Jeremy |
+| P4 Servidor y staging | ⛔ | Rodrigo | | En espera de la cuenta de Hetzner de Jeremy |
 | P5 Identidad y organizaciones | ✅ | Rodrigo | #6, #7, #8 | 4 criterios en verde; despliegue a staging pendiente de P4 |
 | P6 Pacientes e historia clínica | ✅ | Rodrigo | #10, #11, #12 | 4 criterios en verde (E2E en escritorio y celular, e integración); despliegue a staging pendiente de P4 |
-| P7 Evaluación y cálculo, Demo 1 | 🟨 | Rodrigo e Iván | | Contratos y datos de Luis primero; RF-18 se adelanta aquí |
+| P7 Evaluación y cálculo, Demo 1 | ✅ | Rodrigo | #14 a #18 | E2E de la Demo 1 en escritorio y celular (G-01 a G-17), ninguna cifra sin método, recálculo con SUPERSEDED y guion; RF-18 adelantado. v0.1.0 al fusionar #18 (con confirmación); staging, pendiente de P4 |
 | P8 Datos maestros de alimentos | ⬜ | Rodrigo | | |
 | P9 Dieta por intercambios | ⬜ | Rodrigo | | |
 | P10 Composición, menú y recetario | ⬜ | Rodrigo | | |
-| P11 Fichas PDF, Demo 2 | ⬜ | Iván | | |
-| P12 Ejercicios y rutinas | ⬜ | Iván | | |
-| P13 App del paciente | ⬜ | Iván | | |
-| P14 Analítica y evolución, Demo 3 | ⬜ | Rodrigo e Iván | | |
-| P15 Marca, calendario, admin y migración | ⬜ | Iván y Rodrigo | | |
-| P16 Producción y entrega, Demo 4 | ⬜ | Iván y Rodrigo | | |
+| P11 Fichas PDF, Demo 2 | ⬜ | Rodrigo | | |
+| P12 Ejercicios y rutinas | ⬜ | Rodrigo | | |
+| P13 App del paciente | ⬜ | Rodrigo | | |
+| P14 Analítica y evolución, Demo 3 | ⬜ | Rodrigo | | |
+| P15 Marca, calendario, admin y migración | ⬜ | Rodrigo | | |
+| P16 Producción y entrega, Demo 4 | ⬜ | Rodrigo | | |
 
 Leyenda: ⬜ pendiente · 🟨 en curso · ✅ terminado · ⛔ bloqueado
 
 ## En curso
-- P7 en 4 PR, con los contratos de cada uno publicados antes: (0) contratos de P7, catálogo de sitios y datos de Luis
-  en seeds/; (1) evaluación y su API; (2) cálculo en el worker e interpretación; (3) prescripción energética; las
-  pantallas las hace Iván en paralelo. Decisiones del plan en ADR-044
+- Cierre de P7 (Demo 1): contratos y API en #14 a #17; guion, decisiones (ADR-048, ADR-049), pantallas, E2E y el
+  worker por lotes (ADR-050) en #18. Falta fusionar #18, la etiqueta v0.1.0 (con confirmación) y el /notion-sync
 - RF-18 se adelanta a P7: la prescripción energética guarda los macronutrientes (RN-E07, G-17); P9 solo hace
   intercambios
-- Para el /notion-sync del cierre de P7: lo que difiera de Notion según ADR-044, RN-D09 (cintura/talla y
-  cintura/cadera con 2 decimales), RN-D11 (ajuste assessment.lee_reference_group_coefficient) y el motor 1.2.0
+- Para el /notion-sync del cierre de P7: lo que difiera de Notion según ADR-044 a ADR-050, RN-D09 (cintura/talla y
+  cintura/cadera con 2 decimales; ETM, %ETM, CMD95 y superficie corporal con 2; meses con 1), RN-D11 (ajuste
+  assessment.lee_reference_group_coefficient), RN-D10 (la versión de los rangos es la de la fecha de la evaluación),
+  RN-D05 (aviso pediátrico), el motor 1.2.0, Rodrigo como responsable de las fases de Iván (Proyecto, prompts y
+  CLAUDE.md en Archivos del repositorio) y la regla de TableScroll en apps/web/CLAUDE.md
 
 ## Siguiente paso
-- P7 Demo 1: E2E del recorrido (Playwright, escritorio y celular) cuando estén las pantallas de Iván, guion en
-  docs/demos/demo-1.md y etiqueta v0.1.0 al fusionar el PR 4 (con confirmación)
+- Antes de la Demo 1: base local limpia y semilla («Antes de empezar» del guion). La demo es en local
+- P8 Datos maestros de alimentos: faltan en seeds/food/ los CSV de la TPCA 2017 (INS-CENAN) y del subconjunto
+  traducido del Compendium 2024
 - db:seed carga el caso Luis: sus resultados aparecen cuando corre el worker
 - Desde P6, cada apps/api/.env local necesita STORAGE_LOCAL_PATH con una ruta absoluta (ADR-043)
 
@@ -55,8 +58,6 @@ Leyenda: ⬜ pendiente · 🟨 en curso · ✅ terminado · ⛔ bloqueado
 - [ ] ⚠️ Rangos de rechazo de perímetros, diámetros y longitudes, y condiciones de la evaluación con umbral de 2 h:
   validarlos con quien revisa los cálculos clínicos
 - [ ] P7: «etiqueta v0.1.0 desplegada en staging» queda pendiente de P4; la Demo 1 se hace en local con la semilla
-- [ ] ⚠️ Rangos de referencia desde los 18 años (sin tablas para menores) y fuente de la cintura/talla (umbral 0.5):
-  confirmarlos (ADR-046)
 - [ ] N13: confirmar regresiones y progresiones en la biblioteca
 - [ ] N7: confirmar el estado diario (estrés, sueño, energía)
 - [ ] R4: permiso de uso de las listas Dextre y ADA
@@ -73,7 +74,6 @@ Leyenda: ⬜ pendiente · 🟨 en curso · ✅ terminado · ⛔ bloqueado
   create-platform-admin para el primer PLATFORM_ADMIN
 - Para P4: Caddy sin trusted_proxies, para que reescriba X-Forwarded-For con la IP real; en el Sentry de la web,
   quitar el fragmento de las URL (beforeSend y beforeBreadcrumb): ahí viajan los tokens de invitación y recuperación
-- P7: columnas tee_method_code y tee_method_version en nutrition.energy_prescription (ADR-029)
 - Por decidir en el prompt que lo use: quién escribe tracking.daily_target, si el paciente marca
   content.resource_assignment.viewed_at y que active_plan_view compare el publishedAt del snapshot
 - Lighthouse móvil en CI sobre staging (RNF-03) cuando exista staging; hoy se mide en local
@@ -89,20 +89,20 @@ Leyenda: ⬜ pendiente · 🟨 en curso · ✅ terminado · ⛔ bloqueado
 - P14: las series de evolución leen result_metric unido a calculation_result vigente (ADR-046)
 - Tres copias de atomically (dos en iam, una en backoffice): usar la de apps/api/src/platform (ADR-045)
 - La pila del E2E se levanta a mano en local (compose, build, API y worker con env.local.example y
-  RATE_LIMIT_FACTOR=100; WebKit en la imagen de Playwright): conviene un script para Iván
+  RATE_LIMIT_FACTOR=100; WebKit en la imagen de Playwright): conviene un script
+- Registrar el ETM de otro miembro (dueño o administrador) no tiene pantalla: la API lo permite (ADR-050)
 
 ## Registro de sesiones (solo las 5 últimas)
+- 2026-10-15 · P7 (PR 5, en #18) · pantallas de evaluación, captura con tercera toma en vivo, bioimpedancia,
+  resultados, comparación, ETM, métodos, Lee y energía; E2E de la Demo 1 en escritorio y celular; el worker lee sus
+  colas por lotes (la auditoría de escrituras tardaba minutos); ADR-050
+- 2026-10-15 · P7 (PR 4) · decisiones abiertas de la Demo 1 resueltas (ADR-049); Rodrigo asume las fases de Iván; PR 4
+  subido
+- 2026-10-13 · P7 (PR 4) · guion de la Demo 1 ensayado contra la API, cintura/talla de NICE, rangos versionados por
+  la fecha de la evaluación, aviso pediátrico, Ana y la bioimpedancia de Luis en la semilla; ADR-048
 - 2026-10-12 · P6 cerrado · PR 3 fusionado (#12): la web no toca la base (web-no-database), STORAGE_LOCAL_PATH
   absoluta en todo entorno y la integración de menores sin efectos; P6 ✅ con sus 4 criterios; .env.example con la
   nota de STORAGE_LOCAL_PATH; /notion-sync de P6 aplicado (26 cambios en 01, 02, 03, 04, 05, 05.1, 06, Proyecto,
   Documento técnico y Archivos del repositorio)
 - 2026-10-12 · P6 (3/3) · web del expediente, auditoría y aceptación del paciente, /mi con sesión PATIENT, búsqueda
   de documento sin tipo; E2E de P6 en escritorio y celular; ADR-043
-- 2026-10-12 · P6 (2/3) · revisión del PR 2: menores con umbral de 14 años (ADR-042), OBESITY solo el equipo, 410
-  único para todo enlace que ya no sirve, 409 si una invitación de staff choca con la de un paciente y la CLI sin
-  clinical, con adaptadores explícitos
-- 2026-10-11 · P6 (2/3) · historia clínica versionada, condiciones, objetivos y notas inmutables, línea de tiempo,
-  READ en cada lectura, módulo audit con /audit-events, invitación y aceptación del paciente con PATIENT_ENROLLMENT,
-  sesión PATIENT y cierre de sesiones al revocar o archivar; ADR-040 y 041
-- 2026-10-09 · P6 (1/3) · care_team_scope en la base, StoragePort local, pacientes con documento cifrado e índice
-  ciego, equipo de atención, consentimiento con evidencia y cupo real; ADR-037 a 039

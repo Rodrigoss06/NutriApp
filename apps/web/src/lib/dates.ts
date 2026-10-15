@@ -57,6 +57,32 @@ export function dayStartIn(isoDate: string, timeZone: string): Date {
   return new Date(utcMidnight.getTime() - offsetMinutes(utcMidnight, timeZone) * 60_000);
 }
 
+/**
+ * La hora local (YYYY-MM-DDTHH:mm, como la de un input datetime-local) en la zona de la organización, para medir
+ * una evaluación (RN-C09): la persona escribe la hora del consultorio, no la de su navegador.
+ */
+export function localDateTimeIn(timeZone: string, now: Date = new Date()): string {
+  const parts = new Intl.DateTimeFormat('en-CA', {
+    timeZone,
+    hourCycle: 'h23',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+  }).formatToParts(now);
+  const part = (type: Intl.DateTimeFormatPartTypes) => parts.find((p) => p.type === type)?.value;
+  return `${part('year') ?? ''}-${part('month') ?? ''}-${part('day') ?? ''}T${part('hour') ?? ''}:${part('minute') ?? ''}`;
+}
+
+/** El instante (ISO, UTC) de una hora local (YYYY-MM-DDTHH:mm) en la zona de la organización. */
+export function instantIn(localDateTime: string, timeZone: string): string {
+  const asUtc = new Date(`${localDateTime}:00Z`);
+  const guess = new Date(asUtc.getTime() - offsetMinutes(asUtc, timeZone) * 60_000);
+  // Si el desfase cambia entre la suposición y el resultado (cambio de horario), se ajusta una vez.
+  return new Date(asUtc.getTime() - offsetMinutes(guess, timeZone) * 60_000).toISOString();
+}
+
 /** Suma días a una fecha de calendario (YYYY-MM-DD). */
 export function addDays(isoDate: string, days: number): string {
   const date = new Date(`${isoDate}T12:00:00Z`);

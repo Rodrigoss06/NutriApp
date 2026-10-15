@@ -150,6 +150,7 @@ export class PrismaCalculationStore implements CalculationStore {
       label: row.label,
       tone: (row.severity ?? 'NEUTRAL') as InterpretationTone,
       source: row.source,
+      validFrom: row.validFrom.toISOString().slice(0, 10),
     }));
   }
 }

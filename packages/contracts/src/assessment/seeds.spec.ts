@@ -1,23 +1,34 @@
 import {
+  BMI,
+  cm,
   CONSOLIDATE_ISAK,
+  kg,
   MDC95,
   runMethod,
   SITES,
   TEM_ISAK,
+  WAIST_HEIGHT,
+  WAIST_HIP,
   type ConsolidateInput,
 } from '@nutricoach/engine';
 import { describe, expect, it } from 'vitest';
+import anaSeed from '../../../../seeds/ana/ana.json' with { type: 'json' };
 import catalogSeed from '../../../../seeds/assessment/measurement-sites.json' with { type: 'json' };
 import luisSeed from '../../../../seeds/luis/luis.json' with { type: 'json' };
 import { createEnergyPrescriptionSchema } from '../nutrition/energy.js';
 import { measurementSiteListResponseSchema, type MeasurementSite } from './catalog.js';
-import { createEvaluationSchema, recordMeasurementSchema } from './evaluation.js';
+import {
+  amendEvaluationSchema,
+  createBiaReadingSchema,
+  createEvaluationSchema,
+  recordMeasurementSchema,
+} from './evaluation.js';
 import { recordTechnicalErrorSchema } from './technical-error.js';
 
 /**
- * El catálogo de sitios y el caso Luis viven como datos en seeds/ (06 §1): los usan la migración del catálogo, la
- * semilla de la demo, el E2E de la Demo 1 y las pantallas mientras la API no existe. Estas pruebas los atan a los
- * contratos y al motor para que no se desalineen.
+ * El catálogo de sitios y los casos Luis y Ana viven como datos en seeds/ (06 §1): los usan la migración del catálogo,
+ * la semilla de la demo, el guion y el E2E de la Demo 1 y las pantallas mientras la API no existe. Estas pruebas los
+ * atan a los contratos y al motor para que no se desalineen.
  */
 const catalog = measurementSiteListResponseSchema.parse(catalogSeed);
 const sites = new Map(catalog.sites.map((site) => [site.code, site]));
@@ -27,6 +38,7 @@ interface SeedEvaluation {
   level: string;
   conditions: unknown;
   measurements: Record<string, number[]>;
+  biaReading?: unknown;
 }
 interface LuisSeed {
   technicalErrorStudy: { sites: { siteCode: string; pairs: [number, number][] }[] };
@@ -197,6 +209,14 @@ describe('Caso Luis (seeds/luis/luis.json)', () => {
     expect(Math.abs(sumDelta)).toBeGreaterThan(6.18);
   });
 
+  it('RN-C08 · la actual es mixta: su lectura de bioimpedancia cumple el contrato, con marca y modelo', () => {
+    expect(current.kind).toBe('MIXED');
+    expect(previous.kind).toBe('ANTHROPOMETRY');
+    const reading = createBiaReadingSchema.parse(current.biaReading);
+    expect(reading.deviceBrand).toBeTruthy();
+    expect(reading.deviceModel).toBeTruthy();
+  });
+
   it('la prescripción de la demo cumple su contrato (G-13 a G-17)', () => {
     expect(
       createEnergyPrescriptionSchema.safeParse({
@@ -204,5 +224,104 @@ describe('Caso Luis (seeds/luis/luis.json)', () => {
         evaluationId: '01920000-0000-7000-8000-000000000001',
       }).success,
     ).toBe(true);
+  });
+});
+
+interface AnaSeed {
+  liveCapture: SeedEvaluation & {
+    extraSite: { siteCode: string; steps: { goldenCase: string; attempts: number[] }[] };
+    amendment: { reason: string; measurements: Record<string, number[]> };
+  };
+  expected: {
+    original: Record<string, number>;
+    amended: Record<string, number>;
+  };
+}
+const ana = anaSeed as unknown as AnaSeed;
+
+describe('Caso Ana (seeds/ana/ana.json): la captura en vivo de la Demo 1', () => {
+  const capture = ana.liveCapture;
+  const value = (code: string, measurements = capture.measurements) =>
+    consolidated(code, measurements[code] ?? []) ?? Number.NaN;
+
+  it('RN-C01 · evaluación básica con sus 4 sitios, válida para los contratos y sin tercera toma pendiente', () => {
+    expect(
+      createEvaluationSchema.safeParse({
+        kind: capture.kind,
+        level: capture.level,
+        measuredAt: '2026-10-13T15:00:00.000Z',
+        conditions: capture.conditions,
+      }).success,
+    ).toBe(true);
+    expect(Object.keys(capture.measurements)).toEqual([
+      'BASIC_WEIGHT',
+      'BASIC_HEIGHT',
+      'GIRTH_WAIST',
+      'GIRTH_HIP',
+    ]);
+    for (const [siteCode, attempts] of Object.entries(capture.measurements)) {
+      expect(recordMeasurementSchema.safeParse({ attempts }).success, siteCode).toBe(true);
+      expect(consolidated(siteCode, attempts), siteCode).not.toBeNull();
+    }
+  });
+
+  it('G-01 a G-03 · el pliegue de tríceps extra: 3.33 % y 12.2 mm; 8.33 % pide tercera; mediana 12.6 mm', () => {
+    const run = (attempts: number[]) => {
+      const result = runMethod(CONSOLIDATE_ISAK, { family: 'SKINFOLD', attempts });
+      if (!result.ok) throw new Error(attempts.join(' '));
+      return result.result.outputs;
+    };
+    const [g01, g02, g03] = capture.extraSite.steps;
+    expect(capture.extraSite.siteCode).toBe('SKF_TRICEPS');
+    expect(capture.extraSite.steps.map((step) => step.goldenCase)).toEqual([
+      'G-01',
+      'G-02',
+      'G-03',
+    ]);
+    expect(run(g01?.attempts ?? [])).toMatchObject({ value: 12.2, needsThird: false });
+    expect(run(g01?.attempts ?? []).diffPct).toBeCloseTo(3.33, 2);
+    expect(run(g02?.attempts ?? [])).toMatchObject({ value: null, needsThird: true });
+    expect(run(g02?.attempts ?? []).diffPct).toBeCloseTo(8.33, 2);
+    expect(run(g03?.attempts ?? [])).toMatchObject({ value: 12.6, consolidation: 'MEDIAN_3' });
+  });
+
+  it('RN-C07 · la enmienda corrige el peso con un motivo válido', () => {
+    expect(amendEvaluationSchema.safeParse({ reason: capture.amendment.reason }).success).toBe(
+      true,
+    );
+    expect(Object.keys(capture.amendment.measurements)).toEqual(['BASIC_WEIGHT']);
+    expect(value('BASIC_WEIGHT', capture.amendment.measurements)).toBe(
+      ana.expected.amended.weightKg,
+    );
+  });
+
+  it('G-05 en Ana · IMC, cintura/talla y cintura/cadera del motor, antes y después de la enmienda', () => {
+    const { original, amended } = ana.expected;
+    const height = value('BASIC_HEIGHT');
+    expect(value('BASIC_WEIGHT')).toBe(original.weightKg);
+    expect(height).toBeCloseTo(original.heightCm ?? Number.NaN, 9);
+    expect(value('GIRTH_WAIST')).toBeCloseTo(original.waistCm ?? Number.NaN, 9);
+    expect(value('GIRTH_HIP')).toBeCloseTo(original.hipCm ?? Number.NaN, 9);
+    const bmi = (weight: number) => {
+      const run = runMethod(BMI, { weightKg: kg(weight), heightCm: cm(height) });
+      if (!run.ok) throw new Error('BMI');
+      return run.result.outputs.bmi;
+    };
+    expect(bmi(value('BASIC_WEIGHT'))).toBeCloseTo(original.bmi ?? Number.NaN, 2);
+    expect(bmi(amended.weightKg ?? Number.NaN)).toBeCloseTo(amended.bmi ?? Number.NaN, 2);
+    const waistHeight = runMethod(WAIST_HEIGHT, {
+      waistCm: cm(value('GIRTH_WAIST')),
+      heightCm: cm(height),
+    });
+    const waistHip = runMethod(WAIST_HIP, {
+      waistCm: cm(value('GIRTH_WAIST')),
+      hipCm: cm(value('GIRTH_HIP')),
+    });
+    if (!waistHeight.ok || !waistHip.ok) throw new Error('índices de cintura');
+    expect(waistHeight.result.outputs.ratio).toBeCloseTo(
+      original.waistHeightRatio ?? Number.NaN,
+      4,
+    );
+    expect(waistHip.result.outputs.ratio).toBeCloseTo(original.waistHipRatio ?? Number.NaN, 4);
   });
 });

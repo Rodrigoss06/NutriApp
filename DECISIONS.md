@@ -432,7 +432,7 @@ la API. Quien use un .env local agrega STORAGE_LOCAL_PATH con una ruta absoluta.
 ## ADR-044 · Evaluación, cálculo y energía de P7: datos y contratos primero — aceptada (2026-10-13)
 Contexto: P7 (Demo 1). Notion no lista los 43 sitios ISAK uno por uno ni sus rangos, no fija el nivel básico ni cómo
 se agrupa el ETM, y 05.2 pide los macronutrientes NOT NULL en la prescripción energética aunque RF-18 sea de P9. Las
-pantallas las hace Iván en paralelo.
+pantallas las hace Iván en paralelo (reemplazado en ADR-049: las hace Rodrigo).
 Decisión:
 - Catálogo como dato (ADR-014) en seeds/assessment/measurement-sites.json: 42 sitios de ISAK 2 (⚠️ el noveno diámetro
   espera la guía de acreditación ISAK 2023), 21 de ISAK 1, nivel básico con peso, talla, cintura y cadera, y los 3
@@ -518,7 +518,8 @@ Decisión:
   del mismo método.
 - Interpretación: rangos de assessment.reference_range (globales por migración; los de la organización ganan), con
   intervalos semiabiertos y sobre el valor sin redondear. ⚠️ Desde los 18 años. ⚠️ La cintura/talla no tiene fuente
-  en la guía. La cintura se interpreta como medida (OMS 2008), con el método de la consolidación.
+  en la guía (los dos, resueltos en ADR-048). La cintura se interpreta como medida (OMS 2008), con el método de la
+  consolidación.
 - Comparación: con la evaluación cerrada vigente anterior, o la que se indique. CMD95 por sitio con el ETM del
   evaluador de la actual en su fecha; sobre la suma de 6 pliegues, con el %ETM agrupado de sus pares (G-04). Solo
   indicadores del mismo método (RN-D03).
@@ -551,3 +552,90 @@ Decisión:
   nutrition.prescription.created (auditada) y aparece en la línea de tiempo (ENERGY_PRESCRIBED).
 Consecuencias: P9 toma las metas (kcal y macronutrientes) de la prescripción. Lo que difiere de 05.2 va al
 /notion-sync del cierre.
+
+## ADR-048 · Rangos versionados, aviso pediátrico y datos de la Demo 1 — aceptada (2026-10-13)
+Contexto: P7 (PR 4). Las dos dudas de ADR-046 quedaron resueltas: los rangos rigen desde los 18 años y la cintura/talla
+ya tiene fuente. RN-D10 pide rangos versionados con su fuente. El guion de la Demo 1 necesita una captura en vivo que no
+cambie los números de Luis, y que la bioimpedancia de Luis se vea.
+Decisión:
+- Cintura/talla en una migración nueva. Las dos filas provisionales nunca llegaron a staging y salen. NICE, guía de
+  obesidad (recomendaciones de 2022):
+  - [0.4, 0.5): «Sin riesgo aumentado»;
+  - [0.5, 0.6): «Riesgo aumentado»;
+  - 0.6 o más: «Riesgo mayor».
+  Las filas del umbral 0.5 citan también a Ashwell y Gibson (BMJ Open, 2016). Por debajo de 0.4 NICE no clasifica, así
+  que no hay interpretación. NICE la usa con IMC menor que 35; la tabla no expresa esa condición (ADR-049).
+- Versiones (RN-D10): valid_from marca la versión. Para cada indicador y alcance (plataforma u organización) rige la
+  versión más reciente que no pase de la fecha local de la evaluación, no la de hoy. Así una versión nueva no cambia la
+  interpretación de lo ya medido, como pasa con las listas de RN-E11, y una ficha regenerada dice lo mismo (RN-H02).
+  - Una versión trae todas las filas de su indicador.
+  - Lo de una organización rige desde su fecha.
+  - Antes de la primera versión de la plataforma rige esa primera: no hubo otra.
+- Menores (RN-D05): si todos los rangos de un indicador empiezan después de la edad del paciente (hoy, 18 años), el
+  valor se muestra con su método, sin interpretación y con el aviso «Sin interpretación pediátrica en la versión
+  1.0». El aviso va en `interpretationNote` del indicador y de `siteInterpretations`, cuya `interpretation` puede ser
+  null. La edad de corte sale de los rangos, no del código.
+- Bioimpedancia (RN-C08): una evaluación solo de bioimpedancia no tiene sitios. Por eso la comparación por defecto es
+  con la anterior con antropometría, y la base de energía es la última cerrada con peso y talla.
+- Datos de la Demo 1:
+  - la evaluación actual de Luis pasa a mixta, con una lectura de bioimpedancia sintética («Marca Demo · BIA-200»);
+  - su alta, su consentimiento y su historia van 35 días antes, antes de cualquier dato de salud (RN-B01);
+  - Ana (seeds/ana/ana.json) es adulta, con consentimiento e historia y sin evaluaciones. El guion la mide en vivo con
+    un tríceps extra para G-01 a G-03 y una enmienda del peso.
+- La auditoría de la web traduce los recursos de P7: evaluación, medidas, resultados, bioimpedancia, ETM, métodos y
+  energía.
+- Guion en docs/demos/demo-1.md, ensayado contra la API sobre una base nueva.
+Consecuencias:
+- Cargar una tabla nueva es una migración con otra valid_from y todas sus filas.
+- Las fichas (P11) y la evolución (P14) interpretan con la fecha de cada evaluación.
+- RN-D09 no fija los decimales del ETM, del CMD95, de los meses hasta la meta ni de la superficie corporal: los fija
+  ADR-049.
+
+## ADR-049 · Decisiones abiertas de la Demo 1 y pantallas de P7 — aceptada (2026-10-15)
+Contexto: el PR 4 de P7 dejó cinco preguntas abiertas, y Rodrigo pidió resolverlas con criterio técnico. Rodrigo
+asume también las fases y las partes que Notion asigna a Iván: las pantallas de P7 no se esperan de otra persona.
+Decisión:
+- Rangos (RN-D10): rige la versión vigente en la fecha local de la evaluación, como dice ADR-048. Con la de hoy, una
+  tabla nueva cambiaría lo ya medido y una ficha regenerada no diría lo mismo (RN-H02).
+- Cintura/talla por debajo de 0.4: el valor se muestra con su método y sin interpretación. NICE no clasifica esa
+  franja; extender «Sin riesgo aumentado» hacia abajo sería inventar un punto de corte.
+- Condición de NICE (IMC menor que 35): la versión 1.0 interpreta la cintura/talla con cualquier IMC y no agrega
+  aviso. Con IMC de 35 o más, el IMC ya trae su propia interpretación (OMS); el aviso exigiría un punto de corte en el
+  código (RN-D10 lo prohíbe) o una columna nueva en reference_range. Queda como limitación conocida.
+- Decimales que RN-D09 no fija:
+  - ETM, %ETM y CMD95 con 2: son décimas de milímetro y con 1 decimal se pierden (0.374 mm se vería 0.4 y el CMD95
+    de un pliegue, 0.8 en vez de 0.78);
+  - superficie corporal con 2, como se usa en clínica: 1.8599 m² se ve 1.86;
+  - meses hasta la meta con 1: es una estimación inicial (RN-E05) y la fecha estimada da el detalle.
+- La E2E de la Demo 1 crea su propio Luis en una organización propia, con los datos de seeds/luis/luis.json: alta,
+  consentimiento, historia, evaluaciones ISAK 2, cierre, resultados y energía, como pide el criterio de P7. No
+  depende de la semilla de la demo.
+- Las pantallas de P7 (captura, resultados, comparación, ETM, preferencias de métodos y energía) van en el PR 5.
+Consecuencias: el /notion-sync del cierre de P7 suma esos decimales a RN-D09 y cambia en Notion el responsable de
+las fases de Iván. La condición de IMC de NICE se revisa si quien valida los cálculos clínicos pide el aviso.
+
+## ADR-050 · Pantallas de P7 y lectura por lotes de las colas del worker — aceptada (2026-10-15)
+Contexto: P7 (PR 5). Faltaban las pantallas de RF-11 a RF-18 y la E2E de la Demo 1. Al correrla, la auditoría de las
+escrituras de una evaluación tardaba minutos: el worker leía cada cola de a un evento cada 2 s.
+Decisión:
+- Dónde vive cada cosa:
+  - pestañas «Evaluaciones» y «Energía» en el expediente;
+  - la evaluación en borrador muestra la captura; cerrada o enmendada, sus resultados; la comparación tiene su página;
+  - el ETM propio, en «Mi cuenta»; los métodos por población y el coeficiente de Lee, en «Ajustes»; los métodos de
+    un paciente, en su pestaña «Evaluaciones».
+- Captura (RF-11): cada sitio se guarda al salir del campo o con Enter, y las escrituras van en fila con la versión
+  de la anterior en If-Match. Enter avanza por series, como el protocolo ISAK, o por sitio. La vista previa usa
+  CONSOLIDATE_ISAK del motor para avisar la tercera toma en vivo; decide la API.
+- Resultados: cada indicador lleva su MethodBadge, también dentro de una tarjeta de método (RN-D02), y la E2E lo
+  comprueba. Mientras el worker calcula, «Calculando los resultados…» y se vuelve a consultar cada 2 s.
+- Energía: la vista previa la calcula la API, que tiene la base y los métodos, y se pide al dejar de escribir. No se
+  guarda sin una vista previa al día. La cantidad del ajuste se escribe en positivo y el signo sale de la opción.
+- Los decimales de ADR-049 son clases de formatNumber: measurementError, bodySurface y months.
+- Las tablas que pueden desbordar en el celular van en TableScroll, una región con nombre que se puede enfocar
+  (WCAG 2.1.1).
+- Worker: cada consumidor lee hasta 50 eventos por vez y sigue sin pausa mientras los lotes lleguen llenos
+  (CONSUMER_WORK_OPTIONS). Si un evento falla, se reintenta el lote; los ya procesados no se repiten
+  (processed_event).
+Consecuencias:
+- La auditoría de las escrituras llega en segundos (RN-B03).
+- Registrar el ETM de otro miembro, que la API permite al dueño y a los administradores, no tiene pantalla todavía.

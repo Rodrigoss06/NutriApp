@@ -2,7 +2,8 @@
 
 Plataforma web para nutricionistas y entrenadores: evaluación antropométrica, composición corporal,
 energía, dieta, rutinas y seguimiento diario del paciente. Versión 1.0, Paquete B. Plazo: 9 semanas.
-Equipo: Rodrigo Sucapuca (arquitectura, backend, motor) e Iván Reaño (interfaz, app del paciente, despliegue).
+Equipo: Rodrigo Sucapuca (arquitectura, backend, motor). Rodrigo asume también lo que Notion asigna a Iván Reaño
+(interfaz, app del paciente, despliegue): se construye aquí, completo (ADR-049).
 "NutriCoach" es un nombre de trabajo; la marca final la define el cliente.
 
 ## Fuente de verdad: Notion (servidor MCP `notion`)

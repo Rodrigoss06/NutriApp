@@ -7,7 +7,13 @@ import {
   type PreferenceRow,
 } from './calculation-plan.js';
 import { conditionDifferences, significance, type ComparedEvaluation } from './comparison.js';
-import { interpret, type ReferenceRange } from './interpretation.js';
+import {
+  interpret,
+  interpretationNote,
+  PEDIATRIC_NOTE,
+  rangesInForce,
+  type ReferenceRange,
+} from './interpretation.js';
 
 const ADULT: PopulationDefaults = {
   fatPct: 'FAT_DW1974_SIRI1961',
@@ -163,6 +169,7 @@ describe('RN-D10 · interpretación con fuente, sobre el valor sin redondear', (
     label: 'Sin riesgo aumentado',
     tone: 'NEUTRAL',
     source: 'Fuente',
+    validFrom: '2026-10-13',
     ...overrides,
   });
   const adult = { sex: 'M', ageYears: 28, population: 'ADULT' } as const;
@@ -183,6 +190,80 @@ describe('RN-D10 · interpretación con fuente, sobre el valor sin redondear', (
     expect(interpret('BMI', 26, adult, ranges)).toBeNull();
     const own = range({ id: 'o', organizationId: 'org', label: 'Propio', source: 'Organización' });
     expect(interpret('WAIST_HEIGHT_RATIO', 0.45, adult, [...ranges, own])?.label).toBe('Propio');
+  });
+
+  it('versiones: rige la más reciente hasta la fecha de la evaluación; una nueva no cambia lo ya medido', () => {
+    const next = [
+      range({
+        id: 'n1',
+        maxValue: 0.6,
+        label: 'Nueva',
+        source: 'Fuente 2',
+        validFrom: '2027-03-01',
+      }),
+      range({
+        id: 'n2',
+        minValue: 0.6,
+        maxValue: null,
+        label: 'Nueva alta',
+        validFrom: '2027-03-01',
+      }),
+    ];
+    const all = [...ranges, ...next];
+    const label = (onDate: string) =>
+      interpret('WAIST_HEIGHT_RATIO', 0.55, adult, rangesInForce(all, onDate))?.label;
+    expect(label('2026-12-31')).toBe('Riesgo');
+    expect(label('2027-03-01')).toBe('Nueva');
+    expect(rangesInForce(all, '2027-06-01').map((r) => r.id)).toEqual(['n1', 'n2']);
+  });
+
+  it('antes de la primera versión rige la de la plataforma; la de una organización, solo desde su fecha', () => {
+    expect(rangesInForce(ranges, '2025-01-15')).toEqual(ranges);
+    const own = range({ id: 'o', organizationId: 'org', label: 'Propio', validFrom: '2027-01-01' });
+    const label = (onDate: string) =>
+      interpret('WAIST_HEIGHT_RATIO', 0.45, adult, rangesInForce([...ranges, own], onDate))?.label;
+    expect(label('2026-12-31')).toBe('Sin riesgo aumentado');
+    expect(label('2027-01-01')).toBe('Propio');
+  });
+});
+
+describe('RN-D05 · en menores, el valor sin interpretación y con aviso', () => {
+  const bmi = (overrides: Partial<ReferenceRange>): ReferenceRange => ({
+    id: 'b',
+    organizationId: null,
+    metricCode: 'BMI',
+    sex: null,
+    minAge: 18,
+    maxAge: null,
+    population: null,
+    minValue: 18.5,
+    maxValue: 25,
+    label: 'Normal',
+    tone: 'NEUTRAL',
+    source: 'OMS',
+    validFrom: '2026-10-13',
+    ...overrides,
+  });
+  const teen = { sex: 'F', ageYears: 15.4, population: 'ADOLESCENT' } as const;
+
+  it('«Sin interpretación pediátrica en la versión 1.0» si todos sus rangos empiezan después de su edad', () => {
+    expect(interpret('BMI', 21, teen, [bmi({})])).toBeNull();
+    expect(interpretationNote('BMI', teen, [bmi({})])).toBe(PEDIATRIC_NOTE);
+    expect(PEDIATRIC_NOTE).toBe('Sin interpretación pediátrica en la versión 1.0');
+  });
+
+  it('sin aviso en adultos, en indicadores sin rangos ni cuando un rango cubre su edad', () => {
+    expect(interpretationNote('BMI', { ...teen, ageYears: 18 }, [bmi({})])).toBeNull();
+    expect(interpretationNote('SKINFOLD_SUM_MM', teen, [bmi({})])).toBeNull();
+    expect(
+      interpretationNote('BMI', teen, [bmi({}), bmi({ id: 'p', minAge: 5, maxAge: 18 })]),
+    ).toBeNull();
+  });
+
+  it('una tabla pediátrica de otro sexo o de otra población no la cubre: sigue el aviso', () => {
+    const boys = bmi({ id: 'm', sex: 'M', minAge: 5, maxAge: 18 });
+    const athletes = bmi({ id: 'a', population: 'ATHLETE', minAge: 5, maxAge: 18 });
+    expect(interpretationNote('BMI', teen, [bmi({}), boys, athletes])).toBe(PEDIATRIC_NOTE);
   });
 });
 
