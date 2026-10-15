@@ -26,6 +26,7 @@
   del plan en tres toques o menos (RN-G06). Cada registro envía clientId e Idempotency-Key.
 - La palabra "Paciente" sale de la configuración de la organización (puede ser "Asesorado").
 - Accesibilidad: etiquetas, foco visible y contraste AA; axe en las pruebas de Playwright.
+- Tablas que pueden desbordar en el celular: dentro de TableScroll (región con nombre que se puede enfocar).
 - Un spec de Playwright por demo en e2e/, en escritorio (Chromium) y en móvil (iPhone, WebKit). Los enlaces de
   correo se leen de Mailpit; nunca rutas de prueba que devuelvan tokens.
 
