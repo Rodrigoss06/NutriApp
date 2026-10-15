@@ -20,6 +20,14 @@ import {
   type RetryPolicy,
 } from '../queue/pg-boss.provider.js';
 
+/**
+ * Cómo lee cada consumidor su cola: hasta 50 eventos por lectura y sin pausa mientras los lotes lleguen llenos. De a
+ * uno, con los 2 s de espera de pg-boss entre lecturas, la auditoría de una evaluación ISAK 2 (unos 90 eventos) tardaba
+ * 3 minutos en verse (RN-B03). Si un evento falla, se reintenta el lote: los ya procesados quedan en
+ * platform.processed_event y no se repiten.
+ */
+export const CONSUMER_WORK_OPTIONS = { batchSize: 50, burstWhenBatchFull: true } as const;
+
 /** Trabajos diarios en UTC (01 §4): particiones de madrugada y limpieza después de la copia base de las 03:00. */
 export const MAINTENANCE_JOBS = {
   partitions: { queue: 'platform.maintenance-partitions', cron: '0 2 * * *' },
@@ -82,7 +90,7 @@ export class WorkerRuntime implements OnApplicationBootstrap, OnApplicationShutd
     const queue = consumerQueue(consumer.name);
     await this.boss.createQueue(queue, { ...this.retry, deadLetter: DEAD_LETTER_QUEUE });
     for (const type of consumer.eventTypes) await this.boss.subscribe(type, queue);
-    await this.boss.work<OutboxEnvelope>(queue, async (jobs) => {
+    await this.boss.work<OutboxEnvelope>(queue, CONSUMER_WORK_OPTIONS, async (jobs) => {
       for (const job of jobs) await this.runner.process(consumer, job.data);
     });
   }
