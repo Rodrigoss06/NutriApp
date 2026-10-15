@@ -37,6 +37,8 @@
 1. En la página de entrada, entrar como la dueña.
 2. Menú «Organización»: «Datos», «Suscripción y cupo», «Miembros» e «Invitaciones pendientes».
 3. Invitar a una tercera profesional, con cualquier correo: el sistema no lo permite.
+4. Menú «Ajustes»: los métodos por población y el coeficiente de Lee de la organización (se vuelven a ver en el
+   paso 4).
 
 **Qué decir**
 
@@ -83,24 +85,25 @@ Se mide a Ana para que los números de Luis no cambien.
 
 **Qué se hace**
 
-1. Abrir la ficha de Ana (P-000002) → «Nueva evaluación». Nivel «Básico». Condiciones: en ayunas, sin actividad
-   intensa en las últimas 24 horas, hidratación «Normal».
-2. Escribir las dos tomas de cada sitio:
+1. Abrir la ficha de Ana (P-000002) → pestaña «Evaluaciones» → «Nueva evaluación». Tipo «Antropometría», nivel
+   «Nivel básico». Condiciones: marcar «En ayunas» (sin actividad intensa en las últimas 24 horas) y escribir
+   «Normal» en «Hidratación». «Crear evaluación».
+2. Escribir las dos tomas de cada sitio. Enter guarda el sitio y pasa al siguiente:
 
    | Sitio | Tomas | Consolidado en pantalla |
    |---|---|---|
    | Peso | 58.4 y 58.4 | 58.4 kg |
    | Talla | 160.0 y 160.2 | 160.1 cm |
-   | Cintura | 72.5 y 72.7 | 72.6 cm |
-   | Cadera | 96.0 y 96.2 | 96.1 cm |
+   | Perímetro de la cintura | 72.5 y 72.7 | 72.6 cm |
+   | Perímetro de la cadera | 96.0 y 96.2 | 96.1 cm |
 
-3. «Agregar sitio» → pliegue del tríceps como sitio extra:
+3. En «Sitio extra», elegir «Pliegue del tríceps» → «Agregar sitio»:
    - tomas 12.0 y 12.4;
-   - luego cambiar la segunda toma a 13.0: el sistema pide una tercera;
+   - luego cambiar la segunda toma a 13.0: aparece «Falta la 3.ª toma» y «Cerrar evaluación» se desactiva;
    - tercera toma 12.6.
-4. «Cerrar evaluación». En unos segundos aparecen los resultados.
-5. «Enmendar», con el motivo «Peso mal digitado: la balanza marcaba 59.4 kg.». Se abre la revisión 2 con las mismas
-   tomas. Cambiar el peso a 59.4 y 59.4, y cerrarla.
+4. «Cerrar evaluación» y confirmar. En unos segundos aparecen los resultados.
+5. «Enmendar», con el motivo «Peso mal digitado: la balanza marcaba 59.4 kg.» → «Crear la revisión». Se abre la
+   revisión 2 con las mismas tomas. Cambiar el peso a 59.4 y 59.4, y cerrarla.
 
 **Qué decir**
 
@@ -114,25 +117,26 @@ Se mide a Ana para que los números de Luis no cambien.
 | En pantalla | Caso dorado | Regla |
 |---|---|---|
 | Tríceps 12.0 y 12.4: diferencia 3.3 %, sin tercera toma, consolidado 12.2 mm | G-01: 3.33 %, 12.2 mm | RN-C02, RN-C03 |
-| Tríceps 12.0 y 13.0: diferencia 8.3 %, pide tercera toma | G-02: 8.33 % | RN-C02 |
-| Con la tercera, 12.6: consolidado 12.6 mm, la del medio | G-03: 12.6 mm | RN-C03 |
+| Tríceps 12.0 y 13.0: diferencia 8.3 %, «Falta la 3.ª toma: supera el 5 %» | G-02: 8.33 % | RN-C02 |
+| Con la tercera, 12.6: consolidado 12.6 mm, «la del medio de 3 tomas» | G-03: 12.6 mm | RN-C03 |
 | IMC 22.8, «Normal», fuente OMS | — | RN-D10 |
 | Cintura/talla 0.45, «Sin riesgo aumentado», fuente NICE (2022) y Ashwell y Gibson (2016) | — | RN-D10 |
 | Cintura/cadera 0.76, «Sin obesidad abdominal», fuente OMS | — | RN-D10 |
 | Cintura 72.6 cm, «Sin riesgo aumentado», fuente OMS 2008 | — | RN-D10 |
-| Los demás métodos figuran como no disponibles por el nivel: piden ISAK 1 o ISAK 2 | — | RN-C01 |
+| Los demás métodos figuran en «No disponibles»: «Necesita un nivel de evaluación más completo» | — | RN-C01 |
 | Tras la enmienda: revisión 2 vigente con IMC 23.2, «Normal»; la original queda «Enmendada», con sus resultados como histórico | — | RN-C07 |
 
 ## 4 · Las evaluaciones ISAK 2 de Luis (RF-12, RF-13, RF-15, RF-16) · 5 min
 
 **Qué se hace**
 
-1. En la ficha de Luis, abrir «Evaluaciones»: la de hoy (ISAK 2 con bioimpedancia) y la de hace 4 semanas (ISAK 2).
-2. Abrir la de hoy: los 42 sitios con sus tomas y la lectura de bioimpedancia.
-3. Abrir sus resultados.
-4. Pedir el peso objetivo con 15 % de grasa.
-5. Mostrar los métodos por población de la organización y los de Luis.
-6. Mostrar el ETM de la evaluadora (Dueña Demo).
+1. En la ficha de Luis, pestaña «Evaluaciones»: la de hoy (ISAK 2 · antropometría y bioimpedancia) y la de hace 4
+   semanas (ISAK 2).
+2. Abrir la de hoy: sus resultados, la lectura de bioimpedancia y, al final, «Tomas de cada sitio» con los 42 sitios.
+3. En «Peso objetivo», con 15 en «% de grasa deseado», «Calcular el peso objetivo».
+4. Mostrar los métodos de Luis («Métodos de cálculo», en la pestaña «Evaluaciones») y los de la organización (menú
+   «Ajustes»).
+5. Mostrar el ETM de la evaluadora: «Error técnico de medida», en la misma evaluación, o «Mi cuenta».
 
 **Qué decir**
 
@@ -211,15 +215,16 @@ bajó solo 1.5 cm, y sin un ETM de perímetros no se puede decir que el cambio s
 
 **Qué se hace**
 
-1. En la ficha de Luis, «Energía». Toma por defecto la evaluación de hoy y muestra la tasa metabólica en reposo
-   (TMR) con los cinco métodos.
+1. En la ficha de Luis, pestaña «Energía» → «Nueva prescripción». Toma por defecto la evaluación de hoy y muestra la
+   tasa metabólica en reposo (TMR) con los cinco métodos.
 2. Completar:
    - TMR: Mifflin-St Jeor;
-   - estrategia aditiva, con PAL de vida diaria 1.4;
-   - actividad: buscar «correr» → «Correr a 6–6.3 mph (unos 10 km/h)», 9.3 MET, 30 minutos, 3 veces por semana;
-   - objetivo «Perder grasa», 3 kg de grasa por mes, meta de 15 % de grasa;
-   - proteína 2 g/kg y grasa 25 % de las kcal.
-3. Revisar la vista previa y guardar la prescripción.
+   - estrategia «Aditiva», con 1.4 en «PAL de la vida diaria»;
+   - «Buscar actividad»: «correr» → «Agregar» en «Correr a 6–6.3 mph (unos 10 km/h)», 9.3 MET; 30 minutos por sesión
+     y 3 sesiones por semana;
+   - objetivo «Perder grasa», ajuste «Perder grasa: kg por mes» con cantidad 3, y 15 en «% de grasa deseado»;
+   - proteína 2 g por kg y grasa 25 % de las kcal.
+3. Revisar la vista previa y «Guardar prescripción».
 
 **Qué decir**
 
@@ -279,17 +284,17 @@ y fechas (hasta 90 días).
 | RF-08 | Pacientes y equipo de atención | Pasos 2 y 7 | ✅ Listo (P6) |
 | RF-09 | Historia clínica versionada y notas | Paso 2 | ✅ Listo (P6). Historia v1 en texto libre hasta la ficha de Jeremy |
 | RF-10 | Expediente con línea de tiempo | Pasos 2 y 6 | ✅ Listo (P6); P7 suma evaluaciones y energía |
-| RF-11 | Evaluación y captura con tercera toma | Paso 3 | 🟨 Cálculo y reglas listos y probados; falta la pantalla de captura (PR 5) |
-| RF-12 | ETM del evaluador | Pasos 4 y 5 | 🟨 Listo y probado; falta la pantalla (PR 5) |
-| RF-13 | Bioimpedancia a mano, con marca y modelo | Paso 4 | 🟨 Listo y probado; falta la pantalla (PR 5). Lista de indicadores por confirmar (N19) |
-| RF-14 | Cerrar y enmendar con motivo | Paso 3 | 🟨 Listo y probado; falta la pantalla (PR 5) |
-| RF-15 | Composición corporal con método e interpretación con fuente | Pasos 4 y 5 | 🟨 Listo y probado (G-04 a G-12); falta la pantalla (PR 5) |
-| RF-16 | Métodos por población, por organización y por paciente | Paso 4 | 🟨 Listo y probado; falta la pantalla (PR 5) |
-| RF-17 | Energía: TMR, PAL, ejercicio, GET, objetivo, ritmo, peso objetivo y fecha | Paso 6 | 🟨 Listo y probado (G-12 a G-16); falta la pantalla (PR 5) |
-| RF-18 | Macronutrientes (adelantado de la Demo 2) | Paso 6 | 🟨 Listo y probado (G-17); falta la pantalla (PR 5) |
+| RF-11 | Evaluación y captura con tercera toma | Paso 3 | ✅ Listo (P7): captura con aviso de tercera toma en vivo; G-01 a G-03 en la E2E |
+| RF-12 | ETM del evaluador | Pasos 4 y 5 | ✅ Listo (P7): «Mi cuenta», calculado o declarado; G-04 en la E2E |
+| RF-13 | Bioimpedancia a mano, con marca y modelo | Paso 4 | ✅ Listo (P7). Lista de indicadores por confirmar (N19) |
+| RF-14 | Cerrar y enmendar con motivo | Paso 3 | ✅ Listo (P7) |
+| RF-15 | Composición corporal con método e interpretación con fuente | Pasos 4 y 5 | ✅ Listo (P7): G-04 a G-12 en la E2E, ninguna cifra sin su método |
+| RF-16 | Métodos por población, por organización y por paciente | Pasos 1 y 4 | ✅ Listo (P7): «Ajustes» y «Métodos de cálculo» del paciente |
+| RF-17 | Energía: TMR, PAL, ejercicio, GET, objetivo, ritmo, peso objetivo y fecha | Paso 6 | ✅ Listo (P7): G-12 a G-16 en la E2E |
+| RF-18 | Macronutrientes (adelantado de la Demo 2) | Paso 6 | ✅ Listo (P7): G-17 en la E2E |
 
-Los RF de P7 pasan a ✅ cuando estén sus pantallas y la E2E del recorrido (`apps/web/e2e/demo-1.spec.ts`) esté en
-verde.
+La E2E del recorrido (`apps/web/e2e/demo-1.spec.ts`) sigue estos siete pasos y está en verde en escritorio (Chromium)
+y en celular (iPhone, WebKit).
 
 ## Antes de empezar (quien presenta)
 
@@ -324,24 +329,15 @@ verde.
 
 ## Notas para el equipo
 
-- **Ensayo:** el 2026-10-13 se recorrieron los siete pasos sobre una base nueva, llamando directamente a la API.
-  Todas las cifras de este guion salen de ese ensayo y coinciden con los casos dorados.
-- **Pantallas (PR 5):** los nombres de botones entre comillas que todavía no existen son provisionales:
-  «Nueva evaluación», «Agregar sitio», «Cerrar evaluación», «Enmendar», «Evaluaciones», «Comparar con la anterior» y
-  «Energía». Se ajustan cuando estén las pantallas.
-- **La captura (paso 3) necesita:**
-  - agregar un sitio extra en una evaluación básica;
-  - el aviso de tercera toma en vivo;
-  - el bloqueo del cierre mientras falte una toma.
-- **Los resultados necesitan:**
-  - el método junto a cada número;
-  - la fuente junto a cada interpretación;
-  - el aviso «Sin interpretación pediátrica en la versión 1.0» en menores (`interpretationNote`).
+- **Ensayo:** el 2026-10-13 se recorrieron los siete pasos sobre una base nueva, llamando directamente a la API, y el
+  2026-10-15 por las pantallas, con la E2E. Las cifras de este guion salen de ahí y coinciden con los casos dorados.
+- **Botones y pestañas:** los nombres entre comillas son los de las pantallas.
 - **E2E:** `apps/web/e2e/demo-1.spec.ts` sigue estos siete pasos con los datos de `seeds/luis/luis.json` y
-  `seeds/ana/ana.json`, en su propia organización.
-  - El criterio de P7 pide crear a Luis en la E2E: alta, consentimiento, historia, evaluación ISAK 2, cierre,
-    resultados y energía. Por eso la E2E no usa la carga de la demo.
-  - Comprueba G-01 a G-17 en escritorio y en celular.
+  `seeds/ana/ana.json`, en su propia organización (ADR-049).
+  - Crea a Luis por las pantallas: alta, consentimiento, historia, evaluación ISAK 2, cierre, resultados y energía,
+    como pide el criterio de P7. La evaluación de hace 4 semanas la prepara por la API.
+  - Comprueba G-01 a G-17, que ninguna cifra de los resultados quede sin su método y que axe no encuentre
+    violaciones graves en cada pantalla, en escritorio y en celular.
 - **Decidido en ADR-049:**
   - ETM, %ETM, CMD95 y superficie corporal con 2 decimales; los meses hasta la meta, con 1;
   - por debajo de 0.4, la cintura/talla se muestra sin interpretación: NICE no clasifica esa franja;

@@ -613,3 +613,29 @@ Decisión:
 - Las pantallas de P7 (captura, resultados, comparación, ETM, preferencias de métodos y energía) van en el PR 5.
 Consecuencias: el /notion-sync del cierre de P7 suma esos decimales a RN-D09 y cambia en Notion el responsable de
 las fases de Iván. La condición de IMC de NICE se revisa si quien valida los cálculos clínicos pide el aviso.
+
+## ADR-050 · Pantallas de P7 y lectura por lotes de las colas del worker — aceptada (2026-10-15)
+Contexto: P7 (PR 5). Faltaban las pantallas de RF-11 a RF-18 y la E2E de la Demo 1. Al correrla, la auditoría de las
+escrituras de una evaluación tardaba minutos: el worker leía cada cola de a un evento cada 2 s.
+Decisión:
+- Dónde vive cada cosa:
+  - pestañas «Evaluaciones» y «Energía» en el expediente;
+  - la evaluación en borrador muestra la captura; cerrada o enmendada, sus resultados; la comparación tiene su página;
+  - el ETM propio, en «Mi cuenta»; los métodos por población y el coeficiente de Lee, en «Ajustes»; los métodos de
+    un paciente, en su pestaña «Evaluaciones».
+- Captura (RF-11): cada sitio se guarda al salir del campo o con Enter, y las escrituras van en fila con la versión
+  de la anterior en If-Match. Enter avanza por series, como el protocolo ISAK, o por sitio. La vista previa usa
+  CONSOLIDATE_ISAK del motor para avisar la tercera toma en vivo; decide la API.
+- Resultados: cada indicador lleva su MethodBadge, también dentro de una tarjeta de método (RN-D02), y la E2E lo
+  comprueba. Mientras el worker calcula, «Calculando los resultados…» y se vuelve a consultar cada 2 s.
+- Energía: la vista previa la calcula la API, que tiene la base y los métodos, y se pide al dejar de escribir. No se
+  guarda sin una vista previa al día. La cantidad del ajuste se escribe en positivo y el signo sale de la opción.
+- Los decimales de ADR-049 son clases de formatNumber: measurementError, bodySurface y months.
+- Las tablas que pueden desbordar en el celular van en TableScroll, una región con nombre que se puede enfocar
+  (WCAG 2.1.1).
+- Worker: cada consumidor lee hasta 50 eventos por vez y sigue sin pausa mientras los lotes lleguen llenos
+  (CONSUMER_WORK_OPTIONS). Si un evento falla, se reintenta el lote; los ya procesados no se repiten
+  (processed_event).
+Consecuencias:
+- La auditoría de las escrituras llega en segundos (RN-B03).
+- Registrar el ETM de otro miembro, que la API permite al dueño y a los administradores, no tiene pantalla todavía.
