@@ -1,6 +1,6 @@
 # STATUS — NutriCoach v1.0
 
-Actualizado: 2026-10-15 · Por: Rodrigo, con Claude Code
+Actualizado: 2026-10-16 · Por: Rodrigo, con Claude Code
 Inicio del proyecto: POR CONFIRMAR (día siguiente al Pago 1) · Semana actual: 0 de 9
 Próxima demo: Demo 1 · Base y evaluación · semana 2
 
@@ -14,7 +14,7 @@ Próxima demo: Demo 1 · Base y evaluación · semana 2
 | P4 Servidor y staging | ⛔ | Rodrigo | | En espera de la cuenta de Hetzner de Jeremy |
 | P5 Identidad y organizaciones | ✅ | Rodrigo | #6, #7, #8 | 4 criterios en verde; despliegue a staging pendiente de P4 |
 | P6 Pacientes e historia clínica | ✅ | Rodrigo | #10, #11, #12 | 4 criterios en verde (E2E en escritorio y celular, e integración); despliegue a staging pendiente de P4 |
-| P7 Evaluación y cálculo, Demo 1 | ✅ | Rodrigo | #14 a #18 | E2E de la Demo 1 en escritorio y celular (G-01 a G-17), ninguna cifra sin método, recálculo con SUPERSEDED y guion; RF-18 adelantado. v0.1.0 al fusionar #18 (con confirmación); staging, pendiente de P4 |
+| P7 Evaluación y cálculo, Demo 1 | ✅ | Rodrigo | #14 a #18 | E2E de la Demo 1 en escritorio y celular (G-01 a G-17), ninguna cifra sin método, recálculo con SUPERSEDED y guion; RF-18 adelantado. Etiqueta v0.1.0 (abf0d42) y Notion sincronizado; staging, pendiente de P4 |
 | P8 Datos maestros de alimentos | ⬜ | Rodrigo | | |
 | P9 Dieta por intercambios | ⬜ | Rodrigo | | |
 | P10 Composición, menú y recetario | ⬜ | Rodrigo | | |
@@ -28,18 +28,15 @@ Próxima demo: Demo 1 · Base y evaluación · semana 2
 Leyenda: ⬜ pendiente · 🟨 en curso · ✅ terminado · ⛔ bloqueado
 
 ## En curso
-- Cierre de P7 (Demo 1): contratos y API en #14 a #17; guion, decisiones (ADR-048, ADR-049), pantallas, E2E y el
-  worker por lotes (ADR-050) en #18. Falta fusionar #18, la etiqueta v0.1.0 (con confirmación) y el /notion-sync
-- RF-18 se adelanta a P7: la prescripción energética guarda los macronutrientes (RN-E07, G-17); P9 solo hace
-  intercambios
-- Para el /notion-sync del cierre de P7: lo que difiera de Notion según ADR-044 a ADR-050, RN-D09 (cintura/talla y
-  cintura/cadera con 2 decimales; ETM, %ETM, CMD95 y superficie corporal con 2; meses con 1), RN-D11 (ajuste
-  assessment.lee_reference_group_coefficient), RN-D10 (la versión de los rangos es la de la fecha de la evaluación),
-  RN-D05 (aviso pediátrico), el motor 1.2.0, Rodrigo como responsable de las fases de Iván (Proyecto, prompts y
-  CLAUDE.md en Archivos del repositorio) y la regla de TableScroll en apps/web/CLAUDE.md
+- Ningún prompt en curso: P7 cerrado. #18 fusionado (abf0d42) con CI en verde, etiqueta v0.1.0 y /notion-sync de P7
+  aplicado (41 cambios)
+- Notion sigue nombrando a Iván en 01 (aprobación del despliegue a producción), en la ruta crítica de Creación del
+  proyecto, en la plantilla de STATUS de Archivos del repositorio y en el Equipo de Proyecto: se deja así por decisión
+  de Rodrigo (2026-10-16)
 
 ## Siguiente paso
-- Antes de la Demo 1: base local limpia y semilla («Antes de empezar» del guion). La demo es en local
+- Antes de la Demo 1: la matriz manual de navegadores (RNF-19: Chrome, Edge, Safari y Firefox; la E2E cubre Chromium
+  y WebKit) y, el mismo día, base local limpia y semilla («Antes de empezar» del guion). La demo es en local
 - P8 Datos maestros de alimentos: faltan en seeds/food/ los CSV de la TPCA 2017 (INS-CENAN) y del subconjunto
   traducido del Compendium 2024
 - db:seed carga el caso Luis: sus resultados aparecen cuando corre el worker
@@ -93,6 +90,9 @@ Leyenda: ⬜ pendiente · 🟨 en curso · ✅ terminado · ⛔ bloqueado
 - Registrar el ETM de otro miembro (dueño o administrador) no tiene pantalla: la API lo permite (ADR-050)
 
 ## Registro de sesiones (solo las 5 últimas)
+- 2026-10-15 · P7 cerrado · #18 fusionado (abf0d42) con CI en verde; etiqueta v0.1.0; /notion-sync de P7 aplicado
+  (41 cambios en 02, 03, 04, 05, 05.1, 05.2, Documento técnico, Proyecto, Creación del proyecto, prompts y Archivos
+  del repositorio); demo levantada en local con la semilla (recorrido de 12 de 12)
 - 2026-10-15 · P7 (PR 5, en #18) · pantallas de evaluación, captura con tercera toma en vivo, bioimpedancia,
   resultados, comparación, ETM, métodos, Lee y energía; E2E de la Demo 1 en escritorio y celular; el worker lee sus
   colas por lotes (la auditoría de escrituras tardaba minutos); ADR-050
@@ -104,5 +104,3 @@ Leyenda: ⬜ pendiente · 🟨 en curso · ✅ terminado · ⛔ bloqueado
   absoluta en todo entorno y la integración de menores sin efectos; P6 ✅ con sus 4 criterios; .env.example con la
   nota de STORAGE_LOCAL_PATH; /notion-sync de P6 aplicado (26 cambios en 01, 02, 03, 04, 05, 05.1, 06, Proyecto,
   Documento técnico y Archivos del repositorio)
-- 2026-10-12 · P6 (3/3) · web del expediente, auditoría y aceptación del paciente, /mi con sesión PATIENT, búsqueda
-  de documento sin tipo; E2E de P6 en escritorio y celular; ADR-043
