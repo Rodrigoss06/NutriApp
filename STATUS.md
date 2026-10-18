@@ -1,6 +1,6 @@
 # STATUS — NutriCoach v1.0
 
-Actualizado: 2026-10-16 · Por: Rodrigo, con Claude Code
+Actualizado: 2026-10-18 · Por: Rodrigo, con Claude Code
 Inicio del proyecto: POR CONFIRMAR (día siguiente al Pago 1) · Semana actual: 0 de 9
 Próxima demo: Demo 1 · Base y evaluación · semana 2
 
@@ -10,7 +10,7 @@ Próxima demo: Demo 1 · Base y evaluación · semana 2
 | P0 Andamiaje | ✅ | Rodrigo | #1 | CI en verde |
 | P1 Motor de cálculo | ✅ | Rodrigo | #2 | G-01 a G-28 en verde; motor 1.1.0 con TEE_PAL (#4); 1.2.0 en P7 (ADR-044) |
 | P2 Base de datos y plataforma | ✅ | Rodrigo | #3 | 61 pruebas de integración |
-| P3 Sistema de diseño | ✅ | Rodrigo | #4 | Lighthouse móvil 99 en Hoy; axe sin violaciones graves |
+| P3 Sistema de diseño | ✅ | Rodrigo | #4 | Lighthouse móvil 99 en Hoy; axe sin violaciones graves. Rediseño «Instrumento» (ADR-051): mediana 97 en Hoy |
 | P4 Servidor y staging | ⛔ | Rodrigo | | En espera de la cuenta de Hetzner de Jeremy |
 | P5 Identidad y organizaciones | ✅ | Rodrigo | #6, #7, #8 | 4 criterios en verde; despliegue a staging pendiente de P4 |
 | P6 Pacientes e historia clínica | ✅ | Rodrigo | #10, #11, #12 | 4 criterios en verde (E2E en escritorio y celular, e integración); despliegue a staging pendiente de P4 |
@@ -30,6 +30,9 @@ Leyenda: ⬜ pendiente · 🟨 en curso · ✅ terminado · ⛔ bloqueado
 ## En curso
 - Ningún prompt en curso: P7 cerrado. #18 fusionado (abf0d42) con CI en verde, etiqueta v0.1.0 y /notion-sync de P7
   aplicado (41 cambios)
+- Rediseño «Instrumento» (ADR-051) en feat/ui-rediseno, apilada sobre docs/cierre-p7 (sin subir): Archivo, riel y
+  zonas destacadas teñidos con la marca, animaciones solo con CSS, fondo de curvas de nivel que se pausa, regla de
+  referencia con la escala que manda la API (RN-D10) y barra de Kerr. pnpm check y E2E 46 de 46 en verde
 - Notion sigue nombrando a Iván en 01 (aprobación del despliegue a producción), en la ruta crítica de Creación del
   proyecto, en la plantilla de STATUS de Archivos del repositorio y en el Equipo de Proyecto: se deja así por decisión
   de Rodrigo (2026-10-16)
@@ -88,8 +91,17 @@ Leyenda: ⬜ pendiente · 🟨 en curso · ✅ terminado · ⛔ bloqueado
 - La pila del E2E se levanta a mano en local (compose, build, API y worker con env.local.example y
   RATE_LIMIT_FACTOR=100; WebKit en la imagen de Playwright): conviene un script
 - Registrar el ETM de otro miembro (dueño o administrador) no tiene pantalla: la API lo permite (ADR-050)
+- LCP de Hoy en Lighthouse móvil: de 2.1 a 2.7 s (mediana de 5 corridas, 2.42 s) porque Archivo variable pesa 90 KB y
+  el texto se vuelve a pintar al llegar. Si en staging pasa de 2.5 s (RNF-03): subconjunto de la fuente (ejes wdth
+  87.5 a 125 y wght 400 a 700) con next/font/local
+- La E2E de celular corre en la imagen de Playwright (docker, mcr.microsoft.com/playwright:v1.63.0-noble): en este
+  equipo WebKit no tiene sus dependencias
 
 ## Registro de sesiones (solo las 5 últimas)
+- 2026-10-18 · Rediseño «Instrumento» · herramientas de diseño en el usuario de Claude Code (frontend-design,
+  ui-ux-pro-max, ui-skills y MCP de shadcn, Context7 y Playwright); vista previa de tres direcciones; dirección A con
+  curvas de nivel; escala de referencia en los resultados; ADR-051. El disco de datos se llenó (lago de datos de
+  otro proyecto) y Rodrigo liberó espacio
 - 2026-10-15 · P7 cerrado · #18 fusionado (abf0d42) con CI en verde; etiqueta v0.1.0; /notion-sync de P7 aplicado
   (41 cambios en 02, 03, 04, 05, 05.1, 05.2, Documento técnico, Proyecto, Creación del proyecto, prompts y Archivos
   del repositorio); demo levantada en local con la semilla (recorrido de 12 de 12)
@@ -100,7 +112,3 @@ Leyenda: ⬜ pendiente · 🟨 en curso · ✅ terminado · ⛔ bloqueado
   subido
 - 2026-10-13 · P7 (PR 4) · guion de la Demo 1 ensayado contra la API, cintura/talla de NICE, rangos versionados por
   la fecha de la evaluación, aviso pediátrico, Ana y la bioimpedancia de Luis en la semilla; ADR-048
-- 2026-10-12 · P6 cerrado · PR 3 fusionado (#12): la web no toca la base (web-no-database), STORAGE_LOCAL_PATH
-  absoluta en todo entorno y la integración de menores sin efectos; P6 ✅ con sus 4 criterios; .env.example con la
-  nota de STORAGE_LOCAL_PATH; /notion-sync de P6 aplicado (26 cambios en 01, 02, 03, 04, 05, 05.1, 06, Proyecto,
-  Documento técnico y Archivos del repositorio)
