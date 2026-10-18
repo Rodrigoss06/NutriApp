@@ -31,6 +31,10 @@ interface Results {
       methodCode: string;
       interpretation: { label: string; tone: string; source: string } | null;
       interpretationNote: string | null;
+      referenceScale: {
+        source: string;
+        bands: { minValue: number | null; maxValue: number | null; label: string; tone: string }[];
+      } | null;
     }[];
   }[];
   siteInterpretations: {
@@ -131,6 +135,17 @@ describe('RF-15 · el worker calcula al cerrar', () => {
       tone: 'NEUTRAL',
       source: 'ACE',
     });
+    // RN-D10: la tabla de ACE completa, en orden y con sus tonos, tal como está en reference_range.
+    expect(metric(view, 'FAT_DW1974_SIRI1961', 'FAT_PCT')?.referenceScale).toEqual({
+      source: 'ACE',
+      bands: [
+        { minValue: 2, maxValue: 6, label: 'Grasa esencial', tone: 'CAUTION' },
+        { minValue: 6, maxValue: 14, label: 'Atlético', tone: 'NEUTRAL' },
+        { minValue: 14, maxValue: 18, label: 'Fitness', tone: 'NEUTRAL' },
+        { minValue: 18, maxValue: 25, label: 'Promedio', tone: 'NEUTRAL' },
+        { minValue: 25, maxValue: null, label: 'Obesidad', tone: 'RISK' },
+      ],
+    });
     expect(metric(view, 'BMI', 'BMI')?.interpretation).toMatchObject({
       label: 'Sobrepeso',
       source: 'OMS',
@@ -151,6 +166,7 @@ describe('RF-15 · el worker calcula al cerrar', () => {
         methodCode: 'CONSOLIDATE_ISAK',
         interpretation: { label: 'Sin riesgo aumentado', tone: 'NEUTRAL', source: 'OMS 2008' },
         interpretationNote: null,
+        referenceScale: expect.objectContaining({ source: 'OMS 2008' }) as unknown,
       },
     ]);
     for (const result of view.results) {

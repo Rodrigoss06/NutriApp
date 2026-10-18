@@ -329,6 +329,10 @@ describe('RF-15 · resultados con método e interpretación con fuente', () => {
       source: 'OMS',
     });
     expect(metric('FAT_DW1974_SIRI1961', 'FAT_PCT')?.interpretation?.label).toBe('Promedio');
+    // RN-D10: la tabla completa viaja con el valor, para dibujar dónde cae.
+    const scale = metric('BMI', 'BMI')?.referenceScale;
+    expect(scale?.source).toBe('OMS');
+    expect(scale?.bands.map((band) => band.label)).toContain('Sobrepeso');
     expect(metric('FAT_FAULKNER1968', 'FAT_PCT')?.interpretation?.label).toBe('Fitness');
     expect(metric('FAT_YUHASZ1974', 'FAT_PCT')?.interpretation?.label).toBe('Atlético');
     expect(view?.siteInterpretations).toEqual([
@@ -417,6 +421,7 @@ describe('RF-15 · resultados con método e interpretación con fuente', () => {
         unit: 'cm',
         interpretation: null,
         interpretationNote: 'Sin interpretación pediátrica en la versión 1.0',
+        referenceScale: null,
       },
     ]);
     // Sin rangos para el indicador, no hay interpretación ni aviso.

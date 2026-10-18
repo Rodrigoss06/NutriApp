@@ -34,8 +34,10 @@ import {
   interpret,
   interpretationNote,
   rangesInForce,
+  referenceScale,
   type Interpretation,
   type ReferenceRange,
+  type ReferenceScale,
 } from '../../domain/interpretation.js';
 import type { SiteUnit } from '../../domain/assessment-rules.js';
 import { CalculationService, shownResults } from '../calculation.service.js';
@@ -59,6 +61,8 @@ export interface InterpretedMetric extends MetricValue {
   readonly interpretation: Interpretation | null;
   /** Por qué no hay interpretación cuando el indicador tiene rangos: en menores, el aviso de RN-D05. */
   readonly interpretationNote: string | null;
+  /** La tabla completa de la interpretación, para mostrar dónde cae el valor (RN-D10). */
+  readonly referenceScale: ReferenceScale | null;
 }
 
 export interface ResultView extends StoredResult {
@@ -72,6 +76,7 @@ export interface SiteInterpretationView {
   readonly unit: SiteUnit;
   readonly interpretation: Interpretation | null;
   readonly interpretationNote: string | null;
+  readonly referenceScale: ReferenceScale | null;
 }
 
 export interface ResultsView {
@@ -181,6 +186,7 @@ export class ResultsQueries {
             interpretationNote: interpretation
               ? null
               : interpretationNote(metric.metricCode, subject, ranges),
+            referenceScale: referenceScale(metric.metricCode, metric.value, subject, ranges),
           };
         }),
         principalFor: outcome?.principal.get(result.methodCode as MethodCode) ?? [],
@@ -458,6 +464,7 @@ export class ResultsQueries {
           unit: site.unit,
           interpretation,
           interpretationNote: note,
+          referenceScale: referenceScale(m.siteCode, value, subject, ranges),
         });
       }
     }
