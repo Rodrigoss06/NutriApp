@@ -64,7 +64,7 @@ export function ConditionsSection({
       {conditions.length === 0 ? (
         <p className="text-sm text-muted-foreground">Sin condiciones registradas.</p>
       ) : (
-        <ul className="divide-y divide-border rounded-lg border border-border">
+        <ul className="divide-y divide-border rounded-lg border border-border bg-card">
           {conditions.map((condition) => (
             <li key={condition.id} className="flex flex-col gap-2 p-4 sm:flex-row sm:items-start">
               <div className="flex min-w-0 flex-1 flex-col gap-1">
@@ -108,7 +108,7 @@ export function ConditionsSection({
       <form
         noValidate
         aria-label="Registrar una condición"
-        className="flex flex-col gap-4 rounded-lg border border-border p-4"
+        className="flex flex-col gap-4 rounded-lg border border-border p-4 bg-card"
         onSubmit={submitWith(
           form.handleSubmit((values) => {
             add.mutate({

@@ -3,7 +3,7 @@ import {
   type EngineIssue,
   type EnergyPrescriptionPreview,
 } from '@nutricoach/contracts';
-import { formatNumber, MethodBadge, Notice } from '@nutricoach/ui';
+import { enterStyle, formatNumber, MethodBadge, Notice } from '@nutricoach/ui';
 import type { ReactNode } from 'react';
 import { formatDate } from '@/lib/dates';
 import { formatInput, GOAL_LABELS, STRATEGY_LABELS } from './labels';
@@ -22,10 +22,13 @@ function Warnings({ issues }: { issues: readonly EngineIssue[] }) {
 function Block({
   title,
   method,
+  order = 0,
   children,
 }: {
   title: string;
   method?: ReactNode;
+  /** Orden en la entrada escalonada. */
+  order?: number;
   children: ReactNode;
 }) {
   const id = `energia-${title
@@ -35,7 +38,8 @@ function Block({
   return (
     <section
       aria-labelledby={id}
-      className="flex flex-col gap-2 rounded-lg border border-border p-4"
+      className="nc-enter flex flex-col gap-2 rounded-lg border border-border bg-card p-4"
+      style={enterStyle(order)}
     >
       <h3 id={id} className="font-semibold">
         {title}
@@ -82,12 +86,12 @@ export function PrescriptionView({ prescription }: { prescription: EnergyPrescri
         </dl>
       </Block>
 
-      <Block title="Tasa metabólica en reposo" method={method(rmr.methodCode)}>
-        <p className="text-2xl font-semibold tabular-nums">{kcal(rmr.rmrKcal)}</p>
+      <Block order={1} title="Tasa metabólica en reposo" method={method(rmr.methodCode)}>
+        <p className="text-3xl font-semibold tracking-tight tabular-nums">{kcal(rmr.rmrKcal)}</p>
         <Warnings issues={rmr.warnings} />
       </Block>
 
-      <Block title="Gasto energético total" method={method(tee.methodCode)}>
+      <Block order={2} title="Gasto energético total" method={method(tee.methodCode)}>
         <dl>
           <Row label="Estrategia">{STRATEGY_LABELS[prescription.strategy]}</Row>
           <Row label={`Base: TMR × PAL ${formatInput(prescription.pal)}`}>{kcal(tee.baseKcal)}</Row>
@@ -107,11 +111,13 @@ export function PrescriptionView({ prescription }: { prescription: EnergyPrescri
             </Row>
           ) : null}
         </dl>
-        <p className="text-2xl font-semibold tabular-nums">GET {kcal(tee.teeKcal)}</p>
+        <p className="text-3xl font-semibold tracking-tight tabular-nums">
+          GET {kcal(tee.teeKcal)}
+        </p>
         <Warnings issues={[...exercise.warnings, ...tee.warnings]} />
       </Block>
 
-      <Block title="Objetivo" method={method(adjustment.methodCode)}>
+      <Block order={3} title="Objetivo" method={method(adjustment.methodCode)}>
         <dl>
           <Row label="Objetivo">{GOAL_LABELS[prescription.goal]}</Row>
           <Row label={adjustment.adjustmentKcal < 0 ? 'Déficit' : 'Superávit'}>
@@ -121,14 +127,14 @@ export function PrescriptionView({ prescription }: { prescription: EnergyPrescri
             {formatNumber(Math.abs(adjustment.weeklyRatePct), 'percent')} % del peso por semana
           </Row>
         </dl>
-        <p className="text-2xl font-semibold tabular-nums">
+        <p className="text-3xl font-semibold tracking-tight tabular-nums">
           Objetivo {kcal(prescription.targetKcal)}
         </p>
         <Warnings issues={adjustment.warnings} />
       </Block>
 
       {projection ? (
-        <Block title="Peso objetivo y fecha" method={method(projection.methodCode)}>
+        <Block order={4} title="Peso objetivo y fecha" method={method(projection.methodCode)}>
           <dl>
             <Row label={`Peso con ${formatNumber(projection.targetFatPct, 'percent')} % de grasa`}>
               {formatNumber(projection.targetWeightKg, 'mass')} kg
@@ -153,7 +159,7 @@ export function PrescriptionView({ prescription }: { prescription: EnergyPrescri
         </Block>
       ) : null}
 
-      <Block title="Macronutrientes" method={method(macros.methodCode)}>
+      <Block order={5} title="Macronutrientes" method={method(macros.methodCode)}>
         <dl>
           <Row label={`Proteína (${formatInput(macros.proteinGPerKg)} g/kg)`}>
             {formatNumber(macros.proteinG, 'grams')} g

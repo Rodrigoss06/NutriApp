@@ -16,7 +16,7 @@ export function PatientBottomNav() {
   return (
     <nav
       aria-label="Secciones de la app"
-      className="fixed inset-x-0 bottom-0 z-40 border-t border-border bg-background pb-[env(safe-area-inset-bottom)]"
+      className="fixed inset-x-0 bottom-0 z-40 border-t border-border bg-card pb-[env(safe-area-inset-bottom)]"
     >
       <div className="mx-auto flex max-w-2xl">
         {ITEMS.map((item) => (

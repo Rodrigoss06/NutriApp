@@ -7,11 +7,22 @@ export {
   brandVariables,
   contrastRatio,
   DEFAULT_BRAND,
+  PAPER,
   parseBrand,
   type Brand,
   type BrandColorTokens,
 } from './brand/brand-tokens';
 export { Button, buttonVariants, type ButtonProps } from './components/button';
+export {
+  CompositionBar,
+  type CompositionBarProps,
+  type CompositionSegment,
+} from './components/composition-bar';
+export {
+  ContourBackground,
+  contourLayers,
+  type ContourBackgroundProps,
+} from './components/contour-background';
 export { ConfirmDialog, type ConfirmDialogProps } from './components/confirm-dialog';
 export { DataTable, type DataTableColumn, type DataTableProps } from './components/data-table';
 export { EmptyState, type EmptyStateProps } from './components/empty-state';
@@ -26,7 +37,16 @@ export {
   type Tone,
 } from './components/notice';
 export { NumberField, type MeasureUnit, type NumberFieldProps } from './components/number-field';
+export {
+  ReferenceRuler,
+  rulerLayout,
+  type ReferenceRulerProps,
+  type RulerBand,
+  type RulerLayout,
+  type RulerTone,
+} from './components/reference-ruler';
 export { Select, type SelectOption, type SelectProps } from './components/select';
 export { Steps, type Step, type StepsProps } from './components/steps';
 export { formatNumber, NUMBER_KINDS, parseDecimal, type NumberKind } from './format/format-number';
 export { cn } from './lib/cn';
+export { enterStyle } from './lib/motion';

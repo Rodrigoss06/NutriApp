@@ -1,5 +1,12 @@
 import { describe, expect, it } from 'vitest';
-import { brandCss, brandTokens, contrastRatio, DEFAULT_BRAND, parseBrand } from './brand-tokens';
+import {
+  brandCss,
+  brandTokens,
+  contrastRatio,
+  DEFAULT_BRAND,
+  PAPER,
+  parseBrand,
+} from './brand-tokens';
 
 const WHITE = '#ffffff';
 
@@ -11,13 +18,15 @@ describe('WCAG 1.4.3 y 1.4.11 · tokens de marca accesibles con cualquier color 
   });
 
   it.each(['#0F766E', '#FFE600', '#1A1A2E', '#D97706', '#FFFFFF', '#000000', '#7C3AED', '#22C55E'])(
-    'con %s: texto sobre el color ≥ 4.5, texto de marca sobre blanco ≥ 4.5, borde y foco ≥ 3',
+    'con %s: texto sobre el color ≥ 4.5, texto de marca sobre el papel y el blanco ≥ 4.5, borde y foco ≥ 3',
     (hex) => {
       const tokens = brandTokens(hex);
 
       expect(contrastRatio(tokens.foreground, tokens.base)).toBeGreaterThanOrEqual(4.5);
-      expect(contrastRatio(tokens.text, WHITE)).toBeGreaterThanOrEqual(4.5);
-      expect(contrastRatio(tokens.border, WHITE)).toBeGreaterThanOrEqual(3);
+      for (const surface of [PAPER, WHITE]) {
+        expect(contrastRatio(tokens.text, surface)).toBeGreaterThanOrEqual(4.5);
+        expect(contrastRatio(tokens.border, surface)).toBeGreaterThanOrEqual(3);
+      }
     },
   );
 

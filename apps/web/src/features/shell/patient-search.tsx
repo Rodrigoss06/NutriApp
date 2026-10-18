@@ -17,7 +17,7 @@ export function PatientSearch({ patientLabel }: { patientLabel: string }) {
         name="q"
         type="search"
         placeholder={label}
-        className="h-10 w-full rounded-md border border-input-border bg-background pr-3 pl-9 text-base placeholder:text-muted-foreground"
+        className="h-10 w-full rounded-md border border-input-border bg-card pr-3 pl-9 text-base placeholder:text-muted-foreground"
       />
     </form>
   );

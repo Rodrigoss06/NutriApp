@@ -12,7 +12,7 @@ export function LiveBrand({ initial }: { initial: { primary: string; secondary: 
   const [secondary, setSecondary] = useState(initial.secondary);
   const css = brandCss(parseBrand({ primary, secondary }));
   return (
-    <fieldset className="flex flex-wrap items-end gap-4 rounded-lg border border-border p-4">
+    <fieldset className="flex flex-wrap items-end gap-4 rounded-lg border border-border p-4 bg-card">
       <legend className="px-1 text-sm font-medium">Marca de prueba</legend>
       <style>{css}</style>
       <label className="flex flex-col gap-1 text-sm">

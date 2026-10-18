@@ -264,7 +264,7 @@ export function PrescriptionForm({
               ) : (
                 <ul
                   aria-label="Actividades encontradas"
-                  className="flex flex-col divide-y divide-border rounded-lg border border-border"
+                  className="flex flex-col divide-y divide-border rounded-lg border border-border bg-card"
                 >
                   {found.data.activities.slice(0, 10).map((activity) => {
                     const added = activities.some((a) => a.activityCode === activity.code);
@@ -309,7 +309,7 @@ export function PrescriptionForm({
             {activities.map((activity) => (
               <div
                 key={activity.activityCode}
-                className="flex flex-col gap-2 rounded-lg border border-border p-3"
+                className="flex flex-col gap-2 rounded-lg border border-border p-3 bg-card"
               >
                 <div className="flex flex-wrap items-center justify-between gap-2">
                   <p className="font-medium">

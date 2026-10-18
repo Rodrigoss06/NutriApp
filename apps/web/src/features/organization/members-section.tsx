@@ -38,7 +38,7 @@ export function MembersSection({ members }: { members: readonly Member[] }) {
   return (
     <div className="flex flex-col gap-3">
       <FormError error={change.error ?? remove.error} />
-      <ul className="divide-y divide-border rounded-lg border border-border">
+      <ul className="divide-y divide-border rounded-lg border border-border bg-card">
         {members.map((member) => {
           const self = member.userId === userId;
           const editable = manage && !self && (grantOwner || member.role !== 'OWNER');

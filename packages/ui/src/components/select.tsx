@@ -44,7 +44,7 @@ export function Select({
           id={id}
           aria-invalid={error ? true : undefined}
           aria-describedby={describedBy(id, hint, error)}
-          className="flex h-10 w-full items-center justify-between rounded-md border border-input-border bg-background px-3 text-left text-base data-placeholder:text-muted-foreground"
+          className="flex h-10 w-full items-center justify-between rounded-md border border-input-border bg-card px-3 text-left text-base data-placeholder:text-muted-foreground"
         >
           <SelectPrimitive.Value placeholder={placeholder} />
           <SelectPrimitive.Icon>
@@ -55,7 +55,7 @@ export function Select({
           <SelectPrimitive.Content
             position="popper"
             sideOffset={4}
-            className="z-50 max-h-72 min-w-(--radix-select-trigger-width) overflow-hidden rounded-md border border-border bg-background shadow-lg"
+            className="z-50 max-h-72 min-w-(--radix-select-trigger-width) overflow-hidden rounded-md border border-border bg-card shadow-lg"
           >
             <SelectPrimitive.Viewport className="p-1">
               {options.map((option) => (

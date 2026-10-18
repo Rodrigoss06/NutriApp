@@ -37,16 +37,18 @@ export interface NoticeProps {
   readonly children?: ReactNode;
   /** Código de regla que lo explica, como `RN-E04` (03): el profesional lo puede consultar. */
   readonly rule?: string;
+  /** Un aviso nuevo que pide atención (la tercera toma): late dos veces al aparecer y queda quieto. */
+  readonly attention?: boolean;
   readonly className?: string;
 }
 
 /** Aviso con ícono, texto y, si aplica, la regla. Los errores se anuncian de inmediato. */
-export function Notice({ tone, title, children, rule, className }: NoticeProps) {
+export function Notice({ tone, title, children, rule, attention = false, className }: NoticeProps) {
   const Icon = ICONS[tone];
   return (
     <div
       role={tone === 'danger' ? 'alert' : 'status'}
-      className={cn(noticeVariants({ tone }), className)}
+      className={cn(noticeVariants({ tone }), attention && 'nc-pulse', className)}
     >
       <Icon aria-hidden className="mt-0.5 size-5 shrink-0" />
       <div className="flex flex-col gap-1">

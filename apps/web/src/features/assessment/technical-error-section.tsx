@@ -222,7 +222,7 @@ export function TechnicalErrorSection({
         </div>
       ) : null}
       {canWrite && adding ? (
-        <div className="flex flex-col gap-4 rounded-lg border border-border p-4">
+        <div className="flex flex-col gap-4 rounded-lg border border-border p-4 bg-card">
           <div className="grid gap-4 sm:grid-cols-2">
             <Select
               label="Origen del ETM"

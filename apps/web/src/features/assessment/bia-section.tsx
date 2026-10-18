@@ -119,7 +119,7 @@ export function BiaSection({
         <article
           key={reading.id}
           aria-label={`Lectura de ${reading.deviceBrand} ${reading.deviceModel}`}
-          className="flex flex-col gap-2 rounded-lg border border-border p-4"
+          className="flex flex-col gap-2 rounded-lg border border-border p-4 bg-card"
         >
           <h3 className="font-medium">
             {reading.deviceBrand} · {reading.deviceModel}
@@ -148,7 +148,7 @@ export function BiaSection({
         </article>
       ))}
       {disabled ? null : adding ? (
-        <div className="flex flex-col gap-4 rounded-lg border border-border p-4">
+        <div className="flex flex-col gap-4 rounded-lg border border-border p-4 bg-card">
           <div className="grid gap-4 sm:grid-cols-2">
             <TextField
               label="Marca del equipo"

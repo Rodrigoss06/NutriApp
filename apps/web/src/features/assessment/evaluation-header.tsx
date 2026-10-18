@@ -1,6 +1,8 @@
 import type { EvaluationResponse, MemberResponse } from '@nutricoach/contracts';
 import { Notice, StatusBadge } from '@nutricoach/ui';
+import { ChevronLeft } from 'lucide-react';
 import Link from 'next/link';
+import type { ReactNode } from 'react';
 import { POPULATION_LABELS } from '@/features/patients/labels';
 import { formatInstant } from '@/lib/dates';
 import { evaluationTitle, STATUS_LABELS, STATUS_TONES } from './labels';
@@ -16,6 +18,16 @@ export function conditionsText(conditions: EvaluationResponse['conditions']): st
   ]
     .filter(Boolean)
     .join(' · ');
+}
+
+/** Un dato de la cabecera: etiqueta estrecha arriba, valor debajo. */
+function Fact({ label, children }: { label: string; children: ReactNode }) {
+  return (
+    <div className="flex flex-col gap-0.5">
+      <dt className="font-label text-xs text-muted-foreground">{label}</dt>
+      <dd className="font-medium">{children}</dd>
+    </div>
+  );
 }
 
 /**
@@ -40,7 +52,11 @@ export function EvaluationHeader({
   const age = Math.floor(evaluation.patientSnapshot.ageYears);
   return (
     <header className="flex flex-col gap-3">
-      <Link href={base} className="text-sm text-brand-text underline">
+      <Link
+        href={base}
+        className="inline-flex w-fit items-center gap-1 text-sm text-brand-text underline underline-offset-4"
+      >
+        <ChevronLeft aria-hidden className="size-4" />
         Volver a evaluaciones
       </Link>
       <div className="flex flex-wrap items-center gap-3">
@@ -52,14 +68,18 @@ export function EvaluationHeader({
           <span className="text-sm text-muted-foreground">Revisión {evaluation.revision}</span>
         ) : null}
       </div>
-      <p className="text-sm text-muted-foreground">
-        {formatInstant(evaluation.measuredAt, timezone)} · Evaluó {evaluator} · {age}{' '}
-        {age === 1 ? 'año' : 'años'} al medir ·{' '}
-        {POPULATION_LABELS[evaluation.patientSnapshot.population]}
-      </p>
-      <p className="text-sm text-muted-foreground">
-        Condiciones: {conditionsText(evaluation.conditions)}
-      </p>
+      <dl className="grid gap-x-8 gap-y-3 rounded-lg border border-border bg-card px-4 py-3 text-sm grid-cols-2 lg:grid-cols-4">
+        <Fact label="Fecha">{formatInstant(evaluation.measuredAt, timezone)}</Fact>
+        <Fact label="Evaluó">{evaluator}</Fact>
+        <Fact label="Edad al medir">
+          {age} {age === 1 ? 'año' : 'años'}
+        </Fact>
+        <Fact label="Población">{POPULATION_LABELS[evaluation.patientSnapshot.population]}</Fact>
+        <div className="col-span-2 flex flex-col gap-0.5 lg:col-span-4">
+          <dt className="font-label text-xs text-muted-foreground">Condiciones</dt>
+          <dd className="first-letter:uppercase">{conditionsText(evaluation.conditions)}</dd>
+        </div>
+      </dl>
       {evaluation.notes ? (
         <p className="text-sm whitespace-pre-wrap">Notas: {evaluation.notes}</p>
       ) : null}

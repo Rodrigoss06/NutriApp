@@ -102,7 +102,7 @@ export function InvitationsSection({ invitations }: { invitations: readonly Invi
       {invitations.length === 0 ? (
         <p className="text-sm text-muted-foreground">No hay invitaciones pendientes.</p>
       ) : (
-        <ul className="divide-y divide-border rounded-lg border border-border">
+        <ul className="divide-y divide-border rounded-lg border border-border bg-card">
           {invitations.map((invitation) => {
             const expired = new Date(invitation.expiresAt) <= new Date();
             return (
