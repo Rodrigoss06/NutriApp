@@ -39,6 +39,7 @@ import {
   type ResultsView,
 } from '../../../application/queries/results.queries.js';
 import { EVALUATION_NOT_FOUND } from '../../../domain/assessment-rules.js';
+import type { ReferenceScale } from '../../../domain/interpretation.js';
 import type { EvaluationRecord } from '../../../application/ports/assessment.ports.js';
 import { contextOf, problem } from './evaluation.controller.js';
 
@@ -68,6 +69,7 @@ const resultsOf = (view: ResultsView): EvaluationResultsResponse => ({
       zScore: m.zScore,
       interpretation: m.interpretation,
       interpretationNote: m.interpretationNote,
+      referenceScale: scaleOf(m.referenceScale),
     })),
     principalFor: [...r.principalFor],
   })),
@@ -85,8 +87,12 @@ const resultsOf = (view: ResultsView): EvaluationResultsResponse => ({
     methodCode: 'CONSOLIDATE_ISAK',
     interpretation: s.interpretation,
     interpretationNote: s.interpretationNote,
+    referenceScale: scaleOf(s.referenceScale),
   })),
 });
+
+const scaleOf = (scale: ReferenceScale | null) =>
+  scale ? { source: scale.source, bands: scale.bands.map((band) => ({ ...band })) } : null;
 
 const compared = (evaluation: EvaluationRecord) => ({
   id: evaluation.id,

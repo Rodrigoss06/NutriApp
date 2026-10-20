@@ -192,7 +192,7 @@ export function EvaluationCapture({
               <h3 id={`familia-${group.family}`} className="font-semibold">
                 {FAMILY_LABELS[group.family]}
               </h3>
-              <ul className="flex flex-col divide-y divide-border rounded-lg border border-border">
+              <ul className="flex flex-col divide-y divide-border rounded-lg border border-border bg-card">
                 {group.sites.map((site) => (
                   <SiteRow
                     key={`${site.code}-${String(reloads)}`}
@@ -428,7 +428,7 @@ function SiteRow({
           </p>
         ) : null}
         {needsThird && third === null ? (
-          <StatusBadge tone="warning">
+          <StatusBadge tone="warning" className="nc-pulse w-fit">
             Falta la 3.ª toma: supera el {String(site.tolerancePct)} %
           </StatusBadge>
         ) : null}

@@ -639,3 +639,48 @@ Decisión:
 Consecuencias:
 - La auditoría de las escrituras llega en segundos (RN-B03).
 - Registrar el ETM de otro miembro, que la API permite al dueño y a los administradores, no tiene pantalla todavía.
+
+## ADR-051 · Rediseño «Instrumento», animaciones y escala de referencia — aceptada (2026-10-18)
+Contexto: a Rodrigo no le convencía la interfaz de P3: el aspecto por defecto de shadcn (Inter, verde azulado sobre
+blanco) y resultados sin jerarquía. Pidió animaciones reutilizables en lo que debe llamar la atención y un fondo
+animado. De tres direcciones en una vista previa eligió «Instrumento» con fondo de curvas de nivel.
+Decisión:
+- Dirección «Instrumento»: la interfaz como un instrumento de medición.
+  - Papel claro (#f3f5f4) con tarjetas blancas y líneas finas.
+  - Tinta azul pizarra y un riel oscuro teñido con la marca de la organización.
+  - Un amarillo de cinta métrica (--signal) solo para marcadores.
+  - Radios por jerarquía: 8 px los controles, 12 px las tarjetas y 16 px las zonas destacadas.
+- Tipografía: Archivo, autoalojada con next/font, en lugar de Inter. Es una sola familia con eje de ancho:
+  - los títulos se ensanchan;
+  - las etiquetas pequeñas se estrechan (font-label);
+  - trae cifras tabulares.
+- La marca sigue siendo solo --brand-* (ADR-027). El texto y los bordes de marca se oscurecen contra el papel (PAPER)
+  y no contra el blanco, así cumplen AA sobre ambos.
+- Animaciones solo con CSS (sin Motion ni GSAP, que cambiarían el stack de Notion):
+  - todas parten de un estado inicial y terminan en el estilo normal del elemento;
+  - con «reducir movimiento» o sin animación queda el valor final;
+  - solo transform y opacity;
+  - una sola entrada escalonada por pantalla (nc-enter con enterStyle);
+  - marcador de regla, crecimiento de barras, brillo del botón principal (attention) y pulso de dos latidos para un
+    aviso nuevo.
+- Fondo de curvas de nivel (ContourBackground) en las zonas destacadas: entrar, inicio del panel y cabecera de Hoy.
+  - Las curvas se dibujan en el navegador: no pesan en el HTML ni retrasan la primera pintura.
+  - Se pausa con su botón (WCAG 2.2.2), fuera de la vista y con la pestaña oculta. La preferencia de pausa queda en
+    el navegador.
+  - En la franja de índices de los resultados va quieto, como textura.
+- Las cifras nunca cuentan desde cero: el número sale exacto y lo que se mueve es el indicador. Así lo que se lee, se
+  captura o se prueba es siempre el valor real.
+- Escala de referencia (RN-D10): los resultados traen, por indicador con rangos, la tabla completa que interpreta el
+  valor (referenceScale).
+  - Es la tabla de la banda que contiene el valor o, si cae en un hueco, la más específica que aplica al paciente.
+  - La web solo la dibuja (ReferenceRuler) y nunca guarda puntos de corte en el código.
+  - La geometría (extremos abiertos con aire, marcas a paso redondo, rótulos que no se pisan) es solo presentación.
+- La barra de composición de Kerr no muestra cifras: las masas se leen debajo, cada una con su método (RN-D02).
+- «Inicio» del riel solo queda activo en /panel (antes lo estaba en todas las secciones).
+Consecuencias:
+- Cambiar el primario de la organización tiñe el riel, las zonas destacadas, los botones y la marca de la sección
+  activa (RN-H03).
+- El contrato de resultados suma referenceScale (null sin rangos para el indicador o el paciente, RN-D05).
+- Las herramientas de diseño (frontend-design, ui-ux-pro-max, ui-skills y los MCP de shadcn, Context7 y Playwright)
+  quedan en el usuario de Claude Code, no en el repositorio: .mcp.json y .claude/settings.json siguen idénticos a
+  Notion.

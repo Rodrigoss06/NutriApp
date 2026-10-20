@@ -59,9 +59,51 @@ export function rangesInForce(ranges: readonly ReferenceRange[], onDate: string)
   return ranges.filter((range) => chosen.get(scopeOf(range)) === range.validFrom);
 }
 
+/** Una banda de la escala: la fila del rango sin su alcance. */
+export interface ReferenceBand {
+  readonly minValue: number | null;
+  readonly maxValue: number | null;
+  readonly label: string;
+  readonly tone: InterpretationTone;
+}
+
+/** Todas las bandas de la tabla que interpreta un valor, para mostrar dónde cae dentro de ella. */
+export interface ReferenceScale {
+  readonly source: string;
+  readonly bands: readonly ReferenceBand[];
+}
+
 /** Intervalos semiabiertos [mínimo, máximo): la tabla ACE tiene huecos entre sus bandas (ADR-044). */
 const inside = (value: number, min: number | null, max: number | null): boolean =>
   (min === null || value >= min) && (max === null || value < max);
+
+/** Los rangos del indicador que corresponden al sexo, la edad y la población, sin mirar el valor. */
+const applicable = (
+  ranges: readonly ReferenceRange[],
+  metricCode: string,
+  subject: InterpretedSubject,
+): ReferenceRange[] =>
+  ranges.filter(
+    (range) =>
+      range.metricCode === metricCode &&
+      (range.sex === null || range.sex === subject.sex) &&
+      (range.population === null || range.population === subject.population) &&
+      inside(subject.ageYears, range.minAge, range.maxAge),
+  );
+
+/** Los de la organización antes que los de la plataforma, y el más específico primero. */
+const bySpecificity = (a: ReferenceRange, b: ReferenceRange): number => {
+  const specificity = (range: ReferenceRange) =>
+    (range.organizationId ? 8 : 0) +
+    (range.population ? 4 : 0) +
+    (range.sex ? 2 : 0) +
+    (range.minAge !== null || range.maxAge !== null ? 1 : 0);
+  return specificity(b) - specificity(a);
+};
+
+/** Las filas de una misma tabla comparten alcance: organización, población, sexo y edades. */
+const tableOf = (range: ReferenceRange): string =>
+  [range.organizationId, range.population, range.sex, range.minAge, range.maxAge].join('|');
 
 /**
  * Interpreta un valor sin redondear (RN-D09, RN-D10) con los rangos que rigen: el del indicador que corresponde al sexo,
@@ -73,22 +115,32 @@ export function interpret(
   subject: InterpretedSubject,
   ranges: readonly ReferenceRange[],
 ): Interpretation | null {
-  const specificity = (range: ReferenceRange) =>
-    (range.organizationId ? 8 : 0) +
-    (range.population ? 4 : 0) +
-    (range.sex ? 2 : 0) +
-    (range.minAge !== null || range.maxAge !== null ? 1 : 0);
-  const match = ranges
-    .filter(
-      (range) =>
-        range.metricCode === metricCode &&
-        (range.sex === null || range.sex === subject.sex) &&
-        (range.population === null || range.population === subject.population) &&
-        inside(subject.ageYears, range.minAge, range.maxAge) &&
-        inside(value, range.minValue, range.maxValue),
-    )
-    .sort((a, b) => specificity(b) - specificity(a))[0];
+  const match = applicable(ranges, metricCode, subject)
+    .filter((range) => inside(value, range.minValue, range.maxValue))
+    .sort(bySpecificity)[0];
   return match ? { label: match.label, tone: match.tone, source: match.source } : null;
+}
+
+/**
+ * La tabla completa que interpreta el valor (RN-D10): la de la banda que lo contiene o, si cae en un hueco, la más
+ * específica que aplica al paciente. Sus bandas van ordenadas de menor a mayor; son datos de reference_range, nunca
+ * código, y la interfaz solo las dibuja. null si no hay rangos para el indicador, el sexo, la población o la edad.
+ */
+export function referenceScale(
+  metricCode: string,
+  value: number,
+  subject: InterpretedSubject,
+  ranges: readonly ReferenceRange[],
+): ReferenceScale | null {
+  const candidates = applicable(ranges, metricCode, subject).sort(bySpecificity);
+  const anchor =
+    candidates.find((range) => inside(value, range.minValue, range.maxValue)) ?? candidates[0];
+  if (!anchor) return null;
+  const bands = candidates
+    .filter((range) => tableOf(range) === tableOf(anchor))
+    .sort((a, b) => (a.minValue ?? -Infinity) - (b.minValue ?? -Infinity))
+    .map(({ minValue, maxValue, label, tone }) => ({ minValue, maxValue, label, tone }));
+  return { source: anchor.source, bands };
 }
 
 /**

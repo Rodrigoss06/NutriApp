@@ -162,7 +162,7 @@ export function OrganizationMethodPreferences({
           <section
             key={row.population}
             aria-labelledby={`poblacion-${row.population}`}
-            className="flex flex-col rounded-lg border border-border px-4 py-2"
+            className="flex flex-col rounded-lg border border-border px-4 py-2 bg-card"
           >
             <h3 id={`poblacion-${row.population}`} className="pt-2 font-semibold">
               {POPULATION_LABELS[row.population]}

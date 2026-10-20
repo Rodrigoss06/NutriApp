@@ -1,14 +1,18 @@
 import { methodLabel } from '@nutricoach/contracts';
 import {
   Button,
+  CompositionBar,
+  ContourBackground,
   EmptyState,
   formatNumber,
   IndicatorCard,
   MethodBadge,
   Notice,
   parseBrand,
+  ReferenceRuler,
   StatusBadge,
   Steps,
+  type RulerBand,
 } from '@nutricoach/ui';
 import { CalendarCheck, Dumbbell, Inbox, Menu, TrendingUp, UtensilsCrossed } from 'lucide-react';
 import type { Metadata } from 'next';
@@ -25,6 +29,15 @@ export const metadata: Metadata = {
 };
 
 type SearchParams = Promise<Record<string, string | string[] | undefined>>;
+
+/** Ejemplo de escala: la tabla de ACE para hombres adultos de la semilla (assessment.reference_range). */
+const ACE_EXAMPLE: RulerBand[] = [
+  { min: 2, max: 6, label: 'Grasa esencial', tone: 'caution' },
+  { min: 6, max: 14, label: 'Atlético', tone: 'neutral' },
+  { min: 14, max: 18, label: 'Fitness', tone: 'neutral' },
+  { min: 18, max: 25, label: 'Promedio', tone: 'neutral' },
+  { min: 25, max: null, label: 'Obesidad', tone: 'risk' },
+];
 
 const hex = (value: string | string[] | undefined) =>
   typeof value === 'string' ? `#${value}` : undefined;
@@ -52,8 +65,9 @@ export default async function ComponentCatalogPage({
       <header className="flex flex-col gap-2">
         <h1 className="text-3xl font-semibold">Catálogo de componentes</h1>
         <p className="text-muted-foreground">
-          Sistema de diseño de NutriCoach. Cambia el color primario y mira cómo cambian los botones,
-          la barra lateral y la barra inferior sin tocar ningún componente.
+          Sistema de diseño de NutriCoach, dirección «Instrumento» (ADR-051). Cambia el color
+          primario y mira cómo cambian los botones, el riel y la barra inferior sin tocar ningún
+          componente.
         </p>
       </header>
 
@@ -107,6 +121,53 @@ export default async function ComponentCatalogPage({
             method={<MethodBadge label={methodLabel('RMR_MIFFLIN1990')} code="RMR_MIFFLIN1990" />}
             status={<StatusBadge tone="success">En rango</StatusBadge>}
           />
+        </div>
+      </section>
+
+      <section aria-labelledby="regla" className="flex flex-col gap-4">
+        <h2 id="regla" className="text-xl font-semibold">
+          Regla de referencia y barra de composición
+        </h2>
+        <div className="grid gap-4 sm:grid-cols-2">
+          <IndicatorCard
+            label="% de grasa"
+            value={formatNumber(20.2563, 'percent')}
+            unit="%"
+            scale={
+              <ReferenceRuler
+                value={20.2563}
+                bands={ACE_EXAMPLE}
+                formatEdge={(edge) => formatNumber(edge, 'percent')}
+              />
+            }
+            status={<StatusBadge tone="success">Promedio</StatusBadge>}
+            method={
+              <MethodBadge label={methodLabel('FAT_DW1974_SIRI1961')} code="FAT_DW1974_SIRI1961" />
+            }
+          />
+          <div className="flex flex-col gap-3 rounded-lg border border-border bg-card p-4">
+            <h3 className="font-semibold">5 componentes</h3>
+            <CompositionBar
+              label="Proporción de las cinco masas de ejemplo: adiposa, muscular, ósea, residual y piel."
+              segments={[
+                { key: 'a', label: 'Adiposa', value: 23.4, color: 'var(--data-adipose)' },
+                { key: 'm', label: 'Muscular', value: 35.9, color: 'var(--data-muscle)' },
+                { key: 'o', label: 'Ósea', value: 8.7, color: 'var(--data-bone)' },
+                { key: 'r', label: 'Residual', value: 9.5, color: 'var(--data-residual)' },
+                { key: 'p', label: 'Piel', value: 4.0, color: 'var(--data-skin)' },
+              ]}
+            />
+          </div>
+        </div>
+      </section>
+
+      <section aria-labelledby="fondo" className="flex flex-col gap-4">
+        <h2 id="fondo" className="text-xl font-semibold">
+          Zona destacada con fondo de curvas de nivel
+        </h2>
+        <div className="relative overflow-hidden rounded-xl bg-hero px-6 py-10 text-hero-foreground">
+          <ContourBackground seed={4.4} />
+          <p className="relative font-display text-3xl">Cada cifra, con su método.</p>
         </div>
       </section>
 
@@ -168,18 +229,22 @@ export default async function ComponentCatalogPage({
           Navegación del panel y de la app
         </h2>
         <div className="grid gap-4 sm:grid-cols-2">
-          <div className="rounded-lg border border-border p-3">
+          <div className="rounded-lg border border-border p-3 bg-card">
             <p className="mb-2 text-sm text-muted-foreground">
               Barra lateral del panel (sección activa)
             </p>
-            <span
-              data-testid="sidebar-active"
-              className="flex min-h-touch items-center gap-3 rounded-md bg-brand px-3 text-sm font-medium text-brand-foreground"
-            >
-              Inicio
-            </span>
+            <div className="rounded-md bg-rail p-3">
+              <span className="relative flex min-h-touch items-center gap-3 rounded-md bg-white/[0.08] px-3 text-sm font-medium text-rail-foreground">
+                <span
+                  aria-hidden
+                  data-testid="sidebar-active"
+                  className="absolute inset-y-2.5 -left-3 w-[3px] rounded-r-full bg-brand"
+                />
+                Inicio
+              </span>
+            </div>
           </div>
-          <div className="rounded-lg border border-border p-3">
+          <div className="rounded-lg border border-border p-3 bg-card">
             <p className="mb-2 text-sm text-muted-foreground">Barra inferior de la app</p>
             <div className="flex">
               {[

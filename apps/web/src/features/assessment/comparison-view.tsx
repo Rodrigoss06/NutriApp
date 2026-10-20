@@ -83,7 +83,7 @@ export function ComparisonView({
       {sum ? (
         <section
           aria-labelledby="suma-6"
-          className="flex flex-col gap-2 rounded-lg border border-border p-4"
+          className="flex flex-col gap-2 rounded-lg border border-border p-4 bg-card"
         >
           <h3 id="suma-6" className="font-semibold">
             Suma de 6 pliegues
@@ -195,7 +195,7 @@ export function ComparisonView({
               <article
                 key={methodCode}
                 aria-label={methodLabel(methodCode)}
-                className="flex flex-col gap-2 rounded-lg border border-border p-4"
+                className="flex flex-col gap-2 rounded-lg border border-border p-4 bg-card"
               >
                 <MethodBadge
                   label={methodLabel(methodCode)}

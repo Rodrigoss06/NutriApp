@@ -1,11 +1,18 @@
 import type { Metadata, Viewport } from 'next';
-import { Inter } from 'next/font/google';
+import { Archivo } from 'next/font/google';
 import type { ReactNode } from 'react';
 import { QueryProvider } from '@/features/query/query-provider';
 import './globals.css';
 
-// Inter autoalojada por next/font: sin pedidos a Google en ejecución. El subconjunto latin trae tildes, ñ, ¿ y ¡.
-const inter = Inter({ subsets: ['latin'], variable: '--font-inter', display: 'swap' });
+// Archivo autoalojada por next/font: sin pedidos a Google en ejecución. El subconjunto latin trae tildes, ñ, ¿ y ¡;
+// el eje wdth deja ensanchar los títulos y estrechar las etiquetas con una sola familia (ADR-051). Trae cifras
+// tabulares (tnum) para las columnas de números.
+const archivo = Archivo({
+  subsets: ['latin'],
+  axes: ['wdth'],
+  variable: '--font-archivo',
+  display: 'swap',
+});
 
 export const metadata: Metadata = {
   title: { default: 'NutriCoach', template: '%s · NutriCoach' },
@@ -20,7 +27,7 @@ export const viewport: Viewport = {
 
 export default function RootLayout({ children }: Readonly<{ children: ReactNode }>) {
   return (
-    <html lang="es-PE" className={inter.variable}>
+    <html lang="es-PE" className={archivo.variable}>
       <body className="min-h-dvh bg-background text-foreground antialiased">
         <QueryProvider>{children}</QueryProvider>
       </body>

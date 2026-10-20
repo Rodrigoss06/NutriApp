@@ -1,5 +1,7 @@
 /*
- * Tokens del sistema de diseño (02 §11). La web los importa después de Tailwind.
+ * Tokens del sistema de diseño (02 §11), dirección «Instrumento» (ADR-051): la interfaz como un instrumento de
+ * medición bien hecho. Papel claro y tarjetas blancas con líneas finas; tinta azul pizarra; un riel oscuro teñido con
+ * la marca; Archivo, una sola familia que se ensancha en los títulos y se estrecha en las etiquetas.
  *
  * Marca: los valores viven en :root como --brand-* y @theme inline solo los referencia con var(). Así las
  * clases (bg-brand, text-brand-text...) leen la variable en ejecución y cambiar la marca de la organización o el
@@ -14,21 +16,38 @@
   --brand-primary-border: #0f766e;
   --brand-secondary: #d97706;
   --brand-secondary-foreground: #000000;
-  --brand-secondary-text: #b26205;
-  --brand-secondary-border: #d97706;
+  --brand-secondary-text: #a95d05;
+  --brand-secondary-border: #d57506;
 
-  /* Neutros: texto 17.7:1 y secundario 7.6:1 sobre el fondo; bordes de campos 4.8:1 (WCAG 1.4.11). */
-  --background: #ffffff;
-  --foreground: #111827;
-  --surface: #f9fafb;
-  --muted: #f3f4f6;
-  --muted-foreground: #4b5563;
-  --border: #e5e7eb;
-  --input-border: #6b7280;
+  /*
+   * Neutros. El papel (--background) es el fondo de las páginas; las tarjetas y los campos van en blanco (--card).
+   * Tinta 14.8:1 y secundario 6.7:1 sobre el papel; bordes de campos 4.0:1 (WCAG 1.4.11). El texto de marca se
+   * oscurece contra el papel (PAPER en brand-tokens.ts), así cumple también sobre blanco.
+   */
+  --background: #f3f5f4;
+  --card: #ffffff;
+  --foreground: #15222b;
+  --surface: #eaeeec;
+  --muted: #e3e8e6;
+  --muted-foreground: #4a585f;
+  --border: #d6dedb;
+  --input-border: #6c7b81;
+
+  /*
+   * Riel y zonas destacadas: tinta casi negra teñida con la marca, así cada organización tiñe su panel. Texto 14:1
+   * y secundario 8:1 sobre ellas. La señal es el amarillo de una cinta métrica: marcadores, nunca texto sobre claro.
+   */
+  --rail: color-mix(in oklab, var(--brand-primary) 14%, #0b171c);
+  --rail-foreground: #e3ebe9;
+  --rail-muted: #a7b8b6;
+  --hero: color-mix(in oklab, var(--brand-primary) 10%, #0c191e);
+  --hero-foreground: #eef4f3;
+  --hero-muted: #b2c3c1;
+  --signal: #f0b23a;
 
   /*
    * Estados: siempre con ícono y texto, nunca solo color (WCAG 1.4.1). El éxito es verde lima para no
-   * confundirse con el primario verde azulado. Texto ≥ 4.5:1 sobre blanco y sobre su fondo.
+   * confundirse con el primario verde azulado. Texto ≥ 4.5:1 sobre el papel y sobre su fondo.
    */
   --success: #4d7c0f;
   --success-surface: #f7fee7;
@@ -39,7 +58,20 @@
   --info: #1d4ed8;
   --info-surface: #eff6ff;
 
+  /* Componentes de Kerr (y otras series): colores de dato fijos, siempre con su nombre al lado. */
+  --data-adipose: #d9973a;
+  --data-muscle: #2f7d6d;
+  --data-bone: #8c8174;
+  --data-residual: #6b8db5;
+  --data-skin: #d4a19a;
+
+  /* Radios por jerarquía: controles 8 px, tarjetas 12 px, zonas destacadas 16 px. */
   --radius: 0.5rem;
+
+  /* Movimiento (ADR-051): una salida suave y larga; la entrada escalonada avanza de a 70 ms. */
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --duration-enter: 520ms;
+  --stagger: 70ms;
 }
 
 @theme inline {
@@ -53,12 +85,20 @@
   --color-brand-secondary-border: var(--brand-secondary-border);
 
   --color-background: var(--background);
+  --color-card: var(--card);
   --color-foreground: var(--foreground);
   --color-surface: var(--surface);
   --color-muted: var(--muted);
   --color-muted-foreground: var(--muted-foreground);
   --color-border: var(--border);
   --color-input-border: var(--input-border);
+  --color-rail: var(--rail);
+  --color-rail-foreground: var(--rail-foreground);
+  --color-rail-muted: var(--rail-muted);
+  --color-hero: var(--hero);
+  --color-hero-foreground: var(--hero-foreground);
+  --color-hero-muted: var(--hero-muted);
+  --color-signal: var(--signal);
   --color-success: var(--success);
   --color-success-surface: var(--success-surface);
   --color-warning: var(--warning);
@@ -67,14 +107,21 @@
   --color-danger-surface: var(--danger-surface);
   --color-info: var(--info);
   --color-info-surface: var(--info-surface);
+  --color-data-adipose: var(--data-adipose);
+  --color-data-muscle: var(--data-muscle);
+  --color-data-bone: var(--data-bone);
+  --color-data-residual: var(--data-residual);
+  --color-data-skin: var(--data-skin);
 
-  /* next/font define --font-inter en <html>. */
-  --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+  /* next/font define --font-archivo en <html>. */
+  --font-sans: var(--font-archivo), ui-sans-serif, system-ui, sans-serif;
 
   --radius-sm: calc(var(--radius) - 0.25rem);
   --radius-md: var(--radius);
   --radius-lg: calc(var(--radius) + 0.25rem);
   --radius-xl: calc(var(--radius) + 0.5rem);
+
+  --shadow-card: 0 1px 0 rgb(21 34 43 / 0.04), 0 1px 2px rgb(21 34 43 / 0.06);
 }
 
 @theme {
@@ -89,9 +136,226 @@
     font-family: var(--font-sans);
   }
 
+  /*
+   * La tipografía es la personalidad: los títulos se ensanchan (Archivo, eje wdth) y se ajustan; el cuerpo queda
+   * en su ancho normal. Las etiquetas pequeñas usan la clase font-label, más estrecha.
+   */
+  h1,
+  h2 {
+    font-stretch: 116%;
+    letter-spacing: -0.012em;
+    text-wrap: balance;
+  }
+
+  h3 {
+    font-stretch: 106%;
+  }
+
   /* Foco visible en todo lo interactivo, con el borde de marca a 3:1 (WCAG 2.4.7 y 1.4.11). */
   :focus-visible {
     outline: 2px solid var(--brand-primary-border);
     outline-offset: 2px;
+  }
+}
+
+/* Títulos de las zonas destacadas: los más anchos, como la rotulación de un instrumento. */
+@utility font-display {
+  font-stretch: 122%;
+  font-weight: 640;
+  letter-spacing: -0.015em;
+}
+
+/* Etiquetas y datos pequeños: Archivo estrecho, que deja respirar a las cifras. */
+@utility font-label {
+  font-stretch: 88%;
+}
+
+/*
+ * Animaciones reutilizables (ADR-051). Todas animan desde un estado inicial hacia el estilo normal del elemento:
+ * sin animación (prefers-reduced-motion, impresión, una prueba) lo que queda es el valor final, nunca un hueco.
+ * Solo transform y opacity, salvo el trazo de los anillos.
+ */
+@keyframes nc-enter {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+}
+
+@keyframes nc-from-start {
+  from {
+    transform: translateX(0);
+  }
+}
+
+@keyframes nc-grow-x {
+  from {
+    transform: scaleX(0);
+  }
+}
+
+@keyframes nc-shine {
+  from {
+    transform: translateX(-120%);
+  }
+  to {
+    transform: translateX(120%);
+  }
+}
+
+@keyframes nc-pulse {
+  from {
+    opacity: 0.9;
+    transform: scale(1);
+  }
+  to {
+    opacity: 0;
+    transform: scale(1.03);
+  }
+}
+
+@keyframes nc-fade-in {
+  from {
+    opacity: 0;
+  }
+}
+
+@keyframes nc-drift-a {
+  from {
+    transform: rotate(-4deg) translate3d(-2%, 1%, 0);
+  }
+  to {
+    transform: rotate(5deg) translate3d(2%, -2%, 0);
+  }
+}
+
+@keyframes nc-drift-b {
+  from {
+    transform: rotate(3deg) translate3d(2%, -1%, 0) scale(1.04);
+  }
+  to {
+    transform: rotate(-5deg) translate3d(-3%, 2%, 0) scale(1);
+  }
+}
+
+@keyframes nc-scan {
+  from {
+    transform: translateX(-110%);
+  }
+  60%,
+  to {
+    transform: translateX(320%);
+  }
+}
+
+@layer components {
+  /* Entrada escalonada: una sola secuencia por pantalla. El índice va en --i (enterStyle). */
+  .nc-enter {
+    animation: nc-enter var(--duration-enter) var(--ease-out) both;
+    animation-delay: calc(var(--i, 0) * var(--stagger));
+  }
+
+  /* El marcador de una regla viaja desde el inicio hasta su valor (su transform final lo pone el componente). */
+  .nc-to-value {
+    animation: nc-from-start 1100ms var(--ease-out) both;
+    animation-delay: calc(var(--i, 0) * var(--stagger) + 260ms);
+  }
+
+  /* Una barra (o un tramo de la barra de composición) crece desde la izquierda. */
+  .nc-grow {
+    transform-origin: left center;
+    animation: nc-grow-x 800ms var(--ease-out) both;
+    animation-delay: calc(400ms + var(--k, 0) * 120ms);
+  }
+
+  /* Brillo del botón principal: al pasar el puntero o enfocarlo; con nc-shine-once, también una vez al aparecer. */
+  .nc-shine {
+    position: relative;
+    overflow: hidden;
+    isolation: isolate;
+  }
+  .nc-shine::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    pointer-events: none;
+    background: linear-gradient(
+      100deg,
+      transparent 30%,
+      rgb(255 255 255 / 0.32) 50%,
+      transparent 70%
+    );
+    transform: translateX(-120%);
+  }
+  .nc-shine:hover::after,
+  .nc-shine:focus-visible::after {
+    animation: nc-shine 900ms var(--ease-out) 1;
+  }
+  .nc-shine-once::after {
+    animation: nc-shine 1100ms var(--ease-out) 900ms 1;
+  }
+
+  /* Pulso de atención: dos latidos y queda quieto (un aviso nuevo, como la tercera toma). */
+  .nc-pulse {
+    position: relative;
+  }
+  .nc-pulse::before {
+    content: '';
+    position: absolute;
+    inset: -3px;
+    border-radius: inherit;
+    border: 2px solid currentColor;
+    opacity: 0;
+    pointer-events: none;
+    animation: nc-pulse 1200ms var(--ease-out) 300ms 2;
+  }
+
+  /* Fondo de curvas de nivel (ContourBackground): dos capas que derivan y una línea de medición que barre. */
+  .nc-contours {
+    animation: nc-fade-in 1200ms var(--ease-out) both;
+  }
+  .nc-contours-a {
+    transform-origin: 30% 70%;
+    animation: nc-drift-a 38s ease-in-out infinite alternate;
+  }
+  .nc-contours-b {
+    transform-origin: 70% 30%;
+    animation: nc-drift-b 52s ease-in-out infinite alternate;
+  }
+  .nc-scan {
+    background: linear-gradient(
+      90deg,
+      transparent,
+      color-mix(in oklab, var(--brand-primary) 26%, transparent) 48%,
+      color-mix(in oklab, var(--signal) 55%, transparent) 50%,
+      transparent 52%
+    );
+    transform: translateX(-110%);
+    animation: nc-scan 9s var(--ease-out) infinite;
+  }
+  /* Pausado con el botón (WCAG 2.2.2), fuera de la vista o con la pestaña oculta. */
+  [data-motion='paused'] :is(.nc-contours-a, .nc-contours-b, .nc-scan) {
+    animation-play-state: paused;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .nc-enter,
+  .nc-to-value,
+  .nc-grow,
+  .nc-shine-once::after,
+  .nc-shine:hover::after,
+  .nc-shine:focus-visible::after,
+  .nc-pulse::before,
+  .nc-contours,
+  .nc-contours-a,
+  .nc-contours-b,
+  .nc-scan {
+    animation: none;
+  }
+
+  .nc-scan {
+    display: none;
   }
 }

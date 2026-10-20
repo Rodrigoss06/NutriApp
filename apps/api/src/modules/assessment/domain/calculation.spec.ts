@@ -12,6 +12,7 @@ import {
   interpretationNote,
   PEDIATRIC_NOTE,
   rangesInForce,
+  referenceScale,
   type ReferenceRange,
 } from './interpretation.js';
 
@@ -215,6 +216,46 @@ describe('RN-D10 · interpretación con fuente, sobre el valor sin redondear', (
     expect(label('2026-12-31')).toBe('Riesgo');
     expect(label('2027-03-01')).toBe('Nueva');
     expect(rangesInForce(all, '2027-06-01').map((r) => r.id)).toEqual(['n1', 'n2']);
+  });
+
+  it('la escala trae todas las bandas del grupo que interpretó, ordenadas, para dibujar dónde cae el valor', () => {
+    expect(referenceScale('WAIST_HEIGHT_RATIO', 0.45, adult, ranges)).toEqual({
+      source: 'Fuente',
+      bands: [
+        { minValue: null, maxValue: 0.5, label: 'Sin riesgo aumentado', tone: 'NEUTRAL' },
+        { minValue: 0.5, maxValue: null, label: 'Riesgo', tone: 'CAUTION' },
+      ],
+    });
+    // Un valor en un hueco de la tabla (ACE, ADR-044) no tiene interpretación, pero sí escala.
+    const gaps = [
+      range({ minValue: 2, maxValue: 5, label: 'Esencial' }),
+      range({ minValue: 6, maxValue: 13, label: 'Atlético' }),
+    ];
+    expect(interpret('WAIST_HEIGHT_RATIO', 5.5, adult, gaps)).toBeNull();
+    expect(referenceScale('WAIST_HEIGHT_RATIO', 5.5, adult, gaps)?.bands).toHaveLength(2);
+  });
+
+  it('la escala es la del grupo más específico: la tabla de la organización antes que la de la plataforma', () => {
+    const own = [
+      range({ id: 'o1', organizationId: 'org', maxValue: 0.55, label: 'Propio', source: 'Org' }),
+      range({ id: 'o2', organizationId: 'org', minValue: 0.55, maxValue: null, label: 'Alto' }),
+    ];
+    expect(referenceScale('WAIST_HEIGHT_RATIO', 0.45, adult, [...ranges, ...own])).toEqual({
+      source: 'Org',
+      bands: [
+        { minValue: null, maxValue: 0.55, label: 'Propio', tone: 'NEUTRAL' },
+        { minValue: 0.55, maxValue: null, label: 'Alto', tone: 'NEUTRAL' },
+      ],
+    });
+  });
+
+  it('sin rangos para la edad, el sexo o el indicador no hay escala', () => {
+    expect(
+      referenceScale('WAIST_HEIGHT_RATIO', 0.45, { ...adult, ageYears: 12 }, ranges),
+    ).toBeNull();
+    expect(referenceScale('BMI', 26, adult, ranges)).toBeNull();
+    const women = [range({ sex: 'F' })];
+    expect(referenceScale('WAIST_HEIGHT_RATIO', 0.45, adult, women)).toBeNull();
   });
 
   it('antes de la primera versión rige la de la plataforma; la de una organización, solo desde su fecha', () => {

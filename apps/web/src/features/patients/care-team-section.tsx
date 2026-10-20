@@ -55,7 +55,7 @@ export function CareTeamSection({
   return (
     <div className="flex flex-col gap-4">
       <FormError error={put.error ?? remove.error} />
-      <ul className="divide-y divide-border rounded-lg border border-border">
+      <ul className="divide-y divide-border rounded-lg border border-border bg-card">
         {patient.careTeam.map((member) => {
           const name = byId.get(member.memberId)?.displayName ?? 'Miembro de la organización';
           return (

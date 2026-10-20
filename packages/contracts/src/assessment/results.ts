@@ -91,6 +91,27 @@ export const interpretationSchema = z.object({
 });
 export type Interpretation = z.infer<typeof interpretationSchema>;
 
+/**
+ * La tabla completa que interpreta un valor (RN-D10): sus bandas de menor a mayor, con huecos si la tabla los tiene
+ * (ACE, ADR-044). Sale de assessment.reference_range; la interfaz solo la dibuja para mostrar dónde cae el valor.
+ */
+export const referenceScaleSchema = z.object({
+  source: z.string(),
+  bands: z
+    .array(
+      z.object({
+        /** null: sin límite inferior. Intervalo semiabierto [mínimo, máximo). */
+        minValue: z.number().nullable(),
+        /** null: sin límite superior. */
+        maxValue: z.number().nullable(),
+        label: z.string(),
+        tone: z.enum(INTERPRETATION_TONES),
+      }),
+    )
+    .min(1),
+});
+export type ReferenceScale = z.infer<typeof referenceScaleSchema>;
+
 export const resultMetricSchema = z.object({
   metricCode: z.enum(METRIC_CODES),
   value: z.number(),
@@ -108,6 +129,8 @@ export const resultMetricSchema = z.object({
    * versión 1.0» (RN-D05). El valor se muestra igual, con su método.
    */
   interpretationNote: z.string().nullable(),
+  /** La escala donde cae el valor; null sin rangos para el indicador o el paciente (RN-D05). */
+  referenceScale: referenceScaleSchema.nullable(),
 });
 export type ResultMetric = z.infer<typeof resultMetricSchema>;
 
@@ -176,6 +199,7 @@ export const evaluationResultsResponseSchema = z.object({
       methodCode: z.literal('CONSOLIDATE_ISAK'),
       interpretation: interpretationSchema.nullable(),
       interpretationNote: z.string().nullable(),
+      referenceScale: referenceScaleSchema.nullable(),
     }),
   ),
 });

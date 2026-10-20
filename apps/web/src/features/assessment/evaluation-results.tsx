@@ -15,7 +15,10 @@ import {
 } from '@nutricoach/contracts';
 import {
   Button,
+  CompositionBar,
   ConfirmDialog,
+  ContourBackground,
+  enterStyle,
   formatNumber,
   IndicatorCard,
   MethodBadge,
@@ -40,7 +43,7 @@ import {
   SITE_NUMBER_KINDS,
   unavailableReason,
 } from './labels';
-import { InterpretationText, MetricLine } from './metric-line';
+import { InterpretationText, MetricLine, MetricRuler } from './metric-line';
 import { TableScroll } from '@/features/shell/table-scroll';
 
 const INDEX_METHODS = new Set(['BMI', 'WAIST_HEIGHT', 'WAIST_HIP']);
@@ -58,6 +61,16 @@ const orderOf = (code: string) => {
   const index = COMPOSITION_ORDER.indexOf(code);
   return index === -1 ? COMPOSITION_ORDER.length : index;
 };
+
+/** Las cinco masas de Kerr, en el orden y con los colores de la barra de composición. */
+const KERR_SEGMENTS = [
+  { code: 'ADIPOSE_MASS_KG', label: 'Adiposa', color: 'var(--data-adipose)' },
+  { code: 'MUSCLE_MASS_KG', label: 'Muscular', color: 'var(--data-muscle)' },
+  { code: 'BONE_MASS_KG', label: 'Ósea', color: 'var(--data-bone)' },
+  { code: 'RESIDUAL_MASS_KG', label: 'Residual', color: 'var(--data-residual)' },
+  { code: 'SKIN_MASS_KG', label: 'Piel', color: 'var(--data-skin)' },
+] as const;
+const KERR_COLORS = new Map<string, string>(KERR_SEGMENTS.map((s) => [s.code, s.color]));
 
 /**
  * Resultados de una evaluación cerrada (RF-15): cada número con su método (RN-D02) y cada interpretación con su fuente
@@ -119,7 +132,7 @@ export function EvaluationResults({
             <article
               key={reading.id}
               aria-label={`Lectura de ${reading.deviceBrand} ${reading.deviceModel}`}
-              className="flex flex-col gap-2 rounded-lg border border-border p-4"
+              className="flex flex-col gap-2 rounded-lg border border-border p-4 bg-card"
             >
               <h3 className="font-medium">
                 {reading.deviceBrand} · {reading.deviceModel}
@@ -150,7 +163,7 @@ export function EvaluationResults({
       />
 
       {evaluation.measurements.length > 0 ? (
-        <details className="rounded-lg border border-border p-4">
+        <details className="rounded-lg border border-border p-4 bg-card">
           <summary className="cursor-pointer font-medium">Tomas de cada sitio</summary>
           <TableScroll label="Tomas de cada sitio" className="mt-3 rounded-none border-0">
             <table className="w-full border-collapse text-sm">
@@ -220,6 +233,9 @@ function ResultsBody({
   const composition = current
     .filter((r) => !INDEX_METHODS.has(r.methodCode) && !PROPORTION_METHODS.has(r.methodCode))
     .sort((a, b) => orderOf(a.methodCode) - orderOf(b.methodCode));
+  const indexMetrics = indices.flatMap((result) =>
+    result.metrics.map((metric) => ({ result, metric })),
+  );
 
   return (
     <>
@@ -229,18 +245,33 @@ function ResultsBody({
         </Notice>
       ) : null}
 
-      <section aria-labelledby="indices-titulo" className="flex flex-col gap-3">
+      <section
+        aria-labelledby="indices-titulo"
+        className="relative isolate flex flex-col gap-4 overflow-hidden rounded-xl bg-hero p-4 text-hero-foreground sm:p-6"
+      >
+        <ContourBackground seed={5.2} animated={false} className="-z-10" />
         <h2 id="indices-titulo" className="text-lg font-semibold">
           Índices
         </h2>
         <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-          {indices.flatMap((result) =>
-            result.metrics.map((metric) => (
+          {indexMetrics.map(({ result, metric }, order) => {
+            const kind = METRIC_NUMBER_KINDS[metric.metricCode];
+            return (
               <IndicatorCard
                 key={`${result.id}-${metric.metricCode}`}
+                className="nc-enter"
+                style={enterStyle(order)}
                 label={METRIC_LABELS[metric.metricCode]}
-                value={formatNumber(metric.value, METRIC_NUMBER_KINDS[metric.metricCode])}
+                value={formatNumber(metric.value, kind)}
                 unit={METRIC_UNIT_LABELS[metric.unit] || undefined}
+                scale={
+                  <MetricRuler
+                    value={metric.value}
+                    scale={metric.referenceScale}
+                    kind={kind}
+                    index={order}
+                  />
+                }
                 method={
                   <MethodBadge label={methodLabel(metric.methodCode)} code={metric.methodCode} />
                 }
@@ -251,19 +282,28 @@ function ResultsBody({
                   />
                 }
               />
-            )),
-          )}
-          {data.siteInterpretations.map((site) => {
+            );
+          })}
+          {data.siteInterpretations.map((site, i) => {
             const catalog = sites.find((s) => s.code === site.siteCode);
+            const kind = catalog ? SITE_NUMBER_KINDS[catalog.unit] : 'length';
+            const order = indexMetrics.length + i;
             return (
               <IndicatorCard
                 key={site.siteCode}
+                className="nc-enter"
+                style={enterStyle(order)}
                 label={siteName(site.siteCode)}
-                value={formatNumber(
-                  site.value,
-                  catalog ? SITE_NUMBER_KINDS[catalog.unit] : 'length',
-                )}
+                value={formatNumber(site.value, kind)}
                 unit={site.unit}
+                scale={
+                  <MetricRuler
+                    value={site.value}
+                    scale={site.referenceScale}
+                    kind={kind}
+                    index={order}
+                  />
+                }
                 method={<MethodBadge label={methodLabel(site.methodCode)} code={site.methodCode} />}
                 status={
                   <InterpretationText
@@ -308,7 +348,7 @@ function ResultsBody({
           <h2 id="proporcionalidad-titulo" className="text-lg font-semibold">
             Proporcionalidad
           </h2>
-          <dl className="flex flex-col divide-y divide-border rounded-lg border border-border px-4">
+          <dl className="flex flex-col divide-y divide-border rounded-lg border border-border px-4 bg-card">
             {proportions.flatMap((result) =>
               result.metrics.map((metric) => (
                 <MetricLine key={`${result.id}-${metric.metricCode}`} metric={metric} />
@@ -319,7 +359,7 @@ function ResultsBody({
       ) : null}
 
       {superseded.length > 0 ? (
-        <details className="rounded-lg border border-border p-4">
+        <details className="rounded-lg border border-border p-4 bg-card">
           <summary className="cursor-pointer font-medium">
             Resultados reemplazados ({superseded.length})
           </summary>
@@ -343,7 +383,7 @@ function ResultCard({ result }: { result: CalculationResultResponse }) {
   return (
     <article
       aria-labelledby={id}
-      className="flex flex-col gap-2 rounded-lg border border-border bg-background p-4"
+      className="flex flex-col gap-2 rounded-lg border border-border bg-card p-4"
     >
       <header className="flex flex-wrap items-center gap-2">
         <h3 id={id} className="font-semibold">
@@ -369,9 +409,36 @@ function ResultCard({ result }: { result: CalculationResultResponse }) {
           rule={warning.rule}
         />
       ))}
+      {result.methodCode === 'COMP5_KERR1988' ? (
+        <CompositionBar
+          className="my-1"
+          label="Proporción de las cinco masas de Kerr: adiposa, muscular, ósea, residual y piel. Cada masa, con su cifra y su método, está en la lista de abajo."
+          segments={KERR_SEGMENTS.flatMap((segment) => {
+            const metric = result.metrics.find((m) => m.metricCode === segment.code);
+            return metric
+              ? [
+                  {
+                    key: segment.code,
+                    label: segment.label,
+                    value: metric.value,
+                    color: segment.color,
+                  },
+                ]
+              : [];
+          })}
+        />
+      ) : null}
       <dl className="flex flex-col divide-y divide-border">
         {result.metrics.map((metric) => (
-          <MetricLine key={metric.metricCode} metric={metric} />
+          <MetricLine
+            key={metric.metricCode}
+            metric={metric}
+            swatch={
+              result.methodCode === 'COMP5_KERR1988'
+                ? KERR_COLORS.get(metric.metricCode)
+                : undefined
+            }
+          />
         ))}
       </dl>
     </article>
@@ -577,7 +644,7 @@ function EvaluationActions({
       {amending ? (
         <form
           noValidate
-          className="flex max-w-2xl flex-col gap-3 rounded-lg border border-border p-4"
+          className="flex max-w-2xl flex-col gap-3 rounded-lg border border-border p-4 bg-card"
           onSubmit={(event) => {
             event.preventDefault();
             if (!tooShort) amend.mutate();

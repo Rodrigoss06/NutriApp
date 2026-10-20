@@ -51,7 +51,7 @@ export function TextAreaField({ label, hint, error, className, ...props }: TextA
         aria-invalid={error ? true : undefined}
         aria-describedby={describedBy(id, hint, error)}
         className={cn(
-          'min-h-24 w-full rounded-md border border-input-border bg-background px-3 py-2 text-base text-foreground placeholder:text-muted-foreground disabled:opacity-50 aria-invalid:border-danger',
+          'min-h-24 w-full rounded-md border border-input-border bg-card px-3 py-2 text-base text-foreground placeholder:text-muted-foreground disabled:opacity-50 aria-invalid:border-danger',
           className,
         )}
         {...props}

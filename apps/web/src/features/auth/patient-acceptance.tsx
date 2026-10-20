@@ -108,7 +108,7 @@ export function PatientAcceptance({
             return (
               <div
                 key={consent.id}
-                className="flex flex-col gap-3 rounded-lg border border-border p-4"
+                className="flex flex-col gap-3 rounded-lg border border-border p-4 bg-card"
               >
                 <div className="flex flex-wrap items-center gap-2">
                   <h3 className="font-semibold">{label}</h3>

@@ -14,9 +14,9 @@ export interface BrandColorTokens {
   readonly base: string;
   /** Texto e íconos sobre `base`: blanco o negro, el de mayor contraste (≥ 4.5:1). */
   readonly foreground: string;
-  /** El color usado como texto sobre blanco: oscurecido lo justo hasta 4.5:1 (WCAG 1.4.3). */
+  /** El color usado como texto sobre el papel y las tarjetas: oscurecido lo justo hasta 4.5:1 (WCAG 1.4.3). */
   readonly text: string;
-  /** Bordes y anillo de foco sobre blanco: oscurecido lo justo hasta 3:1 (WCAG 1.4.11). */
+  /** Bordes y anillo de foco sobre el papel y las tarjetas: oscurecido lo justo hasta 3:1 (WCAG 1.4.11). */
   readonly border: string;
 }
 
@@ -65,12 +65,18 @@ export function contrastRatio(a: string, b: string): number {
   return (light + 0.05) / (dark + 0.05);
 }
 
-/** Oscurece hacia negro en pasos de 2 % hasta alcanzar `minimum` sobre blanco. */
+/**
+ * El fondo claro más oscuro sobre el que se escribe con la marca: el papel de las páginas (--background en
+ * styles.css). Lo que alcanza el contraste sobre él lo alcanza también sobre las tarjetas blancas.
+ */
+export const PAPER = '#f3f5f4';
+
+/** Oscurece hacia negro en pasos de 2 % hasta alcanzar `minimum` sobre el papel (y por lo tanto sobre blanco). */
 function darkenUntil(hex: string, minimum: number): string {
   const rgb = toRgb(hex);
   for (let step = 0; step <= 50; step += 1) {
     const candidate = toHex(rgb.map((c) => c * (1 - step * 0.02)) as unknown as Rgb);
-    if (contrastRatio(candidate, '#ffffff') >= minimum) return candidate;
+    if (contrastRatio(candidate, PAPER) >= minimum) return candidate;
   }
   return '#000000';
 }

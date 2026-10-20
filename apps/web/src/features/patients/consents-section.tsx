@@ -107,7 +107,7 @@ export function ConsentsSection({
           Sin consentimientos: solo existen los datos para crear la ficha e invitar (RN-B01).
         </p>
       ) : (
-        <ul className="divide-y divide-border rounded-lg border border-border">
+        <ul className="divide-y divide-border rounded-lg border border-border bg-card">
           {consents.map((consent) => (
             <li key={consent.id} className="flex flex-col gap-2 p-4 sm:flex-row sm:items-center">
               <div className="flex min-w-0 flex-1 flex-col gap-1">
@@ -162,7 +162,7 @@ export function ConsentsSection({
         <form
           noValidate
           aria-label="Registrar un consentimiento"
-          className="flex flex-col gap-4 rounded-lg border border-border p-4"
+          className="flex flex-col gap-4 rounded-lg border border-border p-4 bg-card"
           onSubmit={(event) => {
             event.preventDefault();
             submit();
@@ -226,7 +226,7 @@ export function ConsentsSection({
                 onChange={(event) => {
                   void onFile(event.currentTarget);
                 }}
-                className="text-sm file:mr-3 file:rounded-md file:border file:border-brand-border file:bg-background file:px-3 file:py-2 file:text-sm file:font-medium file:text-brand-text"
+                className="text-sm file:mr-3 file:rounded-md file:border file:border-brand-border file:bg-card file:px-3 file:py-2 file:text-sm file:font-medium file:text-brand-text"
               />
               <FieldMessages id={fileId} hint="PDF, JPG o PNG de hasta 5 MB." error={fileError} />
             </div>

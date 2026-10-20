@@ -140,7 +140,7 @@ export function SessionsSection({ sessions }: { sessions: readonly Session[] }) 
   return (
     <div className="flex flex-col gap-3">
       <FormError error={closeOne.error ?? closeAll.error} />
-      <ul className="divide-y divide-border rounded-lg border border-border">
+      <ul className="divide-y divide-border rounded-lg border border-border bg-card">
         {sessions.map((session) => (
           <li key={session.id} className="flex flex-col gap-2 p-4 sm:flex-row sm:items-center">
             <div className="flex flex-1 flex-col">

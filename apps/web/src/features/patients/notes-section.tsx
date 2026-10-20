@@ -55,7 +55,7 @@ export function NotesSection({
       {notes.length === 0 ? (
         <p className="text-sm text-muted-foreground">Sin notas.</p>
       ) : (
-        <ul className="divide-y divide-border rounded-lg border border-border">
+        <ul className="divide-y divide-border rounded-lg border border-border bg-card">
           {[...notes].reverse().map((note) => {
             const amended = note.amendsNoteId ? byId.get(note.amendsNoteId) : undefined;
             return (
@@ -94,7 +94,7 @@ export function NotesSection({
       <form
         noValidate
         aria-label="Escribir una nota"
-        className="flex flex-col gap-4 rounded-lg border border-border p-4"
+        className="flex flex-col gap-4 rounded-lg border border-border p-4 bg-card"
         onSubmit={submitWith(
           form.handleSubmit((values) => {
             add.mutate({

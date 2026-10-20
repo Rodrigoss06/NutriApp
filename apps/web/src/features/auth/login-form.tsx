@@ -59,7 +59,7 @@ export function LoginForm({ next }: { next: string }) {
         error={errors.password?.message}
         {...form.register('password')}
       />
-      <Button type="submit" disabled={login.isPending}>
+      <Button type="submit" attention disabled={login.isPending}>
         {login.isPending ? 'Entrando…' : 'Entrar'}
       </Button>
       <Link href="/recuperar" className="text-sm text-brand-text underline">
