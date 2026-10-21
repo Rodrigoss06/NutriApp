@@ -15,6 +15,8 @@ export const INTEGRATION_COVERED = [
   'src/platform/audit/**',
   'src/platform/idempotency/idempotency.interceptor.ts',
   'src/platform/idempotency/idempotency.module.ts',
+  'src/platform/import/catalog-importer.ts',
+  'src/platform/import/import-batch.store.ts',
   'src/platform/http/request-meta.ts',
   'src/platform/rate-limit/rate-limiter.ts',
   // Adaptadores y cableado de cada contexto: controladores, repositorios y consumidores.
