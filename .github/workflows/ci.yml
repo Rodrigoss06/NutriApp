@@ -179,6 +179,10 @@ jobs:
       - name: Build de producción de la API y la web
         run: pnpm turbo run build --filter api --filter web
 
+      # Los catálogos globales existen en todo entorno, también donde db:seed no corre (RF-38, ADR-052).
+      - name: Catálogos de alimentos y actividades
+        run: pnpm catalog:load plataforma@demo.example.com
+
       # 06 §6: el E2E corre sobre el build de producción. El worker va aparte, como en 01 §4.
       - name: Arrancar la API y el worker
         run: |

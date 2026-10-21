@@ -1,4 +1,6 @@
 import { Global, Module } from '@nestjs/common';
+import { ExerciseModule } from '../modules/exercise/index.js';
+import { FoodModule } from '../modules/food/index.js';
 import { IamModule, PATIENT_ENROLLMENT, type PatientEnrollment } from '../modules/iam/index.js';
 import {
   ACTIVE_PATIENT_COUNTER,
@@ -35,6 +37,11 @@ const noActivePatientCounter: ActivePatientCounter = {
 })
 class CliPortsModule {}
 
-/** Raíz de la CLI create-platform-admin: plataforma, tenancy e iam, sin HTTP ni clinical. */
-@Module({ imports: [PlatformModule, TenancyModule, IamModule, CliPortsModule] })
+/**
+ * Raíz de la CLI: plataforma, tenancy e iam para create-platform-admin, y food y exercise para cargar sus catálogos.
+ * Sin HTTP ni clinical.
+ */
+@Module({
+  imports: [PlatformModule, TenancyModule, IamModule, CliPortsModule, FoodModule, ExerciseModule],
+})
 export class CliModule {}

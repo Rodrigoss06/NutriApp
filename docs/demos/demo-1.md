@@ -220,7 +220,7 @@ bajó solo 1.5 cm, y sin un ETM de perímetros no se puede decir que el cambio s
 2. Completar:
    - TMR: Mifflin-St Jeor;
    - estrategia «Aditiva», con 1.4 en «PAL de la vida diaria»;
-   - «Buscar actividad»: «correr» → «Agregar» en «Correr a 6–6.3 mph (unos 10 km/h)», 9.3 MET; 30 minutos por sesión
+   - «Buscar actividad»: «correr» → «Agregar» en «Correr a 6–6.3 mph (9.7–10.1 km/h), 10 min/milla (6.2 min/km)», 9.3 MET; 30 minutos por sesión
      y 3 sesiones por semana;
    - objetivo «Perder grasa», ajuste «Perder grasa: kg por mes» con cantidad 3, y 15 en «% de grasa deseado»;
    - proteína 2 g por kg y grasa 25 % de las kcal.
@@ -306,8 +306,12 @@ y en celular (iPhone, WebKit).
    docker compose -f infra/docker/compose.local.yml down -v
    docker compose -f infra/docker/compose.local.yml up -d --wait
    pnpm db:migrate && pnpm db:seed
+   pnpm --filter api build && pnpm catalog:load plataforma@demo.example.com
    pnpm dev
    ```
+
+   `catalog:load` carga los alimentos de la TPCA 2017 y las actividades del Compendium 2024 (RF-38); sin él, la
+   búsqueda de actividades solo tiene las 9 de la semilla mínima de P7.
 
    Las fechas son relativas al día de la carga: la evaluación actual de Luis queda con esa fecha, y Luis cumple 28
    años ese día.

@@ -62,4 +62,13 @@ export class IamApi {
   createPlatformAdmin(email: string, displayName: string): Promise<Result<void, DomainError>> {
     return this.passwords.createPlatformAdmin(email, displayName);
   }
+
+  /**
+   * La cuenta ACTIVE de un PLATFORM_ADMIN por su correo, dentro de la transacción del llamador; null si no lo es. La
+   * CLI de catálogos la registra como quien inició el lote (RN-I04).
+   */
+  async activePlatformAdmin(email: string): Promise<UserId | null> {
+    const account = await this.accounts.findByEmail(normalizeEmail(email));
+    return account?.isPlatformAdmin && account.status === 'ACTIVE' ? account.id : null;
+  }
 }
