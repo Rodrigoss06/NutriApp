@@ -769,6 +769,7 @@ model Food {
   createdBy           String?              @map("created_by") @db.Uuid
   createdAt           DateTime             @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt           DateTime             @default(now()) @map("updated_at") @db.Timestamptz(6)
+  cookingFactors      CookingFactor[]
   exchangeEquivalents ExchangeEquivalent[]
   foodGroup           FoodGroup?           @relation(fields: [groupCode], references: [code], onDelete: NoAction, onUpdate: NoAction)
   foodSource          FoodSource           @relation(fields: [sourceCode], references: [code], onDelete: NoAction, onUpdate: NoAction)
@@ -811,14 +812,20 @@ model FoodNutrient {
 
 /// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
 model HouseholdMeasure {
-  id             String  @id @db.Uuid
-  foodId         String  @map("food_id") @db.Uuid
-  organizationId String? @map("organization_id") @db.Uuid
-  nameEs         String  @map("name_es")
-  grams          Decimal @db.Decimal(8, 2)
-  isDefault      Boolean @default(false) @map("is_default")
-  food           Food    @relation(fields: [foodId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  id                String      @id @db.Uuid
+  foodId            String      @map("food_id") @db.Uuid
+  organizationId    String?     @map("organization_id") @db.Uuid
+  nameEs            String      @map("name_es")
+  grams             Decimal     @db.Decimal(8, 2)
+  isDefault         Boolean     @default(false) @map("is_default")
+  grossGrams        Decimal?    @map("gross_grams") @db.Decimal(8, 2)
+  sourceCode        String?     @map("source_code")
+  sourceMeasureCode String?     @map("source_measure_code")
+  food              Food        @relation(fields: [foodId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  foodSource        FoodSource? @relation(fields: [sourceCode], references: [code], onDelete: NoAction, onUpdate: NoAction)
 
+  @@unique([organizationId, sourceCode, sourceMeasureCode], map: "household_measure_by_source", where: raw("(source_measure_code IS NOT NULL)"))
+  @@index([foodId], map: "household_measure_by_food")
   @@map("household_measure")
   @@schema("food")
 }
@@ -874,16 +881,18 @@ model RecipeIngredient {
 }
 
 model FoodSource {
-  code          String         @id
-  name          String
-  edition       String?
-  publisher     String?
-  license       String
-  url           String?
-  importedAt    DateTime?      @map("imported_at") @db.Timestamptz(6)
-  exchangeLists ExchangeList[]
-  foods         Food[]
-  foodGroups    FoodGroup[]
+  code              String             @id
+  name              String
+  edition           String?
+  publisher         String?
+  license           String
+  url               String?
+  importedAt        DateTime?          @map("imported_at") @db.Timestamptz(6)
+  cookingFactors    CookingFactor[]
+  exchangeLists     ExchangeList[]
+  foods             Food[]
+  foodGroups        FoodGroup[]
+  householdMeasures HouseholdMeasure[]
 
   @@map("source")
   @@schema("food")
@@ -1856,4 +1865,26 @@ model RateLimit {
 
   @@map("rate_limit")
   @@schema("platform")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model CookingFactor {
+  id                String     @id @db.Uuid
+  organizationId    String?    @map("organization_id") @db.Uuid
+  foodId            String     @map("food_id") @db.Uuid
+  sourceCode        String     @map("source_code")
+  sourceItemCode    String?    @map("source_item_code")
+  nameEs            String     @map("name_es")
+  cookingMethodEs   String     @map("cooking_method_es")
+  cookedToRawFactor Decimal    @map("cooked_to_raw_factor") @db.Decimal(5, 2)
+  createdAt         DateTime   @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt         DateTime   @default(now()) @map("updated_at") @db.Timestamptz(6)
+  food              Food       @relation(fields: [foodId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  foodSource        FoodSource @relation(fields: [sourceCode], references: [code], onDelete: NoAction, onUpdate: NoAction)
+
+  @@unique([organizationId, sourceCode, sourceItemCode], map: "cooking_factor_by_source", where: raw("(source_item_code IS NOT NULL)"))
+  @@index([foodId], map: "cooking_factor_by_food")
+  @@map("cooking_factor")
+  @@schema("food")
 }
