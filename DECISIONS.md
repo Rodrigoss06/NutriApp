@@ -720,12 +720,17 @@ Decisión:
   - la tabla no trae parte comestible: queda en 100 % hasta la TAFERA;
   - el estado sale del nombre oficial: COOKED si nombra una cocción (cocido, sancochado, frito, asado, hervido,
     horneado, guisado, tostado, precocido) y si no RAW, «crudo o tal como se compra». PROCESSED y READY quedan para
-    los alimentos propios y las preparaciones. ⚠️ Revisable con quien valida los cálculos clínicos;
+    los alimentos propios y las preparaciones (aprobado por Rodrigo, 2026-10-20);
   - sin alias derivados del nombre: «pilado o pulido» daría alias falsos, y la búsqueda ya cubre las palabras del
-    nombre.
+    nombre (aprobado por Rodrigo, 2026-10-20).
 - Los CSV de seeds/ son la publicación tal cual, más la traducción del Compendium; las derivaciones viven en el código,
   con pruebas. Como el mismo archivo no se vuelve a aplicar, una regla de derivación nueva llega con el siguiente
   archivo o con una migración de datos.
+- Las diferencias de la propia fuente se conservan tal cual, y seeds/README.md las lista (criterio delegado por
+  Rodrigo, 2026-10-20). Son los kJ de la TPCA que no son kcal × 4.184, la linaza con 0 g de carbohidratos y las
+  equivalencias propias del Compendium que no son exactas. Corregirlas haría que la aplicación no coincida con la
+  publicación que consulta el profesional, y en algunas no se sabe cuál de los dos números es el bueno. Los cálculos
+  usan las kcal y el MET, que no tienen diferencias, y la descripción oficial queda junto a la traducción.
 - Compendium 2024, 560 actividades de 7 encabezados:
   - código, MET y descripción oficial en inglés (columna nueva description_en), y traducción propia;
   - el extractor verifica la traducción: conserva todos los números del original y cada equivalencia entre paréntesis
@@ -741,5 +746,5 @@ Consecuencias:
   RLS en physical_activity; la RLS en food.source (/notion-sync al cerrar P8).
 - La E2E de la Demo 1 corre con los catálogos cargados, y su guion los carga en «Antes de empezar». La actividad de
   Luis se busca por su descripción nueva.
-- Riesgo nuevo, como R4: la licencia de la TPCA. Plan B: la TAFERA 2016 del INS, que autoriza reproducirla citando la
-  fuente, o USDA FoodData Central.
+- Riesgo nuevo, como R4: la licencia de la TPCA. Si el INS no la autoriza, el plan B es USDA FoodData Central, de
+  dominio público (decisión de Rodrigo, 2026-10-20).

@@ -26,9 +26,8 @@ db18470f2651ba198db806fe45bf7f04e30d1f62783f8a88b9755c2ad42c25d7, de
 https://lamejorreceta.ins.gob.pe/sites/default/files/2020-12/tablas-peruanas-QR_0.pdf
 
 ⚠️ **Licencia:** la publicación dice «Prohibida la reproducción total o parcial de esta obra por cualquier medio sin
-autorización del Instituto Nacional de Salud». Se carga mientras se tramita esa autorización (decisión de Rodrigo,
-2026-10-20). Plan B: la TAFERA 2016 del mismo INS, que autoriza reproducirla citando la fuente, o USDA FoodData
-Central, de dominio público.
+autorización del Instituto Nacional de Salud». Se carga mientras se tramita esa autorización; si no llega, el plan B
+es USDA FoodData Central, de dominio público (decisiones de Rodrigo, 2026-10-20).
 
 - 928 alimentos en 14 grupos (A:160 B:125 C:142 D:41 E:90 F:103 G:26 H:16 J:15 K:7 L:29 Q:8 T:85 U:81). El grupo S,
   942 preparaciones del INEI, queda fuera por ahora (decisión de Rodrigo, 2026-10-20).

@@ -28,7 +28,7 @@ Próxima demo: Demo 1 · Base y evaluación · semana 2
 Leyenda: ⬜ pendiente · 🟨 en curso · ✅ terminado · ⛔ bloqueado
 
 ## En curso
-- P8 en feat/food-catalogos, apilada sobre feat/ui-rediseno (#20, abierto). PR 1 listo en local, sin subir:
+- P8 en feat/food-catalogos, sobre main. PR 1 subido, en revisión:
   - importador genérico de catálogos con lote, hash, validación por fila e informe (RN-I04), y CLI catalog:import y
     catalog:load con un PLATFORM_ADMIN como responsable;
   - TPCA 2017: 928 alimentos de 14 grupos, sin el grupo S; nutrientes INFOODS, «sin dato» distinto de cero (RN-I03);
@@ -37,7 +37,7 @@ Leyenda: ⬜ pendiente · 🟨 en curso · ✅ terminado · ⛔ bloqueado
   - pnpm check en verde (318 unitarias de la API y 171 de integración).
   - Siguen PR 2 (TAFERA: medidas caseras y factores de cocido), PR 3 (búsqueda, composición de un plato y alimentos
     propios) y PR 4 (pantallas).
-- Rediseño «Instrumento» (ADR-051): PR #20 abierto, esperando la fusión
+- Rediseño «Instrumento» (ADR-051): #20 fusionado (039bb67)
 - Notion sigue nombrando a Iván en 01 (aprobación del despliegue a producción), en la ruta crítica de Creación del
   proyecto, en la plantilla de STATUS de Archivos del repositorio y en el Equipo de Proyecto: se deja así por decisión
   de Rodrigo (2026-10-16)
@@ -45,7 +45,7 @@ Leyenda: ⬜ pendiente · 🟨 en curso · ✅ terminado · ⛔ bloqueado
 ## Siguiente paso
 - Antes de la Demo 1: la matriz manual de navegadores (RNF-19: Chrome, Edge, Safari y Firefox; la E2E cubre Chromium
   y WebKit) y, el mismo día, base local limpia y semilla («Antes de empezar» del guion). La demo es en local
-- Al fusionarse #20: rebase --onto main de feat/food-catalogos y PR 1 de P8
+- Revisar y fusionar el PR 1 de P8
 - P8 PR 2: TAFERA 2016 (medidas caseras con peso neto y parte comestible, y factores de cocido a crudo)
 - Cada base nueva necesita los catálogos: `pnpm --filter api build && pnpm catalog:load plataforma@demo.example.com`
   en local; en staging y producción, con el correo de su PLATFORM_ADMIN
@@ -68,10 +68,8 @@ Leyenda: ⬜ pendiente · 🟨 en curso · ✅ terminado · ⛔ bloqueado
 - [ ] N13: confirmar regresiones y progresiones en la biblioteca
 - [ ] N7: confirmar el estado diario (estrés, sueño, energía)
 - [ ] R4: permiso de uso de las listas Dextre y ADA
-- [ ] ⚠️ TPCA 2017: autorización del INS para reproducirla. Se usa mientras se tramita (decisión de Rodrigo,
-  2026-10-20); plan B: TAFERA 2016 o USDA FoodData Central
-- [ ] ⚠️ Estado de los alimentos de la TPCA deducido del nombre (COOKED si nombra una cocción, si no RAW): revisarlo
-  con quien valida los cálculos clínicos (ADR-052)
+- [ ] ⚠️ TPCA 2017: autorización del INS para reproducirla. Se usa mientras se tramita; si no llega, plan B: USDA
+  FoodData Central (decisiones de Rodrigo, 2026-10-20)
 - [ ] Captura de un plato por foto: la visión espera un acuerdo con Jeremy (un modelo propio también es IA, regla 10)
 - [ ] Textos legales revisados por el abogado del cliente, en lenguaje claro: desde los 14 años los acepta el propio
   paciente (ADR-042)
@@ -115,8 +113,9 @@ Leyenda: ⬜ pendiente · 🟨 en curso · ✅ terminado · ⛔ bloqueado
 ## Registro de sesiones (solo las 5 últimas)
 - 2026-10-20 · P8 (PR 1) · demo levantada en la red local para presentarla (correo por ngrok); extracción de la
   TPCA 2017 del PDF del INS (928 alimentos) y del Compendium 2024 (560 actividades traducidas y verificadas);
-  importador de catálogos, CLI catalog:load y ADR-052. Rodrigo decidió usar la TPCA mientras se tramita su licencia y
-  dejar la foto sin IA hasta un acuerdo
+  importador de catálogos, CLI catalog:load y ADR-052. Rodrigo decidió usar la TPCA mientras se tramita su licencia
+  (plan B: USDA FoodData Central) y dejar la foto sin IA hasta un acuerdo; aprobó el estado deducido del nombre y no
+  derivar alias
 - 2026-10-18 · Rediseño «Instrumento» · herramientas de diseño en el usuario de Claude Code (frontend-design,
   ui-ux-pro-max, ui-skills y MCP de shadcn, Context7 y Playwright); vista previa de tres direcciones; dirección A con
   curvas de nivel; escala de referencia en los resultados; ADR-051. El disco de datos se llenó (lago de datos de
