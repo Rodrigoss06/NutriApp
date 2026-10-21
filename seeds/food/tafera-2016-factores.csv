@@ -1,0 +1,214 @@
+codigo,codigo_tpca,alimento,coccion,factor,datos_1985
+II-001,A34,Maiz fresco (choclo) en grano,Sancochado,0.94,no
+II-002,A34,Maiz fresco (choclo) entero,Sancochado,1.02,no
+II-003,A41,Maíz pelado seco,Sancochado,0.44,si
+II-004,A41,Maíz mote,Sancochado,0.46,si
+II-008,A54,Quinua blanca,Sancochado,0.23,no
+II-009,A54,Quinua blanca,Tostada,1.18,no
+II-010,A60,Quinua roja,Sancochada,0.23,no
+II-011,A69,Trigo pelado,Sancochado,0.41,no
+II-012,A3,Arroz blanco corriente,Sancochado,0.51,no
+II-013,A3,Arroz blanco corriente,Graneado,0.43,no
+II-014,A3,Arroz blanco corriente,Panetela,0.28,si
+II-015,A3,Arroz blanco corriente,Tostado,1.18,si
+II-016,A7,"Avena, hojuelas de",Sancochada,0.13,si
+II-017,A18,Cebada perlada,Sancochada,0.37,si
+II-018,A12,Cebada,Tostada,1.16,si
+II-019,A22,Fideo tallarín delgado,Sancochado,0.34,no
+II-020,A22,Fideo tallarín grueso,Sancochado,0.4,no
+II-021,A21,Fideo cabello de angel,Sancochado,0.25,no
+II-022,A21,Fideo corbata,Sancochado,0.52,si
+II-023,A21,Fideo entrefino,Sancochado,0.31,si
+II-024,A21,Fideo entrefino,Tostado,1.13,si
+II-025,A139,Fideo especial de huevo,Frito,0.93,si
+II-026,A139,Fideo especial de huevo,Tostado,1.11,si
+II-027,A1,Kiwicha,Tostado,1.16,no
+II-028,B13,Ajo,Sancochado,1.01,si
+II-030,B12,Ají verde,Sancochado,1.19,si
+II-031,B14,Albahaca,Sancochada,1.51,si
+II-032,B15,Alcachofa,Sancochada,2.81,si
+II-033,B17,Apio,Sancochado,0.99,si
+II-034,B18,Berenjena,Sancochada,0.85,si
+II-035,B21,Brócoli,Al dente,0.84,no
+II-036,B21,Brócoli,Sancochado,0.89,no
+II-037,B22,Caigua,Sancochado,1.2,no
+II-038,B24,Calabaza china,Sancochada,1.05,si
+II-039,B24,Calabaza china,Saltada,2.36,si
+II-040,B28,Cebolla china,Frita,1.29,si
+II-041,B28,Cebolla china,Sancochada,1.01,si
+II-042,B29,Cebolla de cabeza (roja),Sancochada,1.09,no
+II-043,B29,Cebolla de cabeza (roja),Frita,1.59,no
+II-044,B35,Col,Sancochada,0.99,si
+II-045,B38,Coliflor,Saltada,1.25,si
+II-046,B38,Coliflor,Sancochada,0.85,si
+II-047,B39,Culantro,Sancochada,0.91,si
+II-048,B43,Espárrago,Sancochada,2.74,si
+II-049,B44,Espinaca,Sancochada,1.69,si
+II-050,B46,Frijolito chino,Saltado,2.02,si
+II-051,B46,Frijolito chino,Sancochado,1.03,si
+II-052,B60,Nabo,Sancochado,1.07,si
+II-053,B114,Pacchoy,Sancochado,0.98,si
+II-054,B69,Pimiento fresco,Sancochado,1.01,si
+II-055,B76,Rocoto,Sancochado,1,si
+II-056,B80,Tomate italiano (marsano),Sancochado,1.06,no
+II-057,B79,Tomate,Frito,1.59,si
+II-058,B84,Vainitas,Sancochado,0.95,no
+II-059,B85,Zanahoria amarilla,Sancochado,1.01,no
+II-060,B89,Zapallo macre,Sancochado,1.14,no
+II-061,B122,Zapallito italiano,Sancochado,1.17,si
+II-062,C2,Aceituna,Sancochada,0.52,si
+II-063,C109,Guindones secos,Sancochados,0.69,si
+II-064,C28,Higo seco,Sancochado,0.67,si
+II-066,C42,Manzana,Sancochada,0.9,si
+II-067,C7,Melocotón,Sancochado,0.99,si
+II-068,C47,Membrillo,Sancochado,0.96,si
+II-069,C69,Piña,Sancochada,1.14,si
+II-070,C78,Plátano bellaco verde,Frito,1.15,no
+II-071,C78,Plátano bellaco verde,Sancochado,1.03,no
+II-072,C135,Plátano bellaco maduro,Frito,1.15,no
+II-073,C135,Plátano bellaco maduro,Horneado,1.34,si
+II-074,C135,Plátano bellaco maduro,Sancochado,1.03,no
+II-075,C70,Plátano de isla,Frito,1.14,si
+II-076,C70,Plátano de isla,Sancochado,0.91,si
+II-078,E35,"Caballa, trozo mediano",Sancochado,1.05,no
+II-079,E35,"Caballa, filete",Frito,1.56,no
+II-080,E44,Coco,Al vapor,1.21,si
+II-081,E44,Coco,Frito,1.6,si
+II-082,E44,Coco,Sancochado,1.18,si
+II-084,E50,Jurel,Sancochado,1.24,no
+II-085,E50,Jurel,Frito,1.41,no
+II-086,E52,Lisa,Sancochado,1.58,si
+II-087,E53,Lorna,Frita,1.55,si
+II-088,E53,Lorna,Sancochado,1.36,si
+II-089,E55,Machete,Sancochado,1.23,si
+II-090,E57,"Merluza, filete",Sancochado,1.31,no
+II-091,E57,Merluza filete,Frito,1.54,no
+II-092,E57,"Merluza, trozo mediano",Sancochado,1.31,no
+II-093,E57,Merluza,Al vapor,1.2,si
+II-097,E63,Pejerrey,Sancochado,1.5,no
+II-098,E63,Pejerrey,Frito,2.12,no
+II-099,E78,Toyo,Sancochado,1.43,si
+II-100,E81,Trucha,Frito,1.52,no
+II-101,E81,Trucha,A la parrilla,1.3,no
+II-102,E1,"Almeja, con bolsa digestiva y gónadas",Sancochado,1.98,no
+II-103,E6,"Camarón de río, entero",Sancochado,1.06,no
+II-104,E6,"Camarón de río, solo la cola",Sancochado,1.24,no
+II-105,E6,"Camarón de río, entero",Frito,1.52,no
+II-106,E6,"Camarón de río, solo la cola",Frito,1.56,no
+II-107,E11,Choros,Sancochado,1.64,no
+II-108,E12,Conchas de abanico,Sancochado,2.12,no
+II-109,E12,Conchas de abanico,Frito,2.13,no
+II-110,E88,Pota,Sancochado,2.06,no
+II-111,E88,Pota,Frito,2.06,no
+II-112,F26,"Pollo, pierna",Frita,1.42,no
+II-113,F26,"Pollo, rabadilla",Sancochada,1.25,no
+II-114,F26,"Pollo, rabadilla",Frita,1.51,no
+II-115,F76,"Llama/alpaca, charqui de",Sancochado,1.06,no
+II-116,F42,"Res, bofe",Sancochado,1.19,no
+II-117,F38,"Res, hígado",Frito,1.57,no
+II-118,F35,"Res, carne",Asada a la olla,1.75,si
+II-119,F35,"Res, carne",Frito,1.78,no
+II-120,F35,"Res, carne",Guisada,1.4,si
+II-121,F35,"Res, carne",Horneada,1.86,si
+II-122,F35,"Res, carne",Sancochado,1.83,no
+II-123,F89,"Res, carne molida (hamburguesa)",Frito,1.16,si
+II-124,F37,"Res, criadilla",Sancochada,2.15,si
+II-125,F40,"Res, mondongo",Sancochado,1.45,si
+II-126,F97,"Res, pata",Sancochada,1.04,si
+II-127,F43,"Res, riñón",Sancochado,2,si
+II-128,F43,"Res, riñón",Frito,1.91,si
+II-129,F44,"Res, seso",Sancochado,1.11,si
+II-130,F44,"Res, seso",Saltado,1.8,si
+II-131,F78,"Pollo, ala",Sancochado,1.18,no
+II-132,F78,"Pollo, ala",Frito,1.58,no
+II-133,F78,"Pollo, brazuelo",Sancochado,1.38,no
+II-134,F78,"Pollo, brazuelo",Frito,1.5,no
+II-135,F78,"Pollo, ala - brazuelo",Sancochado,1.3,no
+II-136,F78,"Pollo, ala - brazuelo",Frito,1.53,no
+II-137,F26,"Pollo, carne",Asado a la olla,1.41,si
+II-138,F27,"Pollo, corazón",Sancochado,1.45,no
+II-139,F26,"Pollo, entero con menudencia",Sancochado,1.33,si
+II-140,F26,"Pollo, entero sin menudencia",Sancochado,1.25,si
+II-141,F26,"Pollo, espinazo de",Sancochado,1.39,no
+II-142,F26,"Pollo, espinazo de",Frito,1.44,no
+II-143,F26,"Pollo, entrepierna de",Sancochado,1.44,no
+II-144,F26,"Pollo, entrepierna de",Frito,1.65,no
+II-145,F28,"Pollo, hígado",Sancochado,1.39,no
+II-146,F28,"Pollo, hígado",Frito,1.37,no
+II-147,F26,"Pollo, filete",Frito,1.59,no
+II-148,F26,"Pollo, pechuga, trozo de",Sancochado,1.48,no
+II-149,F26,"Pollo, pechuga, trozo de",Frito,1.46,no
+II-150,F26,"Pollo, pescuezo de",Sancochado,1.42,no
+II-151,F26,"Pollo, pescuezo de",Frito,1.58,no
+II-152,F26,"Pollo, pierna",Sancochado,1.22,no
+II-153,F12,"Carnero, carne",Sancochado,1.6,si
+II-154,F3,"Carnero, corazón",Sancochado,1.67,si
+II-155,F4,"Carnero, hígado",Frito,1.38,si
+II-156,F5,"Carnero, mondongo",Sancochado,1.97,si
+II-157,F9,"Carnero, seso",Sancochado,1.06,si
+II-158,F46,"Carnero, charqui",Sancochado,1.08,si
+II-159,F19,"Conejo, carne, sin cabeza ni vísceras",Sancochada,1.77,no
+II-160,F19,"Conejo, carne, sin cabeza ni vísceras",Frita,2.01,no
+II-161,F74,"Cuy, carne, sin cabeza ni vísceras",Sancochada,1.77,no
+II-162,F74,"Cuy, carne, sin cabeza ni vísceras",Frita,2.45,no
+II-163,F13,"Cerdo, carne",Asado a la olla,1.62,si
+II-164,F13,"Cerdo, carne",Sancochado,1.66,si
+II-165,F13,"Cerdo, chicharon",Frito,1.78,si
+II-166,F13,"Cerdo, chuleta",Frito,1.73,si
+II-167,F15,"Cerdo, pata",Sancochado,1.27,si
+II-168,F70,"Cerdo, pellejo",Frito,1.5,si
+II-169,F55,"Cerdo, relleno",Frito,1.27,si
+II-170,F24,"Pato, carne",Asado a la olla,2.13,si
+II-171,F24,"Pato, carne",Horneado,2.78,si
+II-172,F24,"Pato, carne",Sancochado,1.75,si
+II-173,F24,"Pato, carne",Sancochado y frito,2.37,si
+II-178,F25,"Pavo, carne",Asado a la olla,1.96,si
+II-179,F25,"Pavo, carne",Horneado,1.77,si
+II-180,F25,"Pavo, carne",Sancochado,1.46,si
+II-181,J12,"Huevo de codorniz, entero",Sancochado,1.04,no
+II-182,J4,"Huevo de gallina, entero",Sancochado,1.04,no
+II-183,J2,"Huevo de gallina, clara",Sancochado,1.03,no
+II-184,J5,"Huevo de gallina, yema",Sancochado,1.06,no
+II-185,J4,"Huevo de gallina, entero",Pasado,1.03,si
+II-186,J4,"Huevo de gallina, entero",Frito,1.1,no
+II-187,J2,"Huevo de gallina, clara",Frito,1.04,no
+II-188,J5,"Huevo de gallina, yema",Frito,0.95,no
+II-189,D14,Maní,Tostado,1.11,si
+II-190,D14,Maní,Sancochado,0.66,si
+II-191,U31,"Betarraga, entero",Sancochado,1.05,no
+II-192,U31,"Betarraga, rodajas",Sancochado,1.09,no
+II-193,U31,"Betarraga, cubos",Sancochado,1.08,no
+II-194,U3,"Camote amarillo, entero",Sancochado,1.03,no
+II-195,U3,"Camote amarillo, rodajas",Frito,1.34,no
+II-196,U5,"Camote morado, entero",Sancochado,1.02,no
+II-197,U16,Mashua,Sancochada,1.11,no
+II-198,U50,"Oca, entero",Sancochado,0.99,no
+II-199,U17,"Olluco, picado tipo juliana",Sancochado,1.05,no
+II-200,U18,"Papa amarilla, entera",Sancochado,1.02,no
+II-201,U19,"Papa blanca perricholi, entera",Sancochado,1.02,no
+II-202,U19,"Papa blanca perricholi, bastones",Frito,1.72,no
+II-203,U19,"Papa blanca, entera",Horneada,1.43,si
+II-204,U23,"Papa huayro, entera",Sancochado,1.03,no
+II-205,U23,"Papa huayro, bastones",Frito,1.44,no
+II-206,U25,Papa seca,Sancochado,0.35,no
+II-207,U10,Yacón,Sancochado,1.16,no
+II-208,U34,"Yuca amarilla, trozo",Sancochado,1.02,no
+II-209,U34,"Yuca amarilla, bastones",Frito,1.35,no
+II-210,U36,"Yuca blanca, trozo",Sancochado,0.98,no
+II-211,U36,"Yuca blanca, bastones",Frito,1.36,no
+II-212,U36,"Yuca blanca, trozo",Horneado,1.55,si
+II-213,T2,Arveja fresca,Sancochado,1.03,no
+II-214,T3,Arveja seca partida,Sancochado,0.44,no
+II-215,T15,Frijol canario,Sancochado,0.51,no
+II-216,T20,Frijol castilla,Sancochado,0.48,no
+II-217,T26,Frijol negro,Sancochado,0.51,no
+II-218,T31,Frijol panamito,Sancochado,0.48,no
+II-219,T9,Frijol zarandaja,Sancochado,0.47,no
+II-220,T44,Garbanzo,Sancochado,0.49,no
+II-222,T47,Haba fresca sin cáscara,Sancochado,0.8,no
+II-223,T49,Haba seca partida,Sancochado,0.46,no
+II-224,T48,Haba seca con cáscara,Tostado,1.35,si
+II-225,T52,Lenteja chica,Sancochado,0.43,no
+II-226,T54,Lenteja grande,Sancochado,0.39,no
+II-227,T56,Pallar seco (con cáscara),Sancochado,0.56,no
+II-228,T57,Pallar seco (sin cáscara),Sancochado,0.44,si

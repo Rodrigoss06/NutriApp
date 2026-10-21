@@ -24,6 +24,7 @@ No edites Notion sin aprobación explícita: propón el cambio con /notion-sync 
 | 05.2 DDL: food, nutrition, exercise, training, tracking | https://app.notion.com/p/3edc3fa6d4ce81cb8baeda0b3d731d80 |
 | 05.3 DDL: scheduling, content, documents, platform, audit, analytics | https://app.notion.com/p/3edc3fa6d4ce81459879e7fb2a8906b8 |
 | 06 Convenciones | https://app.notion.com/p/3edc3fa6d4ce81c982e7f4e4a47ba6d1 |
+| 07 Entrenamiento: periodización, prescripción y seguimiento (método de JV Fitness) | https://app.notion.com/p/400c3fa6d4ce8164880af04f3a6225a6 |
 | Creación del proyecto: flujo y orden | https://app.notion.com/p/3edc3fa6d4ce81ad931fd04dadc1e513 |
 | Prompts P0 a P8 | https://app.notion.com/p/3edc3fa6d4ce81cfa5d8ded9b7c2e483 |
 | Prompts P9 a P16 | https://app.notion.com/p/3edc3fa6d4ce8197aeffd4b8fb5289b3 |

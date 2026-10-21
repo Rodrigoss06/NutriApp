@@ -92,9 +92,14 @@ describe('RF-38 · RN-I04 · importador de catálogos', () => {
     first = await run('TPCA_FOODS', tpca, 'tpca-2017.csv');
   });
 
-  it('la CLI registra los dos catálogos de P8', () => {
+  it('la CLI registra los catálogos de P8', () => {
     expect(importer.kinds()).toEqual(
-      expect.arrayContaining(['COMPENDIUM_ACTIVITIES', 'TPCA_FOODS']),
+      expect.arrayContaining([
+        'COMPENDIUM_ACTIVITIES',
+        'TAFERA_COOKING_FACTORS',
+        'TAFERA_MEASURES',
+        'TPCA_FOODS',
+      ]),
     );
   });
 
@@ -173,6 +178,78 @@ describe('RF-38 · RN-I04 · importador de catálogos', () => {
         tags: ['Imputado de Tabla Boliviana 2005'],
       },
     ]);
+  });
+
+  it('TAFERA 2016: medidas y factores de cocción enlazados con la TPCA 2017; repetir el archivo no duplica', async () => {
+    const measures = await readFile(new URL('food/tafera-2016-medidas.csv', SEEDS));
+    const factors = await readFile(new URL('food/tafera-2016-factores.csv', SEEDS));
+    const counts = () =>
+      owner(
+        `SELECT (SELECT count(*)::int FROM food.household_measure WHERE source_code = 'TAFERA_2016') AS measures,
+                (SELECT count(*)::int FROM food.cooking_factor WHERE source_code = 'TAFERA_2016') AS factors`,
+      );
+
+    const measured = await run('TAFERA_MEASURES', measures, 'tafera-2016-medidas.csv');
+    const factored = await run('TAFERA_COOKING_FACTORS', factors, 'tafera-2016-factores.csv');
+    expect(measured).toMatchObject({ status: 'COMPLETED', rowsTotal: 933, rowsOk: 933 });
+    expect(factored).toMatchObject({ status: 'COMPLETED', rowsTotal: 213, rowsOk: 213 });
+    expect(await counts()).toEqual([{ measures: 933, factors: 213 }]);
+
+    // RN-E12: grams es la parte comestible; el bruto, la manzana entera.
+    const apple = await owner(
+      `SELECT f.source_food_code AS food, f.name_es AS name, m.name_es AS measure, m.grams::float AS grams,
+              m.gross_grams::float AS gross
+       FROM food.household_measure m JOIN food.food f ON f.id = m.food_id
+       WHERE m.source_code = 'TAFERA_2016' AND m.source_measure_code IN ('3-71', '1-1') ORDER BY 1`,
+    );
+    expect(apple).toEqual([
+      {
+        food: 'A3',
+        name: 'Arroz blanco corriente',
+        measure: 'Taza de acero al ras',
+        grams: 203.8,
+        gross: null,
+      },
+      {
+        food: 'C116',
+        name: 'Manzana delicia roja con cáscara',
+        measure: 'Unidad pequeña',
+        grams: 100.6,
+        gross: 105.7,
+      },
+    ]);
+    const wing = await owner(
+      `SELECT f.source_food_code AS food, c.name_es AS name, c.cooking_method_es AS method,
+              c.cooked_to_raw_factor::float AS factor
+       FROM food.cooking_factor c JOIN food.food f ON f.id = c.food_id
+       WHERE c.source_code = 'TAFERA_2016' AND c.source_item_code = 'II-131'`,
+    );
+    expect(wing).toEqual([{ food: 'F78', name: 'Pollo, ala', method: 'Sancochado', factor: 1.18 }]);
+
+    expect((await run('TAFERA_MEASURES', measures, 'tafera-2016-medidas.csv')).status).toBe(
+      'DUPLICATE',
+    );
+    expect(await counts()).toEqual([{ measures: 933, factors: 213 }]);
+    const [source] = await owner<{ imported: boolean }>(
+      `SELECT imported_at IS NOT NULL AS imported FROM food.source WHERE code = 'TAFERA_2016'`,
+    );
+    expect(source?.imported).toBe(true);
+  });
+
+  it('una medida de un alimento que no está en la TPCA hace fallar el lote entero y dice cuál falta', async () => {
+    const report = await run(
+      'TAFERA_MEASURES',
+      'codigo,codigo_tpca,alimento,unidad,medida,peso_bruto_g,peso_neto_g,parte_comestible_pct,energia_kcal,datos_1985\n' +
+        '12-999,Z999,Prueba,Unidad,Unidad,,10,,10,no\n',
+    );
+
+    expect(report).toMatchObject({ status: 'FAILED', rowsTotal: 1, rowsOk: 0 });
+    expect(report.failure).toBe(
+      'Faltan alimentos de TPCA_2017: Z999. Cárguelos antes (pnpm catalog:load).',
+    );
+    expect(
+      await owner(`SELECT 1 FROM food.household_measure WHERE source_measure_code = '12-999'`),
+    ).toEqual([]);
   });
 
   it('las 560 actividades del Compendium 2024 con su MET; las 9 de P7 conservan el suyo', async () => {
@@ -306,6 +383,27 @@ describe('RN-I01 · catálogos globales sin organización', () => {
           `INSERT INTO food.food_group (code, source_code, name_es) VALUES ('X', 'ORG', 'x')`,
         ),
       ).toBe(PG.insufficientPrivilege);
+    });
+  });
+
+  it('factores de cocción: la organización lee los globales y no los escribe; solo SYSTEM', async () => {
+    const food = (
+      await owner<{ id: string }>(
+        `SELECT id FROM food.food WHERE organization_id IS NULL AND source_food_code = 'A3' LIMIT 1`,
+      )
+    )[0]?.id;
+    const insertGlobal = `INSERT INTO food.cooking_factor (id, organization_id, food_id, source_code, name_es,
+                                                          cooking_method_es, cooked_to_raw_factor)
+                          VALUES ('${id()}', NULL, '${String(food)}', 'TAFERA_2016', 'Prueba', 'Sancochado', 1)`;
+    await withContext(
+      'user',
+      { orgId: id(), userId: id(), role: 'PROFESSIONAL' },
+      async (client) => {
+        expect(await errorCode(client, insertGlobal)).toBe(PG.insufficientPrivilege);
+      },
+    );
+    await withContext('user', { role: 'SYSTEM' }, async (client) => {
+      expect(await errorCode(client, insertGlobal)).toBeUndefined();
     });
   });
 

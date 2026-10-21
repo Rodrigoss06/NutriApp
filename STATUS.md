@@ -1,6 +1,6 @@
 # STATUS — NutriCoach v1.0
 
-Actualizado: 2026-10-20 · Por: Rodrigo, con Claude Code
+Actualizado: 2026-10-21 · Por: Rodrigo, con Claude Code
 Inicio del proyecto: POR CONFIRMAR (día siguiente al Pago 1) · Semana actual: 0 de 9
 Próxima demo: Demo 1 · Base y evaluación · semana 2
 
@@ -15,7 +15,7 @@ Próxima demo: Demo 1 · Base y evaluación · semana 2
 | P5 Identidad y organizaciones | ✅ | Rodrigo | #6, #7, #8 | 4 criterios en verde; despliegue a staging pendiente de P4 |
 | P6 Pacientes e historia clínica | ✅ | Rodrigo | #10, #11, #12 | 4 criterios en verde (E2E en escritorio y celular, e integración); despliegue a staging pendiente de P4 |
 | P7 Evaluación y cálculo, Demo 1 | ✅ | Rodrigo | #14 a #18 | E2E de la Demo 1 en escritorio y celular (G-01 a G-17), ninguna cifra sin método, recálculo con SUPERSEDED y guion; RF-18 adelantado. Etiqueta v0.1.0 (abf0d42) y Notion sincronizado; staging, pendiente de P4 |
-| P8 Datos maestros de alimentos | 🟨 | Rodrigo | | PR 1 listo en local (importador, TPCA 2017 y Compendium 2024); faltan TAFERA, API y pantallas |
+| P8 Datos maestros de alimentos | 🟨 | Rodrigo | #21 | PR 1 fusionado (importador, TPCA 2017 y Compendium 2024); PR 2 (TAFERA) listo en local; faltan API y pantallas |
 | P9 Dieta por intercambios | ⬜ | Rodrigo | | |
 | P10 Composición, menú y recetario | ⬜ | Rodrigo | | |
 | P11 Fichas PDF, Demo 2 | ⬜ | Rodrigo | | |
@@ -28,15 +28,21 @@ Próxima demo: Demo 1 · Base y evaluación · semana 2
 Leyenda: ⬜ pendiente · 🟨 en curso · ✅ terminado · ⛔ bloqueado
 
 ## En curso
-- P8 en feat/food-catalogos, sobre main. PR 1 subido, en revisión:
-  - importador genérico de catálogos con lote, hash, validación por fila e informe (RN-I04), y CLI catalog:import y
-    catalog:load con un PLATFORM_ADMIN como responsable;
-  - TPCA 2017: 928 alimentos de 14 grupos, sin el grupo S; nutrientes INFOODS, «sin dato» distinto de cero (RN-I03);
-  - Compendium 2024: 560 actividades de 7 encabezados, traducidas y verificadas contra el PDF;
-  - lista de intercambio DEMO del motor, provisional (R4); ADR-052;
-  - pnpm check en verde (318 unitarias de la API y 171 de integración).
-  - Siguen PR 2 (TAFERA: medidas caseras y factores de cocido), PR 3 (búsqueda, composición de un plato y alimentos
-    propios) y PR 4 (pantallas).
+- P8, PR 1 fusionado (#21, d7beee2): importador genérico de catálogos (RN-I04), TPCA 2017 (928 alimentos) y
+  Compendium 2024 (560 actividades), CLI catalog:load y lista DEMO provisional; ADR-052.
+- P8, PR 2 en feat/food-tafera, sobre main, listo en local (ADR-053):
+  - extractor de la TAFERA 2016 con enlace a la TPCA 2017 por perfil de nutrientes y nombre, y decisiones a mano con
+    su motivo (LINKS y FACTOR_LINKS);
+  - 933 medidas caseras de 194 alimentos, con peso neto (parte comestible) y bruto, y 213 factores de cocido a crudo
+    de 126 alimentos crudos;
+  - migración 202610210000_food_tafera: fuente TAFERA_2016, columnas de origen y peso bruto en household_measure y
+    tabla food.cooking_factor con la RLS de catálogo;
+  - importadores TAFERA_MEASURES y TAFERA_COOKING_FACTORS; catalog:load los carga después de la TPCA.
+  - Siguen PR 3 (búsqueda, composición de un plato y alimentos propios) y PR 4 (pantallas).
+- Notion: el método de entrenamiento de Jeremy (plantilla V3, sin reloj) quedó documentado en la página 07 y en 03
+  (RN-F13 a RN-F17, RN-G11, RN-G14 a RN-G17, G-29 a G-40), 04 (RF-25, RF-26, RF-28, RF-29, RF-34, RF-41 a RF-43),
+  05.2 (sección «Entrenamiento según la plantilla V3»), prompts P12 a P14, Proyecto y Documento técnico (aprobado por
+  Rodrigo, 2026-10-21).
 - Rediseño «Instrumento» (ADR-051): #20 fusionado (039bb67)
 - Notion sigue nombrando a Iván en 01 (aprobación del despliegue a producción), en la ruta crítica de Creación del
   proyecto, en la plantilla de STATUS de Archivos del repositorio y en el Equipo de Proyecto: se deja así por decisión
@@ -45,8 +51,8 @@ Leyenda: ⬜ pendiente · 🟨 en curso · ✅ terminado · ⛔ bloqueado
 ## Siguiente paso
 - Antes de la Demo 1: la matriz manual de navegadores (RNF-19: Chrome, Edge, Safari y Firefox; la E2E cubre Chromium
   y WebKit) y, el mismo día, base local limpia y semilla («Antes de empezar» del guion). La demo es en local
-- Revisar y fusionar el PR 1 de P8
-- P8 PR 2: TAFERA 2016 (medidas caseras con peso neto y parte comestible, y factores de cocido a crudo)
+- Revisar y fusionar el PR 2 de P8 (TAFERA)
+- P8 PR 3: búsqueda de alimentos por trigramas, composición de un plato y alimentos propios de la organización
 - Cada base nueva necesita los catálogos: `pnpm --filter api build && pnpm catalog:load plataforma@demo.example.com`
   en local; en staging y producción, con el correo de su PLATFORM_ADMIN
 - db:seed carga el caso Luis: sus resultados aparecen cuando corre el worker
@@ -55,7 +61,7 @@ Leyenda: ⬜ pendiente · 🟨 en curso · ✅ terminado · ⛔ bloqueado
 ## Bloqueos y preguntas al cliente
 - [ ] Cuenta de Hetzner y dominio a nombre de Jeremy: bloquea P4
 - [ ] N9: límites y precio de los tramos de membresía; qué pasa al superar el límite
-- [ ] ⚠️ Historia clínica v1 en texto libre por bloque: provisional hasta tener la ficha que usa Jeremy
+- [x] Ficha de anamnesis de Jeremy recibida (2026-10-20): será la versión 2 de la historia clínica (RF-43, P12)
 - [ ] Antes de P16: cargar en producción los valores definitivos de TRAMO_5 y TRAMO_50 (la semilla no corre en
   producción): migración de datos o panel interno de P15
 - [ ] N22: caducidad del enlace de acceso del paciente (provisional: 7 días, ajustable por organización en
@@ -65,8 +71,10 @@ Leyenda: ⬜ pendiente · 🟨 en curso · ✅ terminado · ⛔ bloqueado
 - [ ] ⚠️ Rangos de rechazo de perímetros, diámetros y longitudes, y condiciones de la evaluación con umbral de 2 h:
   validarlos con quien revisa los cálculos clínicos
 - [ ] P7: «etiqueta v0.1.0 desplegada en staging» queda pendiente de P4; la Demo 1 se hace en local con la semilla
-- [ ] N13: confirmar regresiones y progresiones en la biblioteca
-- [ ] N7: confirmar el estado diario (estrés, sueño, energía)
+- [x] N13: alternativa, regresión y progresión en la biblioteca (RF-25); Jeremy lo confirma en P-13
+- [x] N7: lo resuelve el registro diario de la plantilla V3 (RN-G11)
+- [ ] Método de entrenamiento de Jeremy: preguntas P-01 a P-14 (Notion 07 §15). Mientras no respondan, P12 a P14 se
+  construyen con la propuesta de cada una
 - [ ] R4: permiso de uso de las listas Dextre y ADA
 - [ ] ⚠️ TPCA 2017: autorización del INS para reproducirla. Se usa mientras se tramita; si no llega, plan B: USDA
   FoodData Central (decisiones de Rodrigo, 2026-10-20)
@@ -111,6 +119,9 @@ Leyenda: ⬜ pendiente · 🟨 en curso · ✅ terminado · ⛔ bloqueado
   PR 3 pasa la búsqueda a trigramas con orden por similitud y PR 4 rehace el buscador
 
 ## Registro de sesiones (solo las 5 últimas)
+- 2026-10-21 · P8 (PR 2) · respuesta a Jeremy sobre periodización y lectura de su paquete operativo (plantilla V3 y
+  formularios); el modelo V3, sin el reloj, documentado en Notion (07 y siete páginas más). TAFERA 2016 extraída del
+  PDF del INS y enlazada con la TPCA 2017 (933 medidas y 213 factores), migración, importadores y ADR-053
 - 2026-10-20 · P8 (PR 1) · demo levantada en la red local para presentarla (correo por ngrok); extracción de la
   TPCA 2017 del PDF del INS (928 alimentos) y del Compendium 2024 (560 actividades traducidas y verificadas);
   importador de catálogos, CLI catalog:load y ADR-052. Rodrigo decidió usar la TPCA mientras se tramita su licencia
@@ -126,5 +137,3 @@ Leyenda: ⬜ pendiente · 🟨 en curso · ✅ terminado · ⛔ bloqueado
 - 2026-10-15 · P7 (PR 5, en #18) · pantallas de evaluación, captura con tercera toma en vivo, bioimpedancia,
   resultados, comparación, ETM, métodos, Lee y energía; E2E de la Demo 1 en escritorio y celular; el worker lee sus
   colas por lotes (la auditoría de escrituras tardaba minutos); ADR-050
-- 2026-10-15 · P7 (PR 4) · decisiones abiertas de la Demo 1 resueltas (ADR-049); Rodrigo asume las fases de Iván; PR 4
-  subido

@@ -6,11 +6,14 @@ import { importCatalog, platformAdmin } from './catalog-cli.js';
 import { CliModule } from './cli.module.js';
 
 /**
- * Los catálogos globales de seeds/, en orden (RF-38). Corren en todo entorno, también en producción, donde db:seed no
- * corre nunca: sin ellos no hay alimentos ni actividades. Cada archivo ya aplicado queda como lote repetido.
+ * Los catálogos globales de seeds/, en orden: la TAFERA enlaza alimentos de la TPCA (RF-38). Corren en todo entorno,
+ * también en producción, donde db:seed no corre nunca: sin ellos no hay alimentos ni actividades. Cada archivo ya
+ * aplicado queda como lote repetido.
  */
 const CATALOGS = [
   { kind: 'TPCA_FOODS', file: 'food/tpca-2017.csv' },
+  { kind: 'TAFERA_MEASURES', file: 'food/tafera-2016-medidas.csv' },
+  { kind: 'TAFERA_COOKING_FACTORS', file: 'food/tafera-2016-factores.csv' },
   { kind: 'COMPENDIUM_ACTIVITIES', file: 'exercise/compendium-2024.csv' },
 ] as const;
 
