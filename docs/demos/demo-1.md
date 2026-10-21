@@ -220,7 +220,7 @@ bajó solo 1.5 cm, y sin un ETM de perímetros no se puede decir que el cambio s
 2. Completar:
    - TMR: Mifflin-St Jeor;
    - estrategia «Aditiva», con 1.4 en «PAL de la vida diaria»;
-   - «Buscar actividad»: «correr» → «Agregar» en «Correr a 6–6.3 mph (9.7–10.1 km/h), 10 min/milla (6.2 min/km)», 9.3 MET; 30 minutos por sesión
+   - «Buscar actividad»: «correr a 6» → «Agregar» en «Correr a 6–6.3 mph (9.7–10.1 km/h), 10 min/milla (6.2 min/km)», 9.3 MET; 30 minutos por sesión
      y 3 sesiones por semana;
    - objetivo «Perder grasa», ajuste «Perder grasa: kg por mes» con cantidad 3, y 15 en «% de grasa deseado»;
    - proteína 2 g por kg y grasa 25 % de las kcal.

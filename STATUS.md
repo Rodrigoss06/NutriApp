@@ -108,8 +108,9 @@ Leyenda: ⬜ pendiente · 🟨 en curso · ✅ terminado · ⛔ bloqueado
   87.5 a 125 y wght 400 a 700) con next/font/local
 - La E2E de celular corre en la imagen de Playwright (docker, mcr.microsoft.com/playwright:v1.63.0-noble): en este
   equipo WebKit no tiene sus dependencias
-- Búsqueda de actividades con LIKE, orden alfabético y LIMIT 50: «correr» da 80 resultados. P8 PR 3 la pasa a
-  trigramas con orden por similitud
+- Búsqueda de actividades con LIKE, orden alfabético y LIMIT 50, y la pantalla de energía muestra 10: con las 560 del
+  Compendium, «correr» da 80 y empieza por «Caminar en cinta de correr». El guion y la E2E buscan «correr a 6». P8
+  PR 3 pasa la búsqueda a trigramas con orden por similitud y PR 4 rehace el buscador
 
 ## Registro de sesiones (solo las 5 últimas)
 - 2026-10-20 · P8 (PR 1) · demo levantada en la red local para presentarla (correo por ngrok); extracción de la

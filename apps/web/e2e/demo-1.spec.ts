@@ -460,7 +460,7 @@ test.describe('Demo 1 · base y evaluación (P7)', () => {
       expect(await seriousViolations(page)).toEqual([]);
       await page.getByRole('radio', { name: /Mifflin-St Jeor/ }).check();
       await page.getByLabel('PAL de la vida diaria', { exact: true }).fill('1.4');
-      await page.getByLabel('Buscar actividad').fill('correr');
+      await page.getByLabel('Buscar actividad').fill('correr a 6');
       await page
         .getByRole('button', {
           name: 'Agregar Correr a 6–6.3 mph (9.7–10.1 km/h), 10 min/milla (6.2 min/km)',
