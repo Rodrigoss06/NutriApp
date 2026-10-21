@@ -684,3 +684,62 @@ Consecuencias:
 - Las herramientas de diseño (frontend-design, ui-ux-pro-max, ui-skills y los MCP de shadcn, Context7 y Playwright)
   quedan en el usuario de Claude Code, no en el repositorio: .mcp.json y .claude/settings.json siguen idénticos a
   Notion.
+
+## ADR-052 · Datos maestros: importador de catálogos, TPCA 2017 y Compendium 2024 — aceptada (2026-10-20)
+Contexto: P8 pide catálogos con fuente y versión, cargados por un importador confiable y buscables (RF-38, RN-I01 a
+RN-I04). La TPCA 2017 prohíbe reproducirla sin autorización del INS; el Compendium 2024 permite el uso comercial si se
+lo cita y no se cambian sus MET. Rodrigo decidió (2026-10-20):
+- usar la TPCA mientras se tramita la autorización;
+- no cargar su grupo S, de preparaciones;
+- cargar 7 encabezados del Compendium;
+- preparar la captura por foto sin construir la parte de visión.
+Decisión:
+- Importador genérico en platform/import:
+  - CSV RFC 4180 propio;
+  - cada archivo es un lote de platform.import_batch con su hash SHA-256, sus conteos y los primeros 100 errores por
+    fila;
+  - cada módulo aporta su tipo (CatalogImport: columnas, validación por fila, clave y guardado con upserts) y lo
+    registra al iniciar en ImportRegistry, como los trabajos del worker.
+- Un lote es una transacción de SYSTEM con un candado por organización y tipo:
+  - el mismo archivo ya aplicado deja un lote DUPLICATE y no toca los datos; el índice único import_batch_once lo
+    garantiza en la base;
+  - una fila mala no detiene a las demás (COMPLETED_WITH_ERRORS); sin filas válidas, FAILED;
+  - si guardar falla, se revierte todo y otra transacción deja el lote FAILED.
+- CLI catalog:import y catalog:load:
+  - corre como app_user con el rol SYSTEM y registra como responsable (started_by) a un PLATFORM_ADMIN activo, buscado
+    por su correo;
+  - no depende de db:seed: los catálogos existen en todo entorno, también en producción.
+- Lo global sin organization_id lo escribe solo SYSTEM:
+  - app.enable_global_rls (todos leen; solo SYSTEM inserta y actualiza) en exercise.physical_activity y food.source;
+  - fuentes, nutrientes, grupos y la lista DEMO llegan por migración, y app_user pierde INSERT y UPDATE sobre ellos,
+    salvo food.source.imported_at.
+- TPCA 2017, 928 alimentos de 14 grupos:
+  - CARTBEQ por el <CARTBQ> de la tabla y FOL para «Ácido fólico», que no trae identificador;
+  - «sin dato» queda NULL con MISSING, las trazas 0 con TRACE y los valores de un alimento imputado con IMPUTED, con
+    la tabla de origen como etiqueta;
+  - la tabla no trae parte comestible: queda en 100 % hasta la TAFERA;
+  - el estado sale del nombre oficial: COOKED si nombra una cocción (cocido, sancochado, frito, asado, hervido,
+    horneado, guisado, tostado, precocido) y si no RAW, «crudo o tal como se compra». PROCESSED y READY quedan para
+    los alimentos propios y las preparaciones. ⚠️ Revisable con quien valida los cálculos clínicos;
+  - sin alias derivados del nombre: «pilado o pulido» daría alias falsos, y la búsqueda ya cubre las palabras del
+    nombre.
+- Los CSV de seeds/ son la publicación tal cual, más la traducción del Compendium; las derivaciones viven en el código,
+  con pruebas. Como el mismo archivo no se vuelve a aplicar, una regla de derivación nueva llega con el siguiente
+  archivo o con una migración de datos.
+- Compendium 2024, 560 actividades de 7 encabezados:
+  - código, MET y descripción oficial en inglés (columna nueva description_en), y traducción propia;
+  - el extractor verifica la traducción: conserva todos los números del original y cada equivalencia entre paréntesis
+    (km/h, min/km, kg, cm, m/min) es la conversión exacta;
+  - las 9 de P7 conservan código y MET; su descripción pasa a la traducción nueva.
+- Lista de intercambio DEMO del motor en food.exchange_list, con la columna nueva provisional en true (riesgo R4) y
+  sus 6 grupos, con kcal por Atwater como las calcula el motor.
+- Captura por foto: sin IA en el producto (regla 10). Un modelo propio, como una CNN, también cuenta como IA, así que
+  la visión espera un acuerdo con Jeremy. P8 deja lo que no depende de ella: el estado de cada alimento y, en sus
+  próximos PR, resolver un término a candidatos (FoodApi.resolve) y la composición de un plato.
+Consecuencias:
+- 05.2 y 05.3 de Notion: provisional en exchange_list; file_name y los estados en import_batch; description_en y la
+  RLS en physical_activity; la RLS en food.source (/notion-sync al cerrar P8).
+- La E2E de la Demo 1 corre con los catálogos cargados, y su guion los carga en «Antes de empezar». La actividad de
+  Luis se busca por su descripción nueva.
+- Riesgo nuevo, como R4: la licencia de la TPCA. Plan B: la TAFERA 2016 del INS, que autoriza reproducirla citando la
+  fuente, o USDA FoodData Central.
