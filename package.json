@@ -21,6 +21,8 @@
     "db:pull": "pnpm --filter api db:pull",
     "db:seed": "pnpm --filter api seed",
     "seed:load": "pnpm --filter api seed:load",
+    "catalog:import": "pnpm --filter api catalog:import",
+    "catalog:load": "pnpm --filter api catalog:load",
     "check": "pnpm lint && pnpm lint:arch && pnpm typecheck && pnpm test && pnpm test:int"
   },
   "devDependencies": {

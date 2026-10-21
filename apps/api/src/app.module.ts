@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common';
 import { AssessmentModule } from './modules/assessment/index.js';
 import { AuditLogModule } from './modules/audit/index.js';
 import { ExerciseModule } from './modules/exercise/index.js';
+import { FoodModule } from './modules/food/index.js';
 import { NutritionModule } from './modules/nutrition/index.js';
 import { BackofficeModule } from './modules/backoffice/index.js';
 import { ClinicalModule } from './modules/clinical/index.js';
@@ -21,6 +22,7 @@ import { AuthModule, HealthModule, IdempotencyModule, PlatformModule } from './p
     ClinicalModule,
     AssessmentModule,
     ExerciseModule,
+    FoodModule,
     NutritionModule,
     AuditLogModule,
     BackofficeModule,

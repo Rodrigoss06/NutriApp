@@ -460,10 +460,22 @@ test.describe('Demo 1 · base y evaluación (P7)', () => {
       expect(await seriousViolations(page)).toEqual([]);
       await page.getByRole('radio', { name: /Mifflin-St Jeor/ }).check();
       await page.getByLabel('PAL de la vida diaria', { exact: true }).fill('1.4');
-      await page.getByLabel('Buscar actividad').fill('correr');
-      await page.getByRole('button', { name: 'Agregar Correr a 6–6.3 mph (unos 10 km/h)' }).click();
-      await page.getByLabel('Minutos por sesión: Correr a 6–6.3 mph (unos 10 km/h)').fill('30');
-      await page.getByLabel('Sesiones por semana: Correr a 6–6.3 mph (unos 10 km/h)').fill('3');
+      await page.getByLabel('Buscar actividad').fill('correr a 6');
+      await page
+        .getByRole('button', {
+          name: 'Agregar Correr a 6–6.3 mph (9.7–10.1 km/h), 10 min/milla (6.2 min/km)',
+        })
+        .click();
+      await page
+        .getByLabel(
+          'Minutos por sesión: Correr a 6–6.3 mph (9.7–10.1 km/h), 10 min/milla (6.2 min/km)',
+        )
+        .fill('30');
+      await page
+        .getByLabel(
+          'Sesiones por semana: Correr a 6–6.3 mph (9.7–10.1 km/h), 10 min/milla (6.2 min/km)',
+        )
+        .fill('3');
       await page.getByLabel('Cantidad').fill('3');
       await page.getByLabel('% de grasa deseado').fill('15');
       await page.getByLabel('Proteína (g por kg de peso)').fill('2');

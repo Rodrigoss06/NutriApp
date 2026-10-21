@@ -57,4 +57,12 @@ export {
 export { JobRegistry, type ScheduledJob } from './jobs/job-registry.js';
 export { EXTENSIONS, MAX_UPLOAD_BYTES, sniffMime, type AllowedMime } from './storage/file-type.js';
 export { FileRegistry, UNSUPPORTED_FILE, type StoredFile } from './storage/file-registry.js';
+export type { CatalogImport, ImportRowError, ImportStatus } from './import/catalog-import.js';
+export {
+  CatalogImporter,
+  MAX_STORED_ERRORS,
+  type ImportReport,
+  type ImportRequest,
+} from './import/catalog-importer.js';
+export { ImportRegistry } from './import/import-registry.js';
 export { STORAGE, type StoragePort } from './storage/storage.port.js';

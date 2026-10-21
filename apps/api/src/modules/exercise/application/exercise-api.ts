@@ -1,4 +1,5 @@
 import { Inject, Injectable } from '@nestjs/common';
+import type { CompendiumActivity } from '../domain/compendium-activity.js';
 
 /** Actividad del Compendium 2024 con su MET (exercise.physical_activity). */
 export interface PhysicalActivityRecord {
@@ -9,10 +10,12 @@ export interface PhysicalActivityRecord {
   readonly sourceVersion: string;
 }
 
-/** El catálogo global de actividades, de solo lectura (RN-I01). */
+/** El catálogo global de actividades: lo leen todos y lo escribe solo el importador, como SYSTEM (RN-I01). */
 export interface PhysicalActivityStore {
   search(text: string | null): Promise<readonly PhysicalActivityRecord[]>;
   byCodes(codes: readonly string[]): Promise<readonly PhysicalActivityRecord[]>;
+  /** Inserta o actualiza por código, dentro de la transacción del lote de importación (RN-I04). */
+  upsert(activities: readonly CompendiumActivity[], sourceVersion: string): Promise<void>;
 }
 
 export const PHYSICAL_ACTIVITY_STORE = Symbol.for('nutricoach.exercise.PhysicalActivityStore');

@@ -1,6 +1,6 @@
 # STATUS — NutriCoach v1.0
 
-Actualizado: 2026-10-18 · Por: Rodrigo, con Claude Code
+Actualizado: 2026-10-20 · Por: Rodrigo, con Claude Code
 Inicio del proyecto: POR CONFIRMAR (día siguiente al Pago 1) · Semana actual: 0 de 9
 Próxima demo: Demo 1 · Base y evaluación · semana 2
 
@@ -15,7 +15,7 @@ Próxima demo: Demo 1 · Base y evaluación · semana 2
 | P5 Identidad y organizaciones | ✅ | Rodrigo | #6, #7, #8 | 4 criterios en verde; despliegue a staging pendiente de P4 |
 | P6 Pacientes e historia clínica | ✅ | Rodrigo | #10, #11, #12 | 4 criterios en verde (E2E en escritorio y celular, e integración); despliegue a staging pendiente de P4 |
 | P7 Evaluación y cálculo, Demo 1 | ✅ | Rodrigo | #14 a #18 | E2E de la Demo 1 en escritorio y celular (G-01 a G-17), ninguna cifra sin método, recálculo con SUPERSEDED y guion; RF-18 adelantado. Etiqueta v0.1.0 (abf0d42) y Notion sincronizado; staging, pendiente de P4 |
-| P8 Datos maestros de alimentos | ⬜ | Rodrigo | | |
+| P8 Datos maestros de alimentos | 🟨 | Rodrigo | | PR 1 listo en local (importador, TPCA 2017 y Compendium 2024); faltan TAFERA, API y pantallas |
 | P9 Dieta por intercambios | ⬜ | Rodrigo | | |
 | P10 Composición, menú y recetario | ⬜ | Rodrigo | | |
 | P11 Fichas PDF, Demo 2 | ⬜ | Rodrigo | | |
@@ -28,11 +28,16 @@ Próxima demo: Demo 1 · Base y evaluación · semana 2
 Leyenda: ⬜ pendiente · 🟨 en curso · ✅ terminado · ⛔ bloqueado
 
 ## En curso
-- Ningún prompt en curso: P7 cerrado. #18 fusionado (abf0d42) con CI en verde, etiqueta v0.1.0 y /notion-sync de P7
-  aplicado (41 cambios)
-- Rediseño «Instrumento» (ADR-051) en feat/ui-rediseno, apilada sobre docs/cierre-p7 (sin subir): Archivo, riel y
-  zonas destacadas teñidos con la marca, animaciones solo con CSS, fondo de curvas de nivel que se pausa, regla de
-  referencia con la escala que manda la API (RN-D10) y barra de Kerr. pnpm check y E2E 46 de 46 en verde
+- P8 en feat/food-catalogos, sobre main. PR 1 subido, en revisión:
+  - importador genérico de catálogos con lote, hash, validación por fila e informe (RN-I04), y CLI catalog:import y
+    catalog:load con un PLATFORM_ADMIN como responsable;
+  - TPCA 2017: 928 alimentos de 14 grupos, sin el grupo S; nutrientes INFOODS, «sin dato» distinto de cero (RN-I03);
+  - Compendium 2024: 560 actividades de 7 encabezados, traducidas y verificadas contra el PDF;
+  - lista de intercambio DEMO del motor, provisional (R4); ADR-052;
+  - pnpm check en verde (318 unitarias de la API y 171 de integración).
+  - Siguen PR 2 (TAFERA: medidas caseras y factores de cocido), PR 3 (búsqueda, composición de un plato y alimentos
+    propios) y PR 4 (pantallas).
+- Rediseño «Instrumento» (ADR-051): #20 fusionado (039bb67)
 - Notion sigue nombrando a Iván en 01 (aprobación del despliegue a producción), en la ruta crítica de Creación del
   proyecto, en la plantilla de STATUS de Archivos del repositorio y en el Equipo de Proyecto: se deja así por decisión
   de Rodrigo (2026-10-16)
@@ -40,8 +45,10 @@ Leyenda: ⬜ pendiente · 🟨 en curso · ✅ terminado · ⛔ bloqueado
 ## Siguiente paso
 - Antes de la Demo 1: la matriz manual de navegadores (RNF-19: Chrome, Edge, Safari y Firefox; la E2E cubre Chromium
   y WebKit) y, el mismo día, base local limpia y semilla («Antes de empezar» del guion). La demo es en local
-- P8 Datos maestros de alimentos: faltan en seeds/food/ los CSV de la TPCA 2017 (INS-CENAN) y del subconjunto
-  traducido del Compendium 2024
+- Revisar y fusionar el PR 1 de P8
+- P8 PR 2: TAFERA 2016 (medidas caseras con peso neto y parte comestible, y factores de cocido a crudo)
+- Cada base nueva necesita los catálogos: `pnpm --filter api build && pnpm catalog:load plataforma@demo.example.com`
+  en local; en staging y producción, con el correo de su PLATFORM_ADMIN
 - db:seed carga el caso Luis: sus resultados aparecen cuando corre el worker
 - Desde P6, cada apps/api/.env local necesita STORAGE_LOCAL_PATH con una ruta absoluta (ADR-043)
 
@@ -61,6 +68,9 @@ Leyenda: ⬜ pendiente · 🟨 en curso · ✅ terminado · ⛔ bloqueado
 - [ ] N13: confirmar regresiones y progresiones en la biblioteca
 - [ ] N7: confirmar el estado diario (estrés, sueño, energía)
 - [ ] R4: permiso de uso de las listas Dextre y ADA
+- [ ] ⚠️ TPCA 2017: autorización del INS para reproducirla. Se usa mientras se tramita; si no llega, plan B: USDA
+  FoodData Central (decisiones de Rodrigo, 2026-10-20)
+- [ ] Captura de un plato por foto: la visión espera un acuerdo con Jeremy (un modelo propio también es IA, regla 10)
 - [ ] Textos legales revisados por el abogado del cliente, en lenguaje claro: desde los 14 años los acepta el propio
   paciente (ADR-042)
 - [ ] ⚠️ Menores: desde los 14 consienten como un adulto; antes, solo en papel firmado por su padre, madre o tutor, sin
@@ -96,8 +106,16 @@ Leyenda: ⬜ pendiente · 🟨 en curso · ✅ terminado · ⛔ bloqueado
   87.5 a 125 y wght 400 a 700) con next/font/local
 - La E2E de celular corre en la imagen de Playwright (docker, mcr.microsoft.com/playwright:v1.63.0-noble): en este
   equipo WebKit no tiene sus dependencias
+- Búsqueda de actividades con LIKE, orden alfabético y LIMIT 50, y la pantalla de energía muestra 10: con las 560 del
+  Compendium, «correr» da 80 y empieza por «Caminar en cinta de correr». El guion y la E2E buscan «correr a 6». P8
+  PR 3 pasa la búsqueda a trigramas con orden por similitud y PR 4 rehace el buscador
 
 ## Registro de sesiones (solo las 5 últimas)
+- 2026-10-20 · P8 (PR 1) · demo levantada en la red local para presentarla (correo por ngrok); extracción de la
+  TPCA 2017 del PDF del INS (928 alimentos) y del Compendium 2024 (560 actividades traducidas y verificadas);
+  importador de catálogos, CLI catalog:load y ADR-052. Rodrigo decidió usar la TPCA mientras se tramita su licencia
+  (plan B: USDA FoodData Central) y dejar la foto sin IA hasta un acuerdo; aprobó el estado deducido del nombre y no
+  derivar alias
 - 2026-10-18 · Rediseño «Instrumento» · herramientas de diseño en el usuario de Claude Code (frontend-design,
   ui-ux-pro-max, ui-skills y MCP de shadcn, Context7 y Playwright); vista previa de tres direcciones; dirección A con
   curvas de nivel; escala de referencia en los resultados; ADR-051. El disco de datos se llenó (lago de datos de
@@ -110,5 +128,3 @@ Leyenda: ⬜ pendiente · 🟨 en curso · ✅ terminado · ⛔ bloqueado
   colas por lotes (la auditoría de escrituras tardaba minutos); ADR-050
 - 2026-10-15 · P7 (PR 4) · decisiones abiertas de la Demo 1 resueltas (ADR-049); Rodrigo asume las fases de Iván; PR 4
   subido
-- 2026-10-13 · P7 (PR 4) · guion de la Demo 1 ensayado contra la API, cintura/talla de NICE, rangos versionados por
-  la fecha de la evaluación, aviso pediátrico, Ana y la bioimpedancia de Luis en la semilla; ADR-048
