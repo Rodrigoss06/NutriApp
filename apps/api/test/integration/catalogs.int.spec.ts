@@ -83,6 +83,15 @@ const batch = async (report: ImportReport) =>
   )[0];
 
 describe('RF-38 · RN-I04 · importador de catálogos', () => {
+  let tpca: Buffer;
+  let first: ImportReport;
+
+  // La primera carga de la TPCA, para que cada prueba valga sola, en cualquier orden.
+  beforeAll(async () => {
+    tpca = await readFile(new URL('food/tpca-2017.csv', SEEDS));
+    first = await run('TPCA_FOODS', tpca, 'tpca-2017.csv');
+  });
+
   it('la CLI registra los dos catálogos de P8', () => {
     expect(importer.kinds()).toEqual(
       expect.arrayContaining(['COMPENDIUM_ACTIVITIES', 'TPCA_FOODS']),
@@ -90,7 +99,6 @@ describe('RF-38 · RN-I04 · importador de catálogos', () => {
   });
 
   it('criterio 1: importar dos veces el mismo archivo no duplica nada y el segundo lote queda como repetido', async () => {
-    const tpca = await readFile(new URL('food/tpca-2017.csv', SEEDS));
     const sha = createHash('sha256').update(tpca).digest('hex');
     const counts = () =>
       owner(
@@ -99,7 +107,6 @@ describe('RF-38 · RN-I04 · importador de catálogos', () => {
                  WHERE f.source_code = 'TPCA_2017') AS nutrients`,
       );
 
-    const first = await run('TPCA_FOODS', tpca, 'tpca-2017.csv');
     expect(first).toMatchObject({
       status: 'COMPLETED',
       rowsTotal: 928,

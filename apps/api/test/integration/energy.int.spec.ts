@@ -83,19 +83,28 @@ afterAll(async () => {
   await harness.stop();
 });
 
+/**
+ * La base de integración es compartida: según el orden de los archivos, el catálogo tiene solo las 9 actividades de la
+ * semilla de P7 o las 560 del Compendium que carga catalogs.int.spec.ts. Estas pruebas valen con cualquiera.
+ */
 describe('RN-E03 · actividades del Compendium 2024', () => {
   it('busca sin tildes y trae el MET; correr a 6 mph es 9.3 (G-15)', async () => {
     const { cookie } = org.staff.responsible;
-    const running = await harness.get('/physical-activities?q=correr', cookie);
-    expect((running.body as { activities: unknown[] }).activities).toEqual([
-      expect.objectContaining({ code: '12050', met: 9.3, sourceVersion: 'COMPENDIUM_2024' }),
-    ]);
+    const running = await harness.get('/physical-activities?q=correr%20a%206', cookie);
+    expect((running.body as { activities: unknown[] }).activities).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ code: '12050', met: 9.3, sourceVersion: 'COMPENDIUM_2024' }),
+      ]),
+    );
     const soccer = await harness.get('/physical-activities?q=futbol', cookie);
-    expect(
-      (soccer.body as { activities: { code: string }[] }).activities.map((a) => a.code),
-    ).toEqual(['15610']);
+    const found = (soccer.body as { activities: { code: string; descriptionEs: string }[] })
+      .activities;
+    expect(found.map((a) => a.code)).toContain('15610');
+    expect(found.every((a) => /fútbol/i.test(a.descriptionEs))).toBe(true);
     const all = await harness.get('/physical-activities', cookie);
-    expect((all.body as { activities: unknown[] }).activities).toHaveLength(9);
+    const listed = (all.body as { activities: unknown[] }).activities.length;
+    expect(listed).toBeGreaterThanOrEqual(9);
+    expect(listed).toBeLessThanOrEqual(50);
   });
 });
 
