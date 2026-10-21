@@ -14,6 +14,8 @@ no corre; antes hay que compilar la API (`pnpm --filter api build`). Un archivo 
 | Archivo | Tipo | Filas | SHA-256 del CSV |
 |---|---|---|---|
 | food/tpca-2017.csv | TPCA_FOODS | 928 | 2c70ad57f15091b944adb7b1ea8ccf10bdc2adecbde3fdf52177b3a663d384b6 |
+| food/tafera-2016-medidas.csv | TAFERA_MEASURES | 933 | cfe7781b411c68e8510f85a53b25a64b7d3a12b0ad26db8aa9df7e0572bdeb35 |
+| food/tafera-2016-factores.csv | TAFERA_COOKING_FACTORS | 213 | a8b0967c7892e737a588fedd6e10934812eeb34f8cdac7f9a9d3fa526ff16e71 |
 | exercise/compendium-2024.csv | COMPENDIUM_ACTIVITIES | 560 | bc7fdf041739c180b1934e0d6c39f414889246b3da57fea44ee47486c5fca6b5 |
 
 Un CSV nuevo cambia su hash: se carga como un lote nuevo y actualiza por código lo que cambió (ADR-052).
@@ -49,6 +51,50 @@ códigos, y lista las diferencias de la propia publicación, que se conservan ta
   F51 a F61, F102, F103 y K1;
 - D25 (Linaza): carbohidratos totales y disponibles 0 con fibra dietaria 27.9 g; su suma proximal da 74.5 g;
 - L29 (Vainilla, extracto): la suma proximal da 65.8 g.
+
+## food/tafera-2016-medidas.csv y food/tafera-2016-factores.csv
+
+Tablas auxiliares para la formulación y evaluación de regímenes alimentarios (TAFERA), 2.ª edición, 2016 (Instituto
+Nacional de Salud, Centro Nacional de Alimentación y Nutrición; ISBN 978-612-310-093-3). PDF oficial de 143 páginas,
+SHA-256 b25e805bd2e7eb7116cf7802b385cd7e3f0a7c06ee9d887e4a7f37b71c89127b, de
+https://lamejorreceta.ins.gob.pe/sites/default/files/2020-12/TAFERA%202016%20OK%20final.pdf
+
+**Licencia:** «Se autoriza su reproducción total o parcial, siempre y cuando se cite la fuente.» Sus medidas apuntan a
+alimentos de la TPCA 2017, cuya autorización sigue pendiente: si se cambia de tabla (plan B, USDA FoodData Central),
+los enlaces se rehacen.
+
+- **Medidas** (módulo I, páginas 14 a 74): 933 de las 1027 medidas caseras, de 194 alimentos de la TPCA 2017.
+  Columnas: `codigo,codigo_tpca,alimento,unidad,medida`, los pesos `peso_bruto_g,peso_neto_g`, y
+  `parte_comestible_pct,energia_kcal,datos_1985`. `alimento` y `unidad` son el texto de la fuente; `medida`, el nombre
+  que se muestra, con el alimento de la TAFERA entre paréntesis cuando un alimento de la TPCA recibe medidas de varios
+  (fideos, cortes de pollo). El peso neto es la parte comestible (RN-E12). `datos_1985` marca lo que la fuente toma de
+  su edición de 1985 (el «*»).
+- **Factores** (módulo II, páginas 77 a 84): 213 de los 228 factores de conversión de peso cocido a crudo, de 126
+  alimentos crudos de la TPCA 2017: peso crudo = peso cocido × factor. Columnas
+  `codigo,codigo_tpca,alimento,coccion,factor,datos_1985`. La fuente no los numera: `codigo` es `II-` y el orden de
+  lectura. `alimento` lleva el subgrupo de la tabla («Pollo, ala») y la forma de sus notas («Camarón de río, solo la
+  cola»).
+- **Enlace con la TPCA 2017.** La TAFERA calcula los nutrientes con la TPCA 2009 y no trae sus códigos. Las filas de
+  un alimento con el mismo perfil por 100 g forman una forma (con y sin cáscara se alternan fila por fila), y cada
+  forma se enlaza con un alimento de la TPCA 2017 por perfil y nombre; lo que la regla automática no resuelve está
+  fijado a mano, con su motivo, en `LINKS` y `FACTOR_LINKS` del extractor (ADR-053). No se cargan: las 44 filas sin
+  nutrientes (formas que la tabla no calcula, como el jugo colado de la granadilla), 50 medidas y 15 factores sin
+  equivalente en la TPCA 2017 (boquichico fresco, palometa, queso edam, requesón, mayonesa, galleta de agua, vísceras
+  de cuy, conejo y pato…).
+- **Peso bruto.** El de la fila cuando la fuente lo da; con el % comestible publicado, el que lo reproduce (±5
+  puntos); en los cortes de cuy y pollo, el peso con pellejo (nota «d»), que es el del %. Si ninguno lo reproduce,
+  queda vacío.
+- **Diferencias de la propia fuente**, que se conservan:
+  - el código 11-91 está dos veces y falta el 11-92: la segunda fila es la 11-92;
+  - dos medidas «Puño» del charqui de llama y alpaca (6-75 y 6-76) y dos «Taza de fierro enlozado al ras» del frijol
+    zarandaja sancochado (11-70 y 11-72), con pesos distintos;
+  - el % comestible de 3-123, 6-117, 12-3 y 12-4 difiere 3 a 5 puntos del que dan sus pesos;
+  - filas que repiten los valores de otro alimento (el perejil con los de la espinaca; la granadilla y el higo
+    fresco): se enlazan por su nombre.
+
+Se extraen con `node scripts/catalogs/extract-tafera.ts <pdf> ../../seeds/food [--revisar]` desde apps/api (requiere
+poppler y seeds/food/tpca-2017.csv). Con `--revisar` lista cada enlace con sus candidatos; el extractor falla si una
+forma queda sin enlace o si un enlace de `LINKS` ya no corresponde a ninguna.
 
 ## exercise/compendium-2024.csv
 

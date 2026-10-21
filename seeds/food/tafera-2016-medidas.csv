@@ -1,0 +1,934 @@
+codigo,codigo_tpca,alimento,unidad,medida,peso_bruto_g,peso_neto_g,parte_comestible_pct,energia_kcal,datos_1985
+1-1,A3,Arroz blanco corriente,Taza de acero al ras,Taza de acero al ras,,203.8,100,731,no
+1-2,A3,Arroz blanco corriente,Taza de acero llena,Taza de acero llena,,240.5,100,862,no
+1-3,A3,Arroz blanco corriente,Taza de acero colmada,Taza de acero colmada,,258.4,100,926,no
+1-4,A3,Arroz blanco corriente,Taza loza al ras,Taza loza al ras,,281.8,100,1010,no
+1-5,A3,Arroz blanco corriente,Taza loza llena,Taza loza llena,,301.1,100,1079,no
+1-6,A3,Arroz blanco corriente,Taza loza colmada,Taza loza colmada,,319.7,100,1146,no
+1-7,A3,Arroz blanco corriente,Taza plástico al ras,Taza plástico al ras,,317.9,100,1139,no
+1-8,A3,Arroz blanco corriente,Taza plástico llena,Taza plástico llena,,338.8,100,1214,no
+1-9,A3,Arroz blanco corriente,Taza plástico colmada,Taza plástico colmada,,355.4,100,1274,no
+1-10,A3,Arroz blanco corriente,Taza fierro enlozado al ras,Taza fierro enlozado al ras,,327.4,100,1174,no
+1-11,A3,Arroz blanco corriente,Taza fierro enlozado llena,Taza fierro enlozado llena,,368.2,100,1320,no
+1-12,A3,Arroz blanco corriente,Taza fierro enlozado colmada,Taza fierro enlozado colmada,,409.2,100,1467,no
+1-13,A3,Arroz blanco corriente,"Puño (L:16,7 cm A:7,6 cm D:8,8 cm)","Puño (L:16,7 cm A:7,6 cm D:8,8 cm)",,30.2,100,108,no
+1-14,A3,Arroz blanco corriente,"Puñado (L:16,7 cm A:7,6 cm D:8,8 cm)","Puñado (L:16,7 cm A:7,6 cm D:8,8 cm)",,64.4,100,231,no
+1-15,A3,Arroz blanco corriente,Cucharada llena,Cucharada llena,,14.7,100,53,no
+1-16,A3,Arroz blanco corriente,Cucharada colmada,Cucharada colmada,,21.7,100,78,no
+1-17,A3,Arroz blanco corriente,Porción pequeña,Porción pequeña,,60,100,215,si
+1-18,A3,Arroz blanco corriente,Porción mediana,Porción mediana,,80,100,287,si
+1-19,A3,Arroz blanco corriente,Porción grande,Porción grande,,100,100,359,si
+1-20,A2,Arroz blanco cocido,Taza loza al ras,Taza loza al ras,,193.2,100,222,no
+1-21,A2,Arroz blanco cocido,Taza loza llena,Taza loza llena,,214.6,100,246,no
+1-22,A2,Arroz blanco cocido,Taza plástico al ras,Taza plástico al ras,,213.3,100,245,no
+1-23,A2,Arroz blanco cocido,Taza plástico llena,Taza plástico llena,,238.1,100,273,no
+1-24,A2,Arroz blanco cocido,Taza fierro enlozado al ras,Taza fierro enlozado al ras,,226.2,100,260,no
+1-25,A2,Arroz blanco cocido,Taza fierro enlozado llena,Taza fierro enlozado llena,,247.9,100,285,no
+1-26,A2,Arroz blanco cocido,Cucharadita llena,Cucharadita llena,,5.6,100,6,no
+1-27,A2,Arroz blanco cocido,Cucharadita colmada,Cucharadita colmada,,9.5,100,11,no
+1-28,A2,Arroz blanco cocido,Cucharada llena,Cucharada llena,,17.8,100,20,no
+1-29,A2,Arroz blanco cocido,Cucharada colmada,Cucharada colmada,,25.9,100,30,no
+1-30,A2,Arroz blanco cocido,Tenedor lleno,Tenedor lleno,,9.7,100,11,no
+1-31,A2,Arroz blanco cocido,Tenedor colmado,Tenedor colmado,,18.9,100,22,no
+1-32,A2,Arroz blanco cocido,Cucharón chino lleno,Cucharón chino lleno,,64.1,100,74,no
+1-33,A2,Arroz blanco cocido,Cucharón chino colmado,Cucharón chino colmado,,97,100,111,no
+1-34,A2,Arroz blanco cocido,Cucharón llano lleno,Cucharón llano lleno,,62.1,100,71,no
+1-35,A2,Arroz blanco cocido,Cucharón llano colmado,Cucharón llano colmado,,101.7,100,117,no
+1-36,A2,Arroz blanco cocido,Espumadera llena,Espumadera llena,,113.1,100,130,no
+1-37,A2,Arroz blanco cocido,Espumadera colmada,Espumadera colmada,,155.8,100,179,no
+1-38,A7,Avena Hojuela cruda,Taza de acero al ras,Taza de acero al ras,,84.6,100,276,no
+1-39,A7,Avena Hojuela cruda,Taza de acero llena,Taza de acero llena,,96.7,100,315,no
+1-40,A7,Avena Hojuela cruda,Taza de acero colmada,Taza de acero colmada,,105.7,100,345,no
+1-41,A7,Avena Hojuela cruda,"Puño (L:16,7 cm; A:7,6 cm; D:8,8 cm)","Puño (L:16,7 cm; A:7,6 cm; D:8,8 cm)",,32.4,100,105,no
+1-42,A7,Avena Hojuela cruda,Cucharadita llena,Cucharadita llena,,2.4,100,8,no
+1-43,A7,Avena Hojuela cruda,Cucharadita colmada,Cucharadita colmada,,4.6,100,15,no
+1-44,A7,Avena Hojuela cruda,Cucharada llena,Cucharada llena,,7,100,23,no
+1-45,A7,Avena Hojuela cruda,Cucharada colmada,Cucharada colmada,,10.4,100,34,no
+1-46,A13,"Cebada, llunka de (morón americano)",Taza de acero colmada,Taza de acero colmada,,180,100,453,si
+1-47,A13,"Cebada, llunka de (morón americano)",Cucharada colmada,Cucharada colmada,,17,100,43,si
+1-48,A21,"Fideo, canuto pequeño",Taza de acero,"Taza de acero (Fideo, canuto pequeño)",,75,100,253,si
+1-49,A21,"Fideo, corbatita",Porción para sopa,"Porción para sopa (Fideo, corbatita)",,20,100,68,si
+1-50,A21,"Fideo, corbatita",Puñado,"Puñado (Fideo, corbatita)",,40,100,135,si
+1-51,A21,"Fideo, entrefino",5 rollitos,"5 rollitos (Fideo, entrefino)",,100,100,337,si
+1-52,A21,"Fideo, letritas",Cucharada colmada,"Cucharada colmada (Fideo, letritas)",,16,100,54,si
+1-53,A21,"Fideo, letritas",Taza de acero colmada,"Taza de acero colmada (Fideo, letritas)",,158,100,533,si
+1-54,A21,"Fideo, municiones",Cucharada colmada,"Cucharada colmada (Fideo, municiones)",,18,100,61,si
+1-55,A23,"Fideo tallarin delgado N.º 40, “espagueti” cocido",Taza loza al ras,"Taza loza al ras (Fideo tallarin delgado N.º 40, “espagueti” cocido)",,168.3,100,152,no
+1-56,A23,"Fideo tallarin delgado N.º 40, “espagueti” cocido",Taza loza llena,"Taza loza llena (Fideo tallarin delgado N.º 40, “espagueti” cocido)",,188.4,100,170,no
+1-57,A23,"Fideo tallarin delgado N.º 40, “espagueti” cocido",Taza plástico al ras,"Taza plástico al ras (Fideo tallarin delgado N.º 40, “espagueti” cocido)",,190.5,100,172,no
+1-58,A23,"Fideo tallarin delgado N.º 40, “espagueti” cocido",Taza plástico llena,"Taza plástico llena (Fideo tallarin delgado N.º 40, “espagueti” cocido)",,214.8,100,194,no
+1-59,A23,"Fideo tallarin delgado N.º 40, “espagueti” cocido",Taza fierro enlozado al ras,"Taza fierro enlozado al ras (Fideo tallarin delgado N.º 40, “espagueti” cocido)",,186.8,100,169,no
+1-60,A23,"Fideo tallarin delgado N.º 40, “espagueti” cocido",Taza fierro enlozado llena,"Taza fierro enlozado llena (Fideo tallarin delgado N.º 40, “espagueti” cocido)",,210.9,100,191,no
+1-61,A23,"Fideo tallarin delgado N.º 40, “espagueti” cocido",Cucharadita llena,"Cucharadita llena (Fideo tallarin delgado N.º 40, “espagueti” cocido)",,7,100,6,no
+1-62,A23,"Fideo tallarin delgado N.º 40, “espagueti” cocido",Cucharadita colmada,"Cucharadita colmada (Fideo tallarin delgado N.º 40, “espagueti” cocido)",,10.3,100,9,no
+1-63,A23,"Fideo tallarin delgado N.º 40, “espagueti” cocido",Cucharada llena,"Cucharada llena (Fideo tallarin delgado N.º 40, “espagueti” cocido)",,12.4,100,11,no
+1-64,A23,"Fideo tallarin delgado N.º 40, “espagueti” cocido",Cucharada colmada,"Cucharada colmada (Fideo tallarin delgado N.º 40, “espagueti” cocido)",,19.4,100,18,no
+1-65,A23,"Fideo tallarin delgado N.º 40, “espagueti” cocido",Tenedor lleno,"Tenedor lleno (Fideo tallarin delgado N.º 40, “espagueti” cocido)",,15.1,100,14,no
+1-66,A23,"Fideo tallarin delgado N.º 40, “espagueti” cocido",Tenedor colmado,"Tenedor colmado (Fideo tallarin delgado N.º 40, “espagueti” cocido)",,23.5,100,21,no
+1-67,A23,"Fideo tallarín grueso N.º40, cocido",Taza loza al ras,"Taza loza al ras (Fideo tallarín grueso N.º40, cocido)",,183.1,100,165,no
+1-68,A23,"Fideo tallarín grueso N.º40, cocido",Taza loza llena,"Taza loza llena (Fideo tallarín grueso N.º40, cocido)",,224.3,100,203,no
+1-69,A23,"Fideo tallarín grueso N.º40, cocido",Taza plástico al ras,"Taza plástico al ras (Fideo tallarín grueso N.º40, cocido)",,196.6,100,178,no
+1-70,A23,"Fideo tallarín grueso N.º40, cocido",Taza plástico llena,"Taza plástico llena (Fideo tallarín grueso N.º40, cocido)",,248.2,100,224,no
+1-71,A23,"Fideo tallarín grueso N.º40, cocido",Taza fierro enlozado al ras,"Taza fierro enlozado al ras (Fideo tallarín grueso N.º40, cocido)",,201.8,100,182,no
+1-72,A23,"Fideo tallarín grueso N.º40, cocido",Taza fierro enlozado llena,"Taza fierro enlozado llena (Fideo tallarín grueso N.º40, cocido)",,253.4,100,229,no
+1-73,A23,"Fideo tallarín grueso N.º40, cocido",Cucharadita llena,"Cucharadita llena (Fideo tallarín grueso N.º40, cocido)",,7.3,100,7,no
+1-74,A23,"Fideo tallarín grueso N.º40, cocido",Cucharadita colmada,"Cucharadita colmada (Fideo tallarín grueso N.º40, cocido)",,10.1,100,9,no
+1-75,A23,"Fideo tallarín grueso N.º40, cocido",Cucharada llena,"Cucharada llena (Fideo tallarín grueso N.º40, cocido)",,15.8,100,14,no
+1-76,A23,"Fideo tallarín grueso N.º40, cocido",Cucharada colmada,"Cucharada colmada (Fideo tallarín grueso N.º40, cocido)",,21.1,100,19,no
+1-77,A23,"Fideo tallarín grueso N.º40, cocido",Tenedor lleno,"Tenedor lleno (Fideo tallarín grueso N.º40, cocido)",,16.5,100,15,no
+1-78,A23,"Fideo tallarín grueso N.º40, cocido",Tenedor colmado,"Tenedor colmado (Fideo tallarín grueso N.º40, cocido)",,27.1,100,25,no
+1-79,A1,Kiwicha cruda,Cucharadita llena,Cucharadita llena,,4.6,100,16,si
+1-80,A1,Kiwicha cruda,Cucharada llena,Cucharada llena,,12.3,100,42,si
+1-81,A32,"Maíz, cancha tostada s/ aceite",Cucharada llena,Cucharada llena,,10,100,34,si
+1-82,A33,"Maíz, chochoca de",Cucharadita al ras,Cucharadita al ras,,2,100,7,si
+1-83,A33,"Maíz, chochoca de",Cucharadita colmada,Cucharadita colmada,,6,100,21,si
+1-84,A33,"Maíz, chochoca de",Cucharada al ras,Cucharada al ras,,4,100,14,si
+1-85,A33,"Maíz, chochoca de",Cucharada colmada,Cucharada colmada,,10,100,35,si
+1-86,A36,"Maíz amarillo, harina de",Taza de acero ras,Taza de acero ras,,156.6,100,508,no
+1-87,A36,"Maíz amarillo, harina de",Taza de acero llena,Taza de acero llena,,183.7,100,596,no
+1-88,A36,"Maíz amarillo, harina de",Cucharadita llena,Cucharadita llena,,4.7,100,16,no
+1-89,A36,"Maíz amarillo, harina de",Cucharadita colmada,Cucharadita colmada,,9.2,100,32,no
+1-90,A36,"Maíz amarillo, harina de",Cucharada llena,Cucharada llena,,11.4,100,39,no
+1-91,A36,"Maíz amarillo, harina de",Cucharada colmada,Cucharada colmada,,18.9,100,65,no
+1-92,A34,"Maíz fresco, unidad de",Unidad pequeña,"Unidad pequeña (Maíz fresco, unidad de)",167.9,105,63,211,no
+1-93,A34,"Maíz fresco, unidad de",Unidad mediana,"Unidad mediana (Maíz fresco, unidad de)",255.9,189.9,74,382,no
+1-94,A34,"Maíz fresco, unidad de",Unidad grande,"Unidad grande (Maíz fresco, unidad de)",349.3,264.1,76,532,no
+1-95,A34,"Maíz fresco, unidad de",Rodaja pequeña,"Rodaja pequeña (Maíz fresco, unidad de)",22.2,16.4,74,33,no
+1-96,A34,"Maíz fresco, unidad de",Rodaja mediana,"Rodaja mediana (Maíz fresco, unidad de)",40.9,31,76,62,no
+1-97,A34,"Maíz fresco, unidad de",Trozo mediano,"Trozo mediano (Maíz fresco, unidad de)",102,74.8,73,151,no
+1-98,A34,"Maiz fresco, granos de",Taza de loza al ras,"Taza de loza al ras (Maiz fresco, granos de)",,209.8,100,422,no
+1-99,A34,"Maiz fresco, granos de",Taza de loza llena,"Taza de loza llena (Maiz fresco, granos de)",,231.2,100,465,no
+1-100,A34,"Maiz fresco, granos de",Taza de plástico al ras,"Taza de plástico al ras (Maiz fresco, granos de)",,231,100,465,no
+1-101,A34,"Maiz fresco, granos de",Taza de plástico llena,"Taza de plástico llena (Maiz fresco, granos de)",,257,100,517,no
+1-102,A34,"Maiz fresco, granos de",Taza de fierro enlozado al ras,"Taza de fierro enlozado al ras (Maiz fresco, granos de)",,244.3,100,492,no
+1-103,A34,"Maiz fresco, granos de",Taza de fierro enlozado lleno,"Taza de fierro enlozado lleno (Maiz fresco, granos de)",,293.6,100,591,no
+1-104,A34,"Maiz fresco, granos de","Puño (L:16,7 cm A:7,6 cm D:8,8 cm)","Puño (L:16,7 cm A:7,6 cm D:8,8 cm) (Maiz fresco, granos de)",,41.7,100,84,no
+1-105,A34,"Maiz fresco, granos de","Puñado (L:16,7 cm A:7,6 cm D:8,8 cm)","Puñado (L:16,7 cm A:7,6 cm D:8,8 cm) (Maiz fresco, granos de)",,54.2,100,109,no
+1-110,A37,"Maíz, maicena",Taza de acero,Taza de acero,,125,100,453,si
+1-111,A37,"Maíz, maicena",Cucharadita al ras,Cucharadita al ras,,2,100,7,si
+1-112,A37,"Maíz, maicena",Cucharadita colmada,Cucharadita colmada,,7,100,25,si
+1-113,A37,"Maíz, maicena",Cucharada al ras,Cucharada al ras,,5,100,18,si
+1-114,A37,"Maíz, maicena",Cucharada colmada,Cucharada colmada,,15,100,54,si
+1-115,A39,"Maíz, para mote pelado",Taza de acero al ras,Taza de acero al ras,,120,100,124,si
+1-116,A39,"Maíz, para mote pelado",Taza de acero colmada,Taza de acero colmada,,165,100,170,si
+1-117,A43,"Maíz, polenta",Cucharada colmada,Cucharada colmada,,16,100,52,si
+1-118,A105,Pan árabe de supermercado,Unidad mediana,Unidad mediana,,60.5,100,179,no
+1-119,A49,Pan baguetino,Unidad pequeña,Unidad pequeña (Pan baguetino),,40,100,111,si
+1-120,A108,Pan ciabatta de panaderia,Unidad pequeña,Unidad pequeña (Pan ciabatta de panaderia),,30.8,100,83,no
+1-121,A108,Pan ciabatta de panaderia,Unidad mediana,Unidad mediana (Pan ciabatta de panaderia),,39.7,100,107,no
+1-122,A108,Pan ciabatta de panaderia,Unidad grande,Unidad grande (Pan ciabatta de panaderia),,47.6,100,129,no
+1-123,A108,Pan ciabatta de supermercado,Unidad pequeña,Unidad pequeña (Pan ciabatta de supermercado),,56.2,100,152,no
+1-124,A108,Pan ciabatta de supermercado,Unidad mediana,Unidad mediana (Pan ciabatta de supermercado),,70.1,100,189,no
+1-125,A108,Pan ciabatta de supermercado,Unidad grande,Unidad grande (Pan ciabatta de supermercado),,88.4,100,239,no
+1-126,A109,Pan chapla,Unidad mediana,Unidad mediana,,36.2,100,118,no
+1-127,A45,Pan serrano (cebada),Unidad mediana,Unidad mediana,,40,100,118,si
+1-128,A49,Pan francés de panaderias,Unidad mediana,Unidad mediana (Pan francés de panaderias),,32,100,95,no
+1-129,A49,Pan francés de supermercados,Unidad mediana,Unidad mediana (Pan francés de supermercados),,62.3,100,108,no
+1-130,A49,Pan francés de supermercados,Unidad grande,Unidad grande (Pan francés de supermercados),,72.6,100,125,no
+1-131,A129,Pan integral de panadería,Unidad pequeña,Unidad pequeña (Pan integral de panadería),,22.5,100,76,no
+1-132,A129,Pan integral de panadería,Unidad mediana,Unidad mediana (Pan integral de panadería),,29.6,100,101,no
+1-133,A129,Pan integral de panadería,Unidad grande,Unidad grande (Pan integral de panadería),,33.9,100,115,no
+1-134,A129,Pan integral supermercados,Unidad pequeña,Unidad pequeña (Pan integral supermercados),,51.4,100,175,no
+1-135,A129,Pan integral supermercados,Unidad mediana,Unidad mediana (Pan integral supermercados),,63.8,100,217,no
+1-136,A129,Pan integral supermercados,Unidad grande,Unidad grande (Pan integral supermercados),,72.8,100,248,no
+1-137,A124,Pan yema de panaderia,Unidad mediana,Unidad mediana (Pan yema de panaderia),,30.7,100,99,no
+1-138,A124,Pan yema de supermercado,Unidad mediana,Unidad mediana (Pan yema de supermercado),,62.4,100,201,no
+1-139,A49,Pan tolete,Unidad mediana,Unidad mediana (Pan tolete),,35,100,97,si
+1-140,A47,Pan de molde,"Tajada (9,7 cm de largo; 9 cm de ancho; 1,3 cm de grosor)","Tajada (9,7 cm de largo; 9 cm de ancho; 1,3 cm de grosor)",,25.7,100,82,no
+1-141,A54,Quinua blanca cruda,Taza de acero al ras,Taza de acero al ras,,189.3,100,649,no
+1-142,A54,Quinua blanca cruda,Taza de acero llena,Taza de acero llena,,214.9,100,737,no
+1-143,A54,Quinua blanca cruda,Taza de acero colmada,Taza de acero colmada,,228.3,100,783,no
+1-144,A54,Quinua blanca cruda,Taza de loza al ras,Taza de loza al ras,,243,100,833,no
+1-145,A54,Quinua blanca cruda,Taza de loza llena,Taza de loza llena,,262.3,100,899,no
+1-146,A54,Quinua blanca cruda,Taza de fierro enlozado al ras,Taza de fierro enlozado al ras,,282.5,100,968,no
+1-147,A54,Quinua blanca cruda,Taza de fierro enlozado llena,Taza de fierro enlozado llena,,320,100,1097,no
+1-148,A54,Quinua blanca cruda,"Puño cerrado (L:17,4 cm; A:7,9 cm; D:10,4 cm)","Puño cerrado (L:17,4 cm; A:7,9 cm; D:10,4 cm)",,31.6,100,108,no
+1-149,A54,Quinua blanca cruda,Cucharadita llena,Cucharadita llena,,4.7,100,16,no
+1-150,A54,Quinua blanca cruda,Cucharadita colmada,Cucharadita colmada,,6.1,100,20,no
+1-151,A54,Quinua blanca cruda,Cucharada llena,Cucharada llena,,12.6,100,43,no
+1-152,A54,Quinua blanca cruda,Cucharada colmada,Cucharada colmada,,15.4,100,53,no
+1-153,A59,"Quinua blanca, hojuela de",Cucharada colmada,Cucharada colmada,,8,100,30,si
+1-154,A53,Quinua blanca sancochada,Taza de fierro enlozado al ras,Taza de fierro enlozado al ras (Quinua blanca sancochada),,416.6,100,358,no
+1-155,A53,Quinua blanca sancochada,Taza de loza al ras,Taza de loza al ras (Quinua blanca sancochada),,354.5,100,304,no
+1-156,A53,Quinua blanca sancochada,Cucharadita llena,Cucharadita llena (Quinua blanca sancochada),,10.6,100,9,no
+1-157,A53,Quinua blanca sancochada,Cucharada llena,Cucharada llena (Quinua blanca sancochada),,25.2,100,22,no
+1-158,A60,Quinua blanca sancochada,Taza de fierro enlozado al ras,Taza de fierro enlozado al ras (Quinua blanca sancochada),,338.9,100,1178,no
+1-159,A60,Quinua roja cruda,Taza de fierro enlozado llena,Taza de fierro enlozado llena (Quinua roja cruda),,370,100,1286,no
+1-160,A60,Quinua roja cruda,Cucharadita llena,Cucharadita llena (Quinua roja cruda),,5.1,100,18,no
+1-161,A60,Quinua roja cruda,Cucharada llena,Cucharada llena (Quinua roja cruda),,12.9,100,45,no
+1-162,A53,Quinua roja sancochada,Taza de fierro enlozado al ras,Taza de fierro enlozado al ras (Quinua roja sancochada),,415.1,100,356,no
+1-163,A53,Quinua roja sancochada,Cucharadita llena,Cucharadita llena (Quinua roja sancochada),,9.2,100,8,no
+1-164,A53,Quinua roja sancochada,Cucharada llena,Cucharada llena (Quinua roja sancochada),,21,100,18,no
+1-165,A63,"Trigo, harina de",Taza de acero al ras,Taza de acero al ras,,160.5,100,568,no
+1-166,A63,"Trigo, harina de",Taza de acero llena,Taza de acero llena,,189.5,100,670,no
+1-167,A63,"Trigo, harina de",Cucharadita al ras,Cucharadita al ras,,1.5,100,5,no
+1-168,A63,"Trigo, harina de",Cucharadita llena,Cucharadita llena,,4.9,100,18,no
+1-169,A63,"Trigo, harina de",Cucharadita colmada,Cucharadita colmada,,9.6,100,39,no
+1-170,A63,"Trigo, harina de",Cucharada al ras,Cucharada al ras,,3.9,100,14,no
+1-171,A63,"Trigo, harina de",Cucharada llena,Cucharada llena,,12.7,100,45,no
+1-172,A63,"Trigo, harina de",Cucharada colmada,Cucharada colmada,,20.3,100,72,no
+1-173,A72,"Trigo, sémola de",Taza de acero al ras,Taza de acero al ras,,194.5,100,652,no
+1-174,A72,"Trigo, sémola de",Taza de acero colmada,Taza de acero colmada,,229.9,100,771,no
+1-175,A72,"Trigo, sémola de",Cucharadita al ras,Cucharadita al ras,,2,100,7,no
+1-176,A72,"Trigo, sémola de",Cucharadita llena,Cucharadita llena,,4.4,100,15,no
+1-177,A72,"Trigo, sémola de",Cucharadita colmada,Cucharadita colmada,,5.9,100,20,no
+1-178,A72,"Trigo, sémola de",Cucharada al ras,Cucharada al ras,,5.1,100,17,no
+1-179,A72,"Trigo, sémola de",Cucharada llena,Cucharada llena,,12.8,100,43,no
+1-180,A72,"Trigo, sémola de",Cucharada colmada,Cucharada colmada,,15,100,50,no
+1-181,A69,"Trigo, pelado",Taza de acero al ras,Taza de acero al ras,,218.9,100,786,no
+1-182,A69,"Trigo, pelado",Taza de acero colmada,Taza de acero colmada,,261.6,100,940,no
+1-183,A69,"Trigo, pelado",Cucharadita llena,Cucharadita llena,,5.2,100,19,no
+1-184,A69,"Trigo, pelado",Cucharadita colmada,Cucharadita colmada,,7.7,100,28,no
+1-185,A69,"Trigo, pelado",Cucharada llena,Cucharada llena,,14.3,100,52,no
+1-186,A69,"Trigo, pelado",Cucharada colmada,Cucharada colmada,,19.6,100,70,no
+2-2,B3,Ají amarillo,Unidad pequeña,Unidad pequeña,37.5,29.2,77,11,no
+2-3,B3,Ají amarillo,Unidad mediana,Unidad mediana,58.5,46.3,79,18,no
+2-4,B3,Ají amarillo,Unidad grande,Unidad grande,81.8,68.5,82,27,no
+2-5,B4,"Ají amarillo, molido",Cucharadita al ras,Cucharadita al ras,,2.9,100,2,no
+2-6,B4,"Ají amarillo, molido",Cucharadita llena,Cucharadita llena,,8.9,100,5,no
+2-7,B4,"Ají amarillo, molido",Cucharadita colmada,Cucharadita colmada,,14.5,100,8,no
+2-8,B4,"Ají amarillo, molido",Cucharada al ras,Cucharada al ras,,7,100,4,no
+2-9,B4,"Ají amarillo, molido",Cucharada llena,Cucharada llena,,18.3,100,10,no
+2-10,B4,"Ají amarillo, molido",Cucharada colmada,Cucharada colmada,,28,100,15,no
+2-11,B8,"Ají colorado, molido",Cucharadita al ras,Cucharadita al ras,,2.6,100,1,no
+2-12,B8,"Ají colorado, molido",Cucharadita llena,Cucharadita llena,,7.3,100,3,no
+2-13,B8,"Ají colorado, molido",Cucharadita colmada,Cucharadita colmada,,24.2,100,10,no
+2-14,B8,"Ají colorado, molido",Cucharada al ras,Cucharada al ras,,6.5,100,3,no
+2-15,B8,"Ají colorado, molido",Cucharada llena,Cucharada llena,,16.4,100,7,no
+2-16,B13,Ajos,Cabeza pequeña,Cabeza pequeña,35.5,31.8,89,37,no
+2-17,B13,Ajos,Cabeza mediana,Cabeza mediana,54.8,49.8,91,57,no
+2-18,B13,Ajos,Diente pequeño,Diente pequeño,3.6,3.4,94,4,no
+2-19,B13,Ajos,Diente mediano,Diente mediano,5.9,5.7,97,7,no
+2-20,B98,"Ajo, molido",Cucharadita al ras,Cucharadita al ras,,2.7,100,3,no
+2-21,B98,"Ajo, molido",Cucharadita llena,Cucharadita llena,,7.5,100,9,no
+2-22,B98,"Ajo, molido",Cucharadita colmada,Cucharadita colmada,,14,100,16,no
+2-23,B98,"Ajo, molido",Cucharada al ras,Cucharada al ras,,6,100,7,no
+2-24,B98,"Ajo, molido",Cucharada llena,Cucharada llena,,15.6,100,18,no
+2-25,B98,"Ajo, molido",Cucharada colmada,Cucharada colmada,,32.4,100,37,no
+2-26,B17,Apio,Cabeza mediana,Cabeza mediana (Apio),370,278,75,22,si
+2-27,B17,Apio,Rama,Rama (Apio),15,11,73,1,si
+2-28,B17,Apio picado (tallo-rama),½ taza de acero,½ taza de acero (Apio picado (tallo-rama)),,20,100,2,si
+2-29,B17,Apio picado (tallo-rama),Taza de acero colmada,Taza de acero colmada (Apio picado (tallo-rama)),,125,100,10,si
+2-30,B21,Brócoli,Cabeza mediana con hojas,Cabeza mediana con hojas,734.7,419.4,57,134,no
+2-31,B21,Brócoli,Ramita pequeña,Ramita pequeña,,2.6,100,1,no
+2-32,B21,Brócoli,Ramita mediana,Ramita mediana,,5,100,2,no
+2-33,B21,Brócoli,Ramita grande,Ramita grande,,7.6,100,2,no
+2-34,B22,Caigua,Unidad pequeña,Unidad pequeña,82.8,75,91,11,no
+2-35,B22,Caigua,Unidad mediana,Unidad mediana,120,105.2,88,16,no
+2-36,B22,Caigua,Unidad grande,Unidad grande,156.6,139.1,89,21,no
+2-37,B29,Cebolla de cabeza (roja),Unidad pequeña,Unidad pequeña (Cebolla de cabeza (roja)),135.8,129.9,96,36,no
+2-38,B29,Cebolla de cabeza (roja),Unidad mediana,Unidad mediana (Cebolla de cabeza (roja)),199.3,194.9,98,55,no
+2-39,B29,Cebolla de cabeza (roja),Unidad grande,Unidad grande (Cebolla de cabeza (roja)),297.6,288.4,97,81,no
+2-40,B29,"Cebolla de cabeza, (corte brunoise)",Taza de fierro enlozado al ras,"Taza de fierro enlozado al ras (Cebolla de cabeza, (corte brunoise))",,244.9,100,69,no
+2-41,B29,"Cebolla de cabeza, (corte brunoise)",Taza de fierro enlozado llena,"Taza de fierro enlozado llena (Cebolla de cabeza, (corte brunoise))",,284.1,100,80,no
+2-42,B29,"Cebolla de cabeza, (corte brunoise)",Taza de fierro enlozado colmada,"Taza de fierro enlozado colmada (Cebolla de cabeza, (corte brunoise))",,335.4,100,94,no
+2-43,B29,"Cebolla de cabeza, (corte brunoise)",Cucharadita llena,"Cucharadita llena (Cebolla de cabeza, (corte brunoise))",,6.9,100,2,no
+2-44,B29,"Cebolla de cabeza, (corte brunoise)",Cucharadita colmada,"Cucharadita colmada (Cebolla de cabeza, (corte brunoise))",,12.5,100,4,no
+2-45,B29,"Cebolla de cabeza, (corte brunoise)",Cucharada llena,"Cucharada llena (Cebolla de cabeza, (corte brunoise))",,17.8,100,5,no
+2-46,B29,"Cebolla de cabeza, (corte brunoise)",Cucharada colmada,"Cucharada colmada (Cebolla de cabeza, (corte brunoise))",,28.4,100,8,no
+2-47,B28,Cebolla china,Atado mediano,Atado mediano,445,316,71,123,si
+2-48,B28,Cebolla china,Atado pequeño,Atado pequeño,285,202,71,79,si
+2-49,B35,Col,1/4 cabeza pequeña,1/4 cabeza pequeña (Col),220,150,68,59,si
+2-50,B35,Col,Trozo pequeño,Trozo pequeño (Col),,20,100,8,si
+2-51,B35,"Col, picada",Taza de acero colmada,"Taza de acero colmada (Col, picada)",,50,100,20,si
+2-52,B39,Culantro,Atado grande,Atado grande,1275,727,57,320,si
+2-53,B39,Culantro,¼ atado pequeño,¼ atado pequeño,154,88,57,39,si
+2-54,B45,Espinaca negra picada,Taza de loza llena,Taza de loza llena,,54,10,17,no
+2-55,B44,"Espinaca, hojas",Atado (7 ataditos),Atado (7 ataditos),320,310,97,99,si
+2-56,B44,"Espinaca, hojas",Atadito,Atadito,45,44,98,14,si
+2-57,B60,Nabo,Unidad mediana,Unidad mediana,189.5,163,86,26,si
+2-58,B60,Nabo,Trozo pequeño,Trozo pequeño,25,22,88,4,si
+2-59,B68,"Perejil, entero",¼ atado pequeño,"¼ atado pequeño (Perejil, entero)",131,66,50,21,si
+2-60,B68,"Perejil, entero",Ramita,"Ramita (Perejil, entero)",5,2,40,1,si
+2-61,B68,Perejil picado,Cucharadita,Cucharadita (Perejil picado),,3,100,1,si
+2-62,B69,Pimiento,Unidad pequeña,Unidad pequeña,95.9,76.6,80,27,no
+2-63,B69,Pimiento,Unidad mediana,Unidad mediana,154.7,128.1,83,45,no
+2-64,B69,Pimiento,Unidad grande,Unidad grande,230.4,195.8,85,69,no
+2-65,B69,Pimiento,Tira,Tira,,2.7,100,1,no
+2-66,B71,Poro,Trozo pequeño,Trozo pequeño,15,10,67,4,si
+2-67,B71,Poro,Cabeza mediana,Cabeza mediana,350,231,66,92,si
+2-68,B80,Tomate italiano (Marzano),Unidad pequeña,Unidad pequeña,92.3,91.9,99,17,no
+2-69,B80,Tomate italiano (Marzano),Unidad mediana,Unidad mediana,130.4,129.6,99,23,no
+2-70,B80,Tomate italiano (Marzano),Unidad mediana,Unidad mediana sin cáscara,130.4,118.6,91,23,no
+2-71,B80,Tomate italiano (Marzano),Unidad grande,Unidad grande,172.5,170.5,99,31,no
+2-72,B80,Tomate italiano (Marzano),Rodaja pequeña,Rodaja pequeña,,12.2,100,2,no
+2-73,B80,Tomate italiano (Marzano),Rodaja mediana,Rodaja mediana,,17.9,100,3,no
+2-74,B80,Tomate italiano (Marzano),Rodaja grande,Rodaja grande,,21.5,100,4,no
+2-75,B84,"Vainitas, enteras","Unidad (14 cm de longitud y 0,8 cm diámetro)","Unidad (14 cm de longitud y 0,8 cm diámetro) (Vainitas, enteras)",7.4,7,95,3,no
+2-76,B84,"Vainita, picado de",Taza de acero,"Taza de acero (Vainita, picado de)",,68,100,25,si
+2-77,B84,"Vainita, picado de",Taza de acero colmada,"Taza de acero colmada (Vainita, picado de)",,95,100,35,si
+2-78,B84,"Vainita, picado de",Taza de loza llena,"Taza de loza llena (Vainita, picado de)",,105,100,39,no
+2-79,B84,"Vainita, picado de",Taza de fierro enlozado llena,"Taza de fierro enlozado llena (Vainita, picado de)",,196.4,100,73,no
+2-80,B84,"Vainita, picado de",Taza de fierro enlozado colmada,"Taza de fierro enlozado colmada (Vainita, picado de)",,202.7,100,75,no
+2-81,B85,Zanahoria amarilla,Unidad pequeña,Unidad pequeña (Zanahoria amarilla),104.1,91.7,89,17,no
+2-82,B85,Zanahoria amarilla,Unidad mediana,Unidad mediana (Zanahoria amarilla),180.3,157.8,88,30,no
+2-83,B85,Zanahoria amarilla,Unidad grande,Unidad grande (Zanahoria amarilla),239.2,214.6,90,41,no
+2-84,B85,Zanahoria amarilla,Rodaja pequeña,Rodaja pequeña (Zanahoria amarilla),,4.3,100,1,no
+2-85,B85,Zanahoria amarilla,Rodaja mediana,Rodaja mediana (Zanahoria amarilla),,7.4,100,1,no
+2-86,B85,Zanahoria amarilla,Rodaja grande,Rodaja grande (Zanahoria amarilla),,11.3,100,2,no
+2-87,B85,"Zanahoria amarilla, cubos",Taza de fierro enlozado al ras,"Taza de fierro enlozado al ras (Zanahoria amarilla, cubos)",,222.5,100,42,no
+2-88,B85,"Zanahoria amarilla, cubos",Taza de fierro enlozado llena,"Taza de fierro enlozado llena (Zanahoria amarilla, cubos)",,246.8,100,47,no
+2-89,B85,"Zanahoria amarilla, cubos",Cucharada llena,"Cucharada llena (Zanahoria amarilla, cubos)",,11.8,100,2,no
+2-90,B85,"Zanahoria amarilla, cubos",Cucharada colmada,"Cucharada colmada (Zanahoria amarilla, cubos)",,19.4,100,4,no
+2-91,B87,Zapallo italiano,Unidad pequeña,Unidad pequeña,150,100,67,14,si
+2-92,B89,Zapallo macre,Trozo pequeño,Trozo pequeño,159,140.9,89,37,no
+2-93,B89,Zapallo macre,Trozo mediano,Trozo mediano,273.2,234.1,86,61,no
+2-94,B89,Zapallo macre,Trozo grande,Trozo grande,566,482.3,85,125,no
+3-1,C2,Aceituna de botija (negra),Unidad pequeña,Unidad pequeña,4.1,3.3,80,10,no
+3-2,C2,Aceituna de botija (negra),Unidad mediana,Unidad mediana,6.5,5.4,83,16,no
+3-3,C2,Aceituna de botija (negra),Unidad grande,Unidad grande,8.8,7.6,86,23,no
+3-4,C100,Aguaymanto,Unidad mediana,Unidad mediana,,4.8,100,3,no
+3-5,C100,Aguaymanto,"Puño (L:17,4 cm A:7,9 cm D:10,4 cm)","Puño (L:17,4 cm A:7,9 cm D:10,4 cm)",36.4,34.9,96,22,no
+3-7,C13,Ciruela peruana,Unidad pequeña,Unidad pequeña,11.5,7.3,63,6,no
+3-9,C13,Ciruela peruana,Unidad mediana,Unidad mediana,14.7,9.6,65,8,no
+3-11,C13,Ciruela peruana,Unidad grande,Unidad grande,20.4,12.7,62,10,no
+3-13,C14,Coco,Unidad mediana,Unidad mediana (Coco),1179.9,368.6,31,1054,no
+3-14,C15,Coco,Agua de coco de unidad mediana,Agua de coco de unidad mediana,,496.1,100,69,no
+3-15,C14,Coco,Tajada de unidad mediana,Tajada de unidad mediana (Coco),,90.9,100,260,no
+3-16,C14,Coco fresco rallado,Cucharadita colmada,Cucharadita colmada (Coco fresco rallado),,4,100,11,si
+3-17,C14,Coco fresco rallado,Cucharada colmada,Cucharada colmada (Coco fresco rallado),,9,100,26,si
+3-20,C16,Cocona,Unidad pequeña,Unidad pequeña,165.3,88.9,54,36,no
+3-23,C16,Cocona,Unidad mediana,Unidad mediana,224,122.7,55,50,no
+3-26,C16,Cocona,Unidad grande,Unidad grande,275.6,162.2,59,67,no
+3-27,C18,Fresa,Unidad pequeña,Unidad pequeña,7.1,6.9,96,3,no
+3-28,C18,Fresa,Unidad mediana,Unidad mediana,11.7,11.4,97,5,no
+3-29,C18,Fresa,Unidad grande,Unidad grande,17.8,17.4,98,7,no
+3-30,C18,Fresa,Taza de fierro enlozado llena,Taza de fierro enlozado llena,,245.6,100,101,no
+3-31,C18,Fresa,Taza de plástico llena,Taza de plástico llena,,226.7,100,93,no
+3-32,C18,Fresa,Taza de Loza llena,Taza de Loza llena,,212,100,87,no
+3-33,C20,Granadilla,Unidad pequeña,Unidad pequeña,90.3,49.8,55,40,no
+3-35,C20,Granadilla,Unidad mediana,Unidad mediana,112.2,67.4,60,54,no
+3-37,C20,Granadilla,Unidad grande,Unidad grande,134.5,78.8,59,63,no
+3-39,C20,Granadilla,"Cucharadita llena, jugo","Cucharadita llena, jugo",,6.1,100,5,no
+3-41,C20,Granadilla,"Cucharada llena, jugo","Cucharada llena, jugo",,15.6,100,13,no
+3-44,C27,Higo fresco,Unidad pequeña,Unidad pequeña,22.6,18.3,81,14,no
+3-46,C27,Higo fresco,Unidad mediana,Unidad mediana,32.2,27,84,21,no
+3-49,C28,Higo seco,4 unidades medianas,4 unidades medianas,40,39,98,71,si
+3-50,C34,Limón,Unidad pequeña,Unidad pequeña (Limón),29,13.2,46,4,no
+3-51,C34,Limón,Unidad mediana,Unidad mediana (Limón),32.6,15.6,48,5,no
+3-52,C34,Limón,Unidad grande,Unidad grande (Limón),40.9,20.6,50,6,no
+3-53,C34,"Limón, jugo de",Cucharadita llena,"Cucharadita llena (Limón, jugo de)",,5,100,2,si
+3-54,C111,"Limón, dulce (lima)",Unidad mediana,Unidad mediana,100,71,71,19,si
+3-55,C35,Lúcuma seda (Beltran),Unidad pequeña,Unidad pequeña,133.1,104.8,79,104,no
+3-56,C35,Lúcuma seda (Beltran),Unidad mediana,Unidad mediana,202.4,161,80,159,no
+3-57,C35,Lúcuma seda (Beltran),Unidad grande,Unidad grande,325.2,251.5,77,249,no
+3-58,C39,Mamey maduro,Unidad pequeña,Unidad pequeña,550.3,291.6,50,108,no
+3-59,C39,Mamey maduro,Unidad mediana,Unidad mediana,847,449.9,53,166,no
+3-60,C39,Mamey maduro,Unidad grande,Unidad grande,1081,618.2,58,229,no
+3-61,C39,Mamey maduro,Tajada mediana,Tajada mediana,,31.8,100,12,no
+3-62,C40,Mandarina sin pepa,Unidad pequeña,Unidad pequeña,73.9,58.1,79,20,no
+3-63,C40,Mandarina sin pepa,Unidad mediana,Unidad mediana,136.3,108.5,79,38,no
+3-64,C40,Mandarina sin pepa,Unidad grande,Unidad grande,180.6,152,84,53,no
+3-65,C40,Mandarina sin pepa,Gajo de unidad mediana,Gajo de unidad mediana,,11.3,100,4,no
+3-66,C41,Mango “planta”,Unidad mediana,Unidad mediana (Mango “planta”),100,85,85,51,si
+3-67,C41,Mango papaya “kent”,Unidad mediana,Unidad mediana (Mango papaya “kent”),554.6,432,78,259,no
+3-68,C41,Mango papaya “kent”,Tajada “tapa”,Tajada “tapa” (Mango papaya “kent”),181,157.5,87,95,no
+3-69,C41,Mango papaya “kent”,Cubo mediano,Cubo mediano (Mango papaya “kent”),,14.1,100,9,no
+3-70,C42,Manzana chilena,Unidad mediana,Unidad mediana (Manzana chilena),145,116,80,63,si
+3-71,C116,Manzana “delicia roja”,Unidad pequeña,Unidad pequeña,105.7,100.6,95,52,no
+3-72,C42,Manzana “delicia roja”,Unidad pequeña,Unidad pequeña (Manzana “delicia roja”),105.7,89.7,85,48,no
+3-73,C116,Manzana “delicia roja”,Unidad mediana,Unidad mediana,172.8,166.8,97,87,no
+3-74,C42,Manzana “delicia roja”,Unidad mediana,Unidad mediana (Manzana “delicia roja”),172.8,147.7,85,80,no
+3-75,C116,Manzana “delicia roja”,Unidad grande,Unidad grande,236.9,229.1,98,119,no
+3-76,C42,Manzana “delicia roja”,Unidad grande,Unidad grande (Manzana “delicia roja”),236.9,207.8,88,112,no
+3-77,C42,Manzana “delicia roja”,Unidad extra grande,Unidad extra grande (Manzana “delicia roja”),400,320,80,173,no
+3-78,C117,Manzana “isrrael”,Unidad pequeña,Unidad pequeña,107,99.5,93,52,no
+3-79,C42,Manzana “isrrael”,Unidad pequeña,Unidad pequeña (Manzana “isrrael”),107,85.9,80,46,no
+3-80,C117,Manzana “isrrael”,Unidad mediana,Unidad mediana,172.8,161.6,94,84,no
+3-81,C42,Manzana “isrrael”,Unidad mediana,Unidad mediana (Manzana “isrrael”),172.8,141.8,82,77,no
+3-82,C117,Manzana “isrrael”,Unidad grande,Unidad grande,229.1,217.3,95,113,no
+3-83,C42,Manzana “isrrael”,Unidad grande,Unidad grande (Manzana “isrrael”),229.1,195.7,85,106,no
+3-84,C42,Manzana “isrrael”,Cubo mediano,Cubo mediano (Manzana “isrrael”),,1.9,100,1,no
+3-85,C42,Manzana “isrrael”,Cubo grande,Cubo grande (Manzana “isrrael”),,3,100,1,no
+3-86,C42,Manzana “isrrael”,Cucharada llena de cubos,Cucharada llena de cubos (Manzana “isrrael”),,16.3,100,9,no
+3-88,C43,Maracuyá,Unidad pequeña,Unidad pequeña,106,26.2,25,18,no
+3-90,C43,Maracuyá,Unidad mediana,Unidad mediana,150.3,46.2,31,31,no
+3-92,C43,Maracuyá,Unidad grande,Unidad grande,197.9,58.3,29,39,no
+3-94,C43,Maracuyá,"Cucharadita llena, jugo colado","Cucharadita llena, jugo colado",,8.4,100,6,no
+3-96,C43,Maracuyá,"Cucharada llena, jugo colado","Cucharada llena, jugo colado",,3.6,100,2,no
+3-97,C47,Membrillo,Unidad mediana,Unidad mediana,100,88,88,38,si
+3-98,C52,Níspero,6 unidades,6 unidades,100,62,62,27,si
+3-100,C7,Melocotón “huayco”,Unidad pequeña,Unidad pequeña,69,52.2,76,33,no
+3-102,C7,Melocotón “huayco”,Unidad mediana,Unidad mediana,93.5,71.7,77,46,no
+3-104,C7,Melocotón “huayco”,Unidad grande,Unidad grande,124.5,98.2,79,63,no
+3-105,C45,Melón “Coquito”,Unidad mediana,Unidad mediana,2230.1,1455.1,66,335,no
+3-106,C45,Melón “Coquito”,Tajada mediana,Tajada mediana,378.8,273.4,72,63,no
+3-107,C45,Melón “Coquito”,Rodaja mediana,Rodaja mediana,,225.9,100,52,no
+3-108,C51,Naranja de mesa “Huando”,Unidad pequeña,Unidad pequeña,206,155.9,76,70,no
+3-110,C51,Naranja de mesa “Huando”,Unidad mediana,Unidad mediana,293.4,222.5,76,100,no
+3-112,C51,Naranja de mesa “Huando”,Unidad grande,Unidad grande,366.3,277.6,76,125,no
+3-113,C129,Naranja de jugo “tangelo”,Unidad grande,Unidad grande,366.3,132.5,36,24,no
+3-114,C128,Naranja de jugo “tangelo”,Unidad pequeña,Unidad pequeña,165.8,132.2,80,32,no
+3-115,C129,Naranja de jugo “tangelo”,Unidad pequeña,Unidad pequeña,,76.4,46,14,no
+3-116,C128,Naranja de jugo “tangelo”,Unidad mediana,Unidad mediana,216.3,178,82,43,no
+3-117,C129,Naranja de jugo “tangelo”,Unidad mediana,Unidad mediana,,108.6,50,20,no
+3-118,C128,Naranja de jugo “tangelo”,Unidad grande,Unidad grande,272.2,221.2,81,53,no
+3-119,C129,Naranja de jugo “tangelo”,Unidad mediana 30 cm,Unidad mediana 30 cm,,141,52,25,si
+3-120,C54,Pacae,Unidad mediana 30 cm,Unidad mediana 30 cm,130,40,31,22,si
+3-121,C131,Palta fuerte,Unidad pequeña,Unidad pequeña (Palta fuerte),169.9,115.9,68,121,no
+3-122,C131,Palta fuerte,Unidad mediana,Unidad mediana (Palta fuerte),267.4,201.4,75,210,no
+3-123,C131,Palta fuerte,Unidad grande,Unidad grande (Palta fuerte),344.2,263.4,81,274,no
+3-124,C131,Palta fuerte,Tajada de unidad mediana,Tajada de unidad mediana (Palta fuerte),,29.4,100,31,no
+3-125,C131,"Palta fuerte, pasta de",Porción para entrada,"Porción para entrada (Palta fuerte, pasta de)",,109,100,113,si
+3-126,C131,"Palta fuerte, pasta de",Cucharadita llena,"Cucharadita llena (Palta fuerte, pasta de)",,11.6,100,12,no
+3-127,C131,"Palta fuerte, pasta de",Cucharada llena,"Cucharada llena (Palta fuerte, pasta de)",,26.2,100,27,no
+3-128,C59,Papaya,Unidad pequeña,Unidad pequeña,1197,1013.1,85,324,no
+3-129,C59,Papaya,Unidad mediana,Unidad mediana,1730.4,1511.2,89,484,no
+3-130,C59,Papaya,Unidad grande,Unidad grande,2263.6,2010.3,89,643,no
+3-131,C59,Papaya,Tajada de unidad pequeña,Tajada de unidad pequeña,,182.3,100,58,no
+3-132,C59,Papaya,Tajada de unidad mediana,Tajada de unidad mediana,,270.6,100,87,no
+3-133,C59,Papaya,Tajada de unidad grande,Tajada de unidad grande,,342.1,100,110,no
+3-134,C60,Pasas negras,Unidad pequeña,Unidad pequeña,,0.6,100,1,no
+3-135,C60,Pasas negras,Unidad mediana,Unidad mediana,,1.2,100,3,no
+3-136,C60,Pasas negras,Unidad grande,Unidad grande,,1.8,100,4,no
+3-137,C60,Pasas negras,Cucharadita llena de unidad mediana,Cucharadita llena de unidad mediana,,4.8,100,12,no
+3-138,C60,Pasas negras,Cucharada llena de unidad mediana,Cucharada llena de unidad mediana,,11.7,100,28,no
+3-140,C62,Pera verde “chilena”,Unidad pequeña,Unidad pequeña,152.6,119.7,78,59,no
+3-142,C62,Pera verde “chilena”,Unidad mediana,Unidad mediana,200.9,164.7,82,81,no
+3-144,C62,Pera verde “chilena”,Unidad grande,Unidad grande,240.9,201.2,84,99,no
+3-145,C135,Plátano bellaco maduro,Rebanada de unidad mediana,Rebanada de unidad mediana,,54.1,100,55,no
+3-146,C78,Plátano bellaco verde,Unidad pequeña,Unidad pequeña,214,126.4,59,192,no
+3-147,C78,Plátano bellaco verde,Unidad mediana,Unidad mediana,280,171.1,61,260,no
+3-148,C78,Plátano bellaco verde,Unidad grande,Unidad grande,333.4,208.9,63,318,no
+3-149,C78,Plátano bellaco verde,Rodaja fina de unidad mediana (tipo chifle),Rodaja fina de unidad mediana (tipo chifle),,1.9,100,3,no
+3-150,C70,Plátano de la isla,Unidad pequeña,Unidad pequeña,124.1,84.6,68,64,no
+3-151,C70,Plátano de la isla,Unidad mediana,Unidad mediana,162.8,105.4,65,79,no
+3-152,C70,Plátano de la isla,Unidad grande,Unidad grande,225.1,151.2,67,113,no
+3-153,C70,Plátano de la isla,Rodaja de unidad mediana,Rodaja de unidad mediana,,9,100,7,no
+3-154,C71,Plátano de seda,Unidad pequeña,Unidad pequeña,112.5,65.7,59,55,no
+3-155,C71,Plátano de seda,Unidad mediana,Unidad mediana,201,128.7,64,107,no
+3-156,C71,Plátano de seda,Unidad grande,Unidad grande,257,161.4,65,134,no
+3-157,C71,Plátano de seda,Rodaja de unidad mediana,Rodaja de unidad mediana,,6.5,100,5,no
+3-158,C73,Plátano manzano,Unidad pequeña,Unidad pequeña,58.4,43.3,74,39,no
+3-159,C73,Plátano manzano,Unidad mediana,Unidad mediana,78.7,53.4,68,48,no
+3-160,C73,Plátano manzano,Unidad grande,Unidad grande,103.7,76.9,74,69,no
+3-161,C73,Plátano manzano,Rodaja mediana,Rodaja mediana,,5.3,100,5,no
+3-162,C69,Piña “hawaiana”,Unidad mediana,Unidad mediana,2319.5,1296.3,56,493,no
+3-163,C69,Piña “hawaiana”,Rodaja mediana,Rodaja mediana,239.4,215.9,90,82,no
+3-164,C69,Piña “hawaiana”,Rodaja pequeña,Rodaja pequeña,122.4,109.6,90,42,no
+3-165,C83,Sandia,Rodaja mediana,Rodaja mediana,320.2,311.3,97,75,no
+3-167,C91,Tuna roja,Unidad pequeña,Unidad pequeña,105.8,59.3,56,21,no
+3-168,C91,Tuna roja,Unidad mediana,Unidad mediana,139.1,80.7,57,29,no
+3-169,C91,Tuna roja,Unidad grande,Unidad grande,186.8,114.7,61,41,no
+3-170,C91,Tuna roja,Rodaja de unidad mediana,Rodaja de unidad mediana,,11.9,100,4,no
+3-171,C93,Uva blanca,Unidad pequeña,Unidad pequeña,4,3.9,96,3,no
+3-172,C93,Uva blanca,Unidad mediana,Unidad mediana,6.5,6.4,97,4,no
+3-173,C93,Uva blanca,Unidad grande,Unidad grande,8.4,8.2,98,6,no
+3-174,C93,Uva blanca,Taza de fierro enlozado llena,Taza de fierro enlozado llena,277.5,269.2,100,180,no
+3-175,C93,Uva blanca,Taza de plástico llena,Taza de plástico llena,264.2,256.3,100,172,no
+3-176,C93,Uva blanca,Taza de Loza llena,Taza de Loza llena,221.6,215,100,144,no
+4-1,D9,Aceite vegetal de soya,Taza de loza al ras,Taza de loza al ras,,314.4,100,2779,no
+4-2,D9,Aceite vegetal de soya,Taza de plástico al ras,Taza de plástico al ras,,349.3,100,3088,no
+4-3,D9,Aceite vegetal de soya,Taza de fierro enlozado al ras,Taza de fierro enlozado al ras,,364.8,100,3225,no
+4-4,D9,Aceite vegetal de soya,Cucharadita llena,Cucharadita llena,,2.4,100,21,no
+4-5,D9,Aceite vegetal de soya,Cucharada llena,Cucharada llena,,6.6,100,58,no
+4-6,D9,Aceite vegetal de soya,Porción para fritura,Porción para fritura,,17,100,150,si
+4-7,D9,Aceite vegetal de soya,Porción para aderezos,Porción para aderezos,,8,100,71,si
+4-8,D9,Aceite vegetal de soya,Porción para ensaladas,Porción para ensaladas,,3,100,27,si
+4-9,D13,Castaña peruana,2 Unidades,2 Unidades,65,30,46,198,si
+4-10,D19,Mantequilla,Cucharadita al ras,Cucharadita al ras,,2.2,100,16,no
+4-11,D19,Mantequilla,Cucharadita llena,Cucharadita llena,,6.5,100,47,no
+4-12,D19,Mantequilla,Cucharada al ras,Cucharada al ras,,5.9,100,43,no
+4-13,D19,Mantequilla,Cucharada llena,Cucharada llena,,14,100,102,no
+4-14,D19,Mantequilla,Porción mediana gruesa para untar,Porción mediana gruesa para untar,,2.8,100,20,no
+4-15,D19,Mantequilla,Porción grande gruesa para untar,Porción grande gruesa para untar,,4.8,100,35,no
+4-16,D14,Maní entero crudo,5 Unidades pequeñas,5 Unidades pequeñas,2.3,2.2,93,12,no
+4-17,D14,Maní entero crudo,5 Unidades medianas,5 Unidades medianas,3.3,3.1,95,17,no
+4-18,D14,Maní entero crudo,5 Unidades grandes,5 Unidades grandes,5.3,5,95,28,no
+4-19,D14,Maní entero crudo,Cucharada llena,Cucharada llena,17.2,16.4,95,92,no
+4-20,D14,Maní entero crudo,Porción,Porción,30,21,70,117,si
+4-21,D14,Maní entero crudo,Puñado,Puñado,21,15,71,84,si
+4-22,D16,Maní tostado entero,Cucharadita llena,Cucharadita llena (Maní tostado entero),,6.5,100,38,no
+4-23,D16,Maní tostado entero,Cucharada llena,Cucharada llena (Maní tostado entero),,14.6,100,86,no
+4-24,D16,Maní tostado molido,Cucharada llena,Cucharada llena (Maní tostado molido),,12.3,100,73,no
+4-25,D16,Maní tostado molido,Cucharada colmada,Cucharada colmada (Maní tostado molido),,18.2,100,107,no
+5-1,E1,Almeja,Unidad pequeña,Unidad pequeña con bolsa digestiva y gónadas,52.7,13.4,25,9,no
+5-2,E1,Almeja,Unidad pequeña,Unidad pequeña sin bolsa digestiva ni gónadas,52.7,9.8,19,7,no
+5-3,E1,Almeja,Unidad mediana,Unidad mediana con bolsa digestiva y gónadas,82.1,16.6,20,12,no
+5-4,E1,Almeja,Unidad mediana,Unidad mediana sin bolsa digestiva ni gónadas,82.1,11.4,14,8,no
+5-5,E1,Almeja,Unidad grande,Unidad grande con bolsa digestiva y gónadas,114.3,33,29,23,no
+5-6,E1,Almeja,Unidad grande,Unidad grande sin bolsa digestiva ni gónadas,114.3,25,22,18,no
+5-7,E19,"Atún, trozos en conserva",Cucharadita llena,Cucharadita llena,,5.6,100,11,no
+5-8,E19,"Atún, trozos en conserva",Cucharadita colmada,Cucharadita colmada,,8.2,100,15,no
+5-9,E19,"Atún, trozos en conserva",Cucharada llena,Cucharada llena,,13.3,100,25,no
+5-10,E19,"Atún, trozos en conserva",Cucharada colmada,Cucharada colmada,,18.2,100,34,no
+5-11,E25,"Bacalao, seco salado",Porción,Porción,,50,100,145,si
+5-21,E35,Caballa,Unidad pequeña,Unidad pequeña (Caballa),246.1,131.6,54,171,no
+5-22,E35,Caballa,Unidad mediana,Unidad mediana (Caballa),352.1,191.8,55,249,no
+5-23,E35,Caballa,Unidad grande,Unidad grande (Caballa),474.2,257,54,334,no
+5-24,E35,"Caballa, trozo superior de",Unidad pequeña,"Unidad pequeña (Caballa, trozo superior de)",96,81.5,85,106,no
+5-25,E35,"Caballa, trozo superior de",Unidad mediana,"Unidad mediana (Caballa, trozo superior de)",130.3,111.8,86,145,no
+5-26,E35,"Caballa, trozo superior de",Unidad grande,"Unidad grande (Caballa, trozo superior de)",181.6,160.9,89,209,no
+5-27,E35,"Caballa, trozo inferior de",Unidad pequeña,"Unidad pequeña (Caballa, trozo inferior de)",70.7,60.7,86,79,no
+5-28,E35,"Caballa, trozo inferior de",Unidad mediana,"Unidad mediana (Caballa, trozo inferior de)",94.1,81,86,105,no
+5-29,E35,"Caballa, trozo inferior de",Unidad grande,"Unidad grande (Caballa, trozo inferior de)",143,124.1,87,161,no
+5-30,E35,"Caballa, filete superior de",Unidad pequeña,"Unidad pequeña (Caballa, filete superior de)",36.9,35.3,96,46,no
+5-31,E35,"Caballa, filete superior de",Unidad mediana,"Unidad mediana (Caballa, filete superior de)",52.4,51.6,98,67,no
+5-32,E35,"Caballa, filete superior de",Unidad grande,"Unidad grande (Caballa, filete superior de)",78.1,76.6,98,99,no
+5-33,E35,"Caballa, filete inferior de",Unidad pequeña,"Unidad pequeña (Caballa, filete inferior de)",26.2,25.4,97,33,no
+5-34,E35,"Caballa, filete inferior de",Unidad mediana,"Unidad mediana (Caballa, filete inferior de)",38.9,38,98,49,no
+5-35,E35,"Caballa, filete inferior de",Unidad grande,"Unidad grande (Caballa, filete inferior de)",62,60.3,97,78,no
+5-36,E6,Camarón de rio,Unidad pequeña,"Unidad pequeña: cola, cabeza y tenazas",6.1,2.9,48,2,no
+5-37,E6,Camarón de rio,Unidad pequeña,Unidad pequeña: solo la cola,6.1,2.4,39,2,no
+5-38,E6,Camarón de rio,Unidad mediana,"Unidad mediana: cola, cabeza y tenazas",12,5.4,45,4,no
+5-39,E6,Camarón de rio,Unidad mediana,Unidad mediana: solo la cola,12,4.3,36,3,no
+5-40,E6,Camarón de rio,Unidad grande,"Unidad grande: cola, cabeza y tenazas",19.2,8.7,46,7,no
+5-41,E6,Camarón de rio,Unidad grande,Unidad grande: solo la cola,19.2,5.5,29,4,no
+5-42,E7,Cangrejos (frescos),2 unidades pequeñas,2 unidades pequeñas,55,27,49,27,si
+5-43,E12,Concha de abanico,Unidad pequeña,Unidad pequeña,27.6,8.6,31,8,no
+5-44,E12,Concha de abanico,Unidad mediana,Unidad mediana,37,12.3,34,11,no
+5-45,E12,Concha de abanico,Unidad grande,Unidad grande,48.5,16.1,33,15,no
+5-46,E11,Choros,Unidad pequeña,Unidad pequeña,28.9,4.8,17,4,no
+5-47,E11,Choros,Unidad mediana,Unidad mediana,47.4,7.6,17,7,no
+5-48,E11,Choros,Unidad grande,Unidad grande,66.2,12.4,19,11,no
+5-49,E50,Jurel pequeño,Unidad,Unidad (Jurel pequeño),335.4,190,57,229,no
+5-50,E50,Jurel pequeño,Trozo de parte superior,Trozo de parte superior (Jurel pequeño),116.6,107.5,92,130,no
+5-51,E50,Jurel pequeño,Trozo de parte inferior,Trozo de parte inferior (Jurel pequeño),76.3,69.7,91,84,no
+5-52,E50,Jurel pequeño,Filete de parte superior,Filete de parte superior (Jurel pequeño),,53.9,100,65,no
+5-53,E50,Jurel pequeño,Filete de parte inferior,Filete de parte inferior (Jurel pequeño),,36.1,100,44,no
+5-54,E50,Jurel mediano,Unidad,Unidad (Jurel mediano),552.3,315.5,57,380,no
+5-55,E50,Jurel mediano,Trozo de parte superior,Trozo de parte superior (Jurel mediano),204.2,192.3,94,232,no
+5-56,E50,Jurel mediano,Trozo de parte inferior,Trozo de parte inferior (Jurel mediano),133.9,121.3,91,146,no
+5-57,E50,Jurel mediano,Filete de parte superior,Filete de parte superior (Jurel mediano),,94.8,100,114,no
+5-58,E50,Jurel mediano,Filete de parte inferior,Filete de parte inferior (Jurel mediano),,59.8,100,72,no
+5-59,E57,Merluza pequeña,Unidad,Unidad (Merluza pequeña),468.4,240.6,51,174,no
+5-60,E57,Merluza pequeña,Trozo de parte superior,Trozo de parte superior (Merluza pequeña),166.4,142.9,86,103,no
+5-61,E57,Merluza pequeña,Trozo de parte inferior,Trozo de parte inferior (Merluza pequeña),109.7,97.7,89,71,no
+5-62,E57,Merluza pequeña,Filete de parte superior,Filete de parte superior (Merluza pequeña),,68.7,100,50,no
+5-63,E57,Merluza pequeña,Filete de parte inferior,Filete de parte inferior (Merluza pequeña),,44.9,100,33,no
+5-64,E57,Merluza mediana,Unidad,Unidad (Merluza mediana),745.4,389.9,52,282,no
+5-65,E57,Merluza mediana,Trozo de parte superior,Trozo de parte superior (Merluza mediana),313.3,279.6,89,202,no
+5-66,E57,Merluza mediana,Trozo de parte inferior,Trozo de parte inferior (Merluza mediana),206.4,186.2,90,135,no
+5-67,E57,Merluza mediana,Filete de parte superior,Filete de parte superior (Merluza mediana),,81.4,100,59,no
+5-68,E57,Merluza mediana,Filete de parte inferior,Filete de parte inferior (Merluza mediana),,53.2,100,39,no
+5-72,E63,Pejerrey,Unidad pequeña,Unidad pequeña,17.7,11.3,64,12,no
+5-73,E63,Pejerrey,Unidad mediana,Unidad mediana,29.1,18.3,63,19,no
+5-74,E63,Pejerrey,Unidad grande,Unidad grande,39.8,24.2,61,26,no
+5-75,E88,"Pota, cubos de (1,5 cm por lado aprox.)",Taza de fierro lleno,"Taza de fierro lleno (Pota, cubos de (1,5 cm por lado aprox.))",,407.6,100,412,no
+5-76,E88,"Pota, cubos de (1,5 cm por lado aprox.)",Taza plástico lleno,"Taza plástico lleno (Pota, cubos de (1,5 cm por lado aprox.))",,382.1,100,386,no
+5-77,E88,"Pota, trozo de",Unidad pequeña,"Unidad pequeña (Pota, trozo de)",,61.6,100,62,no
+5-78,E88,"Pota, trozo de",Unidad mediana,"Unidad mediana (Pota, trozo de)",,107.5,100,109,no
+5-79,E88,"Pota, trozo de",Unidad grande,"Unidad grande (Pota, trozo de)",,154.2,100,156,no
+5-80,E81,Trucha pequeña,Unidad,Unidad con cabeza y cola (Trucha pequeña),184.7,171.4,93,189,no
+5-81,E81,Trucha pequeña,Unidad,"Filete, unidad sin cabeza ni cola (Trucha pequeña)",184.7,146.2,79,161,no
+5-82,E81,Trucha pequeña,Trozo de parte superior,Trozo de parte superior (Trucha pequeña),84.2,77.7,92,85.4,no
+5-83,E81,Trucha pequeña,Trozo de parte inferior,Trozo de parte inferior (Trucha pequeña),73.5,68.6,93,75,no
+5-84,E81,Trucha mediana,Unidad,Unidad con cabeza y cola (Trucha mediana),309.9,294.2,95,324,no
+5-85,E81,Trucha mediana,Unidad,"Filete, unidad sin cabeza ni cola (Trucha mediana)",309.9,244.6,79,269,no
+5-86,E81,Trucha mediana,Trozo de parte superior,Trozo de parte superior (Trucha mediana),152.8,140.2,92,154,no
+5-87,E81,Trucha mediana,Trozo de parte inferior,Trozo de parte inferior (Trucha mediana),115.3,104.4,91,115,no
+5-88,E81,Trucha grande,Unidad,Unidad con cabeza y cola (Trucha grande),439.4,415.5,95,457,no
+5-89,E81,Trucha grande,Unidad,"Filete, unidad sin cabeza ni cola (Trucha grande)",439.4,325.9,74,359,no
+5-90,E81,Trucha grande,Trozo de parte superior,Trozo de parte superior (Trucha grande),206.9,183,88,201,no
+5-91,E81,Trucha grande,Trozo de parte inferior,Trozo de parte inferior (Trucha grande),163.1,143,88,157,no
+6-1,F12,"Carnero, pulpa semigorda de",Trozo mediano,Trozo mediano,95,70,74,177,si
+6-2,F12,"Carnero, pulpa semigorda de",1/3 taza de acero picada,1/3 taza de acero picada,,55,100,139,si
+6-3,F13,"Cerdo, chuleta con hueso de",Porción mediana,"Porción mediana (Cerdo, chuleta con hueso de)",190,92,48,182,si
+6-4,F13,"Cerdo, chuleta con hueso de",Porción grande,"Porción grande (Cerdo, chuleta con hueso de)",230,106,46,210,si
+6-5,F13,"Cerdo, chuleta sin hueso de",Porción media sin grasa,"Porción media sin grasa (Cerdo, chuleta sin hueso de)",,90,100,178,si
+6-6,F13,"Cerdo, chuleta sin hueso de",Porción grande con grasa,"Porción grande con grasa (Cerdo, chuleta sin hueso de)",,140,100,277,si
+6-7,F15,"Cerdo, pata semigorda de",Unidad,Unidad,100,56,56,159,si
+6-8,F13,"Cerdo, carne sin hueso",Filete mediano,"Filete mediano (Cerdo, carne sin hueso)",,132,100,261,si
+6-9,F13,"Cerdo, carne sin hueso",1 trozo mediano,"1 trozo mediano (Cerdo, carne sin hueso)",,70,100,139,si
+6-10,F13,"Cerdo, carne picada",1/3 taza de acero,"1/3 taza de acero (Cerdo, carne picada)",,55,100,109,si
+6-11,F19,"Conejo, unidad entera",Unidad pequeña,"Unidad pequeña (Conejo, unidad entera)",1224.9,690.9,56,940,no
+6-12,F19,"Conejo, unidad entera",Unidad mediana,"Unidad mediana (Conejo, unidad entera)",1783.7,1075.1,60,1462,no
+6-13,F19,"Conejo, unidad entera",Unidad grande,"Unidad grande (Conejo, unidad entera)",2142,1308.3,61,1779,no
+6-14,F19,"Conejo, brazuelo de",Unidad pequeña,"Unidad pequeña (Conejo, brazuelo de)",83.9,59.9,71,82,no
+6-15,F19,"Conejo, brazuelo de",Unidad mediana,"Unidad mediana (Conejo, brazuelo de)",114.1,85,75,116,no
+6-16,F19,"Conejo, brazuelo de",Unidad grande,"Unidad grande (Conejo, brazuelo de)",143.7,101.5,71,138,no
+6-17,F19,"Conejo, cabeza de",Unidad pequeña,"Unidad pequeña (Conejo, cabeza de)",122.8,12.8,10,17,no
+6-18,F19,"Conejo, cabeza de",Unidad mediana,"Unidad mediana (Conejo, cabeza de)",145.8,14.1,10,19,no
+6-19,F19,"Conejo, cabeza de",Unidad grande,"Unidad grande (Conejo, cabeza de)",167.4,21,13,29,no
+6-23,F19,"Conejo, ½ espinazo de",Unidad pequeña,"Unidad pequeña (Conejo, ½ espinazo de)",69.1,38.9,56,53,no
+6-24,F19,"Conejo, ½ espinazo de",Unidad mediana,"Unidad mediana (Conejo, ½ espinazo de)",120.7,78.2,65,106,no
+6-25,F19,"Conejo, ½ espinazo de",Unidad grande,"Unidad grande (Conejo, ½ espinazo de)",164.6,99,60,135,no
+6-29,F19,"Conejo, ½ lomo de",Unidad pequeña,"Unidad pequeña (Conejo, ½ lomo de)",117.4,90,77,122,no
+6-30,F19,"Conejo, ½ lomo de",Unidad mediana,"Unidad mediana (Conejo, ½ lomo de)",185.8,149.5,80,203,no
+6-31,F19,"Conejo, ½ lomo de",Unidad grande,"Unidad grande (Conejo, ½ lomo de)",231.7,180.8,78,246,no
+6-32,F19,"Conejo, pescuezo de",Unidad pequeña,"Unidad pequeña (Conejo, pescuezo de)",46.1,24.9,54,34,no
+6-33,F19,"Conejo, pescuezo de",Unidad mediana,"Unidad mediana (Conejo, pescuezo de)",64.2,34.2,53,47,no
+6-34,F19,"Conejo, pescuezo de",Unidad grande,"Unidad grande (Conejo, pescuezo de)",82.6,51,61,69,no
+6-35,F19,"Conejo, pierna de",Unidad pequeña,"Unidad pequeña (Conejo, pierna de)",175.3,134.8,77,183,no
+6-36,F19,"Conejo, pierna de",Unidad mediana,"Unidad mediana (Conejo, pierna de)",240.7,194.2,81,264,no
+6-37,F19,"Conejo, pierna de",Unidad grande,"Unidad grande (Conejo, pierna de)",303.8,246.2,81,335,no
+6-38,F74,"Cuy, unidad entera de",Unidad pequeña,"Unidad pequeña (Cuy, unidad entera de)",511.3,184.9,36,178,no
+6-39,F74,"Cuy, unidad entera de",Unidad mediana,"Unidad mediana (Cuy, unidad entera de)",768.6,304.5,40,292,no
+6-40,F74,"Cuy, unidad entera de",Unidad grande,"Unidad grande (Cuy, unidad entera de)",1075.2,377.8,35,363,no
+6-41,F74,"Cuy, brazuelo de",Unidad pequeña,"Unidad pequeña (Cuy, brazuelo de)",37.2,17.7,48,17,no
+6-42,F74,"Cuy, brazuelo de",Unidad mediana,"Unidad mediana (Cuy, brazuelo de)",56.3,26.4,47,25,no
+6-43,F74,"Cuy, brazuelo de",Unidad grande,"Unidad grande (Cuy, brazuelo de)",79.6,35,44,34,no
+6-44,F74,"Cuy, cabeza de",Unidad pequeña,"Unidad pequeña (Cuy, cabeza de)",77.3,13,17,13,no
+6-45,F74,"Cuy, cabeza de",Unidad mediana,"Unidad mediana (Cuy, cabeza de)",104.2,17.1,16,16,no
+6-46,F74,"Cuy, cabeza de",Unidad grande,"Unidad grande (Cuy, cabeza de)",127.6,18.9,15,18,no
+6-50,F74,"Cuy, ½ espinazo de",Unidad pequeña,"Unidad pequeña (Cuy, ½ espinazo de)",42.7,20,47,19,no
+6-51,F74,"Cuy, ½ espinazo de",Unidad mediana,"Unidad mediana (Cuy, ½ espinazo de)",68.8,33.4,49,32,no
+6-52,F74,"Cuy, ½ espinazo de",Unidad grande,"Unidad grande (Cuy, ½ espinazo de)",103.4,45.3,44,44,no
+6-56,F74,"Cuy, ½ lomo de",Unidad pequeña,"Unidad pequeña (Cuy, ½ lomo de)",32.8,22.6,70,22,no
+6-57,F74,"Cuy, ½ lomo de",Unidad mediana,"Unidad mediana (Cuy, ½ lomo de)",72.1,37.6,52,36,no
+6-58,F74,"Cuy, ½ lomo de",Unidad grande,"Unidad grande (Cuy, ½ lomo de)",104.7,47.3,46,45,no
+6-59,F74,"Cuy, pescuezo de",Unidad pequeña,"Unidad pequeña (Cuy, pescuezo de)",21.8,11.2,51,11,no
+6-60,F74,"Cuy, pescuezo de",Unidad mediana,"Unidad mediana (Cuy, pescuezo de)",35.5,15.9,45,15,no
+6-61,F74,"Cuy, pescuezo de",Unidad grande,"Unidad grande (Cuy, pescuezo de)",49.2,21.9,44,21,no
+6-62,F74,"Cuy, pierna de",Unidad pequeña,"Unidad pequeña (Cuy, pierna de)",42.8,23.2,54,22,no
+6-63,F74,"Cuy, pierna de",Unidad mediana,"Unidad mediana (Cuy, pierna de)",59.6,31.4,52,30,no
+6-64,F74,"Cuy, pierna de",Unidad grande,"Unidad grande (Cuy, pierna de)",86.9,44.7,52,43,no
+6-65,F76,"Llama/alpaca, charqui de",Unidad pequeña,Unidad pequeña,,0.7,100,2,no
+6-66,F76,"Llama/alpaca, charqui de",Unidad mediana,Unidad mediana,,1.3,100,4,no
+6-67,F76,"Llama/alpaca, charqui de",Taza de loza al ras,Taza de loza al ras,,115.7,100,323,no
+6-68,F76,"Llama/alpaca, charqui de",Taza de loza llena,Taza de loza llena,,130.8,100,365,no
+6-69,F76,"Llama/alpaca, charqui de",Taza de plástico al ras,Taza de plástico al ras,,128,100,357,no
+6-70,F76,"Llama/alpaca, charqui de",Taza de plástico llena,Taza de plástico llena,,159.7,100,446,no
+6-71,F76,"Llama/alpaca, charqui de",Taza de fierro enlozado al ras,Taza de fierro enlozado al ras,,141.4,100,395,no
+6-72,F76,"Llama/alpaca, charqui de",Taza de fierro enlozado llena,Taza de fierro enlozado llena,,162.2,100,453,no
+6-73,F76,"Llama/alpaca, charqui de",Cucharada llena,Cucharada llena,,9.7,100,27,no
+6-74,F76,"Llama/alpaca, charqui de",Cucharada colmada,Cucharada colmada,,18.3,100,51,no
+6-75,F76,"Llama/alpaca, charqui de",Puño,Puño,,35.9,100,100,no
+6-76,F76,"Llama/alpaca, charqui de",Puño,Puño,,77.9,100,217,no
+6-77,F78,"Pollo, ala de",Unidad pequeña,"Unidad pequeña (Pollo, ala de)",43.2,12.3,29,15,no
+6-78,F78,"Pollo, ala de",Unidad mediana,"Unidad mediana (Pollo, ala de)",53,15.9,30,19,no
+6-79,F78,"Pollo, ala de",Unidad grande,"Unidad grande (Pollo, ala de)",59.8,20.9,35,25,no
+6-80,F78,"Pollo, brazuelo de",Unidad pequeña,"Unidad pequeña (Pollo, brazuelo de)",51.8,26.8,52,32,no
+6-81,F78,"Pollo, brazuelo de",Unidad mediana,"Unidad mediana (Pollo, brazuelo de)",60.2,33.6,56,40,no
+6-82,F78,"Pollo, brazuelo de",Unidad grande,"Unidad grande (Pollo, brazuelo de)",72.2,43.6,61,52,no
+6-83,F78,"Pollo, ala-brazuelo de",Unidad pequeña,"Unidad pequeña (Pollo, ala-brazuelo de)",94.1,38.3,41,46,no
+6-84,F78,"Pollo, ala-brazuelo de",Unidad mediana,"Unidad mediana (Pollo, ala-brazuelo de)",109.6,46.4,42,55,no
+6-85,F78,"Pollo, ala-brazuelo de",Unidad grande,"Unidad grande (Pollo, ala-brazuelo de)",128.2,61.8,48,74,no
+6-86,F27,"Pollo, corazón de",Unidad pequeña,Unidad pequeña,11.5,7.9,67,12,no
+6-87,F27,"Pollo, corazón de",Unidad mediana,Unidad mediana,14.1,9.2,67,14,no
+6-88,F27,"Pollo, corazón de",Unidad grande,Unidad grande,16.3,11.2,70,17,no
+6-90,F26,"Pollo, entero",Unidad mediana sin menudencia,"Unidad mediana sin menudencia (Pollo, entero)",1360,993,73,1182,si
+6-91,F26,"Pollo, espinazo de",Unidad mediana,"Unidad mediana (Pollo, espinazo de)",172.4,68.1,40,81,no
+6-92,F26,"Pollo, entrepierna de",Unidad pequeña,"Unidad pequeña (Pollo, entrepierna de)",96.4,56,58,67,no
+6-93,F26,"Pollo, entrepierna de",Unidad mediana,"Unidad mediana (Pollo, entrepierna de)",127,74,58,88,no
+6-94,F26,"Pollo, entrepierna de",Unidad grande,"Unidad grande (Pollo, entrepierna de)",145,80,55,95,no
+6-95,F26,"Pollo, filete de",Unidad pequeña,"Unidad pequeña (Pollo, filete de)",,72.9,100,87,no
+6-96,F26,"Pollo, filete de",Unidad mediana,"Unidad mediana (Pollo, filete de)",,114.3,100,136,no
+6-97,F26,"Pollo, filete de",Unidad grande,"Unidad grande (Pollo, filete de)",,162.3,100,193,no
+6-98,F28,"Pollo, hígado de",Unidad pequeña,Unidad pequeña,46.5,44.9,97,56,no
+6-99,F28,"Pollo, hígado de",Unidad mediana,Unidad mediana,54.1,51.5,95,64,no
+6-100,F28,"Pollo, hígado de",Unidad grande,Unidad grande,64.2,61.9,96,77,no
+6-101,F26,"Pollo, pescuezo de",Unidad pequeña,"Unidad pequeña (Pollo, pescuezo de)",42.7,11.6,27,14,no
+6-102,F26,"Pollo, pescuezo de",Unidad mediana,"Unidad mediana (Pollo, pescuezo de)",67.3,18.7,28,22,no
+6-103,F26,"Pollo, pescuezo de",Unidad grande,"Unidad grande (Pollo, pescuezo de)",90.5,26.8,30,32,no
+6-104,F26,"Pollo, cabeza y pescuezo, de",Unidad,"Unidad (Pollo, cabeza y pescuezo, de)",105,38,37,45,si
+6-105,F26,"Pollo, pierna de",Unidad pequeña,"Unidad pequeña (Pollo, pierna de)",115.2,68.6,60,82,no
+6-106,F26,"Pollo, pierna de",Unidad mediana,"Unidad mediana (Pollo, pierna de)",148.8,85.8,58,102,no
+6-107,F26,"Pollo, pierna de",Unidad grande,"Unidad grande (Pollo, pierna de)",179.7,103.8,58,124,no
+6-108,F26,"Pollo, pechuga corte redondo",Unidad pequeña,"Unidad pequeña (Pollo, pechuga corte redondo)",845.3,581.5,66,692,no
+6-109,F26,"Pollo, pechuga corte redondo",Unidad mediana,"Unidad mediana (Pollo, pechuga corte redondo)",1087.4,693.9,64,826,no
+6-110,F26,"Pollo, pechuga corte redondo",Unidad grande,"Unidad grande (Pollo, pechuga corte redondo)",1238,754.8,61,898,no
+6-111,F26,"Pollo, trozo superior de media pechuga de",Unidad pequeña,"Unidad pequeña (Pollo, trozo superior de media pechuga de)",203.6,158.6,78,189,no
+6-112,F26,"Pollo, trozo superior de media pechuga de",Unidad mediana,"Unidad mediana (Pollo, trozo superior de media pechuga de)",253.1,193.8,77,231,no
+6-113,F26,"Pollo, trozo superior de media pechuga de",Unidad grande,"Unidad grande (Pollo, trozo superior de media pechuga de)",264.6,217.2,82,258,no
+6-114,F26,"Pollo, trozo inferior de media pechuga de",Unidad pequeña,"Unidad pequeña (Pollo, trozo inferior de media pechuga de)",165,132.1,80,157,no
+6-115,F26,"Pollo, trozo inferior de media pechuga de",Unidad mediana,"Unidad mediana (Pollo, trozo inferior de media pechuga de)",199,153.1,77,182,no
+6-116,F26,"Pollo, trozo inferior de media pechuga de",Unidad grande,"Unidad grande (Pollo, trozo inferior de media pechuga de)",228,183.6,81,219,no
+6-117,F26,"Pollo, rabadilla de",Unidad pequeña,"Unidad pequeña (Pollo, rabadilla de)",86,47.1,59,56,no
+6-118,F26,"Pollo, rabadilla de",Unidad mediana,"Unidad mediana (Pollo, rabadilla de)",,67.7,77,81,no
+6-119,F26,"Pollo, rabadilla de",Unidad grande,"Unidad grande (Pollo, rabadilla de)",,81.8,74,97,no
+6-120,F42,"Res, bofe de",Taza de plástico llena,Taza de plástico llena,,290.8,100,241,no
+6-121,F42,"Res, bofe de",Taza de fierro enlozado llena,Taza de fierro enlozado llena,,300.6,100,250,no
+6-122,F42,"Res, bofe de",Cucharada llena,Cucharada llena,,15.5,100,13,no
+6-123,F42,"Res, bofe de",Cucharada colmada,Cucharada colmada,,26.1,100,22,no
+6-124,F38,"Res, hígado de",Unidad pequeña,Unidad pequeña,,58.7,100,75,no
+6-125,F38,"Res, hígado de",Unidad mediana,Unidad mediana,,108.1,100,137,no
+6-126,F38,"Res, hígado de",Unidad grande,Unidad grande,,149.8,100,190,no
+6-127,F40,"Res, mondongo picado de",1/3 taza de acero,1/3 taza de acero,,55,100,57,si
+6-128,F35,"Res, carne pulpa de",Filete pequeño,"Filete pequeño (Res, carne pulpa de)",,62.3,100,65,no
+6-129,F35,"Res, carne pulpa de",Filete mediana,"Filete mediana (Res, carne pulpa de)",,96.9,100,102,no
+6-130,F35,"Res, carne pulpa de",Filete grande,"Filete grande (Res, carne pulpa de)",,149.9,100,157,no
+6-131,F35,"Res, carne pulpa de",Trozo pequeño,"Trozo pequeño (Res, carne pulpa de)",,96.2,100,101,no
+6-132,F35,"Res, carne pulpa de",Trozo mediano,"Trozo mediano (Res, carne pulpa de)",,123.3,100,130,no
+6-133,F35,"Res, carne pulpa de",Trozo grande,"Trozo grande (Res, carne pulpa de)",,162.8,100,171,no
+6-134,F35,"Res, carne pulpa molida de","Porción para croqueta, hamburguesa o albóndiga","Porción para croqueta, hamburguesa o albóndiga (Res, carne pulpa molida de)",,60,100,63,si
+6-135,F35,"Res, carne pulpa picada de",Taza de loza llena,"Taza de loza llena (Res, carne pulpa picada de)",,305.9,100,321,no
+6-136,F35,"Res, carne pulpa picada de",Taza de plástico llena,"Taza de plástico llena (Res, carne pulpa picada de)",,350.1,100,368,no
+6-137,F35,"Res, carne pulpa picada de",Taza de fierro enlozado llena,"Taza de fierro enlozado llena (Res, carne pulpa picada de)",,366.5,100,385,no
+6-138,F43,"Res, riñón picado de",1/3 taza de acero,1/3 taza de acero,,55,100,50,si
+6-139,F51,Jamonada,Rebanada,Rebanada,,13,100,43,no
+6-140,F50,Jamón del país,Rebanada,Rebanada,,17,100,59,no
+6-141,F52,Mortadela,Rebanada,Rebanada,,20,100,51,si
+6-142,F58,Hot dog,Unidad mediana,Unidad mediana,,36,100,132,no
+6-143,F47,Chicharrón de cerdo (cocido),Trozo pequeño,Trozo pequeño,,40,100,260,si
+6-144,F53,Paté,2 cucharaditas,2 cucharaditas,,15,100,74,si
+6-145,F55,Relleno,Tajada delgada,Tajada delgada,,30,100,32,si
+6-146,F60,Tocino,Tajada delgada,Tajada delgada,,20,100,98,si
+6-147,F46,"Carnero, carne seca (chalona)",Porción,Porción,,30,100,95,si
+7-1,G7,Leche evaporada entera de vaca,Taza de loza al ras,Taza de loza al ras,,370.7,100,493,no
+7-2,G7,Leche evaporada entera de vaca,Taza de plástico al ras,Taza de plástico al ras,,416.2,100,554,no
+7-3,G7,Leche evaporada entera de vaca,Taza fierro enlozado al ras,Taza fierro enlozado al ras,,422.5,100,562,no
+7-4,G7,Leche evaporada entera de vaca,Vaso grande de vidrio al ras,Vaso grande de vidrio al ras,,348.8,100,464,no
+7-5,G7,Leche evaporada entera de vaca,Cucharadita llena,Cucharadita llena,,3.3,100,4,no
+7-6,G7,Leche evaporada entera de vaca,Cucharada llena,Cucharada llena,,8.6,100,11,no
+7-7,G11,Leche fresca de vaca,Taza de loza al ras,Taza de loza al ras,,359.8,100,227,no
+7-8,G11,Leche fresca de vaca,Taza de plástico al ras,Taza de plástico al ras,,404.9,100,255,no
+7-9,G11,Leche fresca de vaca,Taza fierro enlozado al ras,Taza fierro enlozado al ras,,410.7,100,259,no
+7-10,G11,Leche fresca de vaca,Vaso grande de vidrio al ras,Vaso grande de vidrio al ras,,337.2,100,212,no
+7-11,G11,Leche fresca de vaca,Cucharadita llena,Cucharadita llena,,3.4,100,2,no
+7-12,G11,Leche fresca de vaca,Cucharada llena,Cucharada llena,,8.6,100,5,no
+7-13,G5,Leche en polvo entera de vaca,Cucharadita llena,Cucharadita llena,,4.8,100,23,no
+7-14,G5,Leche en polvo entera de vaca,Cucharadita colmada,Cucharadita colmada,,7.9,100,38,no
+7-15,G5,Leche en polvo entera de vaca,Cucharada al ras,Cucharada al ras,,6,100,29,si
+7-16,G5,Leche en polvo entera de vaca,Cucharada llena,Cucharada llena,,12,100,58,no
+7-17,G5,Leche en polvo entera de vaca,Cucharada colmada,Cucharada colmada,,16.4,100,79,no
+7-18,G3,Leche condensada endulzada,Cucharadita llena,Cucharadita llena,,4.9,100,16,no
+7-19,G3,Leche condensada endulzada,Cucharada llena,Cucharada llena,,12.9,100,42,no
+7-21,G14,Queso fresco de vaca,Tajada pequeña delgada,Tajada pequeña delgada,,11.7,100,31,no
+7-22,G14,Queso fresco de vaca,Tajada mediana delgada,Tajada mediana delgada,,19.4,100,51,no
+7-23,G14,Queso fresco de vaca,Tajada grande delgada,Tajada grande delgada,,32.8,100,87,no
+7-24,G13,Queso fresco de cabra,Tajada delgada,Tajada delgada,,30,100,52,si
+7-26,G15,Queso mantecoso,Tajada mediana delgada molde,Tajada mediana delgada molde,,30.9,100,122,no
+7-27,G15,Queso mantecoso,Cucharadita llena,Cucharadita llena,,9.2,100,36,no
+7-28,G16,Queso parmesano (rallado),Cucharadita llena,Cucharadita llena,,3.9,100,17,no
+7-29,G16,Queso parmesano (rallado),Cucharadita colmada,Cucharadita colmada,,6.1,100,27,no
+7-30,G16,Queso parmesano (rallado),Cucharada llena,Cucharada llena,,10,100,44,no
+7-31,G16,Queso parmesano (rallado),Cucharada colmada,Cucharada colmada,,14.2,100,63,no
+7-32,G18,Yogur frutado,Taza de loza al ras,Taza de loza al ras,,374,100,363,no
+7-33,G18,Yogur frutado,Taza de plástico al ras,Taza de plástico al ras,,426,100,413,no
+7-34,G18,Yogur frutado,Taza Fierro enlozado al ras,Taza Fierro enlozado al ras,,416.4,100,404,no
+7-35,G18,Yogur frutado,Vaso pequeño de vidrio al ras,Vaso pequeño de vidrio al ras,,251.5,100,244,no
+7-36,G18,Yogur frutado,Vaso grande de vidrio al ras,Vaso grande de vidrio al ras,,343.9,100,334,no
+7-37,G18,Yogur frutado,Cucharadita llena,Cucharadita llena,,4.3,100,4,no
+7-38,G18,Yogur frutado,Cucharada llena,Cucharada llena,,10.2,100,10,no
+8-1,J12,"Codorniz, huevo de",Unidad mediana,Unidad mediana,12.1,10.2,84,14,no
+8-2,J4,Gallina huevo de,Unidad pequeña,Unidad pequeña,59.8,51.8,87,81,no
+8-3,J4,Gallina huevo de,Unidad mediana,Unidad mediana,68.4,59.9,88,93,no
+8-4,J4,Gallina huevo de,Unidad grande,Unidad grande,77.3,67.7,88,106,no
+8-5,J2,"Gallina, clara de huevo",Unidad mediana,Unidad mediana,,40.9,100,21,no
+8-6,J5,"Gallina, yema de huevo",Unidad mediana,Unidad mediana,,19.9,100,70,no
+8-7,J7,"Pata, huevo de",Unidad mediana,Unidad mediana,67,60,90,100,si
+9-1,K2,Azúcar rubia,Taza de loza al ras,Taza de loza al ras,,293.2,100,1114,no
+9-2,K2,Azúcar rubia,Taza de loza llena,Taza de loza llena,,338.9,100,1288,no
+9-3,K2,Azúcar rubia,Taza de loza colmada,Taza de loza colmada,,350.8,100,1333,no
+9-4,K2,Azúcar rubia,Taza de plástico al ras,Taza de plástico al ras,,337.1,100,1281,no
+9-5,K2,Azúcar rubia,Taza de plástico llena,Taza de plástico llena,,371.6,100,1412,no
+9-6,K2,Azúcar rubia,Taza de plástico colmada,Taza de plástico colmada,,411.5,100,1564,no
+9-7,K2,Azúcar rubia,Taza de fierro enlozado al ras,Taza de fierro enlozado al ras,,349.7,100,1329,no
+9-8,K2,Azúcar rubia,Taza de fierro enlozado llena,Taza de fierro enlozado llena,,390.3,100,1483,no
+9-9,K2,Azúcar rubia,Taza de fierro enlozado colmada,Taza de fierro enlozado colmada,,430.1,100,1634,no
+9-10,K2,Azúcar rubia,Cucharadita ras,Cucharadita ras,,2.8,100,11,no
+9-11,K2,Azúcar rubia,Cucharadita llena,Cucharadita llena,,6.5,100,25,no
+9-12,K2,Azúcar rubia,Cucharadita colmada,Cucharadita colmada,,10,100,38,no
+9-13,K2,Azúcar rubia,Cucharada al ras,Cucharada al ras,,6.5,100,25,no
+9-14,K2,Azúcar rubia,Cucharada llena,Cucharada llena,,16.1,100,61,no
+9-15,K2,Azúcar rubia,Cucharada colmada,Cucharada colmada,,27.5,100,105,no
+9-16,K3,Chancaca,Unidad tipo “tapa”,Unidad tipo “tapa”,,458.6,100,1486,no
+9-17,K3,Chancaca,Unidad tipo “bola”,Unidad tipo “bola”,,941.8,100,3052,no
+9-18,K7,Mermelada de fresa,Cucharadita llena,Cucharadita llena,,6.3,100,12,no
+9-19,K7,Mermelada de fresa,Cucharada llena,Cucharada llena,,17.1,100,34,no
+9-20,K4,Miel de abeja,Cucharadita llena,Cucharadita llena,,5.3,100,18,no
+9-21,K4,Miel de abeja,Cucharada llena,Cucharada llena,,12.4,100,41,no
+10-3,A90,Galleta dulce con relleno de crema saborizada,Paquete de 4 unidades cuadradas,Paquete de 4 unidades cuadradas,,51.8,100,256,no
+10-4,A90,Galleta dulce con relleno de crema saborizada,Unidad cuadrada,Unidad cuadrada,,12.9,100,64,no
+10-5,A91,Galleta dulce con relleno de chocolate,Paquete de 4 unidades redondas,Paquete de 4 unidades redondas,,31.9,100,155,no
+10-6,A91,Galleta dulce con relleno de chocolate,Unidad redonda,Unidad redonda,,7.7,100,38,no
+10-7,A24,Galleta de soda,Paquete de 12 unidades cuadradas,Paquete de 12 unidades cuadradas,,40.9,100,177,no
+10-8,A24,Galleta de soda,Unidad cuadrada,Unidad cuadrada,,3.4,100,16,no
+10-9,A25,Galleta de vainilla,Paquete de 8 unidades cuadradas,Paquete de 8 unidades cuadradas,,37.5,100,163,no
+10-10,A25,Galleta de vainilla,Unidad cuadrada,Unidad cuadrada,,4.6,100,20,no
+11-1,T2,Arvejas frescas (en vainas),1/4 kilogramo,1/4 kilogramo (Arvejas frescas (en vainas)),246,106.9,44,113,no
+11-2,T2,Arveja fresca (guisantes),Taza de loza al ras,Taza de loza al ras (Arveja fresca (guisantes)),,205.1,100,217,no
+11-3,T2,Arveja fresca (guisantes),Taza de fierro enlozado al ras,Taza de fierro enlozado al ras (Arveja fresca (guisantes)),,247.5,100,262,no
+11-4,T2,Arveja fresca (guisantes),Cucharadita llena,Cucharadita llena (Arveja fresca (guisantes)),,5.9,100,6,no
+11-5,T2,Arveja fresca (guisantes),Cucharada llena,Cucharada llena (Arveja fresca (guisantes)),,14.4,100,15,no
+11-6,T2,Arveja fresca (guisantes),Puñado,Puñado (Arveja fresca (guisantes)),,39,100,41,si
+11-7,T2,Arveja fresca (guisantes),Porción para guiso,Porción para guiso (Arveja fresca (guisantes)),,7,100,7,si
+11-8,T3,Arveja seca partida,Taza de loza al ras,Taza de loza al ras,,305.4,100,1072,no
+11-9,T3,Arveja seca partida,Taza de loza llena,Taza de loza llena,,328.2,100,1152,no
+11-10,T3,Arveja seca partida,Taza de fierro enlozado al ras,Taza de fierro enlozado al ras,,348.8,100,1224,no
+11-11,T3,Arveja seca partida,Taza de Fierro enlozado llena,Taza de Fierro enlozado llena,,408.2,100,1433,no
+11-12,T3,Arveja seca partida,Cucharadita llena,Cucharadita llena,,6.5,100,23,no
+11-13,T3,Arveja seca partida,Cucharada llena,Cucharada llena,,16.9,100,59,no
+11-14,T61,Arveja seca partida sancochada,Taza de loza al ras,Taza de loza al ras,,295.7,100,457,no
+11-15,T61,Arveja seca partida sancochada,Taza de fierro enlozado al ras,Taza de fierro enlozado al ras,,358.2,100,553,no
+11-16,T61,Arveja seca partida sancochada,Cucharadita llena,Cucharadita llena,,9.2,100,14,no
+11-17,T61,Arveja seca partida sancochada,Cucharadita colmada,Cucharadita colmada,,15.6,100,24,no
+11-18,T61,Arveja seca partida sancochada,Cucharada llena,Cucharada llena,,22.9,100,36,no
+11-19,T61,Arveja seca partida sancochada,Cucharada colmada,Cucharada colmada,,38.1,100,59,no
+11-20,T20,Frijol castilla,Taza de loza al ras,Taza de loza al ras,,270.8,100,615,no
+11-21,T20,Frijol castilla,Taza de loza llena,Taza de loza llena,,303.4,100,689,no
+11-22,T20,Frijol castilla,Taza de fierro enlozado al ras,Taza de fierro enlozado al ras,,316.4,100,718,no
+11-23,T20,Frijol castilla,Taza de fierro enlozado llena,Taza de fierro enlozado llena,,368.4,100,836,no
+11-24,T20,Frijol castilla,Cucharadita llena,Cucharadita llena,,6.6,100,15,no
+11-25,T20,Frijol castilla,Cucharada llena,Cucharada llena,,16.7,100,38,no
+11-26,T64,Frijol castilla sancochado,Taza de loza al ras,Taza de loza al ras,,233.5,100,370,no
+11-27,T64,Frijol castilla sancochado,Taza de fierro enlozado al ras,Taza de fierro enlozado al ras,,278.9,100,442,no
+11-28,T64,Frijol castilla sancochado,Cucharadita llena,Cucharadita llena,,6,100,10,no
+11-29,T64,Frijol castilla sancochado,Cucharada llena,Cucharada llena,,14.4,100,23,no
+11-30,T64,Frijol castilla sancochado,Cucharada colmada,Cucharada colmada,,19.8,100,31,no
+11-31,T15,Frijol canario,Taza de loza al ras,Taza de loza al ras,,298.8,100,1013,no
+11-32,T15,Frijol canario,Taza de loza llena,Taza de loza llena,,336.7,100,1141,no
+11-33,T15,Frijol canario,Taza de fierro enlozado al ras,Taza de fierro enlozado al ras,,344.2,100,1167,no
+11-34,T15,Frijol canario,Taza de Fierro enlozado llena,Taza de Fierro enlozado llena,,417.5,100,1415,no
+11-35,T15,Frijol canario,Cucharadita llena,Cucharadita llena,,7.7,100,26,no
+11-36,T15,Frijol canario,Cucharada llena,Cucharada llena,,19.3,100,65,no
+11-37,T16,Frijol canario sancochado,Taza de loza al ras,Taza de loza al ras,,243.8,100,207,no
+11-38,T16,Frijol canario sancochado,Taza de fierro enlozado al ras,Taza de fierro enlozado al ras,,283.9,100,241,no
+11-39,T16,Frijol canario sancochado,Cucharadita llena,Cucharadita llena,,7.4,100,6,no
+11-40,T16,Frijol canario sancochado,Cucharada llena,Cucharada llena,,17.4,100,15,no
+11-41,T26,Frijol negro,Taza loza ras,Taza loza ras,,285.7,100,949,no
+11-42,T26,Frijol negro,Taza loza llena,Taza loza llena,,322.5,100,1071,no
+11-43,T26,Frijol negro,Taza plástico ras,Taza plástico ras,,317.5,100,1054,no
+11-44,T26,Frijol negro,Taza plastico llena,Taza plastico llena,,358.2,100,1189,no
+11-45,T26,Frijol negro,Taza fierro enlozado ras,Taza fierro enlozado ras,,332.5,100,1104,no
+11-46,T26,Frijol negro,Taza Fierro enlozado lleno,Taza Fierro enlozado lleno,,395,100,1311,no
+11-47,T26,Frijol negro,"Puño cerrado (L:16,7 cm A:7,6 cm D:8,8 cm)","Puño cerrado (L:16,7 cm A:7,6 cm D:8,8 cm)",,31.8,100,106,no
+11-48,T26,Frijol negro,"Puñado (L:16,7 cm A:7,6 cm D:8,8 cm)","Puñado (L:16,7 cm A:7,6 cm D:8,8 cm)",,47.2,100,157,no
+11-49,T26,Frijol negro,Cucharada llena,Cucharada llena,,16.9,100,56,no
+11-50,T26,Frijol negro,Cucharadita llena,Cucharadita llena,,7.3,100,24,no
+11-57,T31,Frijol panamito,Taza de loza al ras,Taza de loza al ras,,292.3,100,982,no
+11-58,T31,Frijol panamito,Taza de loza llena,Taza de loza llena,,318,100,1068,no
+11-59,T31,Frijol panamito,Taza de plástico al ras,Taza de plástico al ras,,327.3,100,1100,no
+11-60,T31,Frijol panamito,Taza de plástico llena,Taza de plástico llena,,352.6,100,1185,no
+11-61,T31,Frijol panamito,Taza de fierro enlozado al ras,Taza de fierro enlozado al ras,,341.8,100,1148,no
+11-62,T31,Frijol panamito,Taza de fierro enlozado llena,Taza de fierro enlozado llena,,386.2,100,1298,no
+11-63,T31,Frijol panamito,Cucharadita llena,Cucharadita llena,,6.1,100,21,no
+11-64,T31,Frijol panamito,Cucharada llena,Cucharada llena,,15.3,100,51,no
+11-65,T71,Frijol panamito sancochado,Taza de loza al ras,Taza de loza al ras,,240.9,100,388,no
+11-66,T71,Frijol panamito sancochado,Taza de plástico al ras,Taza de plástico al ras,,268,100,432,no
+11-67,T71,Frijol panamito sancochado,Taza de fierro enlozado al ras,Taza de fierro enlozado al ras,,276.2,100,446,no
+11-68,T71,Frijol panamito sancochado,Cucharadita llena,Cucharadita llena,,6.4,100,10,no
+11-69,T71,Frijol panamito sancochado,Cucharada llena,Cucharada llena,,15.3,100,25,no
+11-70,T77,Frijol zarandaja sancochado,Taza de fierro enlozado al ras,Taza de fierro enlozado al ras,,235.3,100,261,no
+11-71,T77,Frijol zarandaja sancochado,Taza de plástico al ras,Taza de plástico al ras,,258.9,100,287,no
+11-72,T77,Frijol zarandaja sancochado,Taza de fierro enlozado al ras,Taza de fierro enlozado al ras,,275.2,100,305,no
+11-73,T77,Frijol zarandaja sancochado,Cucharadita llena,Cucharadita llena,,7.5,100,8,no
+11-74,T77,Frijol zarandaja sancochado,Cucharada llena,Cucharada llena,,14.8,100,16,no
+11-75,T44,Garbanzo,Taza de loza al ras,Taza de loza al ras,,270.6,100,969,no
+11-76,T44,Garbanzo,Taza de loza llena,Taza de loza llena,,295.8,100,1059,no
+11-77,T44,Garbanzo,Taza de fierro enlozado al ras,Taza de fierro enlozado al ras,,325,100,1164,no
+11-78,T44,Garbanzo,Taza de fierro enlozado llena,Taza de fierro enlozado llena,,357.7,100,1281,no
+11-79,T44,Garbanzo,Cucharadita llena,Cucharadita llena,,7.7,100,28,no
+11-80,T44,Garbanzo,Cucharada llena,Cucharada llena,,17.7,100,63,no
+11-81,T43,Garbanzo sancochado,Taza de loza al ras,Taza de loza al ras,,230.6,100,293,no
+11-82,T43,Garbanzo sancochado,Taza de fierro enlozado al ras,Taza de fierro enlozado al ras,,277.5,100,352,no
+11-83,T43,Garbanzo sancochado,Cucharada llena,Cucharada llena,,19.4,100,25,no
+11-90,T47,Haba fresca (guisante sin cáscara),Unidad mediana sin cáscara,Unidad mediana sin cáscara,,4,100,6,no
+11-91,T47,Haba fresca (guisante sin cáscara),Unidad grande sin cáscara,Unidad grande sin cáscara,,5.6,100,9,no
+11-92,T47,Haba fresca (guisante sin cáscara),Taza de loza al ras,Taza de loza al ras,,179.8,100,272,no
+11-93,T47,Haba fresca (guisante sin cáscara),Taza de fierro enlozado al ras,Taza de fierro enlozado al ras,,223.7,100,338,no
+11-94,T49,Haba seca partida,Taza de loza al ras,Taza de loza al ras,,213.4,100,715,no
+11-95,T49,Haba seca partida,Taza de loza llena,Taza de loza llena,,231.7,100,776,no
+11-96,T49,Haba seca partida,Taza de fierro enlozado al ras,Taza de fierro enlozado al ras,,256.2,100,858,no
+11-97,T49,Haba seca partida,Taza de fierro enlozado llena,Taza de fierro enlozado llena,,285.3,100,956,no
+11-98,T49,Haba seca partida,Cucharadita llena,Cucharadita llena,,5.1,100,17,no
+11-99,T49,Haba seca partida,Cucharada llena,Cucharada llena,,11.8,100,40,no
+11-100,T50,Haba seca sancochada,Taza de loza al ras,Taza de loza al ras,,366.2,100,374,no
+11-101,T50,Haba seca sancochada,Taza de fierro enlozado al ras,Taza de fierro enlozado al ras,,423,100,432,no
+11-102,T50,Haba seca sancochada,Cucharadita llena,Cucharadita llena,,8.6,100,9,no
+11-103,T50,Haba seca sancochada,Cucharada llena,Cucharada llena,,22.1,100,23,no
+11-110,T52,Lenteja chica,Cucharadita llena,Cucharadita llena,,5.4,100,18,no
+11-111,T52,Lenteja chica,Cucharada llena,Cucharada llena,,14.2,100,48,no
+11-112,T53,Lenteja chica sancochada,Cucharadita llena,Cucharadita llena,,5.9,100,6,no
+11-113,T53,Lenteja chica sancochada,Cucharadita colmada,Cucharadita colmada,,8.5,100,8,no
+11-114,T53,Lenteja chica sancochada,Cucharada llena,Cucharada llena,,13.5,100,13,no
+11-115,T53,Lenteja chica sancochada,Cucharada colmada,Cucharada colmada,,22.2,100,22,no
+11-116,T54,Lenteja grande,Taza de loza al ras,Taza de loza al ras,,259.8,100,878,no
+11-117,T54,Lenteja grande,Taza de loza llena,Taza de loza llena,,291.6,100,986,no
+11-118,T54,Lenteja grande,Taza de fierro enlozado al ras,Taza de fierro enlozado al ras,,301,100,1017,no
+11-119,T54,Lenteja grande,Taza de fierro enlozado llena,Taza de fierro enlozado llena,,354.7,100,1199,no
+11-120,T54,Lenteja grande,Cucharadita llena,Cucharadita llena,,5.8,100,20,no
+11-121,T54,Lenteja grande,Cucharada llena,Cucharada llena,,14.5,100,49,no
+11-128,T56,Pallar,Unidad mediana,Unidad mediana,,1.8,100,6,no
+11-129,T56,Pallar,Unidad grande,Unidad grande,,2.9,100,10,no
+11-130,T56,Pallar,Cucharada llena,Cucharada llena,,20,100,66,no
+11-131,T56,Pallar,Taza de loza llena,Taza de loza llena,,292.7,100,969,no
+11-132,T56,Pallar,Taza de fierro enlozado llena,Taza de fierro enlozado llena,,355,100,1175,no
+11-133,T58,Pallar sancochado,Taza de loza al ras,Taza de loza al ras,,377.1,100,460,no
+11-134,T58,Pallar sancochado,Taza de fierro enlozado al ras,Taza de fierro enlozado al ras,,434.8,100,531,no
+11-135,T58,Pallar sancochado,Cucharadita llena,Cucharadita llena,,11.5,100,14,no
+11-136,T58,Pallar sancochado,Cucharada llena,Cucharada llena,,20.3,100,25,no
+11-137,T58,Pallar sancochado,Cucharada colmada,Cucharada colmada,,29.2,100,36,no
+12-1,U31,Betarraga,Taza de acero llena,Taza de acero llena,,149.1,100,27,no
+12-2,U31,Betarraga,Unidad pequeña,Unidad pequeña,135.2,114.9,84,21,no
+12-3,U31,Betarraga,Unidad mediana,Unidad mediana,188.8,152.7,84,28,no
+12-4,U31,Betarraga,Unidad grande,Unidad grande,259.4,227.6,84,41,no
+12-5,U31,Betarraga,Rodaja pequeña (4 cm diámetro x 1 cm grosor aprox.),Rodaja pequeña (4 cm diámetro x 1 cm grosor aprox.),,10.5,100,2,no
+12-6,U31,Betarraga,Rodaja mediana (6 cm diámetro x 1 cm grosor aprox.),Rodaja mediana (6 cm diámetro x 1 cm grosor aprox.),,24.1,100,4,no
+12-7,U31,Betarraga,Rodaja grande (8 cm diámetro x 1 cm grosor aprox.),Rodaja grande (8 cm diámetro x 1 cm grosor aprox.),,42.4,100,8,no
+12-8,U3,Camote amarillo,Unidad pequeña,Unidad pequeña,170.8,149.1,87,125,no
+12-9,U3,Camote amarillo,Unidad mediana,Unidad mediana,316.5,276.7,87,232,no
+12-10,U3,Camote amarillo,Unidad grande,Unidad grande,460.5,407.5,88,342,no
+12-11,U3,Camote amarillo,Rodaja pequeña (4 cm diámetro x 1 cm grosor aprox.),Rodaja pequeña (4 cm diámetro x 1 cm grosor aprox.),,7.9,100,7,no
+12-12,U3,Camote amarillo,Rodaja mediana (6 cm diámetro x 1 cm grosor aprox.),Rodaja mediana (6 cm diámetro x 1 cm grosor aprox.),,20.2,100,17,no
+12-13,U3,Camote amarillo,Rodaja grande (7 cm diámetro x 1 cm grosor aprox.),Rodaja grande (7 cm diámetro x 1 cm grosor aprox.),,27.2,100,23,no
+12-14,U6,"Camote, harina de",Cucharadita al ras,Cucharadita al ras,,2,100,7,si
+12-15,U6,"Camote, harina de",Cucharada al ras,Cucharada al ras,,5,100,18,si
+12-16,U5,Camote morado,Unidad pequeña,Unidad pequeña,148,124,84,136,no
+12-17,U5,Camote morado,Unidad mediana,Unidad mediana,280.1,239.9,86,264,no
+12-18,U5,Camote morado,Unidad grande,Unidad grande,368.5,318.2,86,350,no
+12-19,U5,Camote morado,Rodaja pequeña (4 cm diámetro x 1 cm grosor aprox.),Rodaja pequeña (4 cm diámetro x 1 cm grosor aprox.),,10.6,100,12,no
+12-20,U5,Camote morado,Rodaja mediana (5 cm diámetro x 1 cm grosor aprox.),Rodaja mediana (5 cm diámetro x 1 cm grosor aprox.),,18.4,100,20,no
+12-21,U5,Camote morado,Rodaja grande (6 cm diámetro x 1 cm grosor aprox.),Rodaja grande (6 cm diámetro x 1 cm grosor aprox.),,30.3,100,33,no
+12-22,U5,Camote morado,Porción de rodajas (6 rodajas medianas),Porción de rodajas (6 rodajas medianas),,102.8,100,113,no
+12-23,U54,Harina de chuño,Taza de acero al ras,Taza de acero al ras,,175.6,100,585,no
+12-24,U54,Harina de chuño,Taza de acero llena,Taza de acero llena,,206.5,100,688,no
+12-25,U54,Harina de chuño,Taza de acero colmada,Taza de acero colmada,,254.5,100,848,no
+12-26,U54,Harina de chuño,Cucharadita al ras,Cucharadita al ras,,2.2,100,7,no
+12-27,U54,Harina de chuño,Cucharadita llena,Cucharadita llena,,5.9,100,20,no
+12-28,U54,Harina de chuño,Cucharadita colmada,Cucharadita colmada,,15.2,100,51,no
+12-29,U54,Harina de chuño,Cucharada al ras,Cucharada al ras,,5.4,100,18,no
+12-30,U54,Harina de chuño,Cucharada llena,Cucharada llena,,12.9,100,43,no
+12-31,U54,Harina de chuño,Cucharada colmada,Cucharada colmada,,33,100,110,no
+12-32,U16,Mashua,Unidad pequeña,Unidad pequeña,54.7,44.3,81,22,no
+12-33,U16,Mashua,Unidad mediana,Unidad mediana,76.4,62.4,82,31,no
+12-34,U16,Mashua,Unidad grande,Unidad grande,107.6,89.6,84,45,no
+12-35,U50,Oca,Unidad pequeña (8 cm largo),Unidad pequeña (8 cm largo),19.7,19.3,97,10,no
+12-36,U50,Oca,Unidad mediana (10 cm largo),Unidad mediana (10 cm largo),40.3,39.1,97,21,no
+12-37,U50,Oca,Unidad grande (14 cm largo),Unidad grande (14 cm largo),62.7,60.8,97,32,no
+12-38,U17,"Olluco, entero",Unidad pequeña (6 cm largo),"Unidad pequeña (6 cm largo) (Olluco, entero)",24.3,23.8,98,15,no
+12-39,U17,"Olluco, entero",Unidad mediana (8 cm largo),"Unidad mediana (8 cm largo) (Olluco, entero)",45.8,44.7,98,28,no
+12-40,U17,"Olluco, entero",Unidad grande (10 cm largo),"Unidad grande (10 cm largo) (Olluco, entero)",78.1,75.7,98,47,no
+12-41,U17,"Olluco, picado (picado tipo juliana)",Taza de acero al ras,"Taza de acero al ras (Olluco, picado (picado tipo juliana))",,100,100,62,si
+12-42,U17,"Olluco, picado (picado tipo juliana)",Taza de acero llena,"Taza de acero llena (Olluco, picado (picado tipo juliana))",,135.1,100,84,no
+12-43,U17,"Olluco, picado (picado tipo juliana)",Taza de acero colmada,"Taza de acero colmada (Olluco, picado (picado tipo juliana))",,140,100,87,si
+12-44,U18,Papa amarilla “peruanita”,Unidad pequeña,Unidad pequeña,96.9,81.5,84,84,no
+12-45,U18,Papa amarilla “peruanita”,Unidad mediana,Unidad mediana,188.4,162.5,86,167,no
+12-46,U18,Papa amarilla “peruanita”,Unidad grande,Unidad grande,265.7,232,87,239,no
+12-47,U18,Papa amarilla “peruanita”,Rodaja pequeña (5 cm diámetro x 1 cm grosor aprox.),Rodaja pequeña (5 cm diámetro x 1 cm grosor aprox.),,13.9,100,14,no
+12-48,U18,Papa amarilla “peruanita”,Rodaja mediana (6 cm diámetro x 1 cm grosor aprox.),Rodaja mediana (6 cm diámetro x 1 cm grosor aprox.),,33.5,100,35,no
+12-49,U18,Papa amarilla “peruanita”,Rodaja grande (8 cm diámetro x 1 cm grosor aprox.),Rodaja grande (8 cm diámetro x 1 cm grosor aprox.),,52.5,100,54,no
+12-50,U19,Papa blanca “perricholi”,Taza de acero llena de cubitos,Taza de acero llena de cubitos (Papa blanca “perricholi”),,166.6,100,162,no
+12-51,U19,Papa blanca “perricholi”,Unidad pequeña,Unidad pequeña (Papa blanca “perricholi”),137.9,119.5,86,116,no
+12-52,U19,Papa blanca “perricholi”,Unidad mediana,Unidad mediana (Papa blanca “perricholi”),225.6,197.7,88,192,no
+12-53,U19,Papa blanca “perricholi”,Unidad grande,Unidad grande (Papa blanca “perricholi”),340.1,303.7,89,295,no
+12-54,U19,Papa blanca “perricholi”,Rodaja pequeña (5 cm diámetro x 1 cm grosor aprox.),Rodaja pequeña (5 cm diámetro x 1 cm grosor aprox.) (Papa blanca “perricholi”),,9.4,100,9,no
+12-55,U19,Papa blanca “perricholi”,Rodaja mediana (6 cm diámetro x 1 cm grosor aprox.),Rodaja mediana (6 cm diámetro x 1 cm grosor aprox.) (Papa blanca “perricholi”),,17.5,100,17,no
+12-56,U19,Papa blanca “perricholi”,Rodaja grande (8 cm diámetro x 1 cm grosor aprox.),Rodaja grande (8 cm diámetro x 1 cm grosor aprox.) (Papa blanca “perricholi”),,49.6,100,48,no
+12-57,U19,Papa blanca “perricholi”,"Puñado de bastones (L:16,7 cm A:7,6 cm D:8,8 cm)","Puñado de bastones (L:16,7 cm A:7,6 cm D:8,8 cm) (Papa blanca “perricholi”)",,160.4,100,156,no
+12-58,U19,Papa blanca sin cáscara,Porción para salchipapa,Porción para salchipapa (Papa blanca sin cáscara),,204,100,198,si
+12-59,U23,Papa huayro,Taza de acero llena de cubitos,Taza de acero llena de cubitos,,174.5,100,122,no
+12-60,U23,Papa huayro,Unidad pequeña,Unidad pequeña,110.3,91.8,83,64,no
+12-61,U23,Papa huayro,Unidad mediana,Unidad mediana,220.8,185.8,84,130,no
+12-62,U23,Papa huayro,Unidad grande,Unidad grande,313.3,271.2,87,190,no
+12-63,U23,Papa huayro,1 rodaja pequeña (5 cm diámetro x 1 cm grosor aprox.),1 rodaja pequeña (5 cm diámetro x 1 cm grosor aprox.),,17.8,100,13,no
+12-64,U23,Papa huayro,1 rodaja mediana (6 cm diámetro x 1 cm grosor aprox.),1 rodaja mediana (6 cm diámetro x 1 cm grosor aprox.),,30,100,21,no
+12-65,U23,Papa huayro,1 rodaja grande (7 cm diámetro x 1 cm grosor aprox.),1 rodaja grande (7 cm diámetro x 1 cm grosor aprox.),,33.3,100,23,no
+12-66,U23,Papa huayro,"Puñado de bastones (L:16,7 cm A:7,6 cm D:8,8 cm)","Puñado de bastones (L:16,7 cm A:7,6 cm D:8,8 cm)",,112.2,100,79,no
+12-67,U25,Papa seca,Taza de acero llena,Taza de acero llena,,186.5,100,601,no
+12-68,U25,Papa seca,Taza de acero colmada,Taza de acero colmada,,201.3,100,648,no
+12-69,U25,Papa seca,Cucharada llena,Cucharada llena,,13.1,100,42,no
+12-70,U25,Papa seca,Cucharada colmada,Cucharada colmada,,21.6,100,70,no
+12-71,U10,Yacón,Unidad pequeña,Unidad pequeña,166.7,144.9,87,78,no
+12-72,U10,Yacón,Unidad mediana,Unidad mediana,240.9,215.4,89,116,no
+12-73,U10,Yacón,Unidad grande,Unidad grande,315,281.4,89,152,no
+12-74,U34,Yuca amarilla,Unidad pequeña,Unidad pequeña,687.3,586,85,944,no
+12-75,U34,Yuca amarilla,Unidad mediana,Unidad mediana,1122.1,972.5,87,1566,no
+12-76,U34,Yuca amarilla,Unidad grande,Unidad grande,1709,1484.3,87,2390,no
+12-77,U34,Yuca amarilla,"1 trozo pequeño (3,6 cm largo x 5,3 cm diámetro)","1 trozo pequeño (3,6 cm largo x 5,3 cm diámetro)",,82.9,100,134,no
+12-78,U34,Yuca amarilla,"1 trozo mediano (5,6 cm largo x 6,6cm diámetro)","1 trozo mediano (5,6 cm largo x 6,6cm diámetro)",,225.4,100,383,no
+12-79,U34,Yuca amarilla,"1 trozo grande (8 cm largo x 7,8 cm diámetro)","1 trozo grande (8 cm largo x 7,8 cm diámetro)",,388.8,100,626,no
+12-80,U34,Yuca amarilla,"Puñado de bastones (L:16,7 cm A:7,6 cm D:8,8 cm)","Puñado de bastones (L:16,7 cm A:7,6 cm D:8,8 cm)",,152,100,245,no
+12-81,U36,Yuca blanca,Unidad pequeña,Unidad pequeña,,489.3,78,563,no
+12-82,U36,Yuca blanca,Unidad mediana,Unidad mediana,786.9,628.9,78,723,no
+12-83,U36,Yuca blanca,Unidad grande,Unidad grande,1049.8,829.3,78,954,no
+12-84,U36,Yuca blanca,Trozo pequeño (3 cm longitud x 5 cm diámetro),Trozo pequeño (3 cm longitud x 5 cm diámetro),,67.1,100,77,no
+12-85,U36,Yuca blanca,Trozo mediano (6 cm longitud x 7 cm diámetro),Trozo mediano (6 cm longitud x 7 cm diámetro),,158.5,100,182,no
+12-86,U36,Yuca blanca,Trozo grande (7 cm longitud x 8 cm diámetro),Trozo grande (7 cm longitud x 8 cm diámetro),,261.9,100,301,no
+12-87,U38,"Yuca, harina de",Cucharadita al ras,Cucharadita al ras,,1.3,100,4,no
+12-88,U38,"Yuca, harina de",Cucharadita llena,Cucharadita llena,,4.3,100,14,no
+12-89,U38,"Yuca, harina de",Cucharadita colmada,Cucharadita colmada,,7.3,100,25,no
+12-90,U38,"Yuca, harina de",Cucharada al ras,Cucharada al ras,,2.6,100,9,no
+12-91,U38,"Yuca, harina de",Cucharada llena,Cucharada llena,,11.2,100,38,no
+12-92,U38,"Yuca, harina de",Cucharada colmada,Cucharada colmada,,17.3,100,58,no
