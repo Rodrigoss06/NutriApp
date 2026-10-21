@@ -748,3 +748,46 @@ Consecuencias:
   Luis se busca por su descripción nueva.
 - Riesgo nuevo, como R4: la licencia de la TPCA. Si el INS no la autoriza, el plan B es USDA FoodData Central, de
   dominio público (decisión de Rodrigo, 2026-10-20).
+
+## ADR-053 · TAFERA 2016: medidas caseras y factores de cocción enlazados con la TPCA 2017 — aceptada (2026-10-21)
+Contexto: P8 pide medidas caseras por alimento (RF-38). La TAFERA 2016 del INS-CENAN trae 1027 medidas con peso bruto
+y neto y % comestible (módulo I) y 228 factores de conversión de peso cocido a crudo (módulo II), y autoriza
+reproducirla citando la fuente. Sus nutrientes son los de la TPCA 2009 y no trae los códigos de la TPCA.
+Decisión:
+- Extractor scripts/catalogs/extract-tafera.ts, que lee cada palabra con su posición:
+  - una forma de un alimento son sus filas con el mismo perfil de nutrientes por 100 g, aunque se alternen fila por
+    fila (con y sin cáscara);
+  - el nombre de cada fila sale de los bloques centrados en sus filas, sin letras voladas ni símbolos de nota; «*»
+    marca datos de 1985 (columna datos_1985);
+  - el peso bruto, con el % comestible publicado, es el candidato que lo reproduce (±5 puntos); en los cortes de cuy y
+    pollo, el peso con pellejo (nota «d»). Si ninguno lo reproduce, queda vacío;
+  - las formas que las notas explican llevan su nombre: almeja con y sin bolsa digestiva, camarón entero o solo la
+    cola, trucha entera o filete, tomate sin cáscara.
+- Enlace con la TPCA 2017 por forma y nombre:
+  - automático si el perfil casi coincide y se distingue del segundo, o si el nombre se parece y el perfil está cerca;
+  - lo demás, a mano en LINKS y FACTOR_LINKS, cada decisión con su motivo en el código;
+  - criterio: el mismo alimento, en el mismo estado y forma. Si la TPCA 2017 no lo tiene, el de la variedad o el corte
+    con que la TAFERA calculó (manzanas, cortes de cuy y pollo). Si la TAFERA usó otro alimento (corazón de conejo
+    calculado como el de pollo) o no hay equivalente, no se carga;
+  - cuando el nombre y el perfil discrepan, manda el nombre: la cebolla de cabeza va a «Cebolla de cabeza» aunque su
+    perfil sea el de la perilla, y la uva blanca a «Uva blanca».
+- Resultado: 933 de las 983 medidas con nutrientes, de 194 alimentos, y 213 de los 228 factores, de 126. No se cargan
+  las 44 filas sin nutrientes (formas que la tabla no calcula) ni 50 medidas y 15 factores sin equivalente.
+- La medida se muestra con su unidad; si un alimento de la TPCA recibe medidas de varios de la TAFERA (fideos, cortes
+  de pollo), con el de la TAFERA entre paréntesis.
+- food.household_measure: grams es el peso neto, la parte comestible (RN-E12). Columnas nuevas gross_grams,
+  source_code y source_measure_code, con índice único por fuente y código y la regla bruto ≥ neto.
+- food.cooking_factor nueva: peso crudo = peso cocido × factor, para el alimento crudo de la TPCA, con la RLS de
+  catálogo (RN-I01).
+- food.edible_portion_pct de la TPCA queda en 100, no lo llena la TAFERA: su % es de cada medida y de su unidad de
+  compra (un ala con hueso, una naranja con cáscara), no del alimento de la TPCA (pollo, carne pulpa). El bruto de cada
+  medida cubre el peso de compra.
+- Importadores TAFERA_MEASURES y TAFERA_COOKING_FACTORS en food. Fallan enteros si falta un alimento de la TPCA, y
+  catalog:load los carga después de ella.
+- Diferencias de la fuente que se conservan, listadas en seeds/README.md: el código 11-91 repetido (la segunda fila es
+  la 11-92, que falta), medidas con el mismo nombre y pesos distintos y cuatro % comestibles que difieren 3 a 5 puntos
+  de sus pesos.
+Consecuencias:
+- 05.2 de Notion: household_measure y cooking_factor (/notion-sync al cerrar P8).
+- Los enlaces dependen de la TPCA 2017, cuya licencia está pendiente: con el plan B (USDA FoodData Central) se rehacen.
+- Si llega la TPCA 2009, sus códigos permitirían verificar los enlaces por perfil.
