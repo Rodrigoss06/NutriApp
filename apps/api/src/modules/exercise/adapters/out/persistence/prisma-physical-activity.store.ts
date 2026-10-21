@@ -5,6 +5,7 @@ import type {
   PhysicalActivityRecord,
   PhysicalActivityStore,
 } from '../../../application/exercise-api.js';
+import type { CompendiumActivity } from '../../../domain/compendium-activity.js';
 
 interface Row {
   code: string;
@@ -45,5 +46,24 @@ export class PrismaPhysicalActivityStore implements PhysicalActivityStore {
       SELECT code, major_heading, description_es, met::text AS met, source_version
       FROM exercise.physical_activity WHERE code = ANY(${[...codes]}::text[])`;
     return rows.map(toRecord);
+  }
+
+  /** Una sentencia con unnest para todo el lote; una actividad sin cambios no se toca. */
+  async upsert(activities: readonly CompendiumActivity[], sourceVersion: string): Promise<void> {
+    if (activities.length === 0) return;
+    await this.db.tx.$executeRaw`
+      INSERT INTO exercise.physical_activity AS a
+        (code, major_heading, description_es, description_en, met, source_version)
+      SELECT n.code, n.major_heading, n.description_es, n.description_en, n.met, ${sourceVersion}
+      FROM unnest(${activities.map((a) => a.code)}::text[], ${activities.map((a) => a.majorHeading)}::text[],
+                  ${activities.map((a) => a.descriptionEs)}::text[], ${activities.map((a) => a.descriptionEn)}::text[],
+                  ${activities.map((a) => a.met)}::numeric[])
+        AS n(code, major_heading, description_es, description_en, met)
+      ON CONFLICT (code) DO UPDATE
+        SET major_heading = excluded.major_heading, description_es = excluded.description_es,
+            description_en = excluded.description_en, met = excluded.met, source_version = excluded.source_version
+        WHERE (a.major_heading, a.description_es, a.description_en, a.met, a.source_version)
+              IS DISTINCT FROM (excluded.major_heading, excluded.description_es, excluded.description_en,
+                                excluded.met, excluded.source_version)`;
   }
 }
