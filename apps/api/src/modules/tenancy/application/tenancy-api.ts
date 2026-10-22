@@ -154,6 +154,11 @@ export class TenancyApi {
     return ok(undefined);
   }
 
+  /** Todas las organizaciones, para un trabajo del worker que recorre cada una. Pide el contexto de plataforma. */
+  async organizationIds(): Promise<readonly OrganizationId[]> {
+    return (await this.store.listOrganizations()).map((organization) => organization.id);
+  }
+
   organization(organizationId: OrganizationId): Promise<OrganizationRecord | null> {
     return this.store.findOrganization(organizationId);
   }
