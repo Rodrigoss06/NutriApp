@@ -769,6 +769,7 @@ model Food {
   createdBy           String?              @map("created_by") @db.Uuid
   createdAt           DateTime             @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt           DateTime             @default(now()) @map("updated_at") @db.Timestamptz(6)
+  version             Int                  @default(0)
   cookingFactors      CookingFactor[]
   exchangeEquivalents ExchangeEquivalent[]
   foodGroup           FoodGroup?           @relation(fields: [groupCode], references: [code], onDelete: NoAction, onUpdate: NoAction)
