@@ -65,6 +65,11 @@ export class FoodApi {
     return this.foods.exchangeLists();
   }
 
+  /** Una lista por su id, en cualquier estado: un plan sigue con la versión que usó (RN-E11). */
+  exchangeList(id: string): Promise<ExchangeListRecord | null> {
+    return this.foods.exchangeList(id);
+  }
+
   /** Lo que aporta un plato; falla si un alimento no existe para la organización o una medida no es suya. */
   async compose(items: readonly PlateItemInput[]): Promise<Result<PlateComposition, DomainError>> {
     const found = new Map((await this.foodsById(items.map((i) => i.foodId))).map((f) => [f.id, f]));

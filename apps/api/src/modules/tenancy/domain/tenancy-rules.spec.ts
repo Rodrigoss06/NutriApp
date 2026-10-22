@@ -105,4 +105,18 @@ describe('ajustes de la organización', () => {
     expect(settingValue('assessment.lee_reference_group_coefficient', -2)).toBe(-2);
     expect(settingValue('assessment.lee_reference_group_coefficient', 3)).toBeNull();
   });
+
+  it('RN-E10 · el rango de la adecuación va de 90 a 110 % por defecto, cada borde de su lado del 100', () => {
+    expect(settingValue('nutrition.adequacy_min_pct', undefined)).toBe(90);
+    expect(settingValue('nutrition.adequacy_max_pct', undefined)).toBe(110);
+    expect(checkSetting('nutrition.adequacy_min_pct', 95, 'ORGANIZATION')).toBeNull();
+    expect(checkSetting('nutrition.adequacy_max_pct', 105, 'ORGANIZATION')).toBeNull();
+    for (const [key, value] of [
+      ['nutrition.adequacy_min_pct', 101],
+      ['nutrition.adequacy_min_pct', 92.5],
+      ['nutrition.adequacy_max_pct', 99],
+    ] as const) {
+      expect(checkSetting(key, value, 'ORGANIZATION')?.code).toBe('NC-TEN-030');
+    }
+  });
 });

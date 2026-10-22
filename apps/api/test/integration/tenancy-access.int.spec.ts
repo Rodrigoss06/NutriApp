@@ -579,6 +579,8 @@ describe('RF-02 y RF-03 · organización, suscripción y ajustes por HTTP', () =
       'patient_invitation.ttl_days': 7,
       'subscription.grace_days': 7,
       'assessment.lee_reference_group_coefficient': null,
+      'nutrition.adequacy_min_pct': 90,
+      'nutrition.adequacy_max_pct': 110,
     });
     const lee = await put(
       '/organization/settings/assessment.lee_reference_group_coefficient',
