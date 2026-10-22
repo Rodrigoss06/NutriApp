@@ -851,3 +851,44 @@ Consecuencias:
 - food.source.license de TPCA_2017 todavía dice «Autorización pendiente» y el detalle del alimento lo devuelve: se
   actualiza con una migración de datos cuando se decida el texto.
 - Notion: el riesgo de la licencia y RN-I02 (/notion-sync al cerrar P8).
+
+## ADR-056 · Pantallas de la Biblioteca, «Acerca de» y la licencia de la TPCA fuera de la API — aceptada (2026-10-22)
+Contexto: el PR 4 de P8 hace las pantallas del plan aprobado (Biblioteca, alimento propio, «Armar un plato» y el
+buscador de actividades) y cumple la condición 3 de ADR-055. Rodrigo aprobó (2026-10-22) limpiar el texto de la
+licencia en la base y dejar de devolverla en el detalle del alimento («opción B»), y aclaró que la atribución basta con
+que aparezca una vez, en los Términos o en «Acerca de».
+Decisión:
+- Licencia:
+  - la migración 202610220100_food_source_license cambia food.source.license de TPCA_2017 a «Uso referencial, con
+    atribución de la fuente en la app (ADR-055)»;
+  - GET /foods/:id devuelve la fuente con su código, nombre y edición, sin la licencia. La base la conserva (RN-I02).
+- «Acerca de» en /acerca, pública, es el único lugar con la atribución:
+  - nombra la TPCA 2017 y la TAFERA 2016 (INS/CENAN) y el Compendium 2024 con su cita;
+  - dice que ninguna entidad del Estado avala ni patrocina la app, sin logos;
+  - se llega desde el riel del panel, desde «Más» en la app del paciente y desde la pantalla de entrada.
+  Todavía no hay página de Términos: sus textos los revisa el abogado del cliente.
+- Biblioteca en /panel/biblioteca, con cuatro pestañas:
+  - Alimentos: búsqueda mientras se escribe (los 50 primeros), que queda en la dirección (?q=) para volver atrás. El
+    detalle muestra la fuente y su edición, los nutrientes por 100 g de parte comestible en dos tablas (energía y
+    macronutrientes; otros nutrientes), «sin dato» en cursiva, la calidad del valor (trazas, imputado, calculado), las
+    medidas caseras con su peso neto y bruto y los factores de cocción. Un alimento de referencia no muestra «Editar».
+  - Alimento propio: formulario con los nutrientes del catálogo (GET /foods/nutrients, nuevo), la parte comestible y
+    las medidas; lo vacío queda «sin dato». FormError lista los problemas que la API detalla (details.problems de
+    NC-FOOD-001).
+  - Armar un plato: cada alimento en gramos o en una medida casera por su cantidad. La composición la calcula
+    POST /foods/composition mientras se escribe, con su método (RN-D02), el peso del plato y los gramos que equivale
+    cada medida. No guarda nada.
+  - Actividades: el mismo buscador que la prescripción energética, que muestra de 10 en 10 las 50 que da la API.
+  - Listas de intercambio: GET /exchange-lists (nuevo, en food, con catalog.read) devuelve las publicadas con sus
+    grupos. La DEMO lleva la marca «Provisional» y su nota (riesgo R4).
+- Decimales:
+  - el detalle de un alimento muestra cada valor por 100 g con los decimales con que la TPCA publica ese nutriente:
+    es un dato de la fuente, no un resultado. kcal, kJ, calcio, fósforo, carotenos, vitamina A, folato, sodio y potasio
+    van enteros; zinc, hierro, tiamina, riboflavina, niacina y vitamina C con 2 decimales; el resto con 1;
+  - los totales de un plato siguen RN-D09 (kcal y gramos enteros). Los mg y µg, que RN-D09 no fija, van con los
+    decimales de su fuente.
+Consecuencias:
+- ADR-055 queda cumplido entero.
+- Notion (/notion-sync al cerrar P8):
+  - 02: las rutas GET /foods/nutrients y GET /exchange-lists de food;
+  - 03, RN-D09: los valores del catálogo por 100 g se muestran como los publica su fuente.

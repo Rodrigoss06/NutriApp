@@ -15,7 +15,7 @@ Próxima demo: Demo 1 · Base y evaluación · semana 2
 | P5 Identidad y organizaciones | ✅ | Rodrigo | #6, #7, #8 | 4 criterios en verde; despliegue a staging pendiente de P4 |
 | P6 Pacientes e historia clínica | ✅ | Rodrigo | #10, #11, #12 | 4 criterios en verde (E2E en escritorio y celular, e integración); despliegue a staging pendiente de P4 |
 | P7 Evaluación y cálculo, Demo 1 | ✅ | Rodrigo | #14 a #18 | E2E de la Demo 1 en escritorio y celular (G-01 a G-17), ninguna cifra sin método, recálculo con SUPERSEDED y guion; RF-18 adelantado. Etiqueta v0.1.0 (abf0d42) y Notion sincronizado; staging, pendiente de P4 |
-| P8 Datos maestros de alimentos | 🟨 | Rodrigo | #21, #22 | PR 1 (importador, TPCA 2017 y Compendium 2024) y PR 2 (TAFERA) fusionados; PR 3 (búsqueda, alimentos propios y composición) listo en local; faltan las pantallas |
+| P8 Datos maestros de alimentos | ✅ | Rodrigo | #21, #22, #23, PR 4 | 3 criterios en verde (integración y E2E en escritorio y celular); Biblioteca, alimento propio, «Armar un plato», listas de intercambio y «Acerca de» con la atribución (ADR-055, ADR-056). Falta fusionar el PR 4 y el /notion-sync |
 | P9 Dieta por intercambios | ⬜ | Rodrigo | | |
 | P10 Composición, menú y recetario | ⬜ | Rodrigo | | |
 | P11 Fichas PDF, Demo 2 | ⬜ | Rodrigo | | |
@@ -30,15 +30,16 @@ Leyenda: ⬜ pendiente · 🟨 en curso · ✅ terminado · ⛔ bloqueado
 ## En curso
 - P8, PR 1 fusionado (#21, d7beee2): importador genérico de catálogos (RN-I04), TPCA 2017 (928 alimentos) y
   Compendium 2024 (560 actividades), CLI catalog:load y lista DEMO provisional; ADR-052.
-- P8, PR 3 en feat/food-busqueda, sobre main, listo en local (ADR-054):
-  - búsqueda de alimentos y de actividades sin tildes, por todas las palabras o por parecido (pg_trgm); «platano» en
-    unos 4 ms con la TPCA cargada;
-  - detalle del alimento con sus 22 nutrientes («sin dato» como null con MISSING), medidas y factores de la TAFERA;
-  - FoodApi pública con resolve (candidatos con puntaje y el estado del término primero) y la composición de un plato
-    con RECIPE_NUTRIENTS, en gramos o medidas caseras (RF-20 adelantado);
-  - alimentos propios con If-Match, auditados, y permisos catalog.read y catalog.write;
-  - migración 202610220000_food_own: food.food.version y borrado de las medidas propias.
-  - Sigue el PR 4 (pantallas).
+- P8, PR 4 en feat/food-pantallas, sobre main, listo en local (ADR-056):
+  - Biblioteca en /panel/biblioteca: alimentos con búsqueda y detalle, alimento propio, «Armar un plato», actividades
+    y listas de intercambio (la DEMO rotulada «Provisional»);
+  - «Acerca de» (/acerca, pública): la atribución de la TPCA, la TAFERA y el Compendium, una sola vez (ADR-055);
+  - migración 202610220100_food_source_license: la licencia de TPCA_2017 sin «Autorización pendiente», y el detalle
+    del alimento ya no la devuelve;
+  - GET /foods/nutrients y GET /exchange-lists; el buscador de actividades es uno solo para la Biblioteca y la
+    prescripción energética.
+- P8, PR 3 fusionado (#23, 33ed3db) (ADR-054, ADR-055): búsqueda de alimentos y actividades, detalle, FoodApi con
+  resolve y composición de un plato (RF-20 adelantado), alimentos propios con If-Match y permisos catalog.*.
 - P8, PR 2 fusionado (#22, 34b8738) (ADR-053):
   - extractor de la TAFERA 2016 con enlace a la TPCA 2017 por perfil de nutrientes y nombre, y decisiones a mano con
     su motivo (LINKS y FACTOR_LINKS);
@@ -59,10 +60,17 @@ Leyenda: ⬜ pendiente · 🟨 en curso · ✅ terminado · ⛔ bloqueado
 ## Siguiente paso
 - Antes de la Demo 1: la matriz manual de navegadores (RNF-19: Chrome, Edge, Safari y Firefox; la E2E cubre Chromium
   y WebKit) y, el mismo día, base local limpia y semilla («Antes de empezar» del guion). La demo es en local
-- Revisar y fusionar el PR 3 de P8 (búsqueda, alimentos propios y composición)
-- P8 PR 4: pantallas de Biblioteca (alimentos, actividades y listas), alimento propio, «Armar un plato» y buscador de
-  actividades en la prescripción energética. Incluye la atribución de fuentes en «Acerca de» o en los Términos
-  (ADR-055) y ningún logo del INS, MINSA ni CENAN
+- Revisar y fusionar el PR 4 de P8; después, /notion-sync de P8 (ADR-052 a ADR-056)
+- P9 · Dieta por intercambios, en 3 PR (dominio y API del borrador; publicación y tracking; pantallas). Decisiones
+  de Rodrigo (2026-10-22), para registrar en un ADR al empezar:
+  - porción de los alimentos permitidos: el profesional escribe los gramos y la app sugiere los que aportan el
+    macronutriente que define al grupo. Falta confirmar ese macronutriente por grupo, sobre todo en lácteos
+    (12 g de carbohidratos u 8 g de proteína);
+  - hidratación (RN-E13): como ayuda, las ingestas adecuadas de agua total de EFSA 2010 (2.0 L mujeres, 2.5 L
+    hombres) e IOM 2004 (2.7 L y 3.7 L), sin valor por defecto;
+  - el plan empieza el día de su publicación, en la fecha local del paciente, sin fechas futuras en la 1.0;
+  - publicar se bloquea si un grupo con intercambios en un tiempo de comida no tiene ningún alimento permitido;
+  - lista DEMO provisional mientras R4 siga pendiente
 - Cada base nueva necesita los catálogos: `pnpm --filter api build && pnpm catalog:load plataforma@demo.example.com`
   en local; en staging y producción, con el correo de su PLATFORM_ADMIN
 - db:seed carga el caso Luis: sus resultados aparecen cuando corre el worker
@@ -88,7 +96,7 @@ Leyenda: ⬜ pendiente · 🟨 en curso · ✅ terminado · ⛔ bloqueado
 - [ ] R4: permiso de uso de las listas Dextre y ADA
 - [x] TPCA 2017: Rodrigo, tras consultar con un abogado, autoriza usarla sin la autorización del INS con tres
   condiciones (ADR-055): la API no devuelve el código del alimento en la TPCA, el texto «de referencia» en vez de
-  «oficiales» y la atribución de fuentes en «Acerca de» o en los Términos (PR 4). Sin logos ni aval del Estado
+  «oficiales» y la atribución de fuentes una sola vez, en «Acerca de» (ADR-056). Sin logos ni aval del Estado
 - [ ] Captura de un plato por foto: la visión espera un acuerdo con Jeremy (un modelo propio también es IA, regla 10)
 - [ ] Textos legales revisados por el abogado del cliente, en lenguaje claro: desde los 14 años los acepta el propio
   paciente (ADR-042)
@@ -125,10 +133,14 @@ Leyenda: ⬜ pendiente · 🟨 en curso · ✅ terminado · ⛔ bloqueado
   87.5 a 125 y wght 400 a 700) con next/font/local
 - La E2E de celular corre en la imagen de Playwright (docker, mcr.microsoft.com/playwright:v1.63.0-noble): en este
   equipo WebKit no tiene sus dependencias
-- La pantalla de energía muestra 10 actividades de las 50 que da la búsqueda. El guion y la E2E buscan «correr a 6»,
-  que el PR 3 deja entre las primeras; el PR 4 rehace el buscador
+- No hay página de Términos: cuando lleguen los textos revisados por el abogado, la atribución puede mudarse ahí,
+  siempre una sola vez (ADR-056)
 
 ## Registro de sesiones (solo las 5 últimas)
+- 2026-10-22 · P8 (PR 3 y PR 4) · PR 3 fusionado (#23). La licencia de la TPCA, resuelta con Rodrigo tras consultar
+  con un abogado (ADR-055): sin sourceFoodCode ni licencia en la API y la atribución en «Acerca de». Pantallas de la
+  Biblioteca, «Armar un plato» y «Acerca de» (ADR-056); E2E de P8 en escritorio y celular. Plan de P9 aprobado con
+  sus decisiones; va después del PR 4
 - 2026-10-21 · P8 (PR 2) · respuesta a Jeremy sobre periodización y lectura de su paquete operativo (plantilla V3 y
   formularios); el modelo V3, sin el reloj, documentado en Notion (07 y siete páginas más). TAFERA 2016 extraída del
   PDF del INS y enlazada con la TPCA 2017 (933 medidas y 213 factores), migración, importadores y ADR-053
@@ -144,6 +156,3 @@ Leyenda: ⬜ pendiente · 🟨 en curso · ✅ terminado · ⛔ bloqueado
 - 2026-10-15 · P7 cerrado · #18 fusionado (abf0d42) con CI en verde; etiqueta v0.1.0; /notion-sync de P7 aplicado
   (41 cambios en 02, 03, 04, 05, 05.1, 05.2, Documento técnico, Proyecto, Creación del proyecto, prompts y Archivos
   del repositorio); demo levantada en local con la semilla (recorrido de 12 de 12)
-- 2026-10-15 · P7 (PR 5, en #18) · pantallas de evaluación, captura con tercera toma en vivo, bioimpedancia,
-  resultados, comparación, ETM, métodos, Lee y energía; E2E de la Demo 1 en escritorio y celular; el worker lee sus
-  colas por lotes (la auditoría de escrituras tardaba minutos); ADR-050
