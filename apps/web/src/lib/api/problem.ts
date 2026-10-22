@@ -62,3 +62,10 @@ export function errorMessage(error: unknown): string {
   const known = error.code ? MESSAGES[error.code] : undefined;
   return known ?? error.problem.title ?? 'No pudimos completar la acción.';
 }
+
+/** Lo que la API detalla en details.problems (un alimento propio que no cabe en 100 g, NC-FOOD-001). */
+export function problemList(error: unknown): readonly string[] {
+  if (!(error instanceof ApiError)) return [];
+  const problems = error.problem.details?.['problems'];
+  return Array.isArray(problems) ? problems.filter((p): p is string => typeof p === 'string') : [];
+}

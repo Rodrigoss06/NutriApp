@@ -7,19 +7,20 @@ import {
   type EnergyPrescription,
   type EnergyPrescriptionPreview,
   type EvaluationSummary,
-  type PhysicalActivityListResponse,
   type RmrMethod,
 } from '@nutricoach/contracts';
 import { Button, formatNumber, MethodBadge, Notice, Select } from '@nutricoach/ui';
 import { keepPreviousData, useMutation, useQuery } from '@tanstack/react-query';
 import { useRouter } from 'next/navigation';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
+import { ActivitySearch } from '@/features/activities/activity-search';
 import { evaluationTitle } from '@/features/assessment/labels';
 import { TextField } from '@/features/forms/fields';
 import { FormError } from '@/features/forms/form-error';
 import { useCanWrite, usePanelSession } from '@/features/session/panel-session';
 import { apiFetch } from '@/lib/api/client';
 import { formatInstant } from '@/lib/dates';
+import { useDebounced } from '@/lib/use-debounced';
 import { prescriptionBody, type ActivityDraft } from './form';
 import {
   ADJUSTMENT_OPTIONS,
@@ -33,20 +34,6 @@ import { PrescriptionView } from './prescription-view';
 
 type Goal = EnergyPrescriptionPreview['goal'];
 type Strategy = EnergyPrescriptionPreview['strategy'];
-
-/** Espera a que la persona deje de escribir antes de pedir la vista previa. */
-function useDebounced<T>(value: T, ms: number): T {
-  const [debounced, setDebounced] = useState(value);
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setDebounced(value);
-    }, ms);
-    return () => {
-      clearTimeout(timer);
-    };
-  }, [value, ms]);
-  return debounced;
-}
 
 /**
  * Nueva prescripción energética (RF-17, RF-18 adelantado): TMR con cinco ecuaciones (RN-E01), PAL de la vida diaria y
@@ -79,7 +66,6 @@ export function PrescriptionForm({
   const [targetFatPct, setTargetFatPct] = useState('');
   const [proteinGPerKg, setProteinGPerKg] = useState('');
   const [fatPctKcal, setFatPctKcal] = useState('');
-  const [search, setSearch] = useState('');
 
   const body = prescriptionBody({
     evaluationId: basis.evaluation.id,
@@ -105,13 +91,6 @@ export function PrescriptionForm({
     enabled: debouncedBody !== null,
     placeholderData: keepPreviousData,
     retry: false,
-  });
-  const query = useDebounced(search.trim(), 250);
-  const found = useQuery({
-    queryKey: ['physical-activities', query],
-    queryFn: () =>
-      apiFetch<PhysicalActivityListResponse>(`/physical-activities?q=${encodeURIComponent(query)}`),
-    enabled: query.length >= 2,
   });
   const save = useMutation({
     mutationFn: () =>
@@ -246,66 +225,33 @@ export function PrescriptionForm({
         </div>
         {strategy === 'ADDITIVE' ? (
           <div className="flex flex-col gap-3">
-            <div className="max-w-md">
-              <TextField
-                label="Buscar actividad"
-                type="search"
-                autoComplete="off"
-                hint="Compendium 2024: escribe al menos 2 letras, sin importar las tildes."
-                value={search}
-                onChange={(event) => {
-                  setSearch(event.target.value);
-                }}
-              />
-            </div>
-            {found.data && query.length >= 2 ? (
-              found.data.activities.length === 0 ? (
-                <p className="text-sm text-muted-foreground">Sin resultados.</p>
-              ) : (
-                <ul
-                  aria-label="Actividades encontradas"
-                  className="flex flex-col divide-y divide-border rounded-lg border border-border bg-card"
-                >
-                  {found.data.activities.slice(0, 10).map((activity) => {
-                    const added = activities.some((a) => a.activityCode === activity.code);
-                    return (
-                      <li
-                        key={activity.code}
-                        className="flex flex-wrap items-center justify-between gap-2 p-2"
-                      >
-                        <span className="text-sm">
-                          {activity.descriptionEs}{' '}
-                          <span className="text-muted-foreground tabular-nums">
-                            · {formatInput(activity.met)} MET · {activity.code}
-                          </span>
-                        </span>
-                        <Button
-                          size="sm"
-                          variant="secondary"
-                          disabled={added}
-                          aria-label={`Agregar ${activity.descriptionEs}`}
-                          onClick={() => {
-                            setActivities((current) => [
-                              ...current,
-                              {
-                                activityCode: activity.code,
-                                descriptionEs: activity.descriptionEs,
-                                met: activity.met,
-                                minutes: '',
-                                sessions: '',
-                              },
-                            ]);
-                            setSearch('');
-                          }}
-                        >
-                          {added ? 'Agregada' : 'Agregar'}
-                        </Button>
-                      </li>
-                    );
-                  })}
-                </ul>
-              )
-            ) : null}
+            <ActivitySearch
+              action={(activity) => {
+                const added = activities.some((a) => a.activityCode === activity.code);
+                return (
+                  <Button
+                    size="sm"
+                    variant="secondary"
+                    disabled={added}
+                    aria-label={`Agregar ${activity.descriptionEs}`}
+                    onClick={() => {
+                      setActivities((current) => [
+                        ...current,
+                        {
+                          activityCode: activity.code,
+                          descriptionEs: activity.descriptionEs,
+                          met: activity.met,
+                          minutes: '',
+                          sessions: '',
+                        },
+                      ]);
+                    }}
+                  >
+                    {added ? 'Agregada' : 'Agregar'}
+                  </Button>
+                );
+              }}
+            />
             {activities.map((activity) => (
               <div
                 key={activity.activityCode}
