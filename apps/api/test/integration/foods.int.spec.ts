@@ -22,7 +22,6 @@ let cookie: string;
 interface Summary {
   id: string;
   name: string;
-  sourceFoodCode: string | null;
   state: string;
   own: boolean;
 }
@@ -89,14 +88,16 @@ describe('RF-38 · P8 · búsqueda de alimentos', () => {
     expect(foods.length).toBeGreaterThan(5);
     expect(foods[0]?.name).toMatch(/^Plátano/);
     expect(elapsed).toBeLessThan(100);
+    // ADR-055: el código del alimento en su fuente no sale de la API.
+    expect(foods[0]).not.toHaveProperty('sourceFoodCode');
   });
 
   it('todas las palabras en cualquier orden, y el estado pedido primero (RN-E12)', async () => {
     const cooked = await search('q=arroz%20cocido&state=COOKED');
-    expect(cooked[0]).toMatchObject({ sourceFoodCode: 'A2', state: 'COOKED' });
+    expect(cooked[0]).toMatchObject({ id: await tpca('A2'), state: 'COOKED' });
 
     const kiwicha = await search('q=kiwicha&limit=10');
-    expect(kiwicha.map((f) => f.sourceFoodCode)).toContain('A1');
+    expect(kiwicha.map((f) => f.id)).toContain(await tpca('A1'));
   });
 
   it('FoodApi.resolve: el término dice el estado («arroz cocido») y da candidatos con su parecido', async () => {
@@ -132,6 +133,7 @@ describe('RN-I03 · detalle del alimento', () => {
     expect(nutrient('FIBTG')).toMatchObject({ valuePer100g: null, flag: 'MISSING' });
     expect(nutrient('VITC')).toMatchObject({ valuePer100g: 0, flag: null });
     expect(rice).toMatchObject({ own: false, state: 'COOKED' });
+    expect(rice).not.toHaveProperty('sourceFoodCode');
   });
 
   it('las medidas caseras y los factores de cocción de la TAFERA (RN-E12)', async () => {

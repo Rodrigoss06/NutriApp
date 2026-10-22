@@ -10,7 +10,7 @@ export const FOOD_NOT_FOUND = domainError({
 export const GLOBAL_FOOD_READ_ONLY = domainError({
   code: 'NC-FOOD-003',
   rule: 'RN-I01',
-  message: 'Los alimentos de las tablas oficiales no se editan: crea uno propio.',
+  message: 'Los alimentos de referencia no se editan: crea uno propio.',
 });
 
 /** Alguien editó el alimento antes (If-Match). */

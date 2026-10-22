@@ -8,12 +8,14 @@ export type FoodState = (typeof FOOD_STATES)[number];
 /** Calidad de un valor, como food.food_nutrient.value_flag; null: tal como lo publica la fuente (RN-I03). */
 export const VALUE_FLAGS = ['MEASURED', 'CALCULATED', 'TRACE', 'MISSING', 'IMPUTED'] as const;
 
-/** Un alimento en una lista: global (TPCA, solo lectura) o propio de la organización (RN-I01). */
+/**
+ * Un alimento en una lista: de referencia (solo lectura) o propio de la organización (RN-I01). El código del alimento
+ * en su fuente no sale de la API (ADR-055).
+ */
 export const foodSummarySchema = z.object({
   id: z.uuid(),
   name: z.string(),
   sourceCode: z.string(),
-  sourceFoodCode: z.string().nullable(),
   groupName: z.string().nullable(),
   state: z.enum(FOOD_STATES),
   /** Propio de la organización: se edita; los globales no. */
