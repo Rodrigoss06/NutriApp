@@ -1,4 +1,5 @@
 import { ContourBackground, enterStyle } from '@nutricoach/ui';
+import Link from 'next/link';
 import type { ReactNode } from 'react';
 
 /**
@@ -54,6 +55,9 @@ export function AuthCard({
         <div className="nc-enter" style={enterStyle(3)}>
           {children}
         </div>
+        <Link href="/acerca" className="text-sm text-muted-foreground underline">
+          Acerca de NutriCoach
+        </Link>
       </main>
     </div>
   );

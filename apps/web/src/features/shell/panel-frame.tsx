@@ -3,6 +3,7 @@
 import {
   Building2,
   CalendarDays,
+  Info,
   LayoutDashboard,
   Library,
   Menu,
@@ -94,6 +95,9 @@ export function PanelFrame({
         {items.map((item) => (
           <NavLink key={item.href} item={item} variant="sidebar" />
         ))}
+        <div className="mt-auto pt-4">
+          <NavLink item={{ href: '/acerca', label: 'Acerca de', icon: Info }} variant="sidebar" />
+        </div>
       </nav>
 
       <div className="flex min-w-0 flex-1 flex-col">
