@@ -15,8 +15,8 @@ Próxima demo: Demo 1 · Base y evaluación · semana 2
 | P5 Identidad y organizaciones | ✅ | Rodrigo | #6, #7, #8 | 4 criterios en verde; despliegue a staging pendiente de P4 |
 | P6 Pacientes e historia clínica | ✅ | Rodrigo | #10, #11, #12 | 4 criterios en verde (E2E en escritorio y celular, e integración); despliegue a staging pendiente de P4 |
 | P7 Evaluación y cálculo, Demo 1 | ✅ | Rodrigo | #14 a #18 | E2E de la Demo 1 en escritorio y celular (G-01 a G-17), ninguna cifra sin método, recálculo con SUPERSEDED y guion; RF-18 adelantado. Etiqueta v0.1.0 (abf0d42) y Notion sincronizado; staging, pendiente de P4 |
-| P8 Datos maestros de alimentos | ✅ | Rodrigo | #21, #22, #23, PR 4 | 3 criterios en verde (integración y E2E en escritorio y celular); Biblioteca, alimento propio, «Armar un plato», listas de intercambio y «Acerca de» con la atribución (ADR-055, ADR-056). Falta fusionar el PR 4 y el /notion-sync |
-| P9 Dieta por intercambios | ⬜ | Rodrigo | | |
+| P8 Datos maestros de alimentos | ✅ | Rodrigo | #21 a #24 | 3 criterios en verde (integración y E2E en escritorio y celular); Biblioteca, alimento propio, «Armar un plato», listas de intercambio y «Acerca de» con la atribución (ADR-055, ADR-056). /notion-sync aplicado (21 cambios) |
+| P9 Dieta por intercambios | 🟨 | Rodrigo | | PR 1 (borrador por intercambios, G-17 a G-19) en revisión (ADR-057); sigue el PR 2 |
 | P10 Composición, menú y recetario | ⬜ | Rodrigo | | |
 | P11 Fichas PDF, Demo 2 | ⬜ | Rodrigo | | |
 | P12 Ejercicios y rutinas | ⬜ | Rodrigo | | |
@@ -30,7 +30,12 @@ Leyenda: ⬜ pendiente · 🟨 en curso · ✅ terminado · ⛔ bloqueado
 ## En curso
 - P8, PR 1 fusionado (#21, d7beee2): importador genérico de catálogos (RN-I04), TPCA 2017 (928 alimentos) y
   Compendium 2024 (560 actividades), CLI catalog:load y lista DEMO provisional; ADR-052.
-- P8, PR 4 en feat/food-pantallas, sobre main, listo en local (ADR-056):
+- P9, PR 1 en feat/nut-intercambios, sobre main, en revisión (ADR-057):
+  - borrador por intercambios con las metas exactas de la prescripción: G-17, G-18 y G-19 por HTTP;
+  - ajuste a mano de almidones, carnes y grasas, reparto a mano de un grupo y alimentos permitidos con su porción;
+  - adecuación con el rango de la organización (nutrition.adequacy_min_pct y _max_pct) y lo que falta para publicar;
+  - migración 202610230000_nutrition_plans: la base rechaza tocar un plan publicado y sus hijos (RN-E15).
+- P8, PR 4 fusionado (#24, fec8621) (ADR-056):
   - Biblioteca en /panel/biblioteca: alimentos con búsqueda y detalle, alimento propio, «Armar un plato», actividades
     y listas de intercambio (la DEMO rotulada «Provisional»);
   - «Acerca de» (/acerca, pública): la atribución de la TPCA, la TAFERA y el Compendium, una sola vez (ADR-055);
@@ -60,17 +65,10 @@ Leyenda: ⬜ pendiente · 🟨 en curso · ✅ terminado · ⛔ bloqueado
 ## Siguiente paso
 - Antes de la Demo 1: la matriz manual de navegadores (RNF-19: Chrome, Edge, Safari y Firefox; la E2E cubre Chromium
   y WebKit) y, el mismo día, base local limpia y semilla («Antes de empezar» del guion). La demo es en local
-- Revisar y fusionar el PR 4 de P8; después, /notion-sync de P8 (ADR-052 a ADR-056)
-- P9 · Dieta por intercambios, en 3 PR (dominio y API del borrador; publicación y tracking; pantallas). Decisiones
-  de Rodrigo (2026-10-22), para registrar en un ADR al empezar:
-  - porción de los alimentos permitidos: el profesional escribe los gramos y la app sugiere los que aportan el
-    macronutriente que define al grupo. Falta confirmar ese macronutriente por grupo, sobre todo en lácteos
-    (12 g de carbohidratos u 8 g de proteína);
-  - hidratación (RN-E13): como ayuda, las ingestas adecuadas de agua total de EFSA 2010 (2.0 L mujeres, 2.5 L
-    hombres) e IOM 2004 (2.7 L y 3.7 L), sin valor por defecto;
-  - el plan empieza el día de su publicación, en la fecha local del paciente, sin fechas futuras en la 1.0;
-  - publicar se bloquea si un grupo con intercambios en un tiempo de comida no tiene ningún alimento permitido;
-  - lista DEMO provisional mientras R4 siga pendiente
+- Revisar y fusionar el PR 1 de P9 (borrador por intercambios)
+- P9 · PR 2: publicar con snapshot y valid_from, el anterior a SUPERSEDED, versión nueva desde un publicado, eventos
+  y el módulo tracking (active_plan_view y la meta del día). PR 3: pantallas, sugerencia de gramos e hidratación
+  (decisiones de Rodrigo en ADR-057)
 - Cada base nueva necesita los catálogos: `pnpm --filter api build && pnpm catalog:load plataforma@demo.example.com`
   en local; en staging y producción, con el correo de su PLATFORM_ADMIN
 - db:seed carga el caso Luis: sus resultados aparecen cuando corre el worker
@@ -137,10 +135,10 @@ Leyenda: ⬜ pendiente · 🟨 en curso · ✅ terminado · ⛔ bloqueado
   siempre una sola vez (ADR-056)
 
 ## Registro de sesiones (solo las 5 últimas)
-- 2026-10-22 · P8 (PR 3 y PR 4) · PR 3 fusionado (#23). La licencia de la TPCA, resuelta con Rodrigo tras consultar
-  con un abogado (ADR-055): sin sourceFoodCode ni licencia en la API y la atribución en «Acerca de». Pantallas de la
-  Biblioteca, «Armar un plato» y «Acerca de» (ADR-056); E2E de P8 en escritorio y celular. Plan de P9 aprobado con
-  sus decisiones; va después del PR 4
+- 2026-10-22 · P8 cerrado y P9 (PR 1) · PR 3 fusionado (#23). La licencia de la TPCA, resuelta con Rodrigo tras
+  consultar con un abogado (ADR-055): sin sourceFoodCode ni licencia en la API y la atribución en «Acerca de».
+  Pantallas de la Biblioteca, «Armar un plato» y «Acerca de» (ADR-056, #24); E2E de P8 en escritorio y celular;
+  /notion-sync de P8 con 21 cambios. P9: decisiones de Rodrigo y borrador por intercambios con G-17 a G-19 (ADR-057)
 - 2026-10-21 · P8 (PR 2) · respuesta a Jeremy sobre periodización y lectura de su paquete operativo (plantilla V3 y
   formularios); el modelo V3, sin el reloj, documentado en Notion (07 y siete páginas más). TAFERA 2016 extraída del
   PDF del INS y enlazada con la TPCA 2017 (933 medidas y 213 factores), migración, importadores y ADR-053

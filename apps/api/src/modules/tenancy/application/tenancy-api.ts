@@ -174,6 +174,18 @@ export class TenancyApi {
     );
   }
 
+  /** RN-E10: el rango aceptable de la adecuación que fijó la organización; 90 a 110 % por defecto. */
+  async adequacyRangePct(organizationId: OrganizationId): Promise<readonly [number, number]> {
+    const [min, max] = await Promise.all([
+      this.store.getSetting(organizationId, 'nutrition.adequacy_min_pct'),
+      this.store.getSetting(organizationId, 'nutrition.adequacy_max_pct'),
+    ]);
+    return [
+      settingValue('nutrition.adequacy_min_pct', min),
+      settingValue('nutrition.adequacy_max_pct', max),
+    ];
+  }
+
   async invitationTtlDays(organizationId: OrganizationId): Promise<number> {
     return settingValue(
       'invitation.ttl_days',

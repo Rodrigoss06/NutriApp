@@ -187,7 +187,17 @@ export class PrismaFoodStore implements FoodStore {
     return rows.map((r) => ({ code: r.code, name: r.name_es, unit: r.unit, core: r.is_core }));
   }
 
-  async exchangeLists(): Promise<readonly ExchangeListRecord[]> {
+  exchangeLists(): Promise<readonly ExchangeListRecord[]> {
+    return this.#exchangeLists(null);
+  }
+
+  async exchangeList(id: string): Promise<ExchangeListRecord | null> {
+    const [list] = await this.#exchangeLists(id);
+    return list ?? null;
+  }
+
+  /** Sin id, las publicadas; con id, esa, en cualquier estado. */
+  async #exchangeLists(id: string | null): Promise<readonly ExchangeListRecord[]> {
     const lists = await this.db.tx.$queryRaw<
       {
         id: string;
@@ -199,7 +209,8 @@ export class PrismaFoodStore implements FoodStore {
       }[]
     >`
       SELECT id, code, name, version, provisional, license_note
-      FROM food.exchange_list WHERE status = 'PUBLISHED'
+      FROM food.exchange_list
+      WHERE (${id}::uuid IS NULL AND status = 'PUBLISHED') OR id = ${id}::uuid
       ORDER BY provisional, name, version`;
     if (lists.length === 0) return [];
     const groups = await this.db.tx.$queryRaw<

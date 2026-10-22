@@ -103,6 +103,8 @@ export interface FoodStore {
   nutrients(): Promise<readonly CatalogNutrient[]>;
   /** Las publicadas, globales y de la organización. */
   exchangeLists(): Promise<readonly ExchangeListRecord[]>;
+  /** Una lista por su id, publicada o no: un plan sigue con la versión que usó (RN-E11). */
+  exchangeList(id: string): Promise<ExchangeListRecord | null>;
   /** El siguiente código de alimento propio de la organización: 1, 2, 3… */
   nextOwnCode(organizationId: string): Promise<string>;
   insertOwn(food: NewOwnFood): Promise<void>;

@@ -1,6 +1,7 @@
 import type { OrganizationId, UserId } from '@nutricoach/shared-kernel';
 import type { TimelineCursor, TimelineEntry } from '../../../clinical/index.js';
 import type { EnergyGoal, EnergyStrategy } from '../../domain/energy-rules.js';
+import type { ExchangePlan, PlanDraftInput, PlanStatus } from '../../domain/nutrition-plan.js';
 import type { PrescriptionComponents } from '../energy-calculation.js';
 
 /** Actividad elegida, congelada con su descripción y su MET (05.2: activityCode, met, minutes, sessionsPerWeek). */
@@ -55,3 +56,62 @@ export interface EnergyPrescriptionStore {
 }
 
 export const ENERGY_PRESCRIPTION_STORE = Symbol.for('nutricoach.nutrition.EnergyPrescriptionStore');
+
+/**
+ * nutrition.plan por intercambios con sus hijos. Las metas de las columnas van redondeadas a 1 decimal, para listar; el
+ * cálculo usa las exactas de la prescripción (RN-D09).
+ */
+export interface NutritionPlanSummary {
+  readonly id: string;
+  readonly organizationId: OrganizationId;
+  readonly patientId: string;
+  readonly lineageId: string;
+  readonly versionNo: number;
+  readonly status: PlanStatus;
+  readonly energyPrescriptionId: string;
+  readonly exchangeListId: string;
+  readonly exchangeListVersion: string;
+  readonly targetKcal: number;
+  readonly createdAt: Date;
+  readonly publishedAt: Date | null;
+}
+
+export interface NutritionPlanRecord extends NutritionPlanSummary {
+  /** El borrador tal como lo escribió el profesional, rearmado desde sus filas. */
+  readonly draft: PlanDraftInput;
+  /** Los id de los tiempos de comida, en su orden. */
+  readonly mealIds: readonly string[];
+  readonly createdBy: UserId;
+  readonly updatedAt: Date;
+  readonly version: number;
+}
+
+export interface NewNutritionPlan {
+  readonly id: string;
+  readonly organizationId: OrganizationId;
+  readonly patientId: string;
+  readonly lineageId: string;
+  readonly versionNo: number;
+  readonly energyPrescriptionId: string;
+  readonly exchangeListId: string;
+  readonly exchangeListVersion: string;
+  readonly targets: {
+    readonly kcal: number;
+    readonly choG: number;
+    readonly proteinG: number;
+    readonly fatG: number;
+  };
+  readonly createdBy: UserId;
+  readonly now: Date;
+}
+
+export interface NutritionPlanStore {
+  insert(plan: NewNutritionPlan, content: ExchangePlan): Promise<void>;
+  find(id: string): Promise<NutritionPlanRecord | null>;
+  /** Reemplaza el contenido del borrador si la versión coincide; si no, false. */
+  replaceDraft(id: string, version: number, content: ExchangePlan, now: Date): Promise<boolean>;
+  /** El historial del paciente, de lo más reciente a lo más antiguo (RF-23). */
+  listByPatient(patientId: string): Promise<readonly NutritionPlanSummary[]>;
+}
+
+export const NUTRITION_PLAN_STORE = Symbol.for('nutricoach.nutrition.NutritionPlanStore');

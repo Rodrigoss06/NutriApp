@@ -1026,7 +1026,7 @@ model NutritionPlan {
   id                    String              @id @db.Uuid
   organizationId        String              @map("organization_id") @db.Uuid
   patientId             String              @unique(map: "plan_one_published", where: raw("(status = 'PUBLISHED'::text)")) @map("patient_id") @db.Uuid
-  lineageId             String              @map("lineage_id") @db.Uuid
+  lineageId             String              @unique(map: "plan_one_draft_per_lineage", where: raw("(status = 'DRAFT'::text)")) @map("lineage_id") @db.Uuid
   versionNo             Int                 @map("version_no")
   modality              String
   status                String              @default("DRAFT")
@@ -1111,6 +1111,7 @@ model PlanMeal {
   planMealAllowedFoods PlanMealAllowedFood[]
   planMealExchanges    PlanMealExchange[]
 
+  @@unique([planId, dayOfWeek, position], map: "plan_meal_position")
   @@map("plan_meal")
   @@schema("nutrition")
 }
@@ -1123,6 +1124,7 @@ model PlanMealAllowedFood {
   organizationId String   @map("organization_id") @db.Uuid
   grams          Decimal  @db.Decimal(8, 2)
   householdText  String?  @map("household_text")
+  position       Int      @default(0) @db.SmallInt
   planMeal       PlanMeal @relation(fields: [planMealId], references: [id], onDelete: Cascade, onUpdate: NoAction)
 
   @@id([planMealId, groupCode, foodId])
@@ -1137,6 +1139,7 @@ model PlanMealExchange {
   groupCode      String   @map("group_code")
   organizationId String   @map("organization_id") @db.Uuid
   servings       Int
+  isManual       Boolean  @default(false) @map("is_manual")
   planMeal       PlanMeal @relation(fields: [planMealId], references: [id], onDelete: Cascade, onUpdate: NoAction)
 
   @@id([planMealId, groupCode])

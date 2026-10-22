@@ -55,6 +55,21 @@ export const ORGANIZATION_SETTINGS = {
     defaultValue: null,
     editor: 'ORGANIZATION',
   },
+  /** RN-E10: rango aceptable de la adecuación, 90 a 110 % por defecto. Cada borde, de su lado del 100. */
+  'nutrition.adequacy_min_pct': {
+    kind: 'INTEGER',
+    min: 50,
+    max: 100,
+    defaultValue: 90,
+    editor: 'ORGANIZATION',
+  },
+  'nutrition.adequacy_max_pct': {
+    kind: 'INTEGER',
+    min: 100,
+    max: 150,
+    defaultValue: 110,
+    editor: 'ORGANIZATION',
+  },
 } as const satisfies Record<string, OrganizationSetting>;
 
 export type SettingKey = keyof typeof ORGANIZATION_SETTINGS;

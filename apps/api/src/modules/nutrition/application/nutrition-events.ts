@@ -6,7 +6,8 @@ import {
 } from '@nutricoach/shared-kernel';
 
 /** Eventos de nutrition (02 §7 y §8): solo identificadores; las escrituras se auditan desde ellos. */
-export type NutritionEventType = 'nutrition.prescription.created';
+export type NutritionEventType =
+  'nutrition.prescription.created' | 'nutrition.plan.created' | 'nutrition.plan.updated';
 
 export function nutritionEvent<TPayload extends { patientId: string }>(
   type: NutritionEventType,
