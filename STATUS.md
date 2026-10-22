@@ -16,7 +16,7 @@ Próxima demo: Demo 1 · Base y evaluación · semana 2
 | P6 Pacientes e historia clínica | ✅ | Rodrigo | #10, #11, #12 | 4 criterios en verde (E2E en escritorio y celular, e integración); despliegue a staging pendiente de P4 |
 | P7 Evaluación y cálculo, Demo 1 | ✅ | Rodrigo | #14 a #18 | E2E de la Demo 1 en escritorio y celular (G-01 a G-17), ninguna cifra sin método, recálculo con SUPERSEDED y guion; RF-18 adelantado. Etiqueta v0.1.0 (abf0d42) y Notion sincronizado; staging, pendiente de P4 |
 | P8 Datos maestros de alimentos | ✅ | Rodrigo | #21 a #24 | 3 criterios en verde (integración y E2E en escritorio y celular); Biblioteca, alimento propio, «Armar un plato», listas de intercambio y «Acerca de» con la atribución (ADR-055, ADR-056). /notion-sync aplicado (21 cambios) |
-| P9 Dieta por intercambios | 🟨 | Rodrigo | | #25 (borrador por intercambios, G-17 a G-19) en revisión (ADR-057); PR 2 (publicación y tracking) en local (ADR-058) |
+| P9 Dieta por intercambios | ✅ | Rodrigo | #25, #26 y PR 3 | 3 criterios en verde (integración y E2E de Luis en escritorio y celular): borrador (ADR-057), publicación y tracking (ADR-058) y pantallas (ADR-059). #26 en revisión; el PR 3 se abre al fusionarse. /notion-sync pendiente |
 | P10 Composición, menú y recetario | ⬜ | Rodrigo | | |
 | P11 Fichas PDF, Demo 2 | ⬜ | Rodrigo | | |
 | P12 Ejercicios y rutinas | ⬜ | Rodrigo | | |
@@ -30,12 +30,15 @@ Leyenda: ⬜ pendiente · 🟨 en curso · ✅ terminado · ⛔ bloqueado
 ## En curso
 - P8, PR 1 fusionado (#21, d7beee2): importador genérico de catálogos (RN-I04), TPCA 2017 (928 alimentos) y
   Compendium 2024 (560 actividades), CLI catalog:load y lista DEMO provisional; ADR-052.
-- P9, PR 2 en feat/nut-publicacion, sobre feat/nut-intercambios (#25), listo en local (ADR-058):
-  - publicar con snapshot y hash, valid_from de hoy y el anterior a SUPERSEDED; versión nueva desde un publicado;
-  - módulo tracking: consumidor tracking.plans (active_plan_view y la meta de hoy) y trabajo diario de metas;
-  - el plan publicado en la línea de tiempo del expediente.
-  - Al fusionarse #25: git rebase --onto main feat/nut-intercambios feat/nut-publicacion y abrir el PR.
-- P9, PR 1 en #25 (feat/nut-intercambios), en revisión (ADR-057):
+- P9, PR 3 en feat/nut-editor, sobre feat/nut-publicacion (#26), listo en local (ADR-059):
+  - editor en tres pasos (metas con la referencia de hidratación, intercambios, reparto y alimentos) con la
+    adecuación en vivo por POST /nutrition-plans/:id/preview, y publicar con confirmación;
+  - porción sugerida con el macronutriente que define al grupo; historial de versiones y vista del plan publicado;
+  - E2E e2e/dieta.spec.ts: Luis con G-17 a G-19, publicar y versión nueva.
+  - Al fusionarse #26: git rebase --onto main feat/nut-publicacion feat/nut-editor y abrir el PR.
+- P9, PR 2 en #26 (feat/nut-publicacion), en revisión (ADR-058): publicar con snapshot y hash, valid_from de hoy y el
+  anterior a SUPERSEDED; versión nueva; módulo tracking (active_plan_view, la meta de hoy y el trabajo diario).
+- P9, PR 1 fusionado (#25, 5d1ed91) (ADR-057):
   - borrador por intercambios con las metas exactas de la prescripción: G-17, G-18 y G-19 por HTTP;
   - ajuste a mano de almidones, carnes y grasas, reparto a mano de un grupo y alimentos permitidos con su porción;
   - adecuación con el rango de la organización (nutrition.adequacy_min_pct y _max_pct) y lo que falta para publicar;
@@ -70,9 +73,8 @@ Leyenda: ⬜ pendiente · 🟨 en curso · ✅ terminado · ⛔ bloqueado
 ## Siguiente paso
 - Antes de la Demo 1: la matriz manual de navegadores (RNF-19: Chrome, Edge, Safari y Firefox; la E2E cubre Chromium
   y WebKit) y, el mismo día, base local limpia y semilla («Antes de empezar» del guion). La demo es en local
-- Revisar y fusionar #25 (PR 1 de P9); después, abrir el PR 2 (publicación y tracking)
-- P9 · PR 3: editor en tres pasos, historial, sugerencia de gramos e hidratación (ADR-057), y E2E de Luis
-  (G-18 y G-19, publicar)
+- Revisar y fusionar #26 (PR 2 de P9); después, abrir el PR 3 (pantallas)
+- /notion-sync de P9 (ADR-057 a ADR-059) y, después, P10 (composición, menú semanal y recetario)
 - Cada base nueva necesita los catálogos: `pnpm --filter api build && pnpm catalog:load plataforma@demo.example.com`
   en local; en staging y producción, con el correo de su PLATFORM_ADMIN
 - db:seed carga el caso Luis: sus resultados aparecen cuando corre el worker
@@ -96,6 +98,8 @@ Leyenda: ⬜ pendiente · 🟨 en curso · ✅ terminado · ⛔ bloqueado
 - [ ] Método de entrenamiento de Jeremy: preguntas P-01 a P-14 (Notion 07 §15). Mientras no respondan, P12 a P14 se
   construyen con la propuesta de cada una
 - [ ] R4: permiso de uso de las listas Dextre y ADA
+- [ ] Porción sugerida de verduras, frutas y almidones: ¿carbohidratos totales (CHOCDF) o disponibles (CHOAVL) de la
+  TPCA? Provisional: totales, los que la app muestra como «Carbohidratos» (ADR-059)
 - [x] TPCA 2017: Rodrigo, tras consultar con un abogado, autoriza usarla sin la autorización del INS con tres
   condiciones (ADR-055): la API no devuelve el código del alimento en la TPCA, el texto «de referencia» en vez de
   «oficiales» y la atribución de fuentes una sola vez, en «Acerca de» (ADR-056). Sin logos ni aval del Estado
@@ -135,10 +139,17 @@ Leyenda: ⬜ pendiente · 🟨 en curso · ✅ terminado · ⛔ bloqueado
   87.5 a 125 y wght 400 a 700) con next/font/local
 - La E2E de celular corre en la imagen de Playwright (docker, mcr.microsoft.com/playwright:v1.63.0-noble): en este
   equipo WebKit no tiene sus dependencias
+- Botón secundario en hover: el texto de marca queda en 4.42:1 sobre bg-muted con la marca por defecto (debajo de
+  4.5:1). darkenUntil lo calcula contra el papel; la E2E de P9 audita con el puntero fuera (dieta.spec.ts)
+- useDebounced con un objeto nuevo en cada render (formulario de energía y «Armar un plato») vuelve a renderizar cada
+  300 ms sin parar; el editor de dieta pasa el texto JSON del cuerpo
 - No hay página de Términos: cuando lleguen los textos revisados por el abogado, la atribución puede mudarse ahí,
   siempre una sola vez (ADR-056)
 
 ## Registro de sesiones (solo las 5 últimas)
+- 2026-10-22 · P9 (PR 2 y PR 3) · #25 fusionado; PR 2 abierto (#26). Pantallas de la dieta por intercambios: editor en
+  tres pasos con vista previa en la API, porción sugerida, referencias de hidratación, historial y vista del plan
+  publicado (ADR-059); E2E de Luis en escritorio y celular. P9 cumple sus tres criterios
 - 2026-10-22 · P8 cerrado y P9 (PR 1) · PR 3 fusionado (#23). La licencia de la TPCA, resuelta con Rodrigo tras
   consultar con un abogado (ADR-055): sin sourceFoodCode ni licencia en la API y la atribución en «Acerca de».
   Pantallas de la Biblioteca, «Armar un plato» y «Acerca de» (ADR-056, #24); E2E de P8 en escritorio y celular;
@@ -155,6 +166,3 @@ Leyenda: ⬜ pendiente · 🟨 en curso · ✅ terminado · ⛔ bloqueado
   ui-ux-pro-max, ui-skills y MCP de shadcn, Context7 y Playwright); vista previa de tres direcciones; dirección A con
   curvas de nivel; escala de referencia en los resultados; ADR-051. El disco de datos se llenó (lago de datos de
   otro proyecto) y Rodrigo liberó espacio
-- 2026-10-15 · P7 cerrado · #18 fusionado (abf0d42) con CI en verde; etiqueta v0.1.0; /notion-sync de P7 aplicado
-  (41 cambios en 02, 03, 04, 05, 05.1, 05.2, Documento técnico, Proyecto, Creación del proyecto, prompts y Archivos
-  del repositorio); demo levantada en local con la semilla (recorrido de 12 de 12)
