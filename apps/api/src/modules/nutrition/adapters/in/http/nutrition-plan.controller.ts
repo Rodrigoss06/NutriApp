@@ -17,6 +17,7 @@ import {
   updateNutritionPlanSchema,
   type NutritionPlan,
   type NutritionPlanListResponse,
+  type NutritionPlanPreview,
 } from '@nutricoach/contracts';
 import { isErr, type DomainError, type SecurityContext } from '@nutricoach/shared-kernel';
 import {
@@ -32,6 +33,7 @@ import {
   WRITE_ACCESS_REQUIRED,
 } from '../../../../clinical/index.js';
 import { NutritionPlanCommands } from '../../../application/commands/nutrition-plan.commands.js';
+import type { PlanDocument } from '../../../application/plan-document.js';
 import {
   NutritionPlanQueries,
   type NutritionPlanView,
@@ -78,40 +80,14 @@ const contextOf = (request: ContextualRequest): SecurityContext => {
   return request.securityContext;
 };
 
-/**
- * El plan con lo que calcula el motor, sin redondear (RN-D09), y cada cálculo con su método (RN-D01, RN-D02). Lo
- * publicado sale tal cual de su snapshot.
- */
-function planOf(view: NutritionPlanView): NutritionPlan {
-  const { record, document } = view;
+/** Lo que calcula el motor, sin redondear (RN-D09), y cada cálculo con su método (RN-D01, RN-D02). */
+function calculationOf(
+  document: PlanDocument,
+  publishProblems: readonly string[],
+): Omit<NutritionPlanPreview, 'meals'> {
   return {
-    id: record.id,
-    patientId: record.patientId,
-    lineageId: record.lineageId,
-    versionNo: record.versionNo,
-    status: record.status,
-    energyPrescriptionId: record.energyPrescriptionId,
-    exchangeList: {
-      ...document.exchangeList,
-      groups: document.exchangeList.groups.map((g) => ({ ...g })),
-    },
     targets: { ...document.targets },
     exchanges: document.exchanges.map((e) => ({ ...e })),
-    meals: document.meals.map((meal) => ({
-      id: meal.id,
-      slotCode: meal.slotCode,
-      name: meal.name,
-      timeOfDay: meal.timeOfDay,
-      sharePct: meal.sharePct,
-      servings: { ...meal.servings },
-      allowedFoods: meal.allowedFoods.map((food) => ({
-        groupCode: food.groupCode,
-        foodId: food.foodId,
-        foodName: food.foodName,
-        grams: food.grams,
-        householdText: food.householdText,
-      })),
-    })),
     manualSplit: [...document.manualSplit],
     totals: { ...document.totals },
     adequacy: {
@@ -125,9 +101,43 @@ function planOf(view: NutritionPlanView): NutritionPlan {
       ...m,
       warnings: m.warnings.map((w) => ({ ...w })),
     })),
+    publishProblems: [...publishProblems],
+  };
+}
+
+/** El plan con lo que calcula el motor. Lo publicado sale tal cual de su snapshot. */
+function planOf(view: NutritionPlanView): NutritionPlan {
+  const { record, document } = view;
+  return {
+    ...calculationOf(document, view.publishProblems),
+    id: record.id,
+    patientId: record.patientId,
+    lineageId: record.lineageId,
+    versionNo: record.versionNo,
+    status: record.status,
+    energyPrescriptionId: record.energyPrescriptionId,
+    exchangeList: {
+      ...document.exchangeList,
+      groups: document.exchangeList.groups.map((g) => ({ ...g })),
+    },
+    meals: document.meals.map((meal) => ({
+      id: meal.id,
+      slotCode: meal.slotCode,
+      name: meal.name,
+      timeOfDay: meal.timeOfDay,
+      sharePct: meal.sharePct,
+      servings: { ...meal.servings },
+      allowedFoods: meal.allowedFoods.map((food) => ({
+        groupCode: food.groupCode,
+        foodId: food.foodId,
+        foodName: food.foodName,
+        grams: food.grams,
+        householdText: food.householdText,
+        nutrientsPer100g: { ...food.nutrientsPer100g },
+      })),
+    })),
     hydrationTargetMl: document.hydrationTargetMl,
     instructions: document.instructions,
-    publishProblems: [...view.publishProblems],
     createdAt: record.createdAt.toISOString(),
     updatedAt: record.updatedAt.toISOString(),
     publishedAt: record.publishedAt?.toISOString() ?? null,
@@ -207,6 +217,26 @@ export class NutritionPlanController {
     const view = await this.queries.detail(contextOf(request), planId);
     if (!view) throw notFound(PLAN_NOT_FOUND.code);
     return planOf(view);
+  }
+
+  /** POST /api/v1/nutrition-plans/:id/preview: el borrador calculado sin guardarlo, para el editor (RN-E10). */
+  @Post(':planId/preview')
+  @HttpCode(HttpStatus.OK)
+  @RequirePermission('patients.read')
+  async preview(
+    @Req() request: ContextualRequest,
+    @Param('planId', ParseUUIDPipe) planId: string,
+    @Body() body: unknown,
+  ): Promise<NutritionPlanPreview> {
+    const input = parseBody(updateNutritionPlanSchema, body);
+    const result = await this.queries.preview(contextOf(request), planId, input);
+    if (!result) throw notFound(PLAN_NOT_FOUND.code);
+    if (isErr(result)) throw problem(result.error);
+    const { document, publishProblems } = result.value;
+    return {
+      ...calculationOf(document, publishProblems),
+      meals: document.meals.map((meal) => ({ servings: { ...meal.servings } })),
+    };
   }
 
   /** POST /api/v1/nutrition-plans/:id/publish con If-Match (RF-23, RN-E14, RN-E15). */

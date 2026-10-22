@@ -174,6 +174,13 @@ describe('RF-23 · RN-E14 · RN-E15 · publicar y reemplazar', () => {
     expect(edit.status).toBe(409);
     expect(edit.body).toMatchObject({ code: 'NC-NUT-007', rule: 'RN-E15' });
     expect((await publish(first)).status).toBe(409);
+    const preview = await harness.post(
+      `/nutrition-plans/${first.id}/preview`,
+      readyBody(first),
+      cookie,
+    );
+    expect(preview.status).toBe(409);
+    expect(preview.body).toMatchObject({ code: 'NC-NUT-007', rule: 'RN-E15' });
 
     const timeline = await harness.get(`/patients/${patientId}/timeline`, cookie);
     const items = (timeline.body as { items: { kind: string; refId: string; label: string }[] })

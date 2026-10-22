@@ -208,6 +208,10 @@ describe('RF-18 · RF-19 · borrador desde la prescripción', () => {
         { groupCode: 'MEAT', foodId: chicken, grams: 35, foodName: 'Pollo de la casa (plan)' },
       ],
     });
+    // Los nutrientes principales por 100 g: la web sugiere con ellos los gramos de un intercambio (ADR-057).
+    expect(saved.meals[2]?.allowedFoods[0]).toMatchObject({
+      nutrientsPer100g: { ENERC_KCAL: 150, PROCNT: 20, FAT: 5, CHOCDF: 5 },
+    });
     expect(saved.publishProblems).not.toContain('Falta la meta de hidratación (RN-E13).');
     expect(saved.publishProblems).toContain(
       'Almuerzo: falta al menos un alimento permitido de Verduras (RN-G05).',
@@ -215,6 +219,47 @@ describe('RF-18 · RF-19 · borrador desde la prescripción', () => {
     expect(saved.publishProblems).not.toContain(
       'Almuerzo: falta al menos un alimento permitido de Almidones (RN-G05).',
     );
+  });
+
+  it('RN-E10 · la vista previa calcula G-18 con un borrador sin guardarlo, y 422 si no cuadra', async () => {
+    const plan = await draft();
+    const response = await harness.post(
+      `/nutrition-plans/${plan.id}/preview`,
+      bodyOf(plan),
+      cookie,
+    );
+    expect(response.status, JSON.stringify(response.body)).toBe(200);
+    const preview = response.body as Pick<
+      Plan,
+      'exchanges' | 'totals' | 'adequacy' | 'manualSplit' | 'methods' | 'publishProblems'
+    > & { meals: { servings: Record<string, number> }[] };
+
+    expect(preview.exchanges.map((e) => [e.groupCode, e.servings])).toEqual([
+      ['VEG', 4],
+      ['FRU', 3],
+      ['MILK', 3],
+      ['STA', 6],
+      ['MEAT', 16],
+      ['FAT', 3],
+    ]);
+    expect(preview.totals).toEqual({ choG: 191, proteinG: 162, fatG: 53, kcal: 1889 });
+    expect(preview.adequacy.fat.pct).toBeCloseTo(104.0, 1);
+    expect(preview.meals.map((m) => m.servings.MEAT)).toEqual([4, 2, 5, 2, 3]);
+    expect(preview.publishProblems).toContain('Falta la meta de hidratación (RN-E13).');
+    expect(preview.methods.map((m) => m.methodCode)).toContain('ADEQUACY');
+
+    const read = (await harness.get(`/nutrition-plans/${plan.id}`, cookie)).body as Plan;
+    expect(read.version).toBe(plan.version);
+    expect(read.exchanges.find((e) => e.groupCode === 'VEG')?.servings).toBe(0);
+
+    const meals = bodyOf(plan).meals.map((meal, i) => (i === 0 ? { ...meal, sharePct: 30 } : meal));
+    const invalid = await harness.post(
+      `/nutrition-plans/${plan.id}/preview`,
+      bodyOf(plan, { meals }),
+      cookie,
+    );
+    expect(invalid.status).toBe(422);
+    expect(invalid.body).toMatchObject({ code: 'NC-NUT-010' });
   });
 
   it('422 con cada problema: porcentajes, reparto a mano y alimentos donde el grupo no tiene intercambios', async () => {
