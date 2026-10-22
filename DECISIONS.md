@@ -832,3 +832,22 @@ Consecuencias:
 - Notion: 05.2 (food.food.version y la política de borrado de las medidas), 02 (FoodApi) y 04 (RF-20 adelantado en
   parte). Van en el /notion-sync al cerrar P8.
 - El PR 4 hace las pantallas: Biblioteca, alimento propio, «Armar un plato» y el buscador de actividades.
+
+## ADR-055 · Uso de la TPCA 2017 sin autorización expresa del INS — aceptada (2026-10-22)
+Contexto: la TPCA 2017 dice «Prohibida la reproducción total o parcial de esta obra por cualquier medio sin
+autorización del Instituto Nacional de Salud». ADR-052 la cargó mientras se tramitaba esa autorización, con USDA
+FoodData Central como plan B. Rodrigo lo revisó con un abogado y autorizó un camino que no la necesita.
+Decisión (Rodrigo, 2026-10-22, tras consultar con un abogado):
+- La API pública no devuelve el código del alimento en su fuente (sourceFoodCode). Queda dentro del sistema: en los
+  CSV de seeds/, en la base y en los enlaces de la TAFERA. Los 14 grupos y los nombres de los alimentos no cambian.
+- Ningún texto de la app llama «oficiales» a las tablas: el error NC-FOOD-003 dice «Los alimentos de referencia no se
+  editan».
+- La app cita sus fuentes en «Acerca de» o en los Términos y Condiciones. La línea llega con el PR de pantallas de P8
+  y nombra solo las fuentes que de verdad se cargan: TPCA y TAFERA (INS/CENAN) y el Compendium 2024.
+- Ningún logo del INS, MINSA ni CENAN, y ninguna frase de aval o patrocinio del Estado: es un desarrollo independiente
+  que toma fuentes públicas.
+Consecuencias:
+- Deja de ser necesaria la autorización del INS y el plan B de USDA FoodData Central queda sin uso.
+- food.source.license de TPCA_2017 todavía dice «Autorización pendiente» y el detalle del alimento lo devuelve: se
+  actualiza con una migración de datos cuando se decida el texto.
+- Notion: el riesgo de la licencia y RN-I02 (/notion-sync al cerrar P8).

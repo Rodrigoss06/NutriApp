@@ -61,7 +61,8 @@ Leyenda: ⬜ pendiente · 🟨 en curso · ✅ terminado · ⛔ bloqueado
   y WebKit) y, el mismo día, base local limpia y semilla («Antes de empezar» del guion). La demo es en local
 - Revisar y fusionar el PR 3 de P8 (búsqueda, alimentos propios y composición)
 - P8 PR 4: pantallas de Biblioteca (alimentos, actividades y listas), alimento propio, «Armar un plato» y buscador de
-  actividades en la prescripción energética
+  actividades en la prescripción energética. Incluye la atribución de fuentes en «Acerca de» o en los Términos
+  (ADR-055) y ningún logo del INS, MINSA ni CENAN
 - Cada base nueva necesita los catálogos: `pnpm --filter api build && pnpm catalog:load plataforma@demo.example.com`
   en local; en staging y producción, con el correo de su PLATFORM_ADMIN
 - db:seed carga el caso Luis: sus resultados aparecen cuando corre el worker
@@ -85,8 +86,9 @@ Leyenda: ⬜ pendiente · 🟨 en curso · ✅ terminado · ⛔ bloqueado
 - [ ] Método de entrenamiento de Jeremy: preguntas P-01 a P-14 (Notion 07 §15). Mientras no respondan, P12 a P14 se
   construyen con la propuesta de cada una
 - [ ] R4: permiso de uso de las listas Dextre y ADA
-- [ ] ⚠️ TPCA 2017: autorización del INS para reproducirla. Se usa mientras se tramita; si no llega, plan B: USDA
-  FoodData Central (decisiones de Rodrigo, 2026-10-20)
+- [x] TPCA 2017: Rodrigo, tras consultar con un abogado, autoriza usarla sin la autorización del INS con tres
+  condiciones (ADR-055): la API no devuelve el código del alimento en la TPCA, el texto «de referencia» en vez de
+  «oficiales» y la atribución de fuentes en «Acerca de» o en los Términos (PR 4). Sin logos ni aval del Estado
 - [ ] Captura de un plato por foto: la visión espera un acuerdo con Jeremy (un modelo propio también es IA, regla 10)
 - [ ] Textos legales revisados por el abogado del cliente, en lenguaje claro: desde los 14 años los acepta el propio
   paciente (ADR-042)
