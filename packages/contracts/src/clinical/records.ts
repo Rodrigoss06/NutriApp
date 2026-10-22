@@ -187,6 +187,8 @@ export const TIMELINE_KINDS = [
   'EVALUATION_CLOSED',
   /** Prescripción energética (P7): label es el objetivo. */
   'ENERGY_PRESCRIBED',
+  /** Plan nutricional publicado (P9): label es su número de versión. */
+  'NUTRITION_PLAN_PUBLISHED',
 ] as const;
 export const timelineItemSchema = z.object({
   kind: z.enum(TIMELINE_KINDS),

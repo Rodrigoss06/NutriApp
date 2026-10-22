@@ -154,6 +154,12 @@ export const AUDITED_EVENTS: Readonly<Record<string, AuditMapping>> = {
     resourceType: 'nutrition.plan',
     fields: (p) => namesOf(p.fields),
   },
+  'nutrition.plan.published': { action: 'PUBLISH', resourceType: 'nutrition.plan' },
+  'nutrition.plan.superseded': {
+    action: 'UPDATE',
+    resourceType: 'nutrition.plan',
+    fields: () => ['status'],
+  },
   'food.food.created': { action: 'CREATE', resourceType: 'food.food' },
   'food.food.updated': {
     action: 'UPDATE',

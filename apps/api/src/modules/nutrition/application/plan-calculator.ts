@@ -24,12 +24,18 @@ import {
 } from './plan-calculation.js';
 import type { EnergyPrescriptionRecord } from './ports/nutrition.ports.js';
 
+/** Un alimento permitido con su nombre y sus nutrientes principales por 100 g; null es «sin dato» (RN-I03). */
+export interface PlanFood {
+  readonly name: string;
+  readonly nutrientsPer100g: Readonly<Record<string, number | null>>;
+}
+
 export interface CalculatedPlan {
   readonly calculation: PlanCalculation;
   readonly targets: PlanTargets;
   readonly list: PlanList;
-  /** El nombre de cada alimento permitido, por su id. */
-  readonly foodNames: ReadonlyMap<string, string>;
+  /** Los alimentos permitidos, por su id. */
+  readonly foods: ReadonlyMap<string, PlanFood>;
 }
 
 const outputOf = (values: Readonly<Record<string, unknown>>, key: string): number => {
@@ -88,8 +94,18 @@ export class PlanCalculator {
     if (!list.ok) return list;
     const ids = [...new Set(input.meals.flatMap((m) => m.allowedFoods.map((f) => f.foodId)))];
     const found = await this.foods.foodsById(ids);
-    const foodNames = new Map(found.map((food) => [food.id, food.name]));
-    if (foodNames.size < ids.length) {
+    const foods = new Map<string, PlanFood>(
+      found.map((food) => [
+        food.id,
+        {
+          name: food.name,
+          nutrientsPer100g: Object.fromEntries(
+            food.nutrients.filter((n) => n.core).map((n) => [n.nutrientCode, n.valuePer100g]),
+          ),
+        },
+      ]),
+    );
+    if (foods.size < ids.length) {
       return err(
         invalidPlan(['Un alimento permitido no existe o no es de tu organización (RN-I01).']),
       );
@@ -102,6 +118,6 @@ export class PlanCalculator {
       await this.tenancy.adequacyRangePct(organizationId),
     );
     if (!calculation.ok) return calculation;
-    return ok({ calculation: calculation.value, targets, list: list.value, foodNames });
+    return ok({ calculation: calculation.value, targets, list: list.value, foods });
   }
 }

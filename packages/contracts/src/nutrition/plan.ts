@@ -154,6 +154,8 @@ export const nutritionPlanSchema = z.object({
   createdAt: z.iso.datetime(),
   updatedAt: z.iso.datetime(),
   publishedAt: z.iso.datetime().nullable(),
+  /** Desde qué día vale, en la fecha local del paciente; null mientras es borrador (RN-E14). */
+  validFrom: z.iso.date().nullable(),
   /** Para If-Match. */
   version: z.number().int(),
 });
@@ -172,6 +174,7 @@ export const nutritionPlanListResponseSchema = z.object({
       targetKcal: z.number(),
       createdAt: z.iso.datetime(),
       publishedAt: z.iso.datetime().nullable(),
+      validFrom: z.iso.date().nullable(),
     }),
   ),
 });

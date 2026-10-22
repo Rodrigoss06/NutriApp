@@ -2,6 +2,7 @@ import type { OrganizationId, UserId } from '@nutricoach/shared-kernel';
 import type { TimelineCursor, TimelineEntry } from '../../../clinical/index.js';
 import type { EnergyGoal, EnergyStrategy } from '../../domain/energy-rules.js';
 import type { ExchangePlan, PlanDraftInput, PlanStatus } from '../../domain/nutrition-plan.js';
+import type { PlanSnapshot } from '../plan-document.js';
 import type { PrescriptionComponents } from '../energy-calculation.js';
 
 /** Actividad elegida, congelada con su descripción y su MET (05.2: activityCode, met, minutes, sessionsPerWeek). */
@@ -74,6 +75,8 @@ export interface NutritionPlanSummary {
   readonly targetKcal: number;
   readonly createdAt: Date;
   readonly publishedAt: Date | null;
+  /** YYYY-MM-DD; null mientras es borrador. */
+  readonly validFrom: string | null;
 }
 
 export interface NutritionPlanRecord extends NutritionPlanSummary {
@@ -112,6 +115,32 @@ export interface NutritionPlanStore {
   replaceDraft(id: string, version: number, content: ExchangePlan, now: Date): Promise<boolean>;
   /** El historial del paciente, de lo más reciente a lo más antiguo (RF-23). */
   listByPatient(patientId: string): Promise<readonly NutritionPlanSummary[]>;
+  /** Publica el borrador con su snapshot si la versión coincide; si no, false (RN-E15). */
+  publish(
+    id: string,
+    version: number,
+    publication: {
+      readonly snapshot: PlanSnapshot;
+      readonly hash: string;
+      readonly publishedAt: Date;
+      readonly publishedBy: UserId;
+      readonly validFrom: string;
+    },
+  ): Promise<boolean>;
+  /** El plan publicado del paciente pasa a SUPERSEDED (RN-E14); devuelve su id, o null si no había. */
+  supersedePublished(patientId: string, now: Date): Promise<string | null>;
+  /** El snapshot de un plan que ya no es borrador. */
+  snapshot(id: string): Promise<PlanSnapshot | null>;
+  /** La última versión de un plan y su borrador, si tiene uno. */
+  lineage(
+    lineageId: string,
+  ): Promise<{ readonly lastVersionNo: number; readonly draftId: string | null }>;
+  /** Los planes publicados en la línea de tiempo del expediente (RF-10), por published_at e id descendentes. */
+  timeline(
+    patientId: string,
+    before: TimelineCursor | null,
+    limit: number,
+  ): Promise<readonly TimelineEntry[]>;
 }
 
 export const NUTRITION_PLAN_STORE = Symbol.for('nutricoach.nutrition.NutritionPlanStore');
