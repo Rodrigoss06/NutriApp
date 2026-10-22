@@ -892,3 +892,51 @@ Consecuencias:
 - Notion (/notion-sync al cerrar P8):
   - 02: las rutas GET /foods/nutrients y GET /exchange-lists de food;
   - 03, RN-D09: los valores del catálogo por 100 g se muestran como los publica su fuente.
+
+## ADR-057 · Dieta por intercambios: borrador con metas exactas, ajustes a mano e inmutabilidad en la base — aceptada (2026-10-22)
+Contexto: P9 pide el agregado NutritionPlan por intercambios (RF-19, RF-23, RN-E08 a RN-E15) en tres PR: borrador,
+publicación con tracking y pantallas. Rodrigo aprobó el plan y decidió (2026-10-22):
+- hacer antes el PR 4 de P8;
+- la porción de cada alimento permitido la escribe el profesional, y la app sugiere los gramos que aportan el
+  macronutriente que define al grupo: carbohidratos en verduras, frutas y almidones, proteína en lácteos y carnes, y
+  grasa en grasas. Con la lista DEMO son 5, 15, 8, 15, 7 y 5 g. Los gramos son lo que aporta un intercambio de la lista
+  ÷ ese macronutriente por 100 g del alimento × 100;
+- como ayuda para la hidratación (RN-E13), las ingestas adecuadas de agua total de EFSA 2010 (2.0 L mujeres, 2.5 L
+  hombres) e IOM 2004 (2.7 L y 3.7 L), sin valor por defecto;
+- el plan vale desde el día de su publicación, en la fecha local del paciente, sin fechas futuras en la 1.0;
+- publicar se bloquea si un grupo con intercambios en un tiempo de comida no tiene ningún alimento permitido;
+- la lista DEMO, provisional, mientras siga pendiente R4.
+Decisión (PR 1, el borrador):
+- POST /patients/:id/nutrition-plans crea un borrador desde una prescripción del paciente y una lista con los seis
+  grupos del método clásico. Empieza sin grupos fijos, con los tiempos de G-19 (que se cambian), sin alimentos ni
+  hidratación. PUT /nutrition-plans/:id con If-Match reemplaza el borrador entero; GET lee uno o el historial.
+- Metas exactas: las del sobre MACROS de la prescripción (targetKcal de sus insumos y los gramos de sus salidas). Las
+  columnas target_* las guardan redondeadas a 1 decimal solo para listar: con 51.0 g de grasa, G-18 daría 103.9 % en
+  vez de 104.0 %.
+- Intercambios (RN-E08): verduras, frutas y lácteos los escribe el profesional. Almidones, carnes y grasas salen de
+  EXCHANGES_CLASSIC, salvo el ajuste a mano, que queda en plan_exchange.is_manual. La respuesta trae también lo que
+  daba el método.
+- Reparto (RN-E09): MEAL_SPLIT_LARGEST_REMAINDER por grupo, con los porcentajes de los tiempos, que suman 100 contados
+  en centésimas. El profesional puede repartir a mano un grupo entero (splitOverrides), y ese reparto debe sumar el
+  total del día; queda en la columna nueva plan_meal_exchange.is_manual.
+- Adecuación (RN-E10): ADEQUACY de las kcal y de cada macronutriente contra las metas exactas, con el rango de la
+  organización en dos ajustes nuevos: nutrition.adequacy_min_pct (de 50 a 100; 90 por defecto) y
+  nutrition.adequacy_max_pct (de 100 a 150; 110).
+- Alimentos permitidos (RN-G05): solo en un grupo con intercambios en ese tiempo, sin repetirse en el mismo grupo,
+  visibles para la organización (RN-I01), con gramos y el texto de la medida casera. La columna nueva
+  plan_meal_allowed_food.position conserva el orden en que se listaron.
+- El borrador se guarda como lo escribió el profesional y se recalcula al leerlo, porque el cálculo es determinista.
+  Lo publicado se leerá de su snapshot (PR 2). publishProblems dice lo que falta para publicar.
+- La base protege lo publicado (migración 202610230000_nutrition_plans):
+  - el disparador guard_plan_children deja insertar, cambiar o borrar en los cinco hijos del plan solo mientras el
+    plan está en DRAFT; el borrado en cascada de un tiempo de comida pasa, porque su propio disparador ya lo exigió;
+  - fuera de borrador, el plan exige snapshot, su versión de esquema, su hash, published_at, published_by y valid_from;
+  - un solo borrador por lineage, share_pct entre 0 y 100, gramos mayores que 0 y una posición única por tiempo.
+- Errores NC-NUT-006 a NC-NUT-011; editar un plan publicado responde 409 con RN-E15. Los eventos
+  nutrition.plan.created y nutrition.plan.updated se auditan, este con las partes que cambiaron.
+- FoodApi.exchangeList(id) da una lista por su id en cualquier estado: un plan sigue con la versión que usó (RN-E11).
+Consecuencias:
+- PR 2: publicar con snapshot y valid_from, el plan anterior a SUPERSEDED, versiones nuevas desde un publicado y el
+  consumidor de tracking. PR 3: pantallas, la sugerencia de gramos y las referencias de hidratación.
+- Notion al cerrar P9: 05.2 (columnas, índices y disparador), 02 (eventos del plan y FoodApi.exchangeList), 03 (RN-E10
+  con los ajustes de la organización) y los ajustes nuevos de tenancy.
