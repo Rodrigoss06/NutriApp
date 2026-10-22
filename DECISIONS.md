@@ -940,3 +940,44 @@ Consecuencias:
   consumidor de tracking. PR 3: pantallas, la sugerencia de gramos y las referencias de hidratación.
 - Notion al cerrar P9: 05.2 (columnas, índices y disparador), 02 (eventos del plan y FoodApi.exchangeList), 03 (RN-E10
   con los ajustes de la organización) y los ajustes nuevos de tenancy.
+
+## ADR-058 · Publicar un plan: snapshot con hash, versiones nuevas y la copia del plan vigente en tracking — aceptada (2026-10-22)
+Contexto: el PR 2 de P9 publica el plan por intercambios (RF-23, RN-E14, RN-E15) y deja lista la app del paciente para
+leerlo: tracking guarda una copia del plan vigente y la meta de cada día (02 §3, RN-G03). Sigue las decisiones de
+ADR-057.
+Decisión:
+- POST /nutrition-plans/:id/publish con If-Match:
+  - sin hidratación, o sin un alimento permitido por grupo con intercambios en cada tiempo, responde 422 NC-NUT-012
+    con cada problema (RN-E13, RN-G05);
+  - el plan publicado del paciente pasa a SUPERSEDED y el borrador a PUBLISHED, en la misma transacción. El
+    disparador del plan solo deja cambiar su estado, así que el anterior no lleva valid_to: lo termina el valid_from
+    del que lo reemplaza;
+  - valid_from es el día de la publicación en la fecha local del paciente (ADR-057).
+- Snapshot, versión de esquema 1. Tiene:
+  - el plan entero: metas exactas, la lista con su versión y sus grupos, los intercambios con lo que daba el método,
+    el reparto, los alimentos permitidos con su nombre y sus nutrientes principales por 100 g, totales y adecuación
+    con su rango;
+  - cada método (RN-D01) y la versión del motor;
+  - valid_from, quién y cuándo publicó.
+  Su hash es el SHA-256 del JSON canónico. Un plan que ya no es borrador se lee de su snapshot y no se recalcula
+  (RN-D08).
+- POST /nutrition-plans/:id/revisions crea la versión siguiente del plan en borrador, copiando lo que tenía. Si el plan
+  ya tiene un borrador, responde 409 NC-NUT-013 con su id.
+- Eventos nutrition.plan.published (auditado como PUBLISH) y nutrition.plan.superseded (UPDATE de status). El plan
+  publicado entra en la línea de tiempo del expediente (NUTRITION_PLAN_PUBLISHED, RF-10).
+- Módulo tracking, mínimo:
+  - el consumidor tracking.plans lee el snapshot por NutritionApi.publishedPlan, guarda la copia en
+    active_plan_view y fija la meta de hoy en la fecha local del paciente, reemplazándola si ya existía;
+  - la copia solo avanza: un evento de un plan publicado antes, que llega tarde, no la pisa (compara publishedAt);
+  - es idempotente por processed_event;
+  - el trabajo tracking.daily-targets (a los 15 minutos de cada hora) crea la meta del día local que falta a cada
+    paciente con plan vigente, sin tocar la que ya existe. Nunca se reescriben días anteriores (RN-G03);
+  - lista las organizaciones con TenancyApi.organizationIds en el contexto de plataforma, como el vencimiento de
+    suscripciones.
+- La lectura del plan por la app del paciente (GET /me/...) llega con sus pantallas en P13; la RLS ya le deja leer su
+  active_plan_view y su meta diaria.
+Consecuencias:
+- La deuda «quién escribe tracking.daily_target» y «que active_plan_view compare el publishedAt del snapshot» queda
+  resuelta.
+- Notion al cerrar P9: 02 (NutritionApi, tracking.plans, el trabajo diario y los eventos), 05.2 (valid_to sin uso y
+  el snapshot) y la línea de tiempo (RF-10).
