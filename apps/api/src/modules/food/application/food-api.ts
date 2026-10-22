@@ -11,6 +11,8 @@ import {
 } from './plate-composition.js';
 import {
   FOOD_STORE,
+  type CatalogNutrient,
+  type ExchangeListRecord,
   type FoodRecord,
   type FoodStore,
   type FoodSummaryRecord,
@@ -51,6 +53,16 @@ export class FoodApi {
 
   foodsById(ids: readonly string[]): Promise<readonly FoodRecord[]> {
     return ids.length === 0 ? Promise.resolve([]) : this.foods.byIds([...new Set(ids)]);
+  }
+
+  /** El catálogo de nutrientes en el orden en que se muestran. */
+  nutrients(): Promise<readonly CatalogNutrient[]> {
+    return this.foods.nutrients();
+  }
+
+  /** Las listas de intercambio publicadas, con sus grupos (RN-E11). */
+  exchangeLists(): Promise<readonly ExchangeListRecord[]> {
+    return this.foods.exchangeLists();
   }
 
   /** Lo que aporta un plato; falla si un alimento no existe para la organización o una medida no es suya. */

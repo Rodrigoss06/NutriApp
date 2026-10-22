@@ -12,7 +12,12 @@ import { FOOD_NOT_FOUND } from '../../domain/food-errors.js';
 import type { FoodState } from '../../domain/food-state.js';
 import { FoodApi } from '../food-api.js';
 import type { PlateComposition, PlateItemInput } from '../plate-composition.js';
-import type { FoodRecord, FoodSummaryRecord } from '../ports/food.port.js';
+import type {
+  CatalogNutrient,
+  ExchangeListRecord,
+  FoodRecord,
+  FoodSummaryRecord,
+} from '../ports/food.port.js';
 
 /** El catálogo de alimentos para las pantallas, en transacciones de solo lectura (RN-I01). */
 @Injectable()
@@ -36,6 +41,14 @@ export class FoodQueries {
       const [food] = await this.foods.foodsById([id]);
       return food ? ok(food) : err(FOOD_NOT_FOUND);
     });
+  }
+
+  nutrients(context: SecurityContext): Promise<readonly CatalogNutrient[]> {
+    return this.uow.query(context, () => this.foods.nutrients());
+  }
+
+  exchangeLists(context: SecurityContext): Promise<readonly ExchangeListRecord[]> {
+    return this.uow.query(context, () => this.foods.exchangeLists());
   }
 
   compose(

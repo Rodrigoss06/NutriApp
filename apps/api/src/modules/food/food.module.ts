@@ -1,4 +1,5 @@
 import { Module } from '@nestjs/common';
+import { ExchangeListController } from './adapters/in/http/exchange-list.controller.js';
 import { FoodController } from './adapters/in/http/food.controller.js';
 import { TaferaCookingFactorsImport } from './adapters/in/imports/tafera-cooking-factors.import.js';
 import { TaferaMeasuresImport } from './adapters/in/imports/tafera-measures.import.js';
@@ -16,10 +17,10 @@ import { FoodQueries } from './application/queries/food.queries.js';
 
 /**
  * food (02 §2): catálogos de alimentos con su carga (TPCA 2017 y TAFERA 2016), búsqueda, alimentos propios de cada
- * organización y composición de un plato (RF-38, RF-20, RN-I01).
+ * organización, composición de un plato y listas de intercambio (RF-38, RF-20, RN-I01, RN-E11).
  */
 @Module({
-  controllers: [FoodController],
+  controllers: [FoodController, ExchangeListController],
   providers: [
     FoodApi,
     FoodQueries,

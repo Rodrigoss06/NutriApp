@@ -17,3 +17,4 @@ export * from './assessment/technical-error.js';
 export * from './assessment/results.js';
 export * from './nutrition/energy.js';
 export * from './food/catalog.js';
+export * from './food/exchange.js';

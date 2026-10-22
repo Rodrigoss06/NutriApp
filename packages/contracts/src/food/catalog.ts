@@ -51,6 +51,14 @@ export const foodNutrientSchema = z.object({
 });
 export type FoodNutrient = z.infer<typeof foodNutrientSchema>;
 
+/** GET /api/v1/foods/nutrients: el catálogo de nutrientes en su orden, con su código INFOODS y su unidad. */
+export const nutrientCatalogResponseSchema = z.object({
+  nutrients: z.array(
+    z.object({ code: z.string(), name: z.string(), unit: z.string(), core: z.boolean() }),
+  ),
+});
+export type NutrientCatalogResponse = z.infer<typeof nutrientCatalogResponseSchema>;
+
 /** Medida casera: grams es el peso neto, la parte comestible (RN-E12); grossGrams, el de compra. */
 export const householdMeasureSchema = z.object({
   id: z.uuid(),
@@ -70,12 +78,14 @@ export const cookingFactorSchema = z.object({
 });
 export type CookingFactor = z.infer<typeof cookingFactorSchema>;
 
-/** De dónde sale el alimento, con su edición y su licencia (RN-I02). */
+/**
+ * De dónde sale el alimento, con su edición (RN-I02). La licencia queda en la base: la app cita sus fuentes una sola
+ * vez, en «Acerca de» (ADR-055).
+ */
 export const foodSourceSchema = z.object({
   code: z.string(),
   name: z.string(),
   edition: z.string().nullable(),
-  license: z.string(),
 });
 
 /** GET /api/v1/foods/:id: el alimento con sus 22 nutrientes, sus medidas caseras y sus factores de cocción. */

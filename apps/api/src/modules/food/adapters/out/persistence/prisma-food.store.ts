@@ -4,6 +4,7 @@ import { ID_GENERATOR, type IdGenerator } from '@nutricoach/shared-kernel';
 import type { Db } from '../../../../../platform/index.js';
 import type {
   CatalogNutrient,
+  ExchangeListRecord,
   FoodRecord,
   FoodSearch,
   FoodStore,
@@ -88,13 +89,12 @@ export class PrismaFoodStore implements FoodStore {
         version: number;
         source_name: string;
         source_edition: string | null;
-        source_license: string;
       })[]
     >`
       SELECT f.id, f.name_es, f.source_code, f.source_food_code, g.name_es AS group_name, f.state,
              f.organization_id IS NOT NULL AS own, e.value_per_100g::float8 AS kcal, 0::float8 AS score,
              f.organization_id, f.edible_portion_pct::float8 AS edible_portion_pct, f.tags, f.version,
-             s.name AS source_name, s.edition AS source_edition, s.license AS source_license
+             s.name AS source_name, s.edition AS source_edition
       FROM food.food f
       JOIN food.source s ON s.code = f.source_code
       LEFT JOIN food.food_group g ON g.code = f.group_code
@@ -149,7 +149,6 @@ export class PrismaFoodStore implements FoodStore {
         code: food.source_code,
         name: food.source_name,
         edition: food.source_edition,
-        license: food.source_license,
       },
       nutrients: nutrients
         .filter((n) => n.food_id === food.id)
@@ -186,6 +185,56 @@ export class PrismaFoodStore implements FoodStore {
       { code: string; name_es: string; unit: NutrientUnit; is_core: boolean }[]
     >`SELECT code, name_es, unit, is_core FROM food.nutrient ORDER BY display_order`;
     return rows.map((r) => ({ code: r.code, name: r.name_es, unit: r.unit, core: r.is_core }));
+  }
+
+  async exchangeLists(): Promise<readonly ExchangeListRecord[]> {
+    const lists = await this.db.tx.$queryRaw<
+      {
+        id: string;
+        code: string;
+        name: string;
+        version: string;
+        provisional: boolean;
+        license_note: string | null;
+      }[]
+    >`
+      SELECT id, code, name, version, provisional, license_note
+      FROM food.exchange_list WHERE status = 'PUBLISHED'
+      ORDER BY provisional, name, version`;
+    if (lists.length === 0) return [];
+    const groups = await this.db.tx.$queryRaw<
+      {
+        exchange_list_id: string;
+        code: string;
+        name_es: string;
+        cho_g: number;
+        protein_g: number;
+        fat_g: number;
+        kcal: number;
+      }[]
+    >`
+      SELECT exchange_list_id, code, name_es, cho_g::float8 AS cho_g, protein_g::float8 AS protein_g,
+             fat_g::float8 AS fat_g, kcal::float8 AS kcal
+      FROM food.exchange_group WHERE exchange_list_id = ANY(${lists.map((l) => l.id)}::uuid[])
+      ORDER BY display_order, code`;
+    return lists.map((list) => ({
+      id: list.id,
+      code: list.code,
+      name: list.name,
+      version: list.version,
+      provisional: list.provisional,
+      note: list.license_note,
+      groups: groups
+        .filter((g) => g.exchange_list_id === list.id)
+        .map((g) => ({
+          code: g.code,
+          name: g.name_es,
+          choG: g.cho_g,
+          proteinG: g.protein_g,
+          fatG: g.fat_g,
+          kcal: g.kcal,
+        })),
+    }));
   }
 
   async nextOwnCode(organizationId: string): Promise<string> {

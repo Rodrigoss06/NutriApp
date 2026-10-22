@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { ApiError, errorMessage } from './problem';
+import { ApiError, errorMessage, problemList } from './problem';
 
 describe('06 §5 · mensajes de error en español', () => {
   it('un code conocido usa el texto de la web; uno desconocido, el título de la API', () => {
@@ -25,5 +25,20 @@ describe('06 §5 · mensajes de error en español', () => {
       /Código de referencia: req-123/,
     );
     expect(errorMessage(new TypeError('fetch failed'))).toMatch(/conexión/);
+  });
+});
+
+describe('NC-FOOD-001 · los problemas que detalla la API', () => {
+  it('se listan los textos de details.problems; sin ellos, nada', () => {
+    const invalid = new ApiError(422, {
+      code: 'NC-FOOD-001',
+      details: { problems: ['Proteínas, grasa y carbohidratos suman 105 g en 100 g.', 3] },
+    });
+
+    expect(problemList(invalid)).toEqual([
+      'Proteínas, grasa y carbohidratos suman 105 g en 100 g.',
+    ]);
+    expect(problemList(new ApiError(409, { code: 'NC-FOOD-004' }))).toEqual([]);
+    expect(problemList(new TypeError('fetch failed'))).toEqual([]);
   });
 });
