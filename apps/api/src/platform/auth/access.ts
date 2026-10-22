@@ -17,6 +17,9 @@ export const PERMISSIONS = {
   'patients.write': ['OWNER', 'ADMIN', 'PROFESSIONAL'],
   /** La auditoría de la organización la consulta solo el dueño (RF-06). */
   'audit.read': ['OWNER'],
+  /** Catálogos de alimentos y actividades: los globales se leen; los propios de la organización se editan (RN-I01). */
+  'catalog.read': ['OWNER', 'ADMIN', 'PROFESSIONAL'],
+  'catalog.write': ['OWNER', 'ADMIN', 'PROFESSIONAL'],
   /** El perfil profesional propio: profesión, colegiatura y título. */
   'profile.self': ['OWNER', 'ADMIN', 'PROFESSIONAL'],
 } as const satisfies Record<string, readonly MemberRole[]>;
