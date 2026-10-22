@@ -18,6 +18,7 @@ import {
   plateCompositionRequestSchema,
   type FoodDetail,
   type FoodListResponse,
+  type NutrientCatalogResponse,
   type PlateCompositionResponse,
 } from '@nutricoach/contracts';
 import { isErr, type DomainError, type SecurityContext } from '@nutricoach/shared-kernel';
@@ -113,6 +114,14 @@ export class FoodController {
         energyKcalPer100g: food.energyKcalPer100g,
       })),
     };
+  }
+
+  /** GET /api/v1/foods/nutrients: el catálogo de nutrientes, para el formulario de un alimento propio. */
+  @Get('nutrients')
+  @RequirePermission('catalog.read')
+  async nutrients(@Req() request: ContextualRequest): Promise<NutrientCatalogResponse> {
+    const nutrients = await this.queries.nutrients(contextOf(request));
+    return { nutrients: nutrients.map((nutrient) => ({ ...nutrient })) };
   }
 
   /** POST /api/v1/foods/composition: lo que aporta un plato (RN-E16). Solo calcula: vale en solo lectura. */

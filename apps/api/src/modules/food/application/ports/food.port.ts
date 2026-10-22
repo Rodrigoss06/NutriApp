@@ -38,7 +38,6 @@ export interface FoodRecord extends Omit<FoodSummaryRecord, 'score'> {
     readonly code: string;
     readonly name: string;
     readonly edition: string | null;
-    readonly license: string;
   };
   /** Los del catálogo, en su orden. */
   readonly nutrients: readonly FoodNutrientRecord[];
@@ -55,6 +54,28 @@ export interface FoodRecord extends Omit<FoodSummaryRecord, 'score'> {
     readonly cookingMethod: string;
     readonly cookedToRawFactor: number;
   }[];
+}
+
+/** Un grupo de una lista de intercambio: lo que aporta un intercambio (RN-E11). */
+export interface ExchangeGroupRecord {
+  readonly code: string;
+  readonly name: string;
+  readonly choG: number;
+  readonly proteinG: number;
+  readonly fatG: number;
+  readonly kcal: number;
+}
+
+/** Una lista de intercambio publicada, versionada, con sus grupos en orden (RN-E11). */
+export interface ExchangeListRecord {
+  readonly id: string;
+  readonly code: string;
+  readonly name: string;
+  readonly version: string;
+  /** Sin permiso de sus autores todavía (riesgo R4). */
+  readonly provisional: boolean;
+  readonly note: string | null;
+  readonly groups: readonly ExchangeGroupRecord[];
 }
 
 export interface FoodSearch {
@@ -80,6 +101,8 @@ export interface FoodStore {
   search(query: FoodSearch): Promise<readonly FoodSummaryRecord[]>;
   byIds(ids: readonly string[]): Promise<readonly FoodRecord[]>;
   nutrients(): Promise<readonly CatalogNutrient[]>;
+  /** Las publicadas, globales y de la organización. */
+  exchangeLists(): Promise<readonly ExchangeListRecord[]>;
   /** El siguiente código de alimento propio de la organización: 1, 2, 3… */
   nextOwnCode(organizationId: string): Promise<string>;
   insertOwn(food: NewOwnFood): Promise<void>;

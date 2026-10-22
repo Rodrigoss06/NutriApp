@@ -24,7 +24,7 @@ function food(id: string, name: string, values: Record<string, number | null>): 
     ediblePortionPct: 100,
     tags: [],
     version: 0,
-    source: { code: 'TPCA_2017', name: 'TPCA', edition: null, license: 'Pendiente' },
+    source: { code: 'TPCA_2017', name: 'TPCA', edition: null },
     nutrients: NUTRIENTS.map((n) => ({
       ...n,
       nutrientCode: n.code,

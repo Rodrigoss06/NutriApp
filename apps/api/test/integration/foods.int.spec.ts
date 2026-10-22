@@ -136,6 +136,32 @@ describe('RN-I03 · detalle del alimento', () => {
     expect(rice).not.toHaveProperty('sourceFoodCode');
   });
 
+  it('ADR-055: la fuente viaja con su edición y sin textos legales; la licencia limpia queda en la base (RN-I02)', async () => {
+    const rice = (await detail(await tpca('A2'))) as Detail & { source: object };
+    const [source] = await owner<{ license: string }>(
+      `SELECT license FROM food.source WHERE code = 'TPCA_2017'`,
+    );
+
+    expect(rice.source).toEqual({
+      code: 'TPCA_2017',
+      name: 'Tablas peruanas de composición de alimentos',
+      edition: '10.ª edición, 2017 (ISBN 978-612-310-117-6)',
+    });
+    expect(source?.license).toBe(
+      'Uso referencial, con atribución de la fuente en la app (ADR-055)',
+    );
+  });
+
+  it('el catálogo de nutrientes, en su orden, para el formulario de un alimento propio', async () => {
+    const response = await harness.get('/foods/nutrients', cookie);
+    const { nutrients } = response.body as { nutrients: { code: string; core: boolean }[] };
+
+    expect(response.status).toBe(200);
+    expect(nutrients).toHaveLength(22);
+    expect(nutrients[0]).toEqual({ code: 'ENERC_KCAL', name: 'Energía', unit: 'kcal', core: true });
+    expect(nutrients.filter((n) => n.core).map((n) => n.code)).toContain('FIBTG');
+  });
+
   it('las medidas caseras y los factores de cocción de la TAFERA (RN-E12)', async () => {
     const rice = await detail(await tpca('A3'));
 
@@ -284,5 +310,31 @@ describe('RN-I01 · alimentos propios de la organización', () => {
     );
     expect(rows.map((r) => r.action)).toEqual(['CREATE', 'UPDATE']);
     expect(rows[1]?.fields).toEqual(['name_es']);
+  });
+});
+
+describe('RN-E11 · listas de intercambio', () => {
+  it('la lista DEMO del motor, provisional (riesgo R4), con sus 6 grupos en orden y lo que aporta cada intercambio', async () => {
+    const response = await harness.get('/exchange-lists', cookie);
+    const { lists } = response.body as {
+      lists: { code: string; provisional: boolean; note: string | null; groups: object[] }[];
+    };
+    const demo = lists.find((list) => list.code === 'DEMO');
+
+    expect(response.status).toBe(200);
+    expect(demo).toMatchObject({
+      name: 'Lista de demostración',
+      version: '1.0.0',
+      provisional: true,
+      note: 'Provisional: valores de demostración del motor, no de una lista oficial',
+    });
+    expect(demo?.groups).toEqual([
+      { code: 'VEG', name: 'Verduras', choG: 5, proteinG: 2, fatG: 0, kcal: 28 },
+      { code: 'FRU', name: 'Frutas', choG: 15, proteinG: 0, fatG: 0, kcal: 60 },
+      { code: 'MILK', name: 'Lácteos', choG: 12, proteinG: 8, fatG: 0, kcal: 80 },
+      { code: 'STA', name: 'Almidones', choG: 15, proteinG: 3, fatG: 1, kcal: 81 },
+      { code: 'MEAT', name: 'Carnes magras', choG: 0, proteinG: 7, fatG: 2, kcal: 46 },
+      { code: 'FAT', name: 'Grasas', choG: 0, proteinG: 0, fatG: 5, kcal: 45 },
+    ]);
   });
 });
