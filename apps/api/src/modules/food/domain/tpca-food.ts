@@ -1,5 +1,10 @@
 import { err, ok, type Result } from '@nutricoach/shared-kernel';
-import type { CatalogFood, NutrientValue } from './catalog-food.js';
+import {
+  MAX_PER_100G,
+  type CatalogFood,
+  type NutrientUnit,
+  type NutrientValue,
+} from './catalog-food.js';
 import { stateFromName } from './food-state.js';
 
 /** Las 22 columnas de la TPCA 2017 en su orden, con el identificador INFOODS de su Anexo 1 (ADR-052). */
@@ -64,9 +69,7 @@ const IMPUTED_SOURCES: readonly string[] = [
   'FAO',
 ];
 
-type Unit = 'kcal' | 'kJ' | 'g' | 'mg' | 'µg';
-
-const UNIT: Readonly<Record<TpcaNutrient, Unit>> = {
+const UNIT: Readonly<Record<TpcaNutrient, NutrientUnit>> = {
   ENERC_KCAL: 'kcal',
   ENERC_KJ: 'kJ',
   WATER: 'g',
@@ -89,18 +92,6 @@ const UNIT: Readonly<Record<TpcaNutrient, Unit>> = {
   FOL: 'µg',
   NA: 'mg',
   K: 'mg',
-};
-
-/**
- * Lo que cabe en 100 g, para detectar columnas corridas al preparar el CSV: 100 g de grasa dan 900 kcal (3766 kJ) y
- * ninguna masa pasa de los 100 g. Los µg los limita el tipo de la columna. No son límites clínicos.
- */
-const MAX_PER_100G: Readonly<Record<Unit, number>> = {
-  kcal: 900,
-  kJ: 3766,
-  g: 100,
-  mg: 100_000,
-  µg: 99_999_999,
 };
 
 const NUMBER = /^\d+(?:\.\d+)?$/;

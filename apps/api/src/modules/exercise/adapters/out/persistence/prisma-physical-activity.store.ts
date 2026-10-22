@@ -28,14 +28,23 @@ const toRecord = (row: Row): PhysicalActivityRecord => ({
 export class PrismaPhysicalActivityStore implements PhysicalActivityStore {
   constructor(@Inject(TransactionHost) private readonly db: Db) {}
 
+  /**
+   * Sin tildes ni mayúsculas. Entra la actividad que tiene todas las palabras del término o se le parece palabra por
+   * palabra (pg_trgm); primero las que contienen el término entero, después las más parecidas.
+   */
   async search(text: string | null): Promise<readonly PhysicalActivityRecord[]> {
     const rows = await this.db.tx.$queryRaw<Row[]>`
-      SELECT code, major_heading, description_es, met::text AS met, source_version
-      FROM exercise.physical_activity
-      WHERE ${text}::text IS NULL
-         OR app.unaccent_immutable(lower(description_es))
-            LIKE '%' || app.unaccent_immutable(lower(${text}::text)) || '%'
-      ORDER BY description_es
+      WITH q AS (SELECT app.unaccent_immutable(lower(${text}::text)) AS t),
+           a AS (SELECT *, app.unaccent_immutable(lower(description_es)) AS search_text
+                 FROM exercise.physical_activity)
+      SELECT a.code, a.major_heading, a.description_es, a.met::text AS met, a.source_version
+      FROM a CROSS JOIN q
+      WHERE q.t IS NULL
+         OR NOT EXISTS (SELECT 1 FROM unnest(string_to_array(q.t, ' ')) AS word
+                        WHERE word <> '' AND a.search_text NOT LIKE '%' || word || '%')
+         OR q.t <% a.search_text
+      ORDER BY coalesce(a.search_text LIKE '%' || q.t || '%', false) DESC,
+               coalesce(word_similarity(q.t, a.search_text), 0) DESC, a.description_es
       LIMIT 50`;
     return rows.map(toRecord);
   }

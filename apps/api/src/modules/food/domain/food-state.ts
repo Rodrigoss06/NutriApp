@@ -13,3 +13,15 @@ export function stateFromName(name: string): FoodState {
   const words = name.toLocaleLowerCase('es').split(/[^\p{L}]+/u);
   return words.some((word) => COOKING.test(word)) ? 'COOKED' : 'RAW';
 }
+
+const RAW = /^crud[oa]s?$/;
+
+/**
+ * El estado que pide un término de búsqueda: COOKED si nombra una cocción («arroz cocido»), RAW si dice crudo; si no
+ * dice nada, null y la búsqueda no prefiere ninguno.
+ */
+export function stateHint(term: string): FoodState | null {
+  const words = term.toLocaleLowerCase('es').split(/[^\p{L}]+/u);
+  if (words.some((word) => COOKING.test(word))) return 'COOKED';
+  return words.some((word) => RAW.test(word)) ? 'RAW' : null;
+}

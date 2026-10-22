@@ -1,6 +1,6 @@
 # STATUS — NutriCoach v1.0
 
-Actualizado: 2026-10-21 · Por: Rodrigo, con Claude Code
+Actualizado: 2026-10-22 · Por: Rodrigo, con Claude Code
 Inicio del proyecto: POR CONFIRMAR (día siguiente al Pago 1) · Semana actual: 0 de 9
 Próxima demo: Demo 1 · Base y evaluación · semana 2
 
@@ -15,7 +15,7 @@ Próxima demo: Demo 1 · Base y evaluación · semana 2
 | P5 Identidad y organizaciones | ✅ | Rodrigo | #6, #7, #8 | 4 criterios en verde; despliegue a staging pendiente de P4 |
 | P6 Pacientes e historia clínica | ✅ | Rodrigo | #10, #11, #12 | 4 criterios en verde (E2E en escritorio y celular, e integración); despliegue a staging pendiente de P4 |
 | P7 Evaluación y cálculo, Demo 1 | ✅ | Rodrigo | #14 a #18 | E2E de la Demo 1 en escritorio y celular (G-01 a G-17), ninguna cifra sin método, recálculo con SUPERSEDED y guion; RF-18 adelantado. Etiqueta v0.1.0 (abf0d42) y Notion sincronizado; staging, pendiente de P4 |
-| P8 Datos maestros de alimentos | 🟨 | Rodrigo | #21 | PR 1 fusionado (importador, TPCA 2017 y Compendium 2024); PR 2 (TAFERA) listo en local; faltan API y pantallas |
+| P8 Datos maestros de alimentos | 🟨 | Rodrigo | #21, #22 | PR 1 (importador, TPCA 2017 y Compendium 2024) y PR 2 (TAFERA) fusionados; PR 3 (búsqueda, alimentos propios y composición) listo en local; faltan las pantallas |
 | P9 Dieta por intercambios | ⬜ | Rodrigo | | |
 | P10 Composición, menú y recetario | ⬜ | Rodrigo | | |
 | P11 Fichas PDF, Demo 2 | ⬜ | Rodrigo | | |
@@ -30,7 +30,16 @@ Leyenda: ⬜ pendiente · 🟨 en curso · ✅ terminado · ⛔ bloqueado
 ## En curso
 - P8, PR 1 fusionado (#21, d7beee2): importador genérico de catálogos (RN-I04), TPCA 2017 (928 alimentos) y
   Compendium 2024 (560 actividades), CLI catalog:load y lista DEMO provisional; ADR-052.
-- P8, PR 2 en feat/food-tafera, sobre main, listo en local (ADR-053):
+- P8, PR 3 en feat/food-busqueda, sobre main, listo en local (ADR-054):
+  - búsqueda de alimentos y de actividades sin tildes, por todas las palabras o por parecido (pg_trgm); «platano» en
+    unos 4 ms con la TPCA cargada;
+  - detalle del alimento con sus 22 nutrientes («sin dato» como null con MISSING), medidas y factores de la TAFERA;
+  - FoodApi pública con resolve (candidatos con puntaje y el estado del término primero) y la composición de un plato
+    con RECIPE_NUTRIENTS, en gramos o medidas caseras (RF-20 adelantado);
+  - alimentos propios con If-Match, auditados, y permisos catalog.read y catalog.write;
+  - migración 202610220000_food_own: food.food.version y borrado de las medidas propias.
+  - Sigue el PR 4 (pantallas).
+- P8, PR 2 fusionado (#22, 34b8738) (ADR-053):
   - extractor de la TAFERA 2016 con enlace a la TPCA 2017 por perfil de nutrientes y nombre, y decisiones a mano con
     su motivo (LINKS y FACTOR_LINKS);
   - 933 medidas caseras de 194 alimentos, con peso neto (parte comestible) y bruto, y 213 factores de cocido a crudo
@@ -38,7 +47,6 @@ Leyenda: ⬜ pendiente · 🟨 en curso · ✅ terminado · ⛔ bloqueado
   - migración 202610210000_food_tafera: fuente TAFERA_2016, columnas de origen y peso bruto en household_measure y
     tabla food.cooking_factor con la RLS de catálogo;
   - importadores TAFERA_MEASURES y TAFERA_COOKING_FACTORS; catalog:load los carga después de la TPCA.
-  - Siguen PR 3 (búsqueda, composición de un plato y alimentos propios) y PR 4 (pantallas).
 - Notion: el método de entrenamiento de Jeremy (plantilla V3, sin reloj) quedó documentado en la página 07 y en 03
   (RN-F13 a RN-F17, RN-G11, RN-G14 a RN-G17, G-29 a G-40), 04 (RF-25, RF-26, RF-28, RF-29, RF-34, RF-41 a RF-43),
   05.2 (sección «Entrenamiento según la plantilla V3»), prompts P12 a P14, Proyecto y Documento técnico (aprobado por
@@ -51,8 +59,10 @@ Leyenda: ⬜ pendiente · 🟨 en curso · ✅ terminado · ⛔ bloqueado
 ## Siguiente paso
 - Antes de la Demo 1: la matriz manual de navegadores (RNF-19: Chrome, Edge, Safari y Firefox; la E2E cubre Chromium
   y WebKit) y, el mismo día, base local limpia y semilla («Antes de empezar» del guion). La demo es en local
-- Revisar y fusionar el PR 2 de P8 (TAFERA)
-- P8 PR 3: búsqueda de alimentos por trigramas, composición de un plato y alimentos propios de la organización
+- Revisar y fusionar el PR 3 de P8 (búsqueda, alimentos propios y composición)
+- P8 PR 4: pantallas de Biblioteca (alimentos, actividades y listas), alimento propio, «Armar un plato» y buscador de
+  actividades en la prescripción energética. Incluye la atribución de fuentes en «Acerca de» o en los Términos
+  (ADR-055) y ningún logo del INS, MINSA ni CENAN
 - Cada base nueva necesita los catálogos: `pnpm --filter api build && pnpm catalog:load plataforma@demo.example.com`
   en local; en staging y producción, con el correo de su PLATFORM_ADMIN
 - db:seed carga el caso Luis: sus resultados aparecen cuando corre el worker
@@ -76,8 +86,9 @@ Leyenda: ⬜ pendiente · 🟨 en curso · ✅ terminado · ⛔ bloqueado
 - [ ] Método de entrenamiento de Jeremy: preguntas P-01 a P-14 (Notion 07 §15). Mientras no respondan, P12 a P14 se
   construyen con la propuesta de cada una
 - [ ] R4: permiso de uso de las listas Dextre y ADA
-- [ ] ⚠️ TPCA 2017: autorización del INS para reproducirla. Se usa mientras se tramita; si no llega, plan B: USDA
-  FoodData Central (decisiones de Rodrigo, 2026-10-20)
+- [x] TPCA 2017: Rodrigo, tras consultar con un abogado, autoriza usarla sin la autorización del INS con tres
+  condiciones (ADR-055): la API no devuelve el código del alimento en la TPCA, el texto «de referencia» en vez de
+  «oficiales» y la atribución de fuentes en «Acerca de» o en los Términos (PR 4). Sin logos ni aval del Estado
 - [ ] Captura de un plato por foto: la visión espera un acuerdo con Jeremy (un modelo propio también es IA, regla 10)
 - [ ] Textos legales revisados por el abogado del cliente, en lenguaje claro: desde los 14 años los acepta el propio
   paciente (ADR-042)
@@ -114,9 +125,8 @@ Leyenda: ⬜ pendiente · 🟨 en curso · ✅ terminado · ⛔ bloqueado
   87.5 a 125 y wght 400 a 700) con next/font/local
 - La E2E de celular corre en la imagen de Playwright (docker, mcr.microsoft.com/playwright:v1.63.0-noble): en este
   equipo WebKit no tiene sus dependencias
-- Búsqueda de actividades con LIKE, orden alfabético y LIMIT 50, y la pantalla de energía muestra 10: con las 560 del
-  Compendium, «correr» da 80 y empieza por «Caminar en cinta de correr». El guion y la E2E buscan «correr a 6». P8
-  PR 3 pasa la búsqueda a trigramas con orden por similitud y PR 4 rehace el buscador
+- La pantalla de energía muestra 10 actividades de las 50 que da la búsqueda. El guion y la E2E buscan «correr a 6»,
+  que el PR 3 deja entre las primeras; el PR 4 rehace el buscador
 
 ## Registro de sesiones (solo las 5 últimas)
 - 2026-10-21 · P8 (PR 2) · respuesta a Jeremy sobre periodización y lectura de su paquete operativo (plantilla V3 y

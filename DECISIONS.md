@@ -791,3 +791,63 @@ Consecuencias:
 - 05.2 de Notion: household_measure y cooking_factor (/notion-sync al cerrar P8).
 - Los enlaces dependen de la TPCA 2017, cuya licencia está pendiente: con el plan B (USDA FoodData Central) se rehacen.
 - Si llega la TPCA 2009, sus códigos permitirían verificar los enlaces por perfil.
+
+## ADR-054 · Búsqueda de alimentos, alimentos propios y composición de un plato — aceptada (2026-10-22)
+Contexto: P8 pide buscar alimentos sin tildes en menos de 100 ms con el catálogo completo y que cada organización cree
+los suyos (RN-I01). El plan aprobado de P8 adelanta además la composición de un plato (RF-20) y FoodApi.resolve, que
+usarán el registro a mano (P13) y, si se contrata, la captura por foto.
+Decisión:
+- Búsqueda sobre food.food.search_text, sin tildes ni mayúsculas, con pg_trgm:
+  - entra el alimento que tiene todas las palabras del término, en cualquier orden, o que se le parece palabra por
+    palabra (umbral 0.6 de pg_trgm);
+  - el orden: primero los que empiezan con el término, después los que lo contienen entero, los del estado pedido, los
+    más parecidos y los de nombre más corto;
+  - con la TPCA cargada tarda unos 4 ms.
+- Las actividades del Compendium siguen la misma regla, con las que contienen el término entero primero: «correr a 6»
+  sigue dando la actividad de la Demo 1 entre las primeras.
+- FoodApi en la API pública de food:
+  - search;
+  - resolve: candidatos con su parecido de 0 a 1; si el término dice el estado («arroz cocido», «pescado crudo»), los
+    de ese estado van primero;
+  - foodsById y compose.
+- Composición de un plato: POST /foods/composition, sin guardar nada.
+  - Usa el método RECIPE_NUTRIENTS del motor como una receta de una porción, con su versión y el hash de los insumos
+    (RN-D01).
+  - Cada ingrediente va en gramos de parte comestible o como medida casera por cantidad (RN-E12).
+  - Un total es «sin dato» si le falta a alguno de sus alimentos (RN-I03), y lleva el aviso de que la 1.0 no aplica
+    factores de retención.
+  - Como solo calcula, vale con la organización en solo lectura.
+- Alimentos propios:
+  - fuente ORG con un código correlativo por organización (platform.counter «food»);
+  - guardan todos los nutrientes del catálogo, y lo que no se envía queda MISSING;
+  - se rechaza lo que no cabe en 100 g: un nutriente sobre su máximo, o proteínas, grasa y carbohidratos que sumen más
+    de 100 g, con 1 g de margen por el redondeo de una etiqueta. También un alimento sin ningún nutriente y dos medidas
+    con el mismo nombre;
+  - se editan con If-Match (columna nueva food.food.version) y editar reemplaza sus medidas. La política de borrado
+    nueva de household_measure solo alcanza a las de la propia organización;
+  - los eventos food.food.created y food.food.updated se auditan (RN-B03).
+- Permisos nuevos catalog.read y catalog.write para dueño, administrador y profesional. La búsqueda de actividades pasa
+  a catalog.read.
+Consecuencias:
+- Notion: 05.2 (food.food.version y la política de borrado de las medidas), 02 (FoodApi) y 04 (RF-20 adelantado en
+  parte). Van en el /notion-sync al cerrar P8.
+- El PR 4 hace las pantallas: Biblioteca, alimento propio, «Armar un plato» y el buscador de actividades.
+
+## ADR-055 · Uso de la TPCA 2017 sin autorización expresa del INS — aceptada (2026-10-22)
+Contexto: la TPCA 2017 dice «Prohibida la reproducción total o parcial de esta obra por cualquier medio sin
+autorización del Instituto Nacional de Salud». ADR-052 la cargó mientras se tramitaba esa autorización, con USDA
+FoodData Central como plan B. Rodrigo lo revisó con un abogado y autorizó un camino que no la necesita.
+Decisión (Rodrigo, 2026-10-22, tras consultar con un abogado):
+- La API pública no devuelve el código del alimento en su fuente (sourceFoodCode). Queda dentro del sistema: en los
+  CSV de seeds/, en la base y en los enlaces de la TAFERA. Los 14 grupos y los nombres de los alimentos no cambian.
+- Ningún texto de la app llama «oficiales» a las tablas: el error NC-FOOD-003 dice «Los alimentos de referencia no se
+  editan».
+- La app cita sus fuentes en «Acerca de» o en los Términos y Condiciones. La línea llega con el PR de pantallas de P8
+  y nombra solo las fuentes que de verdad se cargan: TPCA y TAFERA (INS/CENAN) y el Compendium 2024.
+- Ningún logo del INS, MINSA ni CENAN, y ninguna frase de aval o patrocinio del Estado: es un desarrollo independiente
+  que toma fuentes públicas.
+Consecuencias:
+- Deja de ser necesaria la autorización del INS y el plan B de USDA FoodData Central queda sin uso.
+- food.source.license de TPCA_2017 todavía dice «Autorización pendiente» y el detalle del alimento lo devuelve: se
+  actualiza con una migración de datos cuando se decida el texto.
+- Notion: el riesgo de la licencia y RN-I02 (/notion-sync al cerrar P8).

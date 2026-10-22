@@ -13,7 +13,7 @@ export class PhysicalActivityController {
   constructor(private readonly queries: ActivityQueries) {}
 
   @Get()
-  @RequirePermission('patients.read')
+  @RequirePermission('catalog.read')
   async search(
     @Req() request: ContextualRequest,
     @Query('q') text: string | undefined,

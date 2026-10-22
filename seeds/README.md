@@ -27,9 +27,10 @@ Alimentación y Nutrición; ISBN 978-612-310-117-6). PDF oficial de 146 páginas
 db18470f2651ba198db806fe45bf7f04e30d1f62783f8a88b9755c2ad42c25d7, de
 https://lamejorreceta.ins.gob.pe/sites/default/files/2020-12/tablas-peruanas-QR_0.pdf
 
-⚠️ **Licencia:** la publicación dice «Prohibida la reproducción total o parcial de esta obra por cualquier medio sin
-autorización del Instituto Nacional de Salud». Se carga mientras se tramita esa autorización; si no llega, el plan B
-es USDA FoodData Central, de dominio público (decisiones de Rodrigo, 2026-10-20).
+**Licencia:** la publicación dice «Prohibida la reproducción total o parcial de esta obra por cualquier medio sin
+autorización del Instituto Nacional de Salud». Tras consultar con un abogado, Rodrigo decidió usarla sin esa
+autorización con tres condiciones (ADR-055): la API no devuelve el código del alimento en la TPCA, la app cita las
+fuentes en «Acerca de» o en los Términos y no usa logos del INS, MINSA ni CENAN ni afirma un aval del Estado.
 
 - 928 alimentos en 14 grupos (A:160 B:125 C:142 D:41 E:90 F:103 G:26 H:16 J:15 K:7 L:29 Q:8 T:85 U:81). El grupo S,
   942 preparaciones del INEI, queda fuera por ahora (decisión de Rodrigo, 2026-10-20).
@@ -60,8 +61,7 @@ SHA-256 b25e805bd2e7eb7116cf7802b385cd7e3f0a7c06ee9d887e4a7f37b71c89127b, de
 https://lamejorreceta.ins.gob.pe/sites/default/files/2020-12/TAFERA%202016%20OK%20final.pdf
 
 **Licencia:** «Se autoriza su reproducción total o parcial, siempre y cuando se cite la fuente.» Sus medidas apuntan a
-alimentos de la TPCA 2017, cuya autorización sigue pendiente: si se cambia de tabla (plan B, USDA FoodData Central),
-los enlaces se rehacen.
+alimentos de la TPCA 2017: si algún día se cambia de tabla, los enlaces se rehacen.
 
 - **Medidas** (módulo I, páginas 14 a 74): 933 de las 1027 medidas caseras, de 194 alimentos de la TPCA 2017.
   Columnas: `codigo,codigo_tpca,alimento,unidad,medida`, los pesos `peso_bruto_g,peso_neto_g`, y

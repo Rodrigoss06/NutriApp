@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { stateFromName } from './food-state.js';
+import { stateFromName, stateHint } from './food-state.js';
 
 describe('RN-E12 · estado del alimento según su nombre oficial', () => {
   it('cocido cuando el nombre dice cómo se coció', () => {
@@ -22,5 +22,15 @@ describe('RN-E12 · estado del alimento según su nombre oficial', () => {
   it('mira palabras enteras: «cocido» dentro de otra palabra no cuenta', () => {
     expect(stateFromName('Cocidita')).toBe('RAW');
     expect(stateFromName('Asadero')).toBe('RAW');
+  });
+});
+
+describe('RN-E12 · estado que pide un término de búsqueda', () => {
+  it('cocido si el término nombra una cocción; crudo si lo dice; si no, ninguno', () => {
+    expect(stateHint('arroz cocido')).toBe('COOKED');
+    expect(stateHint('Papa sancochada')).toBe('COOKED');
+    expect(stateHint('pescado crudo')).toBe('RAW');
+    expect(stateHint('Avena, hojuela cruda')).toBe('RAW');
+    expect(stateHint('platano')).toBeNull();
   });
 });
