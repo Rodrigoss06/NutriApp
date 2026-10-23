@@ -12,17 +12,18 @@
 :root {
   --brand-primary: #0f766e;
   --brand-primary-foreground: #ffffff;
-  --brand-primary-text: #0f766e;
+  --brand-primary-text: #0f746c;
   --brand-primary-border: #0f766e;
   --brand-secondary: #d97706;
   --brand-secondary-foreground: #000000;
-  --brand-secondary-text: #a95d05;
-  --brand-secondary-border: #d57506;
+  --brand-secondary-text: #9c5604;
+  --brand-secondary-border: #c86d06;
 
   /*
    * Neutros. El papel (--background) es el fondo de las páginas; las tarjetas y los campos van en blanco (--card).
    * Tinta 14.8:1 y secundario 6.7:1 sobre el papel; bordes de campos 4.0:1 (WCAG 1.4.11). El texto de marca se
-   * oscurece contra el papel (PAPER en brand-tokens.ts), así cumple también sobre blanco.
+   * oscurece contra --muted, el fondo claro más oscuro (DARKEST_SURFACE en brand-tokens.ts): así cumple también en el
+   * hover, sobre el papel y sobre blanco.
    */
   --background: #f3f5f4;
   --card: #ffffff;

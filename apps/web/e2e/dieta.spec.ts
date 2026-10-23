@@ -150,15 +150,6 @@ async function recordTab(page: Page, name: string): Promise<void> {
     .click();
 }
 
-/**
- * axe sobre la pantalla en reposo: con el puntero encima, el hover del botón secundario baja el contraste del texto de
- * marca (pendiente del sistema de diseño, fuera de P9).
- */
-async function violations(page: Page) {
-  await page.mouse.move(0, 0);
-  return seriousViolations(page);
-}
-
 const saved = async (page: Page) => {
   await page.getByRole('button', { name: 'Guardar borrador' }).click();
   await expect(page.getByText('Guardado', { exact: true })).toBeVisible();
@@ -179,7 +170,7 @@ test.describe('P9 · Dieta por intercambios', () => {
       await expect(page.getByText('Todavía no hay planes')).toBeVisible();
       await page.getByRole('link', { name: 'Nuevo plan' }).click();
       await expect(page.getByText('Lista provisional')).toBeVisible();
-      expect(await violations(page)).toEqual([]);
+      expect(await seriousViolations(page)).toEqual([]);
       await page.getByRole('button', { name: 'Crear borrador' }).click();
       await page.waitForURL(/\/dieta\/[0-9a-f-]{36}$/);
     });
@@ -191,7 +182,7 @@ test.describe('P9 · Dieta por intercambios', () => {
       }
       await page.getByRole('button', { name: 'Usar 2,500 ml (EFSA 2010)' }).click();
       await expect(page.getByLabel('Meta de hidratación (ml por día)')).toHaveValue('2500');
-      expect(await violations(page)).toEqual([]);
+      expect(await seriousViolations(page)).toEqual([]);
     });
 
     await test.step('2 · G-18: 4 verduras, 3 frutas y 3 lácteos dan 6, 16 y 3 (RN-E08, RN-E10)', async () => {
@@ -221,7 +212,7 @@ test.describe('P9 · Dieta por intercambios', () => {
         await expect(row).toContainText(pct);
         await expect(row).toContainText('En rango');
       }
-      expect(await violations(page)).toEqual([]);
+      expect(await seriousViolations(page)).toEqual([]);
       await saved(page);
     });
 
@@ -248,7 +239,7 @@ test.describe('P9 · Dieta por intercambios', () => {
       await expect(page.getByRole('list', { name: 'Lo que falta para publicar' })).toContainText(
         'Desayuno: falta al menos un alimento permitido de Verduras (RN-G05).',
       );
-      expect(await violations(page)).toEqual([]);
+      expect(await seriousViolations(page)).toEqual([]);
       await saved(page);
     });
 
@@ -273,7 +264,7 @@ test.describe('P9 · Dieta por intercambios', () => {
       await expect(page.getByRole('region', { name: 'Hidratación e indicaciones' })).toContainText(
         '2,500 ml',
       );
-      expect(await violations(page)).toEqual([]);
+      expect(await seriousViolations(page)).toEqual([]);
 
       await recordTab(page, 'Línea de tiempo');
       await expect(page.getByRole('cell', { name: 'Plan nutricional publicado' })).toBeVisible();
@@ -283,7 +274,7 @@ test.describe('P9 · Dieta por intercambios', () => {
     await test.step('versión nueva: un borrador con lo mismo; pedirla otra vez abre el mismo (RN-E15)', async () => {
       await recordTab(page, 'Dieta');
       await expect(page.getByRole('row', { name: /Versión 1/ })).toContainText('Vigente');
-      expect(await violations(page)).toEqual([]);
+      expect(await seriousViolations(page)).toEqual([]);
       await page.getByRole('link', { name: 'Versión 1' }).click();
       await page.waitForURL(/\/dieta\/[0-9a-f-]{36}$/);
       const published = page.url();

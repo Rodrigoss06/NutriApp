@@ -3,12 +3,14 @@ import {
   brandCss,
   brandTokens,
   contrastRatio,
+  DARKEST_SURFACE,
   DEFAULT_BRAND,
-  PAPER,
   parseBrand,
 } from './brand-tokens';
 
 const WHITE = '#ffffff';
+/** El papel de las páginas (--background). */
+const PAPER = '#f3f5f4';
 
 describe('WCAG 1.4.3 y 1.4.11 · tokens de marca accesibles con cualquier color del cliente', () => {
   it('calcula el contraste WCAG: negro sobre blanco es 21:1 y un color consigo mismo 1:1', () => {
@@ -18,20 +20,25 @@ describe('WCAG 1.4.3 y 1.4.11 · tokens de marca accesibles con cualquier color 
   });
 
   it.each(['#0F766E', '#FFE600', '#1A1A2E', '#D97706', '#FFFFFF', '#000000', '#7C3AED', '#22C55E'])(
-    'con %s: texto sobre el color ≥ 4.5, texto de marca sobre el papel y el blanco ≥ 4.5, borde y foco ≥ 3',
+    'con %s: texto sobre el color ≥ 4.5, texto de marca sobre --muted, el papel y el blanco ≥ 4.5, borde y foco ≥ 3',
     (hex) => {
       const tokens = brandTokens(hex);
 
       expect(contrastRatio(tokens.foreground, tokens.base)).toBeGreaterThanOrEqual(4.5);
-      for (const surface of [PAPER, WHITE]) {
+      for (const surface of [DARKEST_SURFACE, PAPER, WHITE]) {
         expect(contrastRatio(tokens.text, surface)).toBeGreaterThanOrEqual(4.5);
         expect(contrastRatio(tokens.border, surface)).toBeGreaterThanOrEqual(3);
       }
     },
   );
 
-  it('no cambia un color que ya cumple: el primario provisional se usa tal cual como texto', () => {
-    expect(brandTokens('#0F766E').text).toBe('#0f766e');
+  it('no cambia un color que ya cumple: un azul noche se usa tal cual como texto', () => {
+    expect(brandTokens('#1A1A2E').text).toBe('#1a1a2e');
+  });
+
+  it('el primario provisional se oscurece un paso para leerse en el hover del botón secundario (--muted)', () => {
+    expect(contrastRatio(DEFAULT_BRAND.primary, DARKEST_SURFACE)).toBeLessThan(4.5);
+    expect(brandTokens(DEFAULT_BRAND.primary).text).toBe('#0f746c');
   });
 
   it('oscurece lo justo: el amarillo extremo se vuelve un texto legible y lleva texto negro encima', () => {
@@ -39,7 +46,7 @@ describe('WCAG 1.4.3 y 1.4.11 · tokens de marca accesibles con cualquier color 
 
     expect(yellow.foreground).toBe('#000000');
     expect(yellow.text).not.toBe('#ffe600');
-    expect(contrastRatio(yellow.text, WHITE)).toBeLessThan(5.5);
+    expect(contrastRatio(yellow.text, DARKEST_SURFACE)).toBeLessThan(4.8);
   });
 
   it('el ámbar provisional no sirve como texto sobre blanco; su variante oscurecida sí', () => {
