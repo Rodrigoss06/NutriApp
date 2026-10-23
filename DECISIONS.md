@@ -1006,8 +1006,8 @@ Decisión:
   macronutriente que define al grupo por 100 g del alimento × 100, redondeado a gramos enteros; la fila muestra la
   cuenta. Sin el dato no hay sugerencia (RN-I03). No va en el motor porque no es un resultado guardado ni lleva método:
   la porción es la que escribe el profesional. Los carbohidratos son los totales de la TPCA (CHOCDF), los que la app
-  muestra como «Carbohidratos», y GET del plan trae los nutrientes principales de cada alimento permitido (los mismos
-  del snapshot).
+  muestra como «Carbohidratos», no los disponibles (CHOAVL): lo decidió Rodrigo (2026-10-22). GET del plan trae los
+  nutrientes principales de cada alimento permitido (los mismos del snapshot).
 - Historial en /dieta: cada versión con su estado (borrador, vigente, reemplazado), desde cuándo vale, la meta y la
   lista. Un plan publicado se ve desde su snapshot, con «Crear versión nueva»; si ya hay un borrador, la API responde
   409 con su id y se abre ese.
@@ -1015,6 +1015,23 @@ Decisión:
 Consecuencias:
 - P9 cumple sus tres criterios: G-17 a G-19 por HTTP y en la E2E de Luis (escritorio y celular), un plan publicado que
   ni la API ni la base dejan editar, y la publicación que crea active_plan_view y la meta del día.
-- Por confirmar con Rodrigo: carbohidratos totales o disponibles (CHOAVL) en la porción sugerida.
 - Notion al cerrar P9: 02 (la ruta de vista previa), 04 (las pantallas de RF-19 y RF-23) y lo que ya listaban ADR-057
   y ADR-058.
+
+## ADR-060 · Texto de marca legible en el hover y vistas previas que no se vuelven a renderizar — aceptada (2026-10-22)
+Contexto: al cerrar P9 quedaron dos detalles del sistema de diseño, fuera de P9, que Rodrigo pidió arreglar en el mismo
+PR. En el hover del botón secundario (y de las filas de la lista de pacientes) el texto de marca queda sobre --muted
+(#e3e8e6), más oscuro que el papel contra el que se calculaba: con la marca por defecto, 4.42:1 (WCAG 1.4.3 pide
+4.5:1). Y useDebounced, con un objeto nuevo en cada render, reiniciaba la espera y volvía a renderizar cada 300 ms sin
+parar en el formulario de energía y en «Armar un plato».
+Decisión:
+- brandTokens oscurece el texto y el borde de marca contra DARKEST_SURFACE (--muted), el fondo claro más oscuro sobre
+  el que se escribe con la marca, y no contra el papel: lo que cumple ahí cumple también en el papel y en blanco. Una
+  prueba fija que --muted es DARKEST_SURFACE y que el papel y --surface son más claros. Con la paleta provisional, el
+  texto primario pasa de #0f766e a #0f746c (un paso de 2 %), el secundario de #a95d05 a #9c5604 y su borde de #d57506
+  a #c86d06; el color de la marca no cambia. La E2E de P9 ya no aparta el puntero antes de axe.
+- useDebounced solo acepta valores que se comparan por valor (texto, número, booleano o null): un objeto es un error de
+  tipos. El formulario de energía y «Armar un plato» pasan el texto JSON del cuerpo, como el editor de la dieta.
+Consecuencias:
+- Cualquier marca de una organización (P15) cumple 4.5:1 en el hover sin tocar los componentes.
+- Nada cambia en Notion: 02 §11 pide contraste AA y no fija cómo se calcula el texto de marca.

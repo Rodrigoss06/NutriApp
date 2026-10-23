@@ -4,7 +4,8 @@ type Macro = 'choG' | 'proteinG' | 'fatG';
 
 /**
  * El macronutriente que define a cada grupo de intercambio (ADR-057): carbohidratos en verduras, frutas y almidones,
- * proteína en lácteos y carnes, y grasa en grasas. nutrient es su código INFOODS en la tabla de alimentos.
+ * proteína en lácteos y carnes, y grasa en grasas. nutrient es su código INFOODS en la tabla de alimentos: los
+ * carbohidratos son los totales (CHOCDF), no los disponibles, como decidió Rodrigo (ADR-059).
  */
 export const DEFINING_MACRO: Readonly<
   Record<ExchangeGroupCode, { macro: Macro; nutrient: string; label: string }>
