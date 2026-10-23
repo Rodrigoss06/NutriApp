@@ -7,6 +7,8 @@ import {
   type UserId,
 } from '@nutricoach/shared-kernel';
 import type { Db } from '../../../../../platform/index.js';
+import type { TimelineCursor, TimelineEntry } from '../../../../clinical/index.js';
+import type { PlanSnapshot } from '../../../application/plan-document.js';
 import type {
   NewNutritionPlan,
   NutritionPlanRecord,
@@ -41,6 +43,7 @@ interface PlanRow {
   created_at: Date;
   updated_at: Date;
   published_at: Date | null;
+  valid_from: string | null;
   version: number;
 }
 
@@ -57,6 +60,7 @@ const summaryOf = (row: PlanRow): NutritionPlanSummary => ({
   targetKcal: row.target_kcal,
   createdAt: row.created_at,
   publishedAt: row.published_at,
+  validFrom: row.valid_from,
 });
 
 const isFixed = (code: ExchangeGroupCode): code is FixedGroup =>
@@ -113,7 +117,8 @@ export class PrismaNutritionPlanStore implements NutritionPlanStore {
     const [plan] = await this.db.tx.$queryRaw<PlanRow[]>`
       SELECT id, organization_id, patient_id, lineage_id, version_no, status, energy_prescription_id,
              exchange_list_id, exchange_list_version, target_kcal::float8 AS target_kcal, hydration_target_ml,
-             instructions, created_by, created_at, updated_at, published_at, version
+             instructions, created_by, created_at, updated_at, published_at,
+             to_char(valid_from, 'YYYY-MM-DD') AS valid_from, version
       FROM nutrition.plan WHERE id = ${id}::uuid`;
     if (!plan) return null;
     const exchanges = await this.db.tx.$queryRaw<
@@ -203,10 +208,80 @@ export class PrismaNutritionPlanStore implements NutritionPlanStore {
     const rows = await this.db.tx.$queryRaw<PlanRow[]>`
       SELECT id, organization_id, patient_id, lineage_id, version_no, status, energy_prescription_id,
              exchange_list_id, exchange_list_version, target_kcal::float8 AS target_kcal, hydration_target_ml,
-             instructions, created_by, created_at, updated_at, published_at, version
+             instructions, created_by, created_at, updated_at, published_at,
+             to_char(valid_from, 'YYYY-MM-DD') AS valid_from, version
       FROM nutrition.plan WHERE patient_id = ${patientId}::uuid
       ORDER BY created_at DESC, id DESC`;
     return rows.map(summaryOf);
+  }
+
+  async publish(
+    id: string,
+    version: number,
+    publication: {
+      readonly snapshot: PlanSnapshot;
+      readonly hash: string;
+      readonly publishedAt: Date;
+      readonly publishedBy: UserId;
+      readonly validFrom: string;
+    },
+  ): Promise<boolean> {
+    const updated = await this.db.tx.$executeRaw`
+      UPDATE nutrition.plan
+      SET status = 'PUBLISHED', snapshot = ${JSON.stringify(publication.snapshot)}::jsonb,
+          snapshot_schema_version = ${publication.snapshot.schemaVersion},
+          snapshot_hash = decode(${publication.hash}, 'hex'), published_at = ${publication.publishedAt},
+          published_by = ${publication.publishedBy}::uuid, valid_from = ${publication.validFrom}::date,
+          version = version + 1, updated_at = ${publication.publishedAt}
+      WHERE id = ${id}::uuid AND version = ${version} AND status = 'DRAFT'`;
+    return updated === 1;
+  }
+
+  /** El disparador del plan deja pasar de PUBLISHED a SUPERSEDED cambiando solo estado, versión y fecha. */
+  async supersedePublished(patientId: string, now: Date): Promise<string | null> {
+    const [row] = await this.db.tx.$queryRaw<{ id: string }[]>`
+      UPDATE nutrition.plan SET status = 'SUPERSEDED', version = version + 1, updated_at = ${now}
+      WHERE patient_id = ${patientId}::uuid AND status = 'PUBLISHED'
+      RETURNING id`;
+    return row?.id ?? null;
+  }
+
+  async snapshot(id: string): Promise<PlanSnapshot | null> {
+    const [row] = await this.db.tx.$queryRaw<{ snapshot: PlanSnapshot }[]>`
+      SELECT snapshot FROM nutrition.plan WHERE id = ${id}::uuid AND status <> 'DRAFT'`;
+    return row?.snapshot ?? null;
+  }
+
+  async lineage(
+    lineageId: string,
+  ): Promise<{ readonly lastVersionNo: number; readonly draftId: string | null }> {
+    const [row] = await this.db.tx.$queryRaw<{ last: number; draft: string | null }[]>`
+      SELECT max(version_no)::int AS last, (array_agg(id) FILTER (WHERE status = 'DRAFT'))[1] AS draft
+      FROM nutrition.plan WHERE lineage_id = ${lineageId}::uuid`;
+    return { lastVersionNo: row?.last ?? 0, draftId: row?.draft ?? null };
+  }
+
+  async timeline(
+    patientId: string,
+    before: TimelineCursor | null,
+    limit: number,
+  ): Promise<readonly TimelineEntry[]> {
+    const rows = await this.db.tx.$queryRaw<
+      { id: string; published_at: Date; version_no: number }[]
+    >`
+      SELECT id, published_at, version_no FROM nutrition.plan
+      WHERE patient_id = ${patientId}::uuid AND published_at IS NOT NULL
+        AND (${before?.occurredAt ?? null}::timestamptz IS NULL
+             OR (published_at, id) < (${before?.occurredAt ?? null}::timestamptz, ${before?.refId ?? null}::uuid))
+      ORDER BY published_at DESC, id DESC
+      LIMIT ${limit}`;
+    return rows.map((row) => ({
+      kind: 'NUTRITION_PLAN_PUBLISHED',
+      occurredAt: row.published_at,
+      refId: row.id,
+      label: String(row.version_no),
+      detail: null,
+    }));
   }
 
   /** Los hijos del plan en sentencias con unnest: intercambios del día, tiempos, su reparto y sus alimentos. */

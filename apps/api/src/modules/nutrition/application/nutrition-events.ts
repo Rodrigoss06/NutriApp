@@ -7,7 +7,11 @@ import {
 
 /** Eventos de nutrition (02 §7 y §8): solo identificadores; las escrituras se auditan desde ellos. */
 export type NutritionEventType =
-  'nutrition.prescription.created' | 'nutrition.plan.created' | 'nutrition.plan.updated';
+  | 'nutrition.prescription.created'
+  | 'nutrition.plan.created'
+  | 'nutrition.plan.updated'
+  | 'nutrition.plan.published'
+  | 'nutrition.plan.superseded';
 
 export function nutritionEvent<TPayload extends { patientId: string }>(
   type: NutritionEventType,

@@ -11,7 +11,8 @@ import {
 import { ClinicalApi } from '../../../clinical/index.js';
 import { FoodApi } from '../../../food/index.js';
 import { publishProblems, type ExchangeGroupCode } from '../../domain/nutrition-plan.js';
-import { PlanCalculator, type CalculatedPlan } from '../plan-calculator.js';
+import { planDocument, type PlanDocument, type PlanSnapshot } from '../plan-document.js';
+import { PlanCalculator } from '../plan-calculator.js';
 import {
   ENERGY_PRESCRIPTION_STORE,
   NUTRITION_PLAN_STORE,
@@ -21,9 +22,15 @@ import {
   type NutritionPlanSummary,
 } from '../ports/nutrition.ports.js';
 
-export interface NutritionPlanView extends CalculatedPlan {
+/**
+ * Un plan para leer: el borrador se calcula al leerlo; lo publicado se lee de su snapshot y nunca se recalcula
+ * (RN-D08, RN-E15).
+ */
+export interface NutritionPlanView {
   readonly record: NutritionPlanRecord;
+  readonly document: PlanDocument;
   readonly publishProblems: readonly string[];
+  readonly snapshot: PlanSnapshot | null;
 }
 
 export interface NutritionPlanListItem extends NutritionPlanSummary {
@@ -70,6 +77,11 @@ export class NutritionPlanQueries {
     const view = await this.uow.query(context, async () => {
       const record = await this.plans.find(planId);
       if (!record) return null;
+      if (record.status !== 'DRAFT') {
+        const snapshot = await this.plans.snapshot(planId);
+        if (!snapshot) throw new Error(`Plan ${planId} publicado sin snapshot.`);
+        return { record, document: snapshot, publishProblems: [], snapshot };
+      }
       const prescription = await this.prescriptions.find(record.energyPrescriptionId);
       if (!prescription || !context.organizationId) return null;
       const calculated = await this.calculator.calculate(
@@ -84,9 +96,10 @@ export class NutritionPlanQueries {
         calculated.value.list.groups.map((g) => [g.code, g.name]),
       ) as Record<ExchangeGroupCode, string>;
       return {
-        ...calculated.value,
         record,
+        document: planDocument(calculated.value, record.mealIds),
         publishProblems: publishProblems(calculated.value.calculation.plan, names),
+        snapshot: null,
       };
     });
     if (!view) return null;

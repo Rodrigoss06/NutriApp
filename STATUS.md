@@ -16,7 +16,7 @@ Próxima demo: Demo 1 · Base y evaluación · semana 2
 | P6 Pacientes e historia clínica | ✅ | Rodrigo | #10, #11, #12 | 4 criterios en verde (E2E en escritorio y celular, e integración); despliegue a staging pendiente de P4 |
 | P7 Evaluación y cálculo, Demo 1 | ✅ | Rodrigo | #14 a #18 | E2E de la Demo 1 en escritorio y celular (G-01 a G-17), ninguna cifra sin método, recálculo con SUPERSEDED y guion; RF-18 adelantado. Etiqueta v0.1.0 (abf0d42) y Notion sincronizado; staging, pendiente de P4 |
 | P8 Datos maestros de alimentos | ✅ | Rodrigo | #21 a #24 | 3 criterios en verde (integración y E2E en escritorio y celular); Biblioteca, alimento propio, «Armar un plato», listas de intercambio y «Acerca de» con la atribución (ADR-055, ADR-056). /notion-sync aplicado (21 cambios) |
-| P9 Dieta por intercambios | 🟨 | Rodrigo | | PR 1 (borrador por intercambios, G-17 a G-19) en revisión (ADR-057); sigue el PR 2 |
+| P9 Dieta por intercambios | 🟨 | Rodrigo | | #25 (borrador por intercambios, G-17 a G-19) en revisión (ADR-057); PR 2 (publicación y tracking) en local (ADR-058) |
 | P10 Composición, menú y recetario | ⬜ | Rodrigo | | |
 | P11 Fichas PDF, Demo 2 | ⬜ | Rodrigo | | |
 | P12 Ejercicios y rutinas | ⬜ | Rodrigo | | |
@@ -30,7 +30,12 @@ Leyenda: ⬜ pendiente · 🟨 en curso · ✅ terminado · ⛔ bloqueado
 ## En curso
 - P8, PR 1 fusionado (#21, d7beee2): importador genérico de catálogos (RN-I04), TPCA 2017 (928 alimentos) y
   Compendium 2024 (560 actividades), CLI catalog:load y lista DEMO provisional; ADR-052.
-- P9, PR 1 en feat/nut-intercambios, sobre main, en revisión (ADR-057):
+- P9, PR 2 en feat/nut-publicacion, sobre feat/nut-intercambios (#25), listo en local (ADR-058):
+  - publicar con snapshot y hash, valid_from de hoy y el anterior a SUPERSEDED; versión nueva desde un publicado;
+  - módulo tracking: consumidor tracking.plans (active_plan_view y la meta de hoy) y trabajo diario de metas;
+  - el plan publicado en la línea de tiempo del expediente.
+  - Al fusionarse #25: git rebase --onto main feat/nut-intercambios feat/nut-publicacion y abrir el PR.
+- P9, PR 1 en #25 (feat/nut-intercambios), en revisión (ADR-057):
   - borrador por intercambios con las metas exactas de la prescripción: G-17, G-18 y G-19 por HTTP;
   - ajuste a mano de almidones, carnes y grasas, reparto a mano de un grupo y alimentos permitidos con su porción;
   - adecuación con el rango de la organización (nutrition.adequacy_min_pct y _max_pct) y lo que falta para publicar;
@@ -65,10 +70,9 @@ Leyenda: ⬜ pendiente · 🟨 en curso · ✅ terminado · ⛔ bloqueado
 ## Siguiente paso
 - Antes de la Demo 1: la matriz manual de navegadores (RNF-19: Chrome, Edge, Safari y Firefox; la E2E cubre Chromium
   y WebKit) y, el mismo día, base local limpia y semilla («Antes de empezar» del guion). La demo es en local
-- Revisar y fusionar el PR 1 de P9 (borrador por intercambios)
-- P9 · PR 2: publicar con snapshot y valid_from, el anterior a SUPERSEDED, versión nueva desde un publicado, eventos
-  y el módulo tracking (active_plan_view y la meta del día). PR 3: pantallas, sugerencia de gramos e hidratación
-  (decisiones de Rodrigo en ADR-057)
+- Revisar y fusionar #25 (PR 1 de P9); después, abrir el PR 2 (publicación y tracking)
+- P9 · PR 3: editor en tres pasos, historial, sugerencia de gramos e hidratación (ADR-057), y E2E de Luis
+  (G-18 y G-19, publicar)
 - Cada base nueva necesita los catálogos: `pnpm --filter api build && pnpm catalog:load plataforma@demo.example.com`
   en local; en staging y producción, con el correo de su PLATFORM_ADMIN
 - db:seed carga el caso Luis: sus resultados aparecen cuando corre el worker
@@ -109,8 +113,8 @@ Leyenda: ⬜ pendiente · 🟨 en curso · ✅ terminado · ⛔ bloqueado
   create-platform-admin para el primer PLATFORM_ADMIN
 - Para P4: Caddy sin trusted_proxies, para que reescriba X-Forwarded-For con la IP real; en el Sentry de la web,
   quitar el fragmento de las URL (beforeSend y beforeBreadcrumb): ahí viajan los tokens de invitación y recuperación
-- Por decidir en el prompt que lo use: quién escribe tracking.daily_target, si el paciente marca
-  content.resource_assignment.viewed_at y que active_plan_view compare el publishedAt del snapshot
+- Por decidir en el prompt que lo use: si el paciente marca content.resource_assignment.viewed_at (la meta diaria y
+  la copia del plan vigente quedaron resueltas en ADR-058)
 - Lighthouse móvil en CI sobre staging (RNF-03) cuando exista staging; hoy se mide en local
 - CSP del despliegue: style-src con 'unsafe-inline' por BrandStyle (ADR-027)
 - La marca es provisional hasta la personalización (P19); la organización activa ya sale de la sesión (P5)

@@ -4,6 +4,8 @@ import {
   Get,
   Header,
   Headers,
+  HttpCode,
+  HttpStatus,
   Param,
   ParseUUIDPipe,
   Post,
@@ -36,6 +38,7 @@ import {
 } from '../../../application/queries/nutrition-plan.queries.js';
 import { PRESCRIPTION_NOT_FOUND } from '../../../domain/energy-rules.js';
 import {
+  DRAFT_EXISTS,
   PLAN_NOT_DRAFT,
   PLAN_NOT_FOUND,
   PLAN_VERSION_CONFLICT,
@@ -43,6 +46,7 @@ import {
 
 const STATUS_BY_CODE: Readonly<Record<string, number>> = {
   [PLAN_NOT_FOUND.code]: 404,
+  [DRAFT_EXISTS]: 409,
   [PRESCRIPTION_NOT_FOUND.code]: 404,
   [PATIENT_NOT_FOUND.code]: 404,
   [PATIENT_ARCHIVED.code]: 409,
@@ -55,6 +59,15 @@ const problem = (error: DomainError) =>
   problemFromDomainError(error, STATUS_BY_CODE[error.code] ?? 422);
 const notFound = (code: string) => new ProblemException(404, { title: 'No encontrado.', code });
 
+/** La versión leída, en If-Match (02 §5); sin ella, 428. */
+const versionOf = (ifMatch: string | undefined): number => {
+  const version = Number(ifMatch?.replaceAll('"', ''));
+  if (!ifMatch || !Number.isInteger(version)) {
+    throw new ProblemException(428, { title: 'Falta la versión en If-Match.', code: 'NC-PLT-428' });
+  }
+  return version;
+};
+
 const contextOf = (request: ContextualRequest): SecurityContext => {
   if (!request.securityContext?.organizationId) {
     throw new ProblemException(403, {
@@ -65,10 +78,12 @@ const contextOf = (request: ContextualRequest): SecurityContext => {
   return request.securityContext;
 };
 
-/** El plan con lo que calcula el motor, sin redondear (RN-D09), y cada cálculo con su método (RN-D01, RN-D02). */
+/**
+ * El plan con lo que calcula el motor, sin redondear (RN-D09), y cada cálculo con su método (RN-D01, RN-D02). Lo
+ * publicado sale tal cual de su snapshot.
+ */
 function planOf(view: NutritionPlanView): NutritionPlan {
-  const { record, calculation, list, targets, foodNames } = view;
-  const { plan, totals, adequacy } = calculation;
+  const { record, document } = view;
   return {
     id: record.id,
     patientId: record.patientId,
@@ -76,40 +91,47 @@ function planOf(view: NutritionPlanView): NutritionPlan {
     versionNo: record.versionNo,
     status: record.status,
     energyPrescriptionId: record.energyPrescriptionId,
-    exchangeList: { ...list, groups: list.groups.map((g) => ({ ...g })) },
-    targets: { ...targets },
-    exchanges: plan.exchanges.map((e) => ({ ...e })),
-    meals: plan.meals.map((meal, index) => ({
-      id: record.mealIds[index] ?? '',
+    exchangeList: {
+      ...document.exchangeList,
+      groups: document.exchangeList.groups.map((g) => ({ ...g })),
+    },
+    targets: { ...document.targets },
+    exchanges: document.exchanges.map((e) => ({ ...e })),
+    meals: document.meals.map((meal) => ({
+      id: meal.id,
       slotCode: meal.slotCode,
       name: meal.name,
       timeOfDay: meal.timeOfDay,
       sharePct: meal.sharePct,
       servings: { ...meal.servings },
       allowedFoods: meal.allowedFoods.map((food) => ({
-        ...food,
-        foodName: foodNames.get(food.foodId) ?? '',
+        groupCode: food.groupCode,
+        foodId: food.foodId,
+        foodName: food.foodName,
+        grams: food.grams,
+        householdText: food.householdText,
       })),
     })),
-    manualSplit: [...plan.manualSplit],
-    totals: { ...totals },
+    manualSplit: [...document.manualSplit],
+    totals: { ...document.totals },
     adequacy: {
-      rangePct: [adequacy.rangePct[0], adequacy.rangePct[1]],
-      kcal: { ...adequacy.kcal },
-      cho: { ...adequacy.cho },
-      protein: { ...adequacy.protein },
-      fat: { ...adequacy.fat },
+      rangePct: [document.adequacy.rangePct[0], document.adequacy.rangePct[1]],
+      kcal: { ...document.adequacy.kcal },
+      cho: { ...document.adequacy.cho },
+      protein: { ...document.adequacy.protein },
+      fat: { ...document.adequacy.fat },
     },
-    methods: calculation.methods.map((m) => ({
+    methods: document.methods.map((m) => ({
       ...m,
       warnings: m.warnings.map((w) => ({ ...w })),
     })),
-    hydrationTargetMl: plan.hydrationTargetMl,
-    instructions: plan.instructions,
+    hydrationTargetMl: document.hydrationTargetMl,
+    instructions: document.instructions,
     publishProblems: [...view.publishProblems],
     createdAt: record.createdAt.toISOString(),
     updatedAt: record.updatedAt.toISOString(),
     publishedAt: record.publishedAt?.toISOString() ?? null,
+    validFrom: record.validFrom,
     version: record.version,
   };
 }
@@ -161,6 +183,7 @@ export class PatientNutritionPlanController {
         targetKcal: plan.targetKcal,
         createdAt: plan.createdAt.toISOString(),
         publishedAt: plan.publishedAt?.toISOString() ?? null,
+        validFrom: plan.validFrom,
       })),
     };
   }
@@ -186,6 +209,32 @@ export class NutritionPlanController {
     return planOf(view);
   }
 
+  /** POST /api/v1/nutrition-plans/:id/publish con If-Match (RF-23, RN-E14, RN-E15). */
+  @Post(':planId/publish')
+  @HttpCode(HttpStatus.OK)
+  @RequirePermission('patients.write')
+  async publish(
+    @Req() request: ContextualRequest,
+    @Param('planId', ParseUUIDPipe) planId: string,
+    @Headers('if-match') ifMatch: string | undefined,
+  ): Promise<NutritionPlan> {
+    const result = await this.commands.publish(contextOf(request), planId, versionOf(ifMatch));
+    if (isErr(result)) throw problem(result.error);
+    return this.get(request, planId);
+  }
+
+  /** POST /api/v1/nutrition-plans/:id/revisions: un borrador nuevo con lo mismo que esta versión (02 §7). */
+  @Post(':planId/revisions')
+  @RequirePermission('patients.write')
+  async revise(
+    @Req() request: ContextualRequest,
+    @Param('planId', ParseUUIDPipe) planId: string,
+  ): Promise<NutritionPlan> {
+    const result = await this.commands.revise(contextOf(request), planId);
+    if (isErr(result)) throw problem(result.error);
+    return this.get(request, result.value.id);
+  }
+
   @Put(':planId')
   @RequirePermission('patients.write')
   async update(
@@ -194,18 +243,11 @@ export class NutritionPlanController {
     @Headers('if-match') ifMatch: string | undefined,
     @Body() body: unknown,
   ): Promise<NutritionPlan> {
-    const version = Number(ifMatch?.replaceAll('"', ''));
-    if (!ifMatch || !Number.isInteger(version)) {
-      throw new ProblemException(428, {
-        title: 'Falta la versión en If-Match.',
-        code: 'NC-PLT-428',
-      });
-    }
     const context = contextOf(request);
     const result = await this.commands.update(
       context,
       planId,
-      version,
+      versionOf(ifMatch),
       parseBody(updateNutritionPlanSchema, body),
     );
     if (isErr(result)) throw problem(result.error);

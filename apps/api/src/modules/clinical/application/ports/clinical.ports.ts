@@ -213,7 +213,9 @@ export type TimelineKind =
   /** Evaluación cerrada; la aporta assessment por TimelineSources. */
   | 'EVALUATION_CLOSED'
   /** Prescripción energética; la aporta nutrition. */
-  | 'ENERGY_PRESCRIBED';
+  | 'ENERGY_PRESCRIBED'
+  /** Plan nutricional publicado; lo aporta nutrition. */
+  | 'NUTRITION_PLAN_PUBLISHED';
 
 export interface TimelineRecord {
   readonly kind: TimelineKind;

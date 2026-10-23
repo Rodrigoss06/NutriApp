@@ -103,6 +103,21 @@ export const EXCHANGE_LIST_UNAVAILABLE = domainError({
   message: 'Esa lista de intercambio no está disponible o le faltan grupos.',
 });
 export const INVALID_PLAN = 'NC-NUT-010';
+/** Lo que falta para publicar, en details.problems (RN-E13, RN-G05). */
+export const planNotReady = (problems: readonly string[]): DomainError =>
+  domainError({
+    code: 'NC-NUT-012',
+    message: 'Al plan le falta algo para publicarlo.',
+    details: { problems },
+  });
+/** Un plan tiene a lo más una versión en borrador: se edita esa (02 §7). */
+export const DRAFT_EXISTS = 'NC-NUT-013';
+export const draftExists = (draftId: string): DomainError =>
+  domainError({
+    code: DRAFT_EXISTS,
+    message: 'Este plan ya tiene una versión en borrador: edítala.',
+    details: { draftId },
+  });
 /** Un ERROR del motor al calcular el plan, con su regla y su código NC-ENG (RN-D06). */
 export const PLAN_RULE = (issue: {
   readonly rule: string;

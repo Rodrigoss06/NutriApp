@@ -20,12 +20,18 @@ import { ClinicalApi } from '../../../clinical/index.js';
 import { PRESCRIPTION_NOT_FOUND } from '../../domain/energy-rules.js';
 import {
   DEFAULT_MEALS,
+  draftExists,
   PLAN_NOT_DRAFT,
   PLAN_NOT_FOUND,
   PLAN_VERSION_CONFLICT,
+  planNotReady,
+  publishProblems,
+  type ExchangeGroupCode,
   type PlanDraftInput,
 } from '../../domain/nutrition-plan.js';
+import { localDateOf } from '../energy-basis.js';
 import { nutritionEvent, type NutritionEventType } from '../nutrition-events.js';
+import { planDocument, planSnapshot } from '../plan-document.js';
 import { PlanCalculator } from '../plan-calculator.js';
 import {
   ENERGY_PRESCRIPTION_STORE,
@@ -165,6 +171,131 @@ export class NutritionPlanCommands {
         fields: changedFields(existing.draft, input),
       });
       return ok({ id: planId, version: version + 1 });
+    });
+  }
+
+  /**
+   * Publica el borrador (RF-23, RN-E14, RN-E15): congela su snapshot con su hash, vale desde hoy en la fecha local del
+   * paciente y el plan que estaba publicado pasa a SUPERSEDED. Sin hidratación o sin un alimento permitido por grupo
+   * con intercambios en cada tiempo no se publica (RN-E13, RN-G05).
+   */
+  publish(
+    context: SecurityContext,
+    planId: string,
+    version: number,
+  ): Promise<Result<{ id: string }, DomainError>> {
+    return atomically(this.uow, context, async () => {
+      const existing = await this.plans.find(planId);
+      if (!existing) return err(PLAN_NOT_FOUND);
+      const patient = await this.clinical.ensureRecordWritable(context, existing.patientId);
+      if (!patient.ok) return patient;
+      if (existing.status !== 'DRAFT') return err(PLAN_NOT_DRAFT);
+      if (existing.version !== version) return err(PLAN_VERSION_CONFLICT);
+      const userId = context.userId;
+      if (!userId) throw new Error('Un plan necesita quién lo publica.');
+      const prescription = await this.prescriptions.find(existing.energyPrescriptionId);
+      if (!prescription) return err(PRESCRIPTION_NOT_FOUND);
+      const calculated = await this.calculator.calculate(
+        this.#organization(context),
+        prescription,
+        existing.exchangeListId,
+        existing.draft,
+      );
+      if (!calculated.ok) return calculated;
+      const names = Object.fromEntries(
+        calculated.value.list.groups.map((g) => [g.code, g.name]),
+      ) as Record<ExchangeGroupCode, string>;
+      const problems = publishProblems(calculated.value.calculation.plan, names);
+      if (problems.length > 0) return err(planNotReady(problems));
+
+      const now = this.clock.now();
+      const validFrom = localDateOf(now, patient.value.timezone);
+      const superseded = await this.plans.supersedePublished(existing.patientId, now);
+      const { snapshot, hash } = planSnapshot(planDocument(calculated.value, existing.mealIds), {
+        planId,
+        lineageId: existing.lineageId,
+        versionNo: existing.versionNo,
+        patientId: existing.patientId,
+        energyPrescriptionId: existing.energyPrescriptionId,
+        validFrom,
+        publishedAt: now.toISOString(),
+        publishedBy: userId,
+      });
+      const published = await this.plans.publish(planId, version, {
+        snapshot,
+        hash,
+        publishedAt: now,
+        publishedBy: userId,
+        validFrom,
+      });
+      if (!published) return err(PLAN_VERSION_CONFLICT);
+      if (superseded) {
+        await this.#event(context, 'nutrition.plan.superseded', superseded, {
+          patientId: existing.patientId,
+          supersededBy: planId,
+        });
+      }
+      await this.#event(context, 'nutrition.plan.published', planId, {
+        patientId: existing.patientId,
+        lineageId: existing.lineageId,
+        versionNo: existing.versionNo,
+        validFrom,
+        supersededPlanId: superseded,
+      });
+      return ok({ id: planId });
+    });
+  }
+
+  /**
+   * Versión nueva de un plan publicado o reemplazado (02 §7): un borrador con lo mismo, que se edita y se publica. Un
+   * plan tiene a lo más un borrador a la vez.
+   */
+  revise(context: SecurityContext, planId: string): Promise<Result<{ id: string }, DomainError>> {
+    return atomically(this.uow, context, async () => {
+      const source = await this.plans.find(planId);
+      if (!source) return err(PLAN_NOT_FOUND);
+      const patient = await this.clinical.ensureRecordWritable(context, source.patientId);
+      if (!patient.ok) return patient;
+      if (source.status === 'DRAFT') return err(draftExists(source.id));
+      const lineage = await this.plans.lineage(source.lineageId);
+      if (lineage.draftId) return err(draftExists(lineage.draftId));
+      const userId = context.userId;
+      if (!userId) throw new Error('Un plan necesita quién lo crea.');
+      const prescription = await this.prescriptions.find(source.energyPrescriptionId);
+      if (!prescription) return err(PRESCRIPTION_NOT_FOUND);
+      const organizationId = this.#organization(context);
+      const calculated = await this.calculator.calculate(
+        organizationId,
+        prescription,
+        source.exchangeListId,
+        source.draft,
+      );
+      if (!calculated.ok) return calculated;
+      const id = this.ids.newId<'NutritionPlanId'>();
+      const versionNo = lineage.lastVersionNo + 1;
+      await this.plans.insert(
+        {
+          id,
+          organizationId,
+          patientId: source.patientId,
+          lineageId: source.lineageId,
+          versionNo,
+          energyPrescriptionId: source.energyPrescriptionId,
+          exchangeListId: source.exchangeListId,
+          exchangeListVersion: source.exchangeListVersion,
+          targets: calculated.value.targets,
+          createdBy: userId,
+          now: this.clock.now(),
+        },
+        calculated.value.calculation.plan,
+      );
+      await this.#event(context, 'nutrition.plan.created', id, {
+        patientId: source.patientId,
+        lineageId: source.lineageId,
+        versionNo,
+        revisionOf: source.id,
+      });
+      return ok({ id });
     });
   }
 

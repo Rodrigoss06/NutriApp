@@ -5,6 +5,7 @@ import { ExerciseModule } from '../exercise/index.js';
 import { FoodModule } from '../food/index.js';
 import { EnergyPrescriptionCommands } from './application/commands/energy-prescription.commands.js';
 import { NutritionPlanCommands } from './application/commands/nutrition-plan.commands.js';
+import { NutritionApi } from './application/nutrition-api.js';
 import { NutritionTimelineSource } from './application/nutrition-timeline.js';
 import { PlanCalculator } from './application/plan-calculator.js';
 import {
@@ -43,10 +44,12 @@ import { PrismaNutritionPlanStore } from './adapters/out/persistence/prisma-nutr
     NutritionPlanCommands,
     NutritionPlanQueries,
     PlanCalculator,
+    NutritionApi,
     NutritionTimelineSource,
     { provide: ENERGY_PRESCRIPTION_STORE, useClass: PrismaEnergyPrescriptionStore },
     { provide: NUTRITION_PLAN_STORE, useClass: PrismaNutritionPlanStore },
   ],
+  exports: [NutritionApi],
 })
 export class NutritionModule implements OnModuleInit {
   constructor(
