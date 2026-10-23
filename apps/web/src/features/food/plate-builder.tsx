@@ -65,15 +65,16 @@ export function PlateBuilder() {
   const items = rows.map(itemOf);
   const complete = items.every((item) => item !== null);
   const request: PlateCompositionRequest | null = rows.length > 0 && complete ? { items } : null;
-  const debounced = useDebounced(request, 300);
+  // El texto del pedido, no el objeto: se compara por valor y la espera no se reinicia en cada render.
+  const debouncedKey = useDebounced(request === null ? null : JSON.stringify(request), 300);
   const plate = useQuery({
-    queryKey: ['plate-composition', JSON.stringify(debounced)],
+    queryKey: ['plate-composition', debouncedKey],
     queryFn: () =>
       apiFetch<PlateCompositionResponse>('/foods/composition', {
         method: 'POST',
-        body: debounced,
+        body: JSON.parse(debouncedKey ?? 'null') as unknown,
       }),
-    enabled: debounced !== null,
+    enabled: debouncedKey !== null,
     placeholderData: keepPreviousData,
     retry: false,
   });

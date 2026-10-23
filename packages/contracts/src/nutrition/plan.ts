@@ -131,7 +131,13 @@ export const nutritionPlanSchema = z.object({
       timeOfDay: z.string().nullable(),
       sharePct: z.number(),
       servings: z.record(z.enum(EXCHANGE_GROUPS), z.number().int()),
-      allowedFoods: z.array(allowedFoodSchema.extend({ foodName: z.string() })),
+      allowedFoods: z.array(
+        allowedFoodSchema.extend({
+          foodName: z.string(),
+          /** Energía, macronutrientes y fibra por 100 g, por código INFOODS; null es «sin dato» (RN-I03). */
+          nutrientsPer100g: z.record(z.string(), z.number().nullable()),
+        }),
+      ),
     }),
   ),
   /** Grupos con el reparto cambiado a mano (RN-E09). */
@@ -160,6 +166,25 @@ export const nutritionPlanSchema = z.object({
   version: z.number().int(),
 });
 export type NutritionPlan = z.infer<typeof nutritionPlanSchema>;
+
+/**
+ * POST /api/v1/nutrition-plans/:id/preview, con el cuerpo de PUT: lo que calcula el motor con ese borrador sin guardarlo,
+ * para la adecuación en vivo del editor (RN-E10). Los tiempos de comida van en el orden del cuerpo.
+ */
+export const nutritionPlanPreviewSchema = nutritionPlanSchema
+  .pick({
+    targets: true,
+    exchanges: true,
+    manualSplit: true,
+    totals: true,
+    adequacy: true,
+    methods: true,
+    publishProblems: true,
+  })
+  .extend({
+    meals: z.array(z.object({ servings: z.record(z.enum(EXCHANGE_GROUPS), z.number().int()) })),
+  });
+export type NutritionPlanPreview = z.infer<typeof nutritionPlanPreviewSchema>;
 
 /** GET /api/v1/patients/:id/nutrition-plans: el historial, de lo más reciente a lo más antiguo (RF-23). */
 export const nutritionPlanListResponseSchema = z.object({

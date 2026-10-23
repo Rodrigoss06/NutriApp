@@ -1,6 +1,11 @@
 import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
-import { brandVariables, contrastRatio, DEFAULT_BRAND } from './brand/brand-tokens';
+import {
+  brandVariables,
+  contrastRatio,
+  DARKEST_SURFACE,
+  DEFAULT_BRAND,
+} from './brand/brand-tokens';
 
 const css = readFileSync(new URL('./styles.css', import.meta.url), 'utf8');
 const root = css.slice(css.indexOf(':root {'), css.indexOf('}', css.indexOf(':root {')));
@@ -14,6 +19,15 @@ describe('tokens de styles.css', () => {
   it('los valores de marca por defecto son exactamente brandTokens de la paleta provisional', () => {
     for (const [name, value] of Object.entries(brandVariables(DEFAULT_BRAND))) {
       expect({ name, value: variable(name) }).toEqual({ name, value });
+    }
+  });
+
+  it('WCAG 1.4.3 · el texto de marca se calcula contra --muted, el fondo claro más oscuro', () => {
+    expect(variable('--muted')).toBe(DARKEST_SURFACE);
+    for (const surface of ['--background', '--surface']) {
+      expect(contrastRatio(variable(surface), '#000000')).toBeGreaterThan(
+        contrastRatio(DARKEST_SURFACE, '#000000'),
+      );
     }
   });
 

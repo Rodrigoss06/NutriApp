@@ -63,10 +63,12 @@ test.describe('RN-H03 · la marca cambia sin tocar componentes', () => {
       bottom: await bottom.evaluate((el) => getComputedStyle(el).color),
     });
 
+    // La barra de la app pinta texto de marca: el primario oscurecido hasta 4.5:1 sobre --muted (ADR-060). El violeta
+    // de abajo ya cumple y se usa tal cual.
     expect(await colors()).toEqual({
       button: 'rgb(15, 118, 110)',
       sidebar: 'rgb(15, 118, 110)',
-      bottom: 'rgb(15, 118, 110)',
+      bottom: 'rgb(15, 116, 108)',
     });
 
     await page.getByTestId('brand-primary').fill('#7c3aed');

@@ -80,15 +80,17 @@ export function PrescriptionForm({
     proteinGPerKg,
     fatPctKcal,
   });
-  const debouncedBody = useDebounced(body, 300);
+  // El texto del cuerpo, no el objeto: se compara por valor y la espera no se reinicia en cada render.
+  const key = body === null ? null : JSON.stringify(body);
+  const debouncedKey = useDebounced(key, 300);
   const preview = useQuery({
-    queryKey: ['energy-preview', patientId, JSON.stringify(debouncedBody)],
+    queryKey: ['energy-preview', patientId, debouncedKey],
     queryFn: () =>
       apiFetch<EnergyPrescriptionPreview>(`/patients/${patientId}/energy-prescriptions/preview`, {
         method: 'POST',
-        body: debouncedBody,
+        body: JSON.parse(debouncedKey ?? 'null') as unknown,
       }),
-    enabled: debouncedBody !== null,
+    enabled: debouncedKey !== null,
     placeholderData: keepPreviousData,
     retry: false,
   });
@@ -102,8 +104,7 @@ export function PrescriptionForm({
       router.push(`/panel/pacientes/${patientId}/energia/${id}`);
     },
   });
-  const upToDate =
-    body !== null && JSON.stringify(body) === JSON.stringify(debouncedBody) && preview.isSuccess;
+  const upToDate = key !== null && key === debouncedKey && preview.isSuccess;
   const option = ADJUSTMENT_OPTIONS[adjustment];
 
   return (

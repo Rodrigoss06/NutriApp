@@ -66,17 +66,17 @@ export function contrastRatio(a: string, b: string): number {
 }
 
 /**
- * El fondo claro más oscuro sobre el que se escribe con la marca: el papel de las páginas (--background en
- * styles.css). Lo que alcanza el contraste sobre él lo alcanza también sobre las tarjetas blancas.
+ * El fondo claro más oscuro sobre el que se escribe con la marca: --muted en styles.css, el hover del botón secundario
+ * y de las filas. Lo que alcanza el contraste sobre él lo alcanza también sobre el papel y las tarjetas blancas.
  */
-export const PAPER = '#f3f5f4';
+export const DARKEST_SURFACE = '#e3e8e6';
 
-/** Oscurece hacia negro en pasos de 2 % hasta alcanzar `minimum` sobre el papel (y por lo tanto sobre blanco). */
+/** Oscurece hacia negro en pasos de 2 % hasta alcanzar `minimum` sobre DARKEST_SURFACE (y por lo tanto sobre blanco). */
 function darkenUntil(hex: string, minimum: number): string {
   const rgb = toRgb(hex);
   for (let step = 0; step <= 50; step += 1) {
     const candidate = toHex(rgb.map((c) => c * (1 - step * 0.02)) as unknown as Rgb);
-    if (contrastRatio(candidate, PAPER) >= minimum) return candidate;
+    if (contrastRatio(candidate, DARKEST_SURFACE) >= minimum) return candidate;
   }
   return '#000000';
 }

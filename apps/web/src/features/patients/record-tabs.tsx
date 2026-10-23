@@ -11,12 +11,13 @@ const TABS = [
   { path: '/registros', label: 'Condiciones, objetivos y notas' },
   { path: '/evaluaciones', label: 'Evaluaciones' },
   { path: '/energia', label: 'Energía' },
+  { path: '/dieta', label: 'Dieta' },
   { path: '/linea-de-tiempo', label: 'Línea de tiempo' },
 ] as const;
 
 /**
- * Secciones del expediente (RF-09 a RF-17), con aria-current en la activa. Evaluaciones y energía siguen activas en
- * sus páginas internas (una evaluación, su comparación, una prescripción).
+ * Secciones del expediente (RF-09 a RF-19), con aria-current en la activa. Evaluaciones, energía y dieta siguen activas
+ * en sus páginas internas (una evaluación, su comparación, una prescripción, un plan).
  */
 export function RecordTabs({ patientId }: { patientId: string }) {
   const pathname = usePathname();

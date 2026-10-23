@@ -981,3 +981,57 @@ Consecuencias:
   resuelta.
 - Notion al cerrar P9: 02 (NutritionApi, tracking.plans, el trabajo diario y los eventos), 05.2 (valid_to sin uso y
   el snapshot) y la línea de tiempo (RF-10).
+
+## ADR-059 · Pantallas de la dieta por intercambios: editor en tres pasos con vista previa, porción sugerida e historial — aceptada (2026-10-22)
+Contexto: el PR 3 de P9 hace las pantallas del plan por intercambios (RF-19, RF-23): editor en tres pasos, adecuación en
+vivo e historial de versiones, con la porción sugerida y las referencias de hidratación que Rodrigo decidió en ADR-057.
+Decisión:
+- Vista previa en la API: POST /nutrition-plans/:id/preview recibe el cuerpo de PUT y devuelve lo que calcula el
+  motor (intercambios, reparto por tiempo, totales, adecuación, métodos y lo que falta para publicar) sin guardar.
+  Pide patients.read y deja un READ, como la vista previa de energía; con un plan publicado responde 409 (RN-E15) y con
+  un borrador que no cuadra, 422 con cada problema. El editor no guarda solo: así no hay un evento updated y una
+  auditoría por tecla. «Guardar borrador» manda PUT con If-Match y el navegador avisa si se sale con cambios.
+- Editor en /panel/pacientes/:id/dieta/:planId, en tres pasos:
+  - Metas: las metas exactas de la prescripción con su método, la lista con su versión (la DEMO, «provisional») y la
+    meta de hidratación. Debajo, las ingestas adecuadas de agua total según el sexo del paciente (EFSA 2010: 2.0 L y
+    2.5 L; IOM 2004: 2.7 L y 3.7 L), cada una con un botón «Usar»; el campo empieza vacío (RN-E13);
+  - Intercambios: verduras, frutas y lácteos se escriben; almidones, carnes y grasas muestran lo que da el método, con
+    «Ajustar» y «Volver al método» (RN-E08);
+  - Reparto y alimentos: tiempos de comida con nombre, hora y % (de 1 a 8, la suma a la vista), el reparto por mayor
+    residuo con «a mano» por grupo (RN-E09), los alimentos permitidos de cada grupo con intercambios en cada tiempo
+    (RN-G05) y las indicaciones.
+  La adecuación queda en una columna aparte en los tres pasos (RN-E10), con lo que falta para publicar. Publicar pide
+  confirmación y no se puede con cambios sin guardar o con algo pendiente.
+- Porción sugerida en la web: al agregar un alimento, el campo de gramos se llena con lo que aporta un intercambio ÷ el
+  macronutriente que define al grupo por 100 g del alimento × 100, redondeado a gramos enteros; la fila muestra la
+  cuenta. Sin el dato no hay sugerencia (RN-I03). No va en el motor porque no es un resultado guardado ni lleva método:
+  la porción es la que escribe el profesional. Los carbohidratos son los totales de la TPCA (CHOCDF), los que la app
+  muestra como «Carbohidratos», no los disponibles (CHOAVL): lo decidió Rodrigo (2026-10-22). GET del plan trae los
+  nutrientes principales de cada alimento permitido (los mismos del snapshot).
+- Historial en /dieta: cada versión con su estado (borrador, vigente, reemplazado), desde cuándo vale, la meta y la
+  lista. Un plan publicado se ve desde su snapshot, con «Crear versión nueva»; si ya hay un borrador, la API responde
+  409 con su id y se abre ese.
+- TableScroll es relative: un texto sr-only de una columna fuera de la pantalla ensanchaba la página en el celular.
+Consecuencias:
+- P9 cumple sus tres criterios: G-17 a G-19 por HTTP y en la E2E de Luis (escritorio y celular), un plan publicado que
+  ni la API ni la base dejan editar, y la publicación que crea active_plan_view y la meta del día.
+- Notion al cerrar P9: 02 (la ruta de vista previa), 04 (las pantallas de RF-19 y RF-23) y lo que ya listaban ADR-057
+  y ADR-058.
+
+## ADR-060 · Texto de marca legible en el hover y vistas previas que no se vuelven a renderizar — aceptada (2026-10-22)
+Contexto: al cerrar P9 quedaron dos detalles del sistema de diseño, fuera de P9, que Rodrigo pidió arreglar en el mismo
+PR. En el hover del botón secundario (y de las filas de la lista de pacientes) el texto de marca queda sobre --muted
+(#e3e8e6), más oscuro que el papel contra el que se calculaba: con la marca por defecto, 4.42:1 (WCAG 1.4.3 pide
+4.5:1). Y useDebounced, con un objeto nuevo en cada render, reiniciaba la espera y volvía a renderizar cada 300 ms sin
+parar en el formulario de energía y en «Armar un plato».
+Decisión:
+- brandTokens oscurece el texto y el borde de marca contra DARKEST_SURFACE (--muted), el fondo claro más oscuro sobre
+  el que se escribe con la marca, y no contra el papel: lo que cumple ahí cumple también en el papel y en blanco. Una
+  prueba fija que --muted es DARKEST_SURFACE y que el papel y --surface son más claros. Con la paleta provisional, el
+  texto primario pasa de #0f766e a #0f746c (un paso de 2 %), el secundario de #a95d05 a #9c5604 y su borde de #d57506
+  a #c86d06; el color de la marca no cambia. La E2E de P9 ya no aparta el puntero antes de axe.
+- useDebounced solo acepta valores que se comparan por valor (texto, número, booleano o null): un objeto es un error de
+  tipos. El formulario de energía y «Armar un plato» pasan el texto JSON del cuerpo, como el editor de la dieta.
+Consecuencias:
+- Cualquier marca de una organización (P15) cumple 4.5:1 en el hover sin tocar los componentes.
+- Nada cambia en Notion: 02 §11 pide contraste AA y no fija cómo se calcula el texto de marca.
