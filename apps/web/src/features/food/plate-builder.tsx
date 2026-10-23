@@ -14,11 +14,11 @@ import { useState } from 'react';
 import { TextField } from '@/features/forms/fields';
 import { FormError } from '@/features/forms/form-error';
 import { Section } from '@/features/patients/section';
-import { TableScroll } from '@/features/shell/table-scroll';
 import { apiFetch } from '@/lib/api/client';
 import { useDebounced } from '@/lib/use-debounced';
-import { formatMeasureGrams, formatTotal } from './format';
+import { formatMeasureGrams } from './format';
 import { FOOD_STATE_LABELS } from './labels';
+import { NutrientTotalsTable } from './nutrient-totals';
 
 const GRAMS = 'GRAMS';
 const MAX_ITEMS = 50;
@@ -266,56 +266,26 @@ export function PlateBuilder() {
                   rule={issue.rule}
                 />
               ))}
-              <TotalsTable
+              <NutrientTotalsTable
                 caption="Energía y macronutrientes"
-                totals={result.totals.filter((t) => t.core)}
+                valueLabel="Total"
+                of={result.items.length}
+                rows={result.totals.filter((t) => t.core)}
               />
-              <TotalsTable
+              <NutrientTotalsTable
                 caption="Otros nutrientes"
-                totals={result.totals.filter((t) => !t.core)}
+                valueLabel="Total"
+                of={result.items.length}
+                rows={result.totals.filter((t) => !t.core)}
               />
               <p className="text-sm text-muted-foreground">
-                «Sin dato»: a algún ingrediente le falta ese valor en su fuente, así que el total no
-                se puede dar.
+                «Al menos»: a algunos alimentos les falta ese valor en su fuente; se suma lo que sí
+                se conoce. «Sin dato»: no lo trae ninguno.
               </p>
             </div>
           )}
         </Section>
       ) : null}
     </div>
-  );
-}
-
-function TotalsTable({
-  caption,
-  totals,
-}: {
-  caption: string;
-  totals: PlateCompositionResponse['totals'];
-}) {
-  return (
-    <TableScroll label={caption}>
-      <table className="w-full border-collapse text-sm">
-        <caption className="bg-surface px-3 py-2 text-left font-medium">{caption}</caption>
-        <tbody>
-          {totals.map((total) => (
-            <tr key={total.code} className="border-t border-border">
-              <th scope="row" className="px-3 py-2 text-left font-normal">
-                {total.name}
-              </th>
-              <td
-                className={
-                  total.value === null
-                    ? 'w-32 px-3 py-2 text-right whitespace-nowrap text-muted-foreground italic'
-                    : 'w-32 px-3 py-2 text-right whitespace-nowrap tabular-nums'
-                }
-              >
-                {formatTotal(total.value, total.code, total.unit)}
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-    </TableScroll>
   );
 }

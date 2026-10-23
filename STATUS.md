@@ -17,7 +17,7 @@ Próxima demo: Demo 1 · Base y evaluación · semana 2
 | P7 Evaluación y cálculo, Demo 1 | ✅ | Rodrigo | #14 a #18 | E2E de la Demo 1 en escritorio y celular (G-01 a G-17), ninguna cifra sin método, recálculo con SUPERSEDED y guion; RF-18 adelantado. Etiqueta v0.1.0 (abf0d42) y Notion sincronizado; staging, pendiente de P4 |
 | P8 Datos maestros de alimentos | ✅ | Rodrigo | #21 a #24 | 3 criterios en verde (integración y E2E en escritorio y celular); Biblioteca, alimento propio, «Armar un plato», listas de intercambio y «Acerca de» con la atribución (ADR-055, ADR-056). /notion-sync aplicado (21 cambios) |
 | P9 Dieta por intercambios | ✅ | Rodrigo | #25, #26 y #27 | 3 criterios en verde (integración y E2E de Luis en escritorio y celular): borrador (ADR-057), publicación y tracking (ADR-058) y pantallas (ADR-059). /notion-sync aplicado (15 cambios en 02, 03 y 05.2) |
-| P10 Composición, menú y recetario | ⬜ | Rodrigo | | |
+| P10 Composición, menú y recetario | 🟨 | Rodrigo | | PR 1 listo (recetario, criterio 1 en verde); faltan PR 2 y PR 3 |
 | P11 Fichas PDF, Demo 2 | ⬜ | Rodrigo | | |
 | P12 Ejercicios y rutinas | ⬜ | Rodrigo | | |
 | P13 App del paciente | ⬜ | Rodrigo | | |
@@ -28,8 +28,14 @@ Próxima demo: Demo 1 · Base y evaluación · semana 2
 Leyenda: ⬜ pendiente · 🟨 en curso · ✅ terminado · ⛔ bloqueado
 
 ## En curso
-- P8, PR 1 fusionado (#21, d7beee2): importador genérico de catálogos (RN-I04), TPCA 2017 (928 alimentos) y
-  Compendium 2024 (560 actividades), CLI catalog:load y lista DEMO provisional; ADR-052.
+- P10, PR 1 listo para PR (rama feat/nut-recetario) (ADR-061):
+  - recetario en /panel/biblioteca/recetas: buscar, crear, editar con If-Match, archivar y restaurar; ingredientes en
+    gramos o medidas caseras, con su estado (RN-E12);
+  - nutrientes por porción con RECIPE_NUTRIENTS 1.1.0 (motor 1.3.0): «al menos X · falta en N de M» cuando a un
+    ingrediente le falta el dato (RN-I03), también en «Armar un plato»;
+  - caché en food.recipe.nutrients_per_serving, recalculada al editar la receta o un alimento propio que usa;
+  - criterio 1 en integración: arroz cocido (A2) y pollo (F26), 204.25 kcal por porción; E2E e2e/recetas.spec.ts;
+  - migración 202610230100_food_recipes.
 - P9, PR 3 fusionado (#27, e30f9ac) (ADR-059, ADR-060):
   - editor en tres pasos (metas con la referencia de hidratación, intercambios, reparto y alimentos) con la
     adecuación en vivo por POST /nutrition-plans/:id/preview, y publicar con confirmación;
@@ -142,6 +148,8 @@ Leyenda: ⬜ pendiente · 🟨 en curso · ✅ terminado · ⛔ bloqueado
   equipo WebKit no tiene sus dependencias
 - No hay página de Términos: cuando lleguen los textos revisados por el abogado, la atribución puede mudarse ahí,
   siempre una sola vez (ADR-056)
+- Reimportar un catálogo global (TPCA) no recalcula la caché de nutrientes de las recetas: hace falta un recálculo
+  de las recetas que usan los alimentos cambiados (ADR-061). Los planes publicados no cambian: llevan su snapshot
 
 ## Registro de sesiones (solo las 5 últimas)
 - 2026-10-23 · P9 cerrado · #27 fusionado con los cuatro checks en verde; /notion-sync de P9 aprobado y aplicado:

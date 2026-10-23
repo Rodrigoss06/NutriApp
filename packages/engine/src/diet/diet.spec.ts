@@ -146,6 +146,32 @@ describe('RN-E12 y RN-I03 · nutrientes de una receta', () => {
     expect(outputs.per100gCooked).toBeNull();
   });
 
+  it('RN-I03 · 1.1.0: lo conocido se suma aparte, con cuántos ingredientes no traen el dato; el total no cambia', () => {
+    const run = runMethod(RECIPE_NUTRIENTS, { ingredients, servings: 4 });
+    const { outputs, methodVersion } = expectOk(run);
+
+    expect(methodVersion).toBe('1.1.0');
+    expect(outputs.totals).toEqual({ kcal: 310, proteinG: 6, fiberG: null });
+    expect(outputs.knownTotals).toEqual({ kcal: 310, proteinG: 6, fiberG: 2 });
+    expect(outputs.knownPerServing).toEqual({ kcal: 77.5, proteinG: 1.5, fiberG: 0.5 });
+    expect(outputs.missingIngredients).toEqual({ kcal: 0, proteinG: 0, fiberG: 1 });
+  });
+
+  it('RN-I03 · un nutriente que un ingrediente no menciona también falta en él', () => {
+    const { outputs } = expectOk(
+      runMethod(RECIPE_NUTRIENTS, {
+        ingredients: [
+          { grams: 100, per100g: { kcal: 100, naMg: 10 } },
+          { grams: 100, per100g: { kcal: 50 } },
+        ],
+        servings: 1,
+      }),
+    );
+    expect(outputs.totals.naMg).toBeNull();
+    expect(outputs.knownTotals.naMg).toBe(10);
+    expect(outputs.missingIngredients).toEqual({ kcal: 0, naMg: 1 });
+  });
+
   it('rechaza porciones que no son positivas', () => {
     expect(expectErrors(runMethod(RECIPE_NUTRIENTS, { ingredients, servings: 0 }))).toEqual([
       { rule: 'RN-E12', code: 'NC-ENG-308', severity: 'ERROR' },

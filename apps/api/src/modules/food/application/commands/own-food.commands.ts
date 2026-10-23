@@ -24,6 +24,7 @@ import {
 import { ownFood, type OwnFood, type OwnFoodInput } from '../../domain/own-food.js';
 import { foodEvent, type FoodEventType } from '../food-events.js';
 import { FOOD_STORE, type FoodRecord, type FoodStore } from '../ports/food.port.js';
+import { RecipeCalculator } from '../recipe-calculator.js';
 
 /** Los campos que cambian, para la auditoría: nombres, nunca valores (02 §10). */
 function changedFields(before: FoodRecord, after: OwnFood): string[] {
@@ -42,8 +43,9 @@ function changedFields(before: FoodRecord, after: OwnFood): string[] {
 }
 
 /**
- * Alimentos propios de la organización (RN-I01): se crean y se editan con If-Match; los globales no se tocan. Cada
- * escritura deja su evento para la auditoría (RN-B03).
+ * Alimentos propios de la organización (RN-I01): se crean y se editan con If-Match; los globales no se tocan. Editar
+ * uno recalcula la caché de las recetas que lo usan, en la misma transacción (RN-E12). Cada escritura deja su evento
+ * para la auditoría (RN-B03).
  */
 @Injectable()
 export class OwnFoodCommands {
@@ -53,6 +55,7 @@ export class OwnFoodCommands {
     @Inject(ID_GENERATOR) private readonly ids: IdGenerator,
     @Inject(OUTBOX) private readonly outbox: Outbox,
     @Inject(FOOD_STORE) private readonly foods: FoodStore,
+    @Inject(RecipeCalculator) private readonly recipes: RecipeCalculator,
   ) {}
 
   create(
@@ -89,6 +92,7 @@ export class OwnFoodCommands {
       const food = ownFood(input, await this.foods.nutrients());
       if (!food.ok) return food;
       if (!(await this.foods.updateOwn(id, version, food.value))) return err(FOOD_VERSION_CONFLICT);
+      await this.recipes.refreshUsing(id);
       await this.#event(context, 'food.food.updated', id, changedFields(existing, food.value));
       return ok({ id, version: version + 1 });
     });

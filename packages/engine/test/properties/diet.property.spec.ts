@@ -5,6 +5,7 @@ import {
   DEMO_EXCHANGE_LIST,
   EXCHANGES_CLASSIC,
   MEAL_SPLIT_LARGEST_REMAINDER,
+  RECIPE_NUTRIENTS,
 } from '../../src/diet/index.js';
 import { runMethod } from '../../src/registry/run-method.js';
 import { expectOk } from '../support.js';
@@ -64,6 +65,26 @@ describe('03 · propiedades de la dieta', () => {
           expectOk(runMethod(ADEQUACY, { prescribed, consumedDaily: [prescribed] })).outputs
             .adequacyPct,
         ).toBe(100);
+      }),
+    );
+  });
+
+  it('RN-I03 · lo conocido de una receta nunca supera al total y es igual a él cuando no falta ningún dato', () => {
+    const ingredient = fc.record({
+      grams: fc.double({ min: 1, max: 1000, noNaN: true }),
+      per100g: fc.record({
+        kcal: fc.double({ min: 0, max: 900, noNaN: true }),
+        caMg: fc.option(fc.double({ min: 0, max: 2000, noNaN: true }), { nil: null }),
+      }),
+    });
+    fc.assert(
+      fc.property(fc.array(ingredient, { minLength: 1, maxLength: 12 }), (ingredients) => {
+        const { outputs } = expectOk(runMethod(RECIPE_NUTRIENTS, { ingredients, servings: 2 }));
+        expect(outputs.knownTotals.kcal).toBe(outputs.totals.kcal);
+        const missing = ingredients.filter(({ per100g }) => per100g.caMg === null).length;
+        expect(outputs.missingIngredients.caMg).toBe(missing);
+        if (missing === 0) expect(outputs.knownTotals.caMg).toBe(outputs.totals.caMg);
+        else expect(outputs.totals.caMg).toBeNull();
       }),
     );
   });

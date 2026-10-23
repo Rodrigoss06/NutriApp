@@ -1,42 +1,7 @@
 import { ENGINE_VERSION } from '@nutricoach/engine';
 import { describe, expect, it } from 'vitest';
-import type { FoodRecord } from './ports/food.port.js';
+import { foodRecord as food, NUTRIENTS } from './food-fakes.spec-support.js';
 import { composePlate, gramsOf } from './plate-composition.js';
-
-const NUTRIENTS = [
-  { code: 'ENERC_KCAL', name: 'Energía', unit: 'kcal', core: true },
-  { code: 'PROCNT', name: 'Proteínas', unit: 'g', core: true },
-  { code: 'FIBTG', name: 'Fibra dietaria', unit: 'g', core: true },
-] as const;
-
-/** Un alimento sintético con sus valores por 100 g; null es «sin dato». */
-function food(id: string, name: string, values: Record<string, number | null>): FoodRecord {
-  return {
-    id,
-    name,
-    sourceCode: 'TPCA_2017',
-    sourceFoodCode: id,
-    groupName: null,
-    state: 'COOKED',
-    own: false,
-    energyKcalPer100g: values.ENERC_KCAL ?? null,
-    organizationId: null,
-    ediblePortionPct: 100,
-    tags: [],
-    version: 0,
-    source: { code: 'TPCA_2017', name: 'TPCA', edition: null },
-    nutrients: NUTRIENTS.map((n) => ({
-      ...n,
-      nutrientCode: n.code,
-      valuePer100g: values[n.code] ?? null,
-      flag: values[n.code] === null ? 'MISSING' : null,
-    })),
-    measures: [
-      { id: 'm-taza', name: 'Taza', grams: 150, grossGrams: null, sourceCode: 'TAFERA_2016' },
-    ],
-    cookingFactors: [],
-  };
-}
 
 const RICE = food('A2', 'Arroz cocido', { ENERC_KCAL: 115, PROCNT: 2.4, FIBTG: null });
 const BEANS = food('T64', 'Frejol sancochado', { ENERC_KCAL: 119, PROCNT: 10.1, FIBTG: 6.8 });
@@ -53,7 +18,7 @@ describe('RN-E12 · RN-E16 · lo que aporta un plato', () => {
 
     expect(plate).toMatchObject({
       methodCode: 'RECIPE_NUTRIENTS',
-      methodVersion: '1.0.0',
+      methodVersion: '1.1.0',
       engineVersion: ENGINE_VERSION,
       weightG: 270,
     });
@@ -63,7 +28,7 @@ describe('RN-E12 · RN-E16 · lo que aporta un plato', () => {
     expect(total('PROCNT')).toBeCloseTo(3.6 + 12.12, 6);
   });
 
-  it('RN-I03: si a un alimento le falta un nutriente, el total es «sin dato», no la suma de los demás', () => {
+  it('RN-I03: si a un alimento le falta un nutriente, el total es «sin dato»; lo conocido va aparte, con cuántos faltan', () => {
     const plate = composePlate(
       [
         { food: RICE, grams: 150, measure: null, quantity: null },
@@ -72,16 +37,12 @@ describe('RN-E12 · RN-E16 · lo que aporta un plato', () => {
       NUTRIENTS,
     );
 
-    expect(plate.totals.find((t) => t.code === 'FIBTG')).toEqual({
-      code: 'FIBTG',
-      name: 'Fibra dietaria',
-      unit: 'g',
-      core: true,
-      value: null,
-    });
+    const fiber = plate.totals.find((t) => t.code === 'FIBTG');
+    expect(fiber).toMatchObject({ code: 'FIBTG', name: 'Fibra dietaria', value: null, missing: 1 });
+    expect(fiber?.known).toBeCloseTo(8.16, 10);
   });
 
-  it('avisa que la 1.0 no aplica factores de retención de micronutrientes (RN-E12)', () => {
+  it('avisa que todavía no aplica factores de retención de micronutrientes (RN-E12)', () => {
     const plate = composePlate(
       [{ food: BEANS, grams: 100, measure: null, quantity: null }],
       NUTRIENTS,

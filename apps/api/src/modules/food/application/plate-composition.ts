@@ -1,4 +1,10 @@
-import { ENGINE_VERSION, RECIPE_NUTRIENTS, runMethod, type Issue } from '@nutricoach/engine';
+import {
+  ENGINE_VERSION,
+  RECIPE_NUTRIENTS,
+  runMethod,
+  type Issue,
+  type RecipeIngredient as EngineIngredient,
+} from '@nutricoach/engine';
 import { err, ok, type DomainError, type Result } from '@nutricoach/shared-kernel';
 import { MEASURE_NOT_OF_FOOD } from '../domain/food-errors.js';
 import type { FoodRecord } from './ports/food.port.js';
@@ -34,7 +40,12 @@ export interface PlateComposition {
     readonly name: string;
     readonly unit: string;
     readonly core: boolean;
+    /** «Sin dato» (null) si le falta a alguno de los alimentos (RN-I03). */
     readonly value: number | null;
+    /** La suma de lo que sí se conoce, para mostrar «al menos». */
+    readonly known: number;
+    /** Cuántos alimentos no traen el dato. */
+    readonly missing: number;
   }[];
   readonly issues: readonly Issue[];
 }
@@ -54,16 +65,12 @@ export function gramsOf(
   });
 }
 
-/**
- * Lo que aporta un plato (RN-E16) con el método RECIPE_NUTRIENTS del motor, como una receta de una porción: cada total
- * es Σ gramos × valor por 100 g ÷ 100, y es «sin dato» si le falta a alguno de sus alimentos (RN-I03). No se guarda:
- * es una vista previa, con el método, la versión y el hash de los insumos (RN-D01).
- */
-export function composePlate(
-  entries: readonly PlateEntry[],
-  nutrients: readonly { code: string; name: string; unit: string; core: boolean }[],
-): PlateComposition {
-  const ingredients = entries.map(({ food, grams }) => ({
+/** Los insumos de RECIPE_NUTRIENTS: cada alimento con sus gramos y todos los nutrientes del catálogo por 100 g. */
+export function engineIngredients(
+  entries: readonly { readonly food: FoodRecord; readonly grams: number }[],
+  nutrients: readonly { readonly code: string }[],
+): EngineIngredient[] {
+  return entries.map(({ food, grams }) => ({
     foodCode: food.id,
     grams,
     per100g: Object.fromEntries(
@@ -73,7 +80,22 @@ export function composePlate(
       ]),
     ),
   }));
-  const run = runMethod(RECIPE_NUTRIENTS, { ingredients, servings: 1 });
+}
+
+/**
+ * Lo que aporta un plato (RN-E16) con el método RECIPE_NUTRIENTS del motor, como una receta de una porción: cada total
+ * es Σ gramos × valor por 100 g ÷ 100, y es «sin dato» si le falta a alguno de sus alimentos (RN-I03); lo conocido va
+ * aparte, con cuántos alimentos no traen el dato (ADR-061). No se guarda:
+ * es una vista previa, con el método, la versión y el hash de los insumos (RN-D01).
+ */
+export function composePlate(
+  entries: readonly PlateEntry[],
+  nutrients: readonly { code: string; name: string; unit: string; core: boolean }[],
+): PlateComposition {
+  const run = runMethod(RECIPE_NUTRIENTS, {
+    ingredients: engineIngredients(entries, nutrients),
+    servings: 1,
+  });
   if (!run.ok)
     throw new Error(`RECIPE_NUTRIENTS no calculó: ${run.errors.map((e) => e.code).join(', ')}`);
   const { result } = run;
@@ -97,6 +119,8 @@ export function composePlate(
       unit,
       core,
       value: result.outputs.totals[code] ?? null,
+      known: result.outputs.knownTotals[code] ?? 0,
+      missing: result.outputs.missingIngredients[code] ?? 0,
     })),
     issues: result.warnings,
   };

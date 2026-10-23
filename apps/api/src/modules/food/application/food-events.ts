@@ -6,7 +6,13 @@ import {
 } from '@nutricoach/shared-kernel';
 
 /** Eventos de food (02 §8): solo identificadores y nombres de campo; las escrituras se auditan desde ellos. */
-export type FoodEventType = 'food.food.created' | 'food.food.updated';
+export type FoodEventType =
+  | 'food.food.created'
+  | 'food.food.updated'
+  | 'food.recipe.created'
+  | 'food.recipe.updated'
+  | 'food.recipe.archived'
+  | 'food.recipe.restored';
 
 export function foodEvent<TPayload extends { fields?: readonly string[] }>(
   type: FoodEventType,

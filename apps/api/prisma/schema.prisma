@@ -858,8 +858,10 @@ model Recipe {
   createdAt           DateTime           @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt           DateTime           @default(now()) @map("updated_at") @db.Timestamptz(6)
   version             Int                @default(0)
+  searchText          String?            @default(dbgenerated("app.unaccent_immutable(lower(name_es))")) @map("search_text")
   recipeIngredients   RecipeIngredient[]
 
+  @@index([searchText(ops: raw("gin_trgm_ops"))], map: "recipe_search", type: Gin)
   @@map("recipe")
   @@schema("food")
 }
@@ -877,6 +879,7 @@ model RecipeIngredient {
   recipe         Recipe  @relation(fields: [recipeId], references: [id], onDelete: Cascade, onUpdate: NoAction)
 
   @@id([recipeId, position])
+  @@index([foodId], map: "recipe_ingredient_food")
   @@map("recipe_ingredient")
   @@schema("food")
 }
