@@ -3,6 +3,14 @@
 Cambiar una fórmula o una constante sube la versión del método afectado y la del motor (02 §9).
 Los resultados guardados conservan la versión con que se calcularon (RN-D01, RN-D08).
 
+## 1.3.0 — 2026-10-23
+
+- `RECIPE_NUTRIENTS` 1.1.0: además de los totales, suma aparte lo que sí se conoce (`knownTotals` y
+  `knownPerServing`) y cuenta los ingredientes que no traen cada nutriente (`missingIngredients`). Sirve para mostrar
+  «al menos X · falta en N de M» en los micronutrientes de una receta o de un día (RN-I03, ADR-061). Los totales no
+  cambian: un dato que falta en un ingrediente sigue dejando el total «sin dato». El aviso NC-ENG-307 ya no nombra
+  la versión.
+
 ## 1.2.0 — 2026-10-13
 
 - `MUSCLE_LEE2000` 1.1.0: el insumo del coeficiente de grupo de referencia se llama `referenceGroupCoefficient`, y

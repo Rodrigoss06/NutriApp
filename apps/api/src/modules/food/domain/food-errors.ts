@@ -25,3 +25,15 @@ export const MEASURE_NOT_OF_FOOD = domainError({
   rule: 'RN-E12',
   message: 'Esa medida casera no es de ese alimento.',
 });
+
+/** La receta no existe o es de otra organización: para ella no existe (RN-A01). */
+export const RECIPE_NOT_FOUND = domainError({
+  code: 'NC-FOOD-006',
+  message: 'No encontramos esa receta.',
+});
+
+/** Alguien editó la receta antes (If-Match). */
+export const RECIPE_VERSION_CONFLICT = domainError({
+  code: 'NC-FOOD-008',
+  message: 'La receta cambió mientras la editabas: vuelve a abrirla.',
+});

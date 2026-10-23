@@ -19,8 +19,14 @@ export interface RecipeInput {
 }
 
 export interface RecipeOutput {
+  /** «Sin dato» (null) si le falta a algún ingrediente (RN-I03). */
   readonly totals: NutrientValues;
   readonly perServing: NutrientValues;
+  /** Σ de lo que sí se conoce, para mostrar «al menos»: igual al total cuando no falta en ningún ingrediente. */
+  readonly knownTotals: Readonly<Record<string, number>>;
+  readonly knownPerServing: Readonly<Record<string, number>>;
+  /** Cuántos ingredientes no traen el dato, por nutriente. */
+  readonly missingIngredients: Readonly<Record<string, number>>;
   readonly rawWeightG: number;
   /** Peso cocido ÷ suma de gramos crudos; null si no se registró el peso cocido. */
   readonly yieldFactor: number | null;
@@ -35,10 +41,11 @@ const mapValues = (values: NutrientValues, fn: (value: number) => number): Nutri
 /**
  * Nutrientes de una receta: totales = Σ gramos × valor por 100 g ÷ 100; por porción = totales ÷
  * porciones; con peso cocido, factor de rendimiento y nutrientes por 100 g cocidos (RN-E12, RN-E16).
+ * Desde 1.1.0 suma aparte lo conocido y cuenta los ingredientes sin el dato, sin tocar los totales (RN-I03, ADR-061).
  */
 export const RECIPE_NUTRIENTS = defineMethod<RecipeInput, RecipeOutput>({
   code: 'RECIPE_NUTRIENTS',
-  version: '1.0.0',
+  version: '1.1.0',
   kind: 'DIET',
   population: 'ALL',
   requiredInputs: ['ingredients', 'servings'],
@@ -47,14 +54,19 @@ export const RECIPE_NUTRIENTS = defineMethod<RecipeInput, RecipeOutput>({
   validity: [],
   compute: ({ ingredients, servings, cookedWeightG }) => {
     const nutrients = [...new Set(ingredients.flatMap(({ per100g }) => Object.keys(per100g)))];
+    const contributions = nutrients.map((nutrient) => {
+      const values = ingredients.map(({ grams, per100g }) => {
+        const value = per100g[nutrient];
+        return value === null || value === undefined ? null : (grams * value) / 100;
+      });
+      const known = values.filter((value): value is number => value !== null);
+      return { nutrient, known: sum(known), missing: values.length - known.length };
+    });
     const totals: NutrientValues = Object.fromEntries(
-      nutrients.map((nutrient) => {
-        const contributions = ingredients.map(({ grams, per100g }) => {
-          const value = per100g[nutrient];
-          return value === null || value === undefined ? null : (grams * value) / 100;
-        });
-        return [nutrient, contributions.includes(null) ? null : sum(contributions as number[])];
-      }),
+      contributions.map(({ nutrient, known, missing }) => [nutrient, missing > 0 ? null : known]),
+    );
+    const knownTotals = Object.fromEntries(
+      contributions.map(({ nutrient, known }) => [nutrient, known]),
     );
     const rawWeightG = sum(ingredients.map(({ grams }) => grams));
     const issues: Issue[] = [
@@ -62,7 +74,7 @@ export const RECIPE_NUTRIENTS = defineMethod<RecipeInput, RecipeOutput>({
         rule: 'RN-E12',
         severity: 'WARNING',
         code: 'NC-ENG-307',
-        message: 'La versión 1.0 no aplica factores de retención de micronutrientes al cocinar.',
+        message: 'Todavía no se aplican factores de retención de micronutrientes al cocinar.',
       },
     ];
     if (!(servings > 0)) {
@@ -78,6 +90,13 @@ export const RECIPE_NUTRIENTS = defineMethod<RecipeInput, RecipeOutput>({
       outputs: {
         totals,
         perServing: mapValues(totals, (value) => value / servings),
+        knownTotals,
+        knownPerServing: Object.fromEntries(
+          contributions.map(({ nutrient, known }) => [nutrient, known / servings]),
+        ),
+        missingIngredients: Object.fromEntries(
+          contributions.map(({ nutrient, missing }) => [nutrient, missing]),
+        ),
         rawWeightG,
         yieldFactor: cooked === null ? null : cooked / rawWeightG,
         per100gCooked:

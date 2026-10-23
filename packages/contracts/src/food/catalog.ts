@@ -167,6 +167,10 @@ export const plateCompositionResponseSchema = z.object({
       unit: z.string(),
       core: z.boolean(),
       value: z.number().nullable(),
+      /** La suma de lo que sí se conoce, para mostrar «al menos» (ADR-061). */
+      known: z.number(),
+      /** Cuántos alimentos no traen el dato. */
+      missing: z.number().int(),
     }),
   ),
   issues: z.array(engineIssueSchema),

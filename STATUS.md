@@ -1,6 +1,6 @@
 # STATUS — NutriCoach v1.0
 
-Actualizado: 2026-10-22 · Por: Rodrigo, con Claude Code
+Actualizado: 2026-10-23 · Por: Rodrigo, con Claude Code
 Inicio del proyecto: POR CONFIRMAR (día siguiente al Pago 1) · Semana actual: 0 de 9
 Próxima demo: Demo 1 · Base y evaluación · semana 2
 
@@ -16,8 +16,8 @@ Próxima demo: Demo 1 · Base y evaluación · semana 2
 | P6 Pacientes e historia clínica | ✅ | Rodrigo | #10, #11, #12 | 4 criterios en verde (E2E en escritorio y celular, e integración); despliegue a staging pendiente de P4 |
 | P7 Evaluación y cálculo, Demo 1 | ✅ | Rodrigo | #14 a #18 | E2E de la Demo 1 en escritorio y celular (G-01 a G-17), ninguna cifra sin método, recálculo con SUPERSEDED y guion; RF-18 adelantado. Etiqueta v0.1.0 (abf0d42) y Notion sincronizado; staging, pendiente de P4 |
 | P8 Datos maestros de alimentos | ✅ | Rodrigo | #21 a #24 | 3 criterios en verde (integración y E2E en escritorio y celular); Biblioteca, alimento propio, «Armar un plato», listas de intercambio y «Acerca de» con la atribución (ADR-055, ADR-056). /notion-sync aplicado (21 cambios) |
-| P9 Dieta por intercambios | ✅ | Rodrigo | #25, #26 y #27 | 3 criterios en verde (integración y E2E de Luis en escritorio y celular): borrador (ADR-057), publicación y tracking (ADR-058) y pantallas (ADR-059). #27 en revisión. /notion-sync pendiente de aprobación |
-| P10 Composición, menú y recetario | ⬜ | Rodrigo | | |
+| P9 Dieta por intercambios | ✅ | Rodrigo | #25, #26 y #27 | 3 criterios en verde (integración y E2E de Luis en escritorio y celular): borrador (ADR-057), publicación y tracking (ADR-058) y pantallas (ADR-059). /notion-sync aplicado (15 cambios en 02, 03 y 05.2) |
+| P10 Composición, menú y recetario | 🟨 | Rodrigo | | PR 1 listo (recetario, criterio 1 en verde); faltan PR 2 y PR 3 |
 | P11 Fichas PDF, Demo 2 | ⬜ | Rodrigo | | |
 | P12 Ejercicios y rutinas | ⬜ | Rodrigo | | |
 | P13 App del paciente | ⬜ | Rodrigo | | |
@@ -28,9 +28,15 @@ Próxima demo: Demo 1 · Base y evaluación · semana 2
 Leyenda: ⬜ pendiente · 🟨 en curso · ✅ terminado · ⛔ bloqueado
 
 ## En curso
-- P8, PR 1 fusionado (#21, d7beee2): importador genérico de catálogos (RN-I04), TPCA 2017 (928 alimentos) y
-  Compendium 2024 (560 actividades), CLI catalog:load y lista DEMO provisional; ADR-052.
-- P9, PR 3 en #27 (feat/nut-editor), en revisión (ADR-059, ADR-060):
+- P10, PR 1 listo para PR (rama feat/nut-recetario) (ADR-061):
+  - recetario en /panel/biblioteca/recetas: buscar, crear, editar con If-Match, archivar y restaurar; ingredientes en
+    gramos o medidas caseras, con su estado (RN-E12);
+  - nutrientes por porción con RECIPE_NUTRIENTS 1.1.0 (motor 1.3.0): «al menos X · falta en N de M» cuando a un
+    ingrediente le falta el dato (RN-I03), también en «Armar un plato»;
+  - caché en food.recipe.nutrients_per_serving, recalculada al editar la receta o un alimento propio que usa;
+  - criterio 1 en integración: arroz cocido (A2) y pollo (F26), 204.25 kcal por porción; E2E e2e/recetas.spec.ts;
+  - migración 202610230100_food_recipes.
+- P9, PR 3 fusionado (#27, e30f9ac) (ADR-059, ADR-060):
   - editor en tres pasos (metas con la referencia de hidratación, intercambios, reparto y alimentos) con la
     adecuación en vivo por POST /nutrition-plans/:id/preview, y publicar con confirmación;
   - porción sugerida con el macronutriente que define al grupo (carbohidratos totales, CHOCDF); historial de
@@ -75,9 +81,7 @@ Leyenda: ⬜ pendiente · 🟨 en curso · ✅ terminado · ⛔ bloqueado
 ## Siguiente paso
 - Antes de la Demo 1: la matriz manual de navegadores (RNF-19: Chrome, Edge, Safari y Firefox; la E2E cubre Chromium
   y WebKit) y, el mismo día, base local limpia y semilla («Antes de empezar» del guion). La demo es en local
-- Revisar y fusionar #27 (PR 3 de P9)
-- Aplicar el /notion-sync de P9 que Rodrigo apruebe (ADR-057 a ADR-059) y, después, P10 (composición, menú semanal y
-  recetario)
+- P10: composición, menú semanal y recetario
 - Cada base nueva necesita los catálogos: `pnpm --filter api build && pnpm catalog:load plataforma@demo.example.com`
   en local; en staging y producción, con el correo de su PLATFORM_ADMIN
 - db:seed carga el caso Luis: sus resultados aparecen cuando corre el worker
@@ -144,8 +148,13 @@ Leyenda: ⬜ pendiente · 🟨 en curso · ✅ terminado · ⛔ bloqueado
   equipo WebKit no tiene sus dependencias
 - No hay página de Términos: cuando lleguen los textos revisados por el abogado, la atribución puede mudarse ahí,
   siempre una sola vez (ADR-056)
+- Reimportar un catálogo global (TPCA) no recalcula la caché de nutrientes de las recetas: hace falta un recálculo
+  de las recetas que usan los alimentos cambiados (ADR-061). Los planes publicados no cambian: llevan su snapshot
 
 ## Registro de sesiones (solo las 5 últimas)
+- 2026-10-23 · P9 cerrado · #27 fusionado con los cuatro checks en verde; /notion-sync de P9 aprobado y aplicado:
+  RN-E08, RN-E10, RN-E13, RN-E14 y RN-G05 en 03 (versión 1.9), mapa de contextos, NutritionPlan y auditoría en 02, y
+  el DDL de nutrition en 05.2 como la migración 202610230000_nutrition_plans
 - 2026-10-22 · P9 (PR 2 y PR 3) · #25 fusionado; PR 2 abierto (#26). Pantallas de la dieta por intercambios: editor en
   tres pasos con vista previa en la API, porción sugerida, referencias de hidratación, historial y vista del plan
   publicado (ADR-059); E2E de Luis en escritorio y celular. P9 cumple sus tres criterios. #26 fusionado; Rodrigo
@@ -162,7 +171,3 @@ Leyenda: ⬜ pendiente · 🟨 en curso · ✅ terminado · ⛔ bloqueado
   importador de catálogos, CLI catalog:load y ADR-052. Rodrigo decidió usar la TPCA mientras se tramita su licencia
   (plan B: USDA FoodData Central) y dejar la foto sin IA hasta un acuerdo; aprobó el estado deducido del nombre y no
   derivar alias
-- 2026-10-18 · Rediseño «Instrumento» · herramientas de diseño en el usuario de Claude Code (frontend-design,
-  ui-ux-pro-max, ui-skills y MCP de shadcn, Context7 y Playwright); vista previa de tres direcciones; dirección A con
-  curvas de nivel; escala de referencia en los resultados; ADR-051. El disco de datos se llenó (lago de datos de
-  otro proyecto) y Rodrigo liberó espacio

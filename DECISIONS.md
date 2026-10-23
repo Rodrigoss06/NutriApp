@@ -1035,3 +1035,39 @@ Decisión:
 Consecuencias:
 - Cualquier marca de una organización (P15) cumple 4.5:1 en el hover sin tocar los componentes.
 - Nada cambia en Notion: 02 §11 pide contraste AA y no fija cómo se calcula el texto de marca.
+
+## ADR-061 · Recetario con caché de nutrientes por porción y «al menos» cuando falta un dato — aceptada (2026-10-23)
+Contexto: P10 (PR 1) pide el recetario (RF-21): una receta con ingredientes, rendimiento y nutrientes por porción
+calculados por el motor (RECIPE_NUTRIENTS), con una caché que se recalcula al cambiar los ingredientes. Con la TPCA,
+casi todo total de micronutrientes de un plato o un día queda «sin dato», porque basta que a un alimento le falte el
+valor (RN-I03). Rodrigo eligió (2026-10-23) mostrar la suma de lo que sí se conoce, con en cuántos alimentos falta, en
+vez de dejar solo «sin dato».
+Decisión:
+- `RECIPE_NUTRIENTS` 1.1.0 (motor 1.3.0) suma aparte lo conocido (`knownTotals`, `knownPerServing`) y cuenta los
+  ingredientes sin el dato (`missingIngredients`). Los totales no cambian: un dato que falta deja el total en null. La
+  interfaz muestra «al menos X · falta en N de M»; si lo conocido es 0 (o se ve 0 al redondear), «0 g · falta en N de
+  M», sin «al menos», porque un nutriente no baja de 0 (Rodrigo, 2026-10-23); si falta en todos, «sin dato». Vale para
+  la receta y para «Armar un plato», y valdrá para los totales del día en composición y menú (PR 2).
+- La caché `food.recipe.nutrients_per_serving` guarda el sobre del método: código, versión, versión del motor, hash de
+  los insumos (RN-D01), ingredientes, peso, rendimiento, por porción (valor, conocido y faltantes), por 100 g cocidos y
+  avisos. Se recalcula en la misma transacción al crear o editar la receta, y al editar un alimento propio que la receta
+  usa. Ese recálculo no cambia la versión de la receta ni deja evento: es un dato derivado, no una edición.
+- Las cantidades quedan con los dos decimales que guarda la base (gramos, porciones y peso cocido): se calcula con lo
+  mismo que se guarda.
+- La medida casera se guarda como texto («0.5 × Taza de acero al ras») junto a los gramos; no se agrega measure_id. Al
+  editar, el ingrediente vuelve en gramos con su texto, y se puede volver a elegir una medida.
+- Una receta no se borra: se archiva y se restaura con If-Match (status ACTIVE o ARCHIVED). Archivada sale de la
+  búsqueda de activas; los planes que ya la usan la conservan en su snapshot.
+- API /api/v1/recipes: búsqueda sin tildes (search_text con trigramas, como food.food), detalle, vista previa sin
+  guardar (catalog.read, vale en solo lectura), crear y editar (catalog.write, If-Match), archivar y restaurar.
+  Errores: NC-FOOD-006 (no existe, 404), NC-FOOD-007 (no se puede calcular, 422, RN-E12) y NC-FOOD-008 (versión, 409);
+  un ingrediente que la organización no ve es NC-FOOD-002 con 422. Eventos food.recipe.created, .updated (con los
+  nombres de los campos), .archived y .restored, auditados.
+- Migración 202610230100_food_recipes: CHECK del estado, porciones y peso cocido mayores que cero, search_text con su
+  índice e índice de recipe_ingredient por alimento.
+- Pasan al PR 2, donde se diseñan las modalidades: los CHECK de nutrition.plan_item y FoodApi.recipesById.
+Consecuencias:
+- Reimportar un catálogo global no recalcula las cachés de las recetas (deuda); los planes publicados no cambian
+  porque llevan su snapshot (RN-E15).
+- Para Notion (/notion-sync): 03 RN-I03 («al menos» con los faltantes), 05.2 food.recipe (CHECK, search_text, índices y
+  contenido de la caché), 02 §8 (eventos food.recipe.*) y 04 RF-21 (archivar en vez de borrar).

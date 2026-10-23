@@ -19,3 +19,4 @@ export * from './nutrition/energy.js';
 export * from './nutrition/plan.js';
 export * from './food/catalog.js';
 export * from './food/exchange.js';
+export * from './food/recipe.js';

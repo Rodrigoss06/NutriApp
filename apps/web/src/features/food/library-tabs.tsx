@@ -6,6 +6,7 @@ import { usePathname } from 'next/navigation';
 
 const TABS = [
   { path: '/alimentos', label: 'Alimentos' },
+  { path: '/recetas', label: 'Recetas' },
   { path: '/plato', label: 'Armar un plato' },
   { path: '/actividades', label: 'Actividades' },
   { path: '/listas', label: 'Listas de intercambio' },

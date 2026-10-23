@@ -59,8 +59,45 @@ export function formatTotal(value: number | null, code: string, unit: string): s
   return `${withDigits(value, SOURCE_DIGITS[code] ?? 1)} ${unit}`;
 }
 
+/** Un total que puede tener huecos: value es «sin dato» si falta en alguno; known suma lo conocido (ADR-061). */
+export interface TotalWithGaps {
+  readonly value: number | null;
+  readonly known: number;
+  readonly missing: number;
+}
+
+/**
+ * Un total de un plato o una receta (RN-I03, ADR-061): completo, el total; si falta en algunos de sus `of` alimentos,
+ * «al menos» lo conocido y en cuántos falta (si lo conocido suma 0, el 0 a secas: un nutriente no baja de 0); si falta
+ * en todos, «sin dato».
+ */
+export function formatTotalWithGaps(
+  total: TotalWithGaps,
+  of: number,
+  code: string,
+  unit: string,
+): { text: string; gap: string | null } {
+  if (total.value !== null) return { text: formatTotal(total.value, code, unit), gap: null };
+  if (total.missing >= of) return { text: NO_DATA, gap: null };
+  const known = formatTotal(total.known, code, unit);
+  // Lo que redondea a 0 al mostrarse (0.3 g de fibra) tampoco lleva «al menos».
+  const zero = formatTotal(0, code, unit);
+  return {
+    text: total.known > 0 && known !== zero ? `al menos ${known}` : known,
+    gap: `falta en ${String(total.missing)} de ${String(of)}`,
+  };
+}
+
 /** Gramos de una medida casera o de un plato, con 1 decimal como los publica la TAFERA. */
 export const formatMeasureGrams = (grams: number): string => `${withDigits(grams, 1)} g`;
+
+const servingsFormatter = new Intl.NumberFormat('es-PE', { maximumFractionDigits: 2 });
+
+/** Porciones de una receta como se escribieron: 2, 2.5 o 0.75, sin ceros de más. */
+export const formatServingsCount = (servings: number): string => servingsFormatter.format(servings);
+
+export const formatServings = (servings: number): string =>
+  `${formatServingsCount(servings)} ${servings === 1 ? 'porción' : 'porciones'}`;
 
 /** Factor de cocido a crudo, con 2 decimales como los publica la TAFERA. */
 export const formatFactor = (factor: number): string => withDigits(factor, 2);
