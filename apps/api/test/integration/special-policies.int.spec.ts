@@ -142,8 +142,9 @@ describe('RN-G01 · el paciente solo ve lo permitido y escribe solo sus registro
     }
     await owner(
       `INSERT INTO nutrition.plan (id, organization_id, patient_id, lineage_id, version_no, modality,
-                                   target_kcal, target_cho_g, target_protein_g, target_fat_g, created_by)
-       VALUES ($1, $2, $3, $1, 1, 'EXCHANGES', 1835, 184, 160, 51, $4)`,
+                                   exchange_list_id, exchange_list_version, target_kcal, target_cho_g,
+                                   target_protein_g, target_fat_g, created_by)
+       VALUES ($1, $2, $3, $1, 1, 'EXCHANGES', gen_random_uuid(), '1.0.0', 1835, 184, 160, 51, $4)`,
       [id(), a.orgId, a.patientId, a.memberUserId],
     );
     await owner(
@@ -269,10 +270,10 @@ describe('RN-C07 · RN-D08 · RN-E15 · lo cerrado o publicado no cambia', () =>
     const planId = id();
     await owner(
       `INSERT INTO nutrition.plan (id, organization_id, patient_id, lineage_id, version_no, modality, status,
-                                   target_kcal, target_cho_g, target_protein_g, target_fat_g, created_by,
-                                   snapshot, snapshot_schema_version, snapshot_hash, published_at, published_by,
-                                   valid_from)
-       VALUES ($1, $2, $3, $1, 1, 'EXCHANGES', 'PUBLISHED', 1835, 184, 160, 51, $4,
+                                   exchange_list_id, exchange_list_version, target_kcal, target_cho_g,
+                                   target_protein_g, target_fat_g, created_by, snapshot, snapshot_schema_version,
+                                   snapshot_hash, published_at, published_by, valid_from)
+       VALUES ($1, $2, $3, $1, 1, 'EXCHANGES', 'PUBLISHED', gen_random_uuid(), '1.0.0', 1835, 184, 160, 51, $4,
                '{}', 1, '\\x00', now(), $4, current_date)`,
       [planId, a.orgId, a.otherPatientId, a.memberUserId],
     );

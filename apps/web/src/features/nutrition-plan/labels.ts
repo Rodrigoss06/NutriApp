@@ -1,4 +1,4 @@
-import type { MealSlot, PlanStatus } from '@nutricoach/contracts';
+import type { MealSlot, PlanModality, PlanStatus } from '@nutricoach/contracts';
 import type { Tone } from '@nutricoach/ui';
 
 export const PLAN_STATUS_LABELS: Readonly<Record<PlanStatus, string>> = {
@@ -6,6 +6,12 @@ export const PLAN_STATUS_LABELS: Readonly<Record<PlanStatus, string>> = {
   PUBLISHED: 'Vigente',
   SUPERSEDED: 'Reemplazado',
   ARCHIVED: 'Archivado',
+};
+
+export const PLAN_MODALITY_LABELS: Readonly<Record<PlanModality, string>> = {
+  EXCHANGES: 'Intercambios',
+  COMPOSITION: 'Composición',
+  WEEKLY_MENU: 'Menú semanal',
 };
 
 export const PLAN_STATUS_TONES: Readonly<Record<PlanStatus, Tone>> = {

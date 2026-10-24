@@ -49,7 +49,7 @@ const owner = async <T>(sql: string, params: unknown[] = []): Promise<T[]> =>
 const draft = async (): Promise<Plan> => {
   const created = await harness.post(
     `/patients/${patientId}/nutrition-plans`,
-    { energyPrescriptionId: prescriptionId, exchangeListId: DEMO },
+    { modality: 'EXCHANGES', energyPrescriptionId: prescriptionId, exchangeListId: DEMO },
     cookie,
   );
   expect(created.status, JSON.stringify(created.body)).toBe(201);
@@ -65,6 +65,7 @@ interface AllowedFood {
 
 /** El cuerpo del PUT a partir de un plan leído: G-18 con sus tiempos, con los cambios que se pidan. */
 const bodyOf = (plan: Plan, changes: Record<string, unknown> = {}) => ({
+  modality: 'EXCHANGES',
   fixedServings: { VEG: 4, FRU: 3, MILK: 3 },
   overrides: {},
   meals: plan.meals.map(({ slotCode, name, timeOfDay, sharePct }) => ({
@@ -313,7 +314,7 @@ describe('RF-18 · RF-19 · borrador desde la prescripción', () => {
     });
     const foreign = await harness.post(
       `/patients/${ana}/nutrition-plans`,
-      { energyPrescriptionId: prescriptionId, exchangeListId: DEMO },
+      { modality: 'EXCHANGES', energyPrescriptionId: prescriptionId, exchangeListId: DEMO },
       cookie,
     );
     expect(foreign.status).toBe(404);
@@ -322,6 +323,7 @@ describe('RF-18 · RF-19 · borrador desde la prescripción', () => {
     const missing = await harness.post(
       `/patients/${patientId}/nutrition-plans`,
       {
+        modality: 'EXCHANGES',
         energyPrescriptionId: prescriptionId,
         exchangeListId: '01926200-0000-7000-8000-0000000000ff',
       },
@@ -454,8 +456,10 @@ describe('RN-E15 · un plan publicado no se edita, tampoco saltándose la API', 
         await errorCode(
           client,
           `INSERT INTO nutrition.plan (id, organization_id, patient_id, lineage_id, version_no, modality,
-                                       target_kcal, target_cho_g, target_protein_g, target_fat_g, created_by)
-           SELECT gen_random_uuid(), organization_id, patient_id, lineage_id, 2, 'EXCHANGES', 1, 1, 1, 1, created_by
+                                       exchange_list_id, exchange_list_version, target_kcal, target_cho_g,
+                                       target_protein_g, target_fat_g, created_by)
+           SELECT gen_random_uuid(), organization_id, patient_id, lineage_id, 2, 'EXCHANGES', exchange_list_id,
+                  exchange_list_version, 1, 1, 1, 1, created_by
            FROM nutrition.plan WHERE id = $1`,
           [plan.id],
         ),
@@ -464,8 +468,10 @@ describe('RN-E15 · un plan publicado no se edita, tampoco saltándose la API', 
         await errorCode(
           client,
           `INSERT INTO nutrition.plan (id, organization_id, patient_id, lineage_id, version_no, modality,
-                                       target_kcal, target_cho_g, target_protein_g, target_fat_g, created_by)
-           SELECT gen_random_uuid(), organization_id, patient_id, lineage_id, 3, 'EXCHANGES', 1, 1, 1, 1, created_by
+                                       exchange_list_id, exchange_list_version, target_kcal, target_cho_g,
+                                       target_protein_g, target_fat_g, created_by)
+           SELECT gen_random_uuid(), organization_id, patient_id, lineage_id, 3, 'EXCHANGES', exchange_list_id,
+                  exchange_list_version, 1, 1, 1, 1, created_by
            FROM nutrition.plan WHERE id = $1`,
           [plan.id],
         ),

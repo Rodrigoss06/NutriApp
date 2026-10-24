@@ -9,6 +9,8 @@ export type SolvedGroup = 'STA' | 'MEAT' | 'FAT';
 export type MealSlotCode =
   'BREAKFAST' | 'MID_MORNING' | 'LUNCH' | 'AFTERNOON' | 'DINNER' | 'CUSTOM';
 export type PlanStatus = 'DRAFT' | 'PUBLISHED' | 'SUPERSEDED' | 'ARCHIVED';
+/** Las tres formas de prescribir: intercambios (RF-19), composición (RF-20) y menú semanal (RF-21). */
+export type PlanModality = 'EXCHANGES' | 'COMPOSITION' | 'WEEKLY_MENU';
 
 /** Lo que el paciente puede elegir en un tiempo y grupo, con su porción en gramos de parte comestible (RN-G05). */
 export interface AllowedFoodDraft {
@@ -118,6 +120,11 @@ export const draftExists = (draftId: string): DomainError =>
     message: 'Este plan ya tiene una versión en borrador: edítala.',
     details: { draftId },
   });
+/** La modalidad se elige al crear el plan y no cambia: el borrador que llega debe ser de esa. */
+export const PLAN_MODALITY_MISMATCH = domainError({
+  code: 'NC-NUT-014',
+  message: 'Ese borrador es de otra modalidad que la del plan.',
+});
 /** Un ERROR del motor al calcular el plan, con su regla y su código NC-ENG (RN-D06). */
 export const PLAN_RULE = (issue: {
   readonly rule: string;

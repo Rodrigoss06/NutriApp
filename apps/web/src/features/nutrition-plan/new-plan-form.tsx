@@ -40,7 +40,11 @@ export function NewPlanForm({
     mutationFn: () =>
       apiFetch<NutritionPlan>(`/patients/${patientId}/nutrition-plans`, {
         method: 'POST',
-        body: { energyPrescriptionId: prescriptionId, exchangeListId: listId },
+        body: {
+          modality: 'EXCHANGES',
+          energyPrescriptionId: prescriptionId,
+          exchangeListId: listId,
+        },
       }),
     onSuccess: ({ id }) => {
       router.push(`/panel/pacientes/${patientId}/dieta/${id}`);

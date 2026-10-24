@@ -2,7 +2,11 @@ import type { NutritionPlan } from '@nutricoach/contracts';
 import { Notice, StatusBadge } from '@nutricoach/ui';
 import type { Metadata } from 'next';
 import Link from 'next/link';
-import { PLAN_STATUS_LABELS, PLAN_STATUS_TONES } from '@/features/nutrition-plan/labels';
+import {
+  PLAN_MODALITY_LABELS,
+  PLAN_STATUS_LABELS,
+  PLAN_STATUS_TONES,
+} from '@/features/nutrition-plan/labels';
 import { PlanEditor } from '@/features/nutrition-plan/plan-editor';
 import { PlanView } from '@/features/nutrition-plan/plan-view';
 import { RevisePlanButton } from '@/features/nutrition-plan/revise-plan-button';
@@ -46,6 +50,17 @@ export default async function NutritionPlanPage({
     );
   }
   const current = plan.data;
+  // La composición y el menú semanal se editan y se ven con sus propias pantallas (P10).
+  if (current.modality !== 'EXCHANGES') {
+    return (
+      <div className="flex flex-col gap-3">
+        <Notice tone="info" title={PLAN_MODALITY_LABELS[current.modality]}>
+          Este plan todavía no se puede ver aquí.
+        </Notice>
+        {back}
+      </div>
+    );
+  }
   const timezone = organization.ok ? organization.data.timezone : 'America/Lima';
   if (current.status === 'DRAFT') {
     return (

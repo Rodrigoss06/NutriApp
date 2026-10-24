@@ -3,8 +3,8 @@ import {
   type FIXED_GROUPS,
   type ExchangeGroupCode,
   type MealSlot,
-  type NutritionPlan,
-  type UpdateNutritionPlan,
+  type ExchangeNutritionPlan,
+  type UpdateExchangePlan,
 } from '@nutricoach/contracts';
 import { parseDecimal } from '@nutricoach/ui';
 
@@ -47,7 +47,7 @@ export interface PlanDraft {
 }
 
 type PlanFields = Pick<
-  NutritionPlan,
+  ExchangeNutritionPlan,
   'exchanges' | 'manualSplit' | 'meals' | 'hydrationTargetMl' | 'instructions'
 >;
 
@@ -126,7 +126,7 @@ export const isTimeOfDay = (text: string): boolean => text === '' || TIME.test(t
  * entonces no se pide la vista previa. Las reglas del plan (porcentajes que suman 100, reparto a mano que suma el total
  * del día, alimentos solo donde hay intercambios) las decide la API y las explica en su 422.
  */
-export function planBody(draft: PlanDraft): UpdateNutritionPlan | null {
+export function planBody(draft: PlanDraft): UpdateExchangePlan | null {
   const VEG = servingsOf(draft.fixed.VEG);
   const FRU = servingsOf(draft.fixed.FRU);
   const MILK = servingsOf(draft.fixed.MILK);
@@ -145,14 +145,14 @@ export function planBody(draft: PlanDraft): UpdateNutritionPlan | null {
     if (values.some((v) => v === null)) return null;
     splitOverrides[code] = values as number[];
   }
-  const meals: UpdateNutritionPlan['meals'] = [];
+  const meals: UpdateExchangePlan['meals'] = [];
   for (const meal of draft.meals) {
     const name = meal.name.trim();
     const sharePct = sharePctOf(meal.sharePct);
     if (name === '' || name.length > 60 || sharePct === null || !isTimeOfDay(meal.timeOfDay)) {
       return null;
     }
-    const allowedFoods: UpdateNutritionPlan['meals'][number]['allowedFoods'] = [];
+    const allowedFoods: UpdateExchangePlan['meals'][number]['allowedFoods'] = [];
     for (const food of meal.foods) {
       const grams = gramsOf(food.grams);
       const householdText = food.householdText.trim();
@@ -176,6 +176,7 @@ export function planBody(draft: PlanDraft): UpdateNutritionPlan | null {
   const instructions = draft.instructions.trim();
   if (hydrationTargetMl === undefined || instructions.length > 2_000) return null;
   return {
+    modality: 'EXCHANGES',
     fixedServings: { VEG, FRU, MILK },
     overrides,
     meals,

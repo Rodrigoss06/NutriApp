@@ -14,14 +14,11 @@ import {
 } from '@nutricoach/shared-kernel';
 import { ClinicalApi } from '../../../clinical/index.js';
 import { FoodApi } from '../../../food/index.js';
-import {
-  PLAN_NOT_DRAFT,
-  publishProblems,
-  type ExchangeGroupCode,
-  type PlanDraftInput,
-} from '../../domain/nutrition-plan.js';
-import { planDocument, type PlanDocument, type PlanSnapshot } from '../plan-document.js';
-import { PlanCalculator, type CalculatedPlan } from '../plan-calculator.js';
+import type { PlanDraft } from '../../domain/food-plan.js';
+import { PLAN_MODALITY_MISMATCH, PLAN_NOT_DRAFT } from '../../domain/nutrition-plan.js';
+import { PlanCalculator } from '../plan-calculator.js';
+import type { PlanDocument, PlanSnapshot } from '../plan-document.js';
+import { calculateDraft, documentOf, problemsOf } from '../plan-drafts.js';
 import {
   ENERGY_PRESCRIPTION_STORE,
   NUTRITION_PLAN_STORE,
@@ -49,21 +46,13 @@ export interface NutritionPlanPreviewView {
 }
 
 export interface NutritionPlanListItem extends NutritionPlanSummary {
-  readonly exchangeListCode: string;
-}
-
-/** Lo que falta para publicar, con el nombre de cada grupo en la lista del plan (RN-E13, RN-G05). */
-function problemsOf(calculated: CalculatedPlan): readonly string[] {
-  const names = Object.fromEntries(calculated.list.groups.map((g) => [g.code, g.name])) as Record<
-    ExchangeGroupCode,
-    string
-  >;
-  return publishProblems(calculated.calculation.plan, names);
+  /** Solo en intercambios (RN-E11). */
+  readonly exchangeListCode: string | null;
 }
 
 /**
- * Lecturas de planes (RF-19, RF-23): el historial del paciente y un plan con lo que calcula el motor y lo que falta para
- * publicarlo. Leen datos de salud: cada lectura deja un READ (RN-B03).
+ * Lecturas de planes de cualquier modalidad (RF-19 a RF-21, RF-23): el historial del paciente y un plan con lo que
+ * calcula el motor y lo que falta para publicarlo. Leen datos de salud: cada lectura deja un READ (RN-B03).
  */
 @Injectable()
 export class NutritionPlanQueries {
@@ -86,10 +75,13 @@ export class NutritionPlanQueries {
       if (!(await this.clinical.patientRef(patientId))) return null;
       const summaries = await this.plans.listByPatient(patientId);
       const codes = new Map<string, string>();
-      for (const id of new Set(summaries.map((s) => s.exchangeListId))) {
+      for (const id of new Set(summaries.flatMap((s) => s.exchangeListId ?? []))) {
         codes.set(id, (await this.foods.exchangeList(id))?.code ?? '');
       }
-      return summaries.map((s) => ({ ...s, exchangeListCode: codes.get(s.exchangeListId) ?? '' }));
+      return summaries.map((s) => ({
+        ...s,
+        exchangeListCode: s.exchangeListId === null ? null : (codes.get(s.exchangeListId) ?? ''),
+      }));
     });
     if (!plans) return null;
     await this.#audited(context, patientId, patientId);
@@ -108,7 +100,8 @@ export class NutritionPlanQueries {
       }
       const prescription = await this.prescriptions.find(record.energyPrescriptionId);
       if (!prescription || !context.organizationId) return null;
-      const calculated = await this.calculator.calculate(
+      const calculated = await calculateDraft(
+        this.calculator,
         context.organizationId,
         prescription,
         record.exchangeListId,
@@ -118,7 +111,7 @@ export class NutritionPlanQueries {
       if (!calculated.ok) throw new Error(`Plan ${planId} sin calcular: ${calculated.error.code}`);
       return {
         record,
-        document: planDocument(calculated.value, record.mealIds),
+        document: documentOf(calculated.value, record.mealIds),
         publishProblems: problemsOf(calculated.value),
         snapshot: null,
       };
@@ -136,15 +129,19 @@ export class NutritionPlanQueries {
   async preview(
     context: SecurityContext,
     planId: string,
-    input: PlanDraftInput,
+    input: PlanDraft,
   ): Promise<Result<NutritionPlanPreviewView, DomainError> | null> {
     const found = await this.uow.query(context, async () => {
       const record = await this.plans.find(planId);
       if (!record) return null;
       if (record.status !== 'DRAFT') return { record, result: err(PLAN_NOT_DRAFT) };
+      if (input.modality !== record.modality) {
+        return { record, result: err(PLAN_MODALITY_MISMATCH) };
+      }
       const prescription = await this.prescriptions.find(record.energyPrescriptionId);
       if (!prescription || !context.organizationId) return null;
-      const calculated = await this.calculator.calculate(
+      const calculated = await calculateDraft(
+        this.calculator,
         context.organizationId,
         prescription,
         record.exchangeListId,
@@ -154,7 +151,7 @@ export class NutritionPlanQueries {
       return {
         record,
         result: ok({
-          document: planDocument(calculated.value, []),
+          document: documentOf(calculated.value, []),
           publishProblems: problemsOf(calculated.value),
         }),
       };

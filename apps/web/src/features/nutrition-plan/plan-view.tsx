@@ -1,4 +1,4 @@
-import type { NutritionPlan } from '@nutricoach/contracts';
+import type { ExchangeNutritionPlan } from '@nutricoach/contracts';
 import { enterStyle, formatNumber } from '@nutricoach/ui';
 import type { ReactNode } from 'react';
 import { AdequacyTable, ExchangeTable, SplitTable } from './plan-tables';
@@ -35,9 +35,9 @@ function Block({
  * Un plan publicado o reemplazado, leído de su snapshot (RN-E15): metas y adecuación, intercambios, reparto por tiempos y
  * alimentos permitidos con su porción, hidratación e indicaciones. Cada cálculo con su método (RN-D02).
  */
-export function PlanView({ plan }: { plan: NutritionPlan }) {
+export function PlanView({ plan }: { plan: ExchangeNutritionPlan }) {
   const groups = plan.exchangeList.groups;
-  const mealName = (meal: NutritionPlan['meals'][number]) =>
+  const mealName = (meal: ExchangeNutritionPlan['meals'][number]) =>
     meal.timeOfDay ? `${meal.name} · ${meal.timeOfDay}` : meal.name;
   return (
     <div className="flex flex-col gap-8">

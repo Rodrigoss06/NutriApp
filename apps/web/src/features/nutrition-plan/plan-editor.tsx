@@ -4,9 +4,9 @@ import {
   FIXED_GROUPS,
   methodLabel,
   type ExchangeGroupCode,
-  type NutritionPlan,
-  type NutritionPlanPreview,
-  type UpdateNutritionPlan,
+  type ExchangeNutritionPlan,
+  type ExchangePlanPreview,
+  type UpdateExchangePlan,
 } from '@nutricoach/contracts';
 import {
   Button,
@@ -46,7 +46,7 @@ const isFixed = (code: ExchangeGroupCode): code is (typeof FIXED_GROUPS)[number]
   (FIXED_GROUPS as readonly string[]).includes(code);
 
 /** Lo que se muestra calculado: lo guardado, o la vista previa de lo que se está escribiendo. */
-type Calculation = NutritionPlanPreview;
+type Calculation = ExchangePlanPreview;
 
 function GoalsStep({
   plan,
@@ -56,7 +56,7 @@ function GoalsStep({
   change,
   disabled,
 }: {
-  plan: NutritionPlan;
+  plan: ExchangeNutritionPlan;
   patientId: string;
   patientSex: 'M' | 'F';
   draft: PlanDraft;
@@ -177,7 +177,7 @@ function ExchangesStep({
   change,
   disabled,
 }: {
-  plan: NutritionPlan;
+  plan: ExchangeNutritionPlan;
   calculation: Calculation;
   draft: PlanDraft;
   change: (update: (draft: PlanDraft) => PlanDraft) => void;
@@ -279,7 +279,7 @@ export function PlanEditor({
   patientId,
   patientSex,
 }: {
-  initial: NutritionPlan;
+  initial: ExchangeNutritionPlan;
   patientId: string;
   patientSex: 'M' | 'F';
 }) {
@@ -301,7 +301,7 @@ export function PlanEditor({
   const preview = useQuery({
     queryKey: ['nutrition-plan-preview', plan.id, debouncedKey],
     queryFn: () =>
-      apiFetch<NutritionPlanPreview>(`/nutrition-plans/${plan.id}/preview`, {
+      apiFetch<ExchangePlanPreview>(`/nutrition-plans/${plan.id}/preview`, {
         method: 'POST',
         body: JSON.parse(debouncedKey ?? 'null') as unknown,
       }),
@@ -313,8 +313,8 @@ export function PlanEditor({
   const upToDate = !dirty || (key === debouncedKey && preview.isSuccess && !preview.isFetching);
 
   const save = useMutation({
-    mutationFn: (payload: UpdateNutritionPlan) =>
-      apiFetch<NutritionPlan>(`/nutrition-plans/${plan.id}`, {
+    mutationFn: (payload: UpdateExchangePlan) =>
+      apiFetch<ExchangeNutritionPlan>(`/nutrition-plans/${plan.id}`, {
         method: 'PUT',
         body: payload,
         headers: { 'If-Match': `"${String(plan.version)}"` },
@@ -326,7 +326,7 @@ export function PlanEditor({
   });
   const publish = useMutation({
     mutationFn: () =>
-      apiFetch<NutritionPlan>(`/nutrition-plans/${plan.id}/publish`, {
+      apiFetch<ExchangeNutritionPlan>(`/nutrition-plans/${plan.id}/publish`, {
         method: 'POST',
         headers: { 'If-Match': `"${String(plan.version)}"` },
       }),

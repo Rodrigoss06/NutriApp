@@ -17,6 +17,7 @@ import {
   type FoodStore,
   type FoodSummaryRecord,
 } from './ports/food.port.js';
+import { RECIPE_STORE, type RecipeRecord, type RecipeStore } from './ports/recipe.port.js';
 
 /** El término de búsqueda sin espacios de más y con 80 caracteres como máximo; vacío es null. */
 const term = (text: string | null): string | null =>
@@ -30,7 +31,10 @@ const term = (text: string | null): string | null =>
  */
 @Injectable()
 export class FoodApi {
-  constructor(@Inject(FOOD_STORE) private readonly foods: FoodStore) {}
+  constructor(
+    @Inject(FOOD_STORE) private readonly foods: FoodStore,
+    @Inject(RECIPE_STORE) private readonly recipes: RecipeStore,
+  ) {}
 
   /** Ordenada por parecido; state pone primero los de ese estado. */
   search(
@@ -53,6 +57,14 @@ export class FoodApi {
 
   foodsById(ids: readonly string[]): Promise<readonly FoodRecord[]> {
     return ids.length === 0 ? Promise.resolve([]) : this.foods.byIds([...new Set(ids)]);
+  }
+
+  /**
+   * Recetas de la organización por su id, con sus ingredientes en orden; también las archivadas, para que un plan siga
+   * calculando con la que usó (RN-E16).
+   */
+  recipesById(ids: readonly string[]): Promise<readonly RecipeRecord[]> {
+    return ids.length === 0 ? Promise.resolve([]) : this.recipes.byIds([...new Set(ids)]);
   }
 
   /** El catálogo de nutrientes en el orden en que se muestran. */

@@ -3,8 +3,8 @@
 import type {
   ExchangeGroupCode,
   FoodDetail,
-  NutritionPlan,
-  NutritionPlanPreview,
+  ExchangeNutritionPlan,
+  ExchangePlanPreview,
 } from '@nutricoach/contracts';
 import { Button, formatNumber, Input, Notice, StatusBadge } from '@nutricoach/ui';
 import { Plus, Trash2 } from 'lucide-react';
@@ -34,7 +34,7 @@ import {
 import { SplitTable } from './plan-tables';
 import { DEFINING_MACRO, suggestedGrams } from './portion';
 
-type ListGroup = NutritionPlan['exchangeList']['groups'][number];
+type ListGroup = ExchangeNutritionPlan['exchangeList']['groups'][number];
 type Change = (update: (draft: PlanDraft) => PlanDraft) => void;
 
 const mealName = (meal: MealRow, index: number) =>
@@ -254,7 +254,7 @@ export function MealsStep({
   change: Change;
   groups: readonly ListGroup[];
   calculation: Pick<
-    NutritionPlanPreview,
+    ExchangePlanPreview,
     'targets' | 'totals' | 'adequacy' | 'exchanges' | 'methods' | 'meals' | 'manualSplit'
   >;
   disabled: boolean;

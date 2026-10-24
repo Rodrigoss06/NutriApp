@@ -3,7 +3,11 @@ import { Button, EmptyState, formatNumber, Notice, StatusBadge } from '@nutricoa
 import { Salad } from 'lucide-react';
 import type { Metadata } from 'next';
 import Link from 'next/link';
-import { PLAN_STATUS_LABELS, PLAN_STATUS_TONES } from '@/features/nutrition-plan/labels';
+import {
+  PLAN_MODALITY_LABELS,
+  PLAN_STATUS_LABELS,
+  PLAN_STATUS_TONES,
+} from '@/features/nutrition-plan/labels';
 import { Section } from '@/features/patients/section';
 import { getOrganization, getPatient } from '@/features/patients/server';
 import { TableScroll } from '@/features/shell/table-scroll';
@@ -65,7 +69,7 @@ export default async function DietPage({ params }: { params: Promise<{ patientId
                   Meta
                 </th>
                 <th scope="col" className="px-3 py-2 font-medium">
-                  Lista
+                  Modalidad
                 </th>
                 <th scope="col" className="px-3 py-2 font-medium">
                   Creado
@@ -90,7 +94,10 @@ export default async function DietPage({ params }: { params: Promise<{ patientId
                     {formatNumber(plan.targetKcal, 'kcal')} kcal
                   </td>
                   <td className="px-3 py-2">
-                    {plan.exchangeListCode} {plan.exchangeListVersion}
+                    {PLAN_MODALITY_LABELS[plan.modality]}
+                    {plan.exchangeListCode === null
+                      ? null
+                      : ` · ${plan.exchangeListCode} ${plan.exchangeListVersion ?? ''}`}
                   </td>
                   <td className="px-3 py-2">
                     {formatInstant(plan.createdAt, organization.data.timezone)}
