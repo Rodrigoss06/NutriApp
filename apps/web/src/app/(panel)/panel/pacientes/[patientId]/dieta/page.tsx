@@ -35,7 +35,7 @@ export default async function DietPage({ params }: { params: Promise<{ patientId
   return (
     <Section
       title="Dieta"
-      description="Planes por intercambios con sus versiones. Un plan publicado no se edita: se crea una versión nueva."
+      description="Planes por intercambios, por composición o menú semanal, con sus versiones. Un plan publicado no se edita: se crea una versión nueva."
     >
       {patient.data.status === 'ARCHIVED' ? null : (
         <div>

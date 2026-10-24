@@ -1,7 +1,11 @@
-import type { NutritionPlan } from '@nutricoach/contracts';
+import type { FoodDetail, NutritionPlan } from '@nutricoach/contracts';
 import { Notice, StatusBadge } from '@nutricoach/ui';
 import type { Metadata } from 'next';
 import Link from 'next/link';
+import { CompositionEditor } from '@/features/food-plan/composition-editor';
+import type { Measures } from '@/features/food-plan/draft';
+import { MenuEditor } from '@/features/food-plan/menu-editor';
+import { CompositionView, MenuView } from '@/features/food-plan/plan-views';
 import {
   PLAN_MODALITY_LABELS,
   PLAN_STATUS_LABELS,
@@ -17,9 +21,44 @@ import { formatDate, formatInstant } from '@/lib/dates';
 
 export const metadata: Metadata = { title: 'Plan nutricional' };
 
+const DESCRIPTIONS: Readonly<Record<NutritionPlan['modality'], string>> = {
+  EXCHANGES: 'Dieta por intercambios.',
+  COMPOSITION: 'Dieta por composición.',
+  WEEKLY_MENU: 'Menú semanal.',
+};
+
+/** Los alimentos de un borrador de composición o menú. */
+function foodIdsOf(plan: NutritionPlan): string[] {
+  if (plan.modality === 'COMPOSITION')
+    return plan.meals.flatMap((m) => m.items.map((i) => i.foodId));
+  if (plan.modality === 'WEEKLY_MENU') {
+    return plan.days.flatMap((day) =>
+      day.meals.flatMap((cell) =>
+        [...cell.optionA, ...cell.optionB].flatMap((i) =>
+          i.itemType === 'FOOD' ? [i.foodId] : [],
+        ),
+      ),
+    );
+  }
+  return [];
+}
+
+/** Las medidas caseras de cada alimento del borrador, para cambiar la cantidad en medidas (RN-E12). */
+async function measuresOf(plan: NutritionPlan): Promise<Measures> {
+  const ids = [...new Set(foodIdsOf(plan))];
+  const foods = await Promise.all(ids.map((id) => serverApi<FoodDetail>(`/foods/${id}`)));
+  return Object.fromEntries(
+    foods.flatMap((food) =>
+      food.ok
+        ? [[food.data.id, food.data.measures.map(({ id, name, grams }) => ({ id, name, grams }))]]
+        : [],
+    ),
+  );
+}
+
 /**
- * Un plan nutricional (RF-19, RF-23): el borrador se edita en tres pasos; lo publicado se lee de su snapshot y, para
- * cambiarlo, se crea una versión nueva (RN-E15).
+ * Un plan nutricional (RF-19 a RF-21, RF-23), según su modalidad: el borrador se edita; lo publicado se lee de su
+ * snapshot y, para cambiarlo, se crea una versión nueva (RN-E15).
  */
 export default async function NutritionPlanPage({
   params,
@@ -50,26 +89,32 @@ export default async function NutritionPlanPage({
     );
   }
   const current = plan.data;
-  // La composición y el menú semanal se editan y se ven con sus propias pantallas (P10).
-  if (current.modality !== 'EXCHANGES') {
-    return (
-      <div className="flex flex-col gap-3">
-        <Notice tone="info" title={PLAN_MODALITY_LABELS[current.modality]}>
-          Este plan todavía no se puede ver aquí.
-        </Notice>
-        {back}
-      </div>
-    );
-  }
   const timezone = organization.ok ? organization.data.timezone : 'America/Lima';
   if (current.status === 'DRAFT') {
+    const sex = patient.data.sex;
     return (
       <Section
         title="Plan nutricional"
-        description={`Borrador de la versión ${String(current.versionNo)}. Dieta por intercambios.`}
+        description={`Borrador de la versión ${String(current.versionNo)}. ${DESCRIPTIONS[current.modality]}`}
       >
         {back}
-        <PlanEditor initial={current} patientId={patientId} patientSex={patient.data.sex} />
+        {current.modality === 'EXCHANGES' ? (
+          <PlanEditor initial={current} patientId={patientId} patientSex={sex} />
+        ) : current.modality === 'COMPOSITION' ? (
+          <CompositionEditor
+            initial={current}
+            patientId={patientId}
+            patientSex={sex}
+            measures={await measuresOf(current)}
+          />
+        ) : (
+          <MenuEditor
+            initial={current}
+            patientId={patientId}
+            patientSex={sex}
+            measures={await measuresOf(current)}
+          />
+        )}
       </Section>
     );
   }
@@ -86,15 +131,24 @@ export default async function NutritionPlanPage({
       }
     >
       {back}
-      <p>
+      <p className="flex flex-wrap items-center gap-2">
         <StatusBadge tone={PLAN_STATUS_TONES[current.status]}>
           {PLAN_STATUS_LABELS[current.status]}
         </StatusBadge>
+        <span className="text-sm text-muted-foreground">
+          {PLAN_MODALITY_LABELS[current.modality]}
+        </span>
       </p>
       {patient.data.status === 'ARCHIVED' ? null : (
         <RevisePlanButton patientId={patientId} planId={current.id} />
       )}
-      <PlanView plan={current} />
+      {current.modality === 'EXCHANGES' ? (
+        <PlanView plan={current} />
+      ) : current.modality === 'COMPOSITION' ? (
+        <CompositionView plan={current} />
+      ) : (
+        <MenuView plan={current} />
+      )}
     </Section>
   );
 }
