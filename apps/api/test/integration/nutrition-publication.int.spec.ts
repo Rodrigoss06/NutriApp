@@ -53,6 +53,7 @@ const today = (): string =>
 
 /** G-18 con un alimento permitido de cada grupo en cada tiempo donde tiene intercambios (RN-G05). */
 const readyBody = (plan: Plan, hydrationTargetMl = 2_500) => ({
+  modality: 'EXCHANGES',
   fixedServings: { VEG: 4, FRU: 3, MILK: 3 },
   overrides: {},
   meals: plan.meals.map(({ slotCode, name, timeOfDay, sharePct, servings }) => ({
@@ -90,7 +91,7 @@ const publish = (plan: Plan) =>
 async function readyDraft(): Promise<Plan> {
   const created = await harness.post(
     `/patients/${patientId}/nutrition-plans`,
-    { energyPrescriptionId: prescriptionId, exchangeListId: DEMO },
+    { modality: 'EXCHANGES', energyPrescriptionId: prescriptionId, exchangeListId: DEMO },
     cookie,
   );
   const draft = created.body as Plan;
@@ -127,7 +128,7 @@ describe('RN-E13 · RN-G05 · lo que falta para publicar', () => {
   it('sin hidratación ni alimentos permitidos no se publica: 422 con cada problema', async () => {
     const created = await harness.post(
       `/patients/${patientId}/nutrition-plans`,
-      { energyPrescriptionId: prescriptionId, exchangeListId: DEMO },
+      { modality: 'EXCHANGES', energyPrescriptionId: prescriptionId, exchangeListId: DEMO },
       cookie,
     );
     const draft = created.body as Plan;

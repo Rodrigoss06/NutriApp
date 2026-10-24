@@ -1,18 +1,18 @@
 import {
   methodLabel,
   type ExchangeGroupCode,
-  type NutritionPlan,
-  type NutritionPlanPreview,
+  type ExchangeNutritionPlan,
+  type ExchangePlanPreview,
 } from '@nutricoach/contracts';
 import { formatNumber, MethodBadge, Notice, StatusBadge } from '@nutricoach/ui';
 import type { ReactNode } from 'react';
 import { TableScroll } from '@/features/shell/table-scroll';
 
 type Calculation = Pick<
-  NutritionPlanPreview,
+  ExchangePlanPreview,
   'targets' | 'totals' | 'adequacy' | 'exchanges' | 'methods'
 >;
-type ListGroup = NutritionPlan['exchangeList']['groups'][number];
+type ListGroup = ExchangeNutritionPlan['exchangeList']['groups'][number];
 
 const ADEQUACY_ROWS = [
   { key: 'kcal', label: 'Energía', macro: 'kcal', kind: 'kcal', unit: 'kcal' },

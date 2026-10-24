@@ -1,4 +1,4 @@
-import type { NutritionPlan } from '@nutricoach/contracts';
+import type { ExchangeNutritionPlan } from '@nutricoach/contracts';
 import { describe, expect, it } from 'vitest';
 import {
   draftOf,
@@ -25,7 +25,7 @@ const meal = (id: string, name: string, sharePct: number, sta: number, meat: num
 
 /** G-18 y G-19 con el ajuste de carnes a 15, el reparto de lácteos a mano y arroz en el almuerzo. */
 const plan: Pick<
-  NutritionPlan,
+  ExchangeNutritionPlan,
   'exchanges' | 'manualSplit' | 'meals' | 'hydrationTargetMl' | 'instructions'
 > = {
   exchanges: [

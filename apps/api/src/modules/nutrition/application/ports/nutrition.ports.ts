@@ -1,7 +1,8 @@
 import type { OrganizationId, UserId } from '@nutricoach/shared-kernel';
 import type { TimelineCursor, TimelineEntry } from '../../../clinical/index.js';
 import type { EnergyGoal, EnergyStrategy } from '../../domain/energy-rules.js';
-import type { ExchangePlan, PlanDraftInput, PlanStatus } from '../../domain/nutrition-plan.js';
+import type { CompositionDraft, PlanDraft, WeeklyMenuDraft } from '../../domain/food-plan.js';
+import type { ExchangePlan, PlanModality, PlanStatus } from '../../domain/nutrition-plan.js';
 import type { PlanSnapshot } from '../plan-document.js';
 import type { PrescriptionComponents } from '../energy-calculation.js';
 
@@ -59,8 +60,8 @@ export interface EnergyPrescriptionStore {
 export const ENERGY_PRESCRIPTION_STORE = Symbol.for('nutricoach.nutrition.EnergyPrescriptionStore');
 
 /**
- * nutrition.plan por intercambios con sus hijos. Las metas de las columnas van redondeadas a 1 decimal, para listar; el
- * cálculo usa las exactas de la prescripción (RN-D09).
+ * nutrition.plan con sus hijos, de cualquier modalidad. Las metas de las columnas van redondeadas a 1 decimal, para
+ * listar; el cálculo usa las exactas de la prescripción (RN-D09).
  */
 export interface NutritionPlanSummary {
   readonly id: string;
@@ -68,10 +69,12 @@ export interface NutritionPlanSummary {
   readonly patientId: string;
   readonly lineageId: string;
   readonly versionNo: number;
+  readonly modality: PlanModality;
   readonly status: PlanStatus;
   readonly energyPrescriptionId: string;
-  readonly exchangeListId: string;
-  readonly exchangeListVersion: string;
+  /** Solo en intercambios (RN-E11). */
+  readonly exchangeListId: string | null;
+  readonly exchangeListVersion: string | null;
   readonly targetKcal: number;
   readonly createdAt: Date;
   readonly publishedAt: Date | null;
@@ -81,8 +84,8 @@ export interface NutritionPlanSummary {
 
 export interface NutritionPlanRecord extends NutritionPlanSummary {
   /** El borrador tal como lo escribió el profesional, rearmado desde sus filas. */
-  readonly draft: PlanDraftInput;
-  /** Los id de los tiempos de comida, en su orden. */
+  readonly draft: PlanDraft;
+  /** Los id de los tiempos de comida, en su orden; en el menú, los de cada celda, día por día de lunes a domingo. */
   readonly mealIds: readonly string[];
   readonly createdBy: UserId;
   readonly updatedAt: Date;
@@ -96,8 +99,8 @@ export interface NewNutritionPlan {
   readonly lineageId: string;
   readonly versionNo: number;
   readonly energyPrescriptionId: string;
-  readonly exchangeListId: string;
-  readonly exchangeListVersion: string;
+  readonly exchangeListId: string | null;
+  readonly exchangeListVersion: string | null;
   readonly targets: {
     readonly kcal: number;
     readonly choG: number;
@@ -108,11 +111,17 @@ export interface NewNutritionPlan {
   readonly now: Date;
 }
 
+/** Lo que se guarda de un borrador ya validado, según su modalidad. */
+export type PlanContent =
+  | { readonly modality: 'EXCHANGES'; readonly plan: ExchangePlan }
+  | { readonly modality: 'COMPOSITION'; readonly plan: CompositionDraft }
+  | { readonly modality: 'WEEKLY_MENU'; readonly plan: WeeklyMenuDraft };
+
 export interface NutritionPlanStore {
-  insert(plan: NewNutritionPlan, content: ExchangePlan): Promise<void>;
+  insert(plan: NewNutritionPlan, content: PlanContent): Promise<void>;
   find(id: string): Promise<NutritionPlanRecord | null>;
-  /** Reemplaza el contenido del borrador si la versión coincide; si no, false. */
-  replaceDraft(id: string, version: number, content: ExchangePlan, now: Date): Promise<boolean>;
+  /** Reemplaza el contenido del borrador si la versión coincide; si no, false. La modalidad no cambia. */
+  replaceDraft(id: string, version: number, content: PlanContent, now: Date): Promise<boolean>;
   /** El historial del paciente, de lo más reciente a lo más antiguo (RF-23). */
   listByPatient(patientId: string): Promise<readonly NutritionPlanSummary[]>;
   /** Publica el borrador con su snapshot si la versión coincide; si no, false (RN-E15). */

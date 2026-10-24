@@ -7,4 +7,5 @@ export type {
   FoodSummaryRecord,
 } from './application/ports/food.port.js';
 export type { PlateComposition, PlateItemInput } from './application/plate-composition.js';
+export type { RecipeRecord } from './application/ports/recipe.port.js';
 export { FoodModule } from './food.module.js';

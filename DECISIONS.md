@@ -1071,3 +1071,43 @@ Consecuencias:
   porque llevan su snapshot (RN-E15).
 - Para Notion (/notion-sync): 03 RN-I03 («al menos» con los faltantes), 05.2 food.recipe (CHECK, search_text, índices y
   contenido de la caché), 02 §8 (eventos food.recipe.*) y 04 RF-21 (archivar en vez de borrar).
+
+## ADR-062 · Composición y menú semanal: totales con el motor, opción A para el día y adecuación con lo conocido — aceptada (2026-10-23)
+Contexto: P10 (PR 2) agrega las otras dos formas de prescribir (RF-20, RF-21, RN-E16) al plan nutricional de P9
+(ADR-057), con la misma publicación. Faltaba decidir cómo se suman los días del menú, qué se exige para publicar y qué
+hacer con la adecuación cuando a un alimento le falta un macronutriente: en la TPCA, los huevos y los pescados (53
+alimentos) no traen carbohidratos y los jugos no traen grasa ni proteína. Rodrigo eligió (2026-10-23) la opción A para
+los totales del día, exigir hidratación y algo en cada tiempo para publicar, y la adecuación con lo conocido.
+Decisión:
+- La modalidad se elige al crear el plan (`POST .../nutrition-plans` con `modality`) y no cambia: un PUT o una vista
+  previa de otra modalidad responde 422 con NC-NUT-014. Solo los intercambios llevan lista (RN-E11).
+- Composición: tiempos de comida (con su % de la meta del día, que suman 100, RN-E09) y en cada uno alimentos con sus
+  gramos de parte comestible y la medida casera como texto. Las recetas van solo en el menú (RN-E16).
+- Menú semanal: los mismos tiempos de lunes a domingo; en cada día, una celda por tiempo con opción A y, si se quiere,
+  opción B, cada una con alimentos en gramos o recetas en porciones. En la base, cada tiempo de cada día es un
+  `plan_meal` con su `day_of_week` (1 = lunes), y cada alimento o receta un `plan_item` con `option_label` A o B.
+- Totales con `RECIPE_NUTRIENTS` como una receta de una porción: por tiempo (o celda y opción), por día y, en el menú,
+  por porción de cada receta. Una receta entra como sus ingredientes escalados a las porciones. El total del día del
+  menú usa la opción A de cada tiempo; la B tiene su propio subtotal para comparar. Sin alimentos, el total es 0 y no se
+  llama al motor. Los cálculos de insumos iguales cuentan una vez en `methods`.
+- Promedio semanal por nutriente: «sin dato» si falta en algún día, con lo conocido aparte y en cuántos días falta.
+- Adecuación (RN-E10, `ADEQUACY`) con la suma de lo conocido de cada día, nunca tomando el dato que falta como 0
+  (RN-I03): si falta, se muestra «al menos» con en cuántos alimentos (composición) o días (menú) falta. En el menú es la
+  del promedio de los siete días, con los días en rango (RN-G09).
+- Para publicar, además de la hidratación (RN-E13): en composición, al menos un alimento por tiempo; en el menú, la
+  opción A en cada tiempo de los siete días. Los mensajes agrupan los días por tiempo («Almuerzo: falta la opción A el
+  martes y el jueves»).
+- El snapshot sigue en la versión 1 y `modality` distingue su forma. Composición y menú congelan cada alimento usado con
+  todos sus nutrientes por 100 g y, en el menú, cada receta con lo que rinde, sus ingredientes y lo de una porción: lo
+  que el paciente registre desde su plan (P13) sale de ahí. tracking no cambia: lee las metas y la hidratación, que
+  están en toda modalidad.
+- Migración 202610232000_plan_modalities: la lista solo en intercambios (`plan_exchange_list_by_modality`); en
+  `plan_item`, un alimento con gramos y sin porciones, una receta con porciones y sin gramos ni medida
+  (`plan_item_quantity`), la opción A o B (`plan_item_option`) y el orden único por tiempo y opción.
+- La web de P9 manda `modality: 'EXCHANGES'`, el historial muestra la modalidad y un plan de otra modalidad muestra un
+  aviso hasta que lleguen sus pantallas (PR 3).
+Consecuencias:
+- El historial (`GET .../nutrition-plans`) trae `modality`, y la lista y su versión pueden ser null.
+- Para Notion (/notion-sync): 03 RN-E16 y RN-G05 (lo que se exige para publicar composición y menú) y RN-E10 (con lo
+  conocido); 05.2 nutrition.plan y plan_item (CHECK nuevos y `option_label` A o B en vez de «Opción A»); 02 §7
+  (modalidad fija y snapshot por modalidad); 04 RF-20 y RF-21.

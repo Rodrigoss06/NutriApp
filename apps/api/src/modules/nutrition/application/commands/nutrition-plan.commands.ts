@@ -18,65 +18,57 @@ import {
 import { atomically } from '../../../../platform/index.js';
 import { ClinicalApi } from '../../../clinical/index.js';
 import { PRESCRIPTION_NOT_FOUND } from '../../domain/energy-rules.js';
+import type { PlanDraft } from '../../domain/food-plan.js';
 import {
-  DEFAULT_MEALS,
   draftExists,
+  PLAN_MODALITY_MISMATCH,
   PLAN_NOT_DRAFT,
   PLAN_NOT_FOUND,
   PLAN_VERSION_CONFLICT,
   planNotReady,
-  publishProblems,
-  type ExchangeGroupCode,
-  type PlanDraftInput,
 } from '../../domain/nutrition-plan.js';
 import { localDateOf } from '../energy-basis.js';
 import { nutritionEvent, type NutritionEventType } from '../nutrition-events.js';
-import { planDocument, planSnapshot } from '../plan-document.js';
 import { PlanCalculator } from '../plan-calculator.js';
+import { planSnapshot } from '../plan-document.js';
+import {
+  calculateDraft,
+  changedFields,
+  contentOf,
+  documentOf,
+  newDraft,
+  problemsOf,
+  type CalculatedDraft,
+} from '../plan-drafts.js';
 import {
   ENERGY_PRESCRIPTION_STORE,
   NUTRITION_PLAN_STORE,
+  type EnergyPrescriptionRecord,
   type EnergyPrescriptionStore,
   type NutritionPlanStore,
 } from '../ports/nutrition.ports.js';
 
-/** Un borrador nuevo empieza sin grupos fijos, con los tiempos de G-19 y sin alimentos ni hidratación. */
-const NEW_DRAFT: PlanDraftInput = {
-  fixedServings: { VEG: 0, FRU: 0, MILK: 0 },
-  overrides: {},
-  meals: DEFAULT_MEALS,
-  splitOverrides: {},
-  hydrationTargetMl: null,
-  instructions: null,
-};
+/** Un plan nuevo: su modalidad y la prescripción de la que salen sus metas; por intercambios, también su lista. */
+export type CreatePlanInput =
+  | {
+      readonly modality: 'EXCHANGES';
+      readonly energyPrescriptionId: string;
+      readonly exchangeListId: string;
+    }
+  | { readonly modality: 'COMPOSITION' | 'WEEKLY_MENU'; readonly energyPrescriptionId: string };
 
-/** Las partes del borrador que cambiaron, para la auditoría: nombres, nunca valores (RN-B03). */
-function changedFields(before: PlanDraftInput, after: PlanDraftInput): readonly string[] {
-  const same = (a: unknown, b: unknown) => JSON.stringify(a) === JSON.stringify(b);
-  const meals = (draft: PlanDraftInput) =>
-    draft.meals.map(({ slotCode, name, timeOfDay, sharePct }) => [
-      slotCode,
-      name,
-      timeOfDay,
-      sharePct,
-    ]);
-  const foods = (draft: PlanDraftInput) => draft.meals.map((m) => m.allowedFoods);
-  return [
-    ...(same([before.fixedServings, before.overrides], [after.fixedServings, after.overrides])
-      ? []
-      : ['plan_exchange']),
-    ...(same(meals(before), meals(after)) ? [] : ['plan_meal']),
-    ...(same(before.splitOverrides, after.splitOverrides) ? [] : ['plan_meal_exchange']),
-    ...(same(foods(before), foods(after)) ? [] : ['plan_meal_allowed_food']),
-    ...(before.hydrationTargetMl === after.hydrationTargetMl ? [] : ['hydration_target_ml']),
-    ...(before.instructions === after.instructions ? [] : ['instructions']),
-  ];
+/** La lista que usa un plan por intercambios y su versión (RN-E11); las otras modalidades no tienen. */
+function listOf(calculated: CalculatedDraft): { id: string | null; version: string | null } {
+  return calculated.modality === 'EXCHANGES'
+    ? { id: calculated.value.list.id, version: calculated.value.list.version }
+    : { id: null, version: null };
 }
 
 /**
- * Plan nutricional por intercambios (RF-19, 02 §7): un borrador que parte de una prescripción energética con sus metas
- * (RF-18) y que se edita entero con If-Match. Publicado es inmutable (RN-E15). Exige escribir datos de salud del
- * paciente (RN-A05, RN-B01) y cada escritura deja su evento para la auditoría (RN-B03).
+ * Plan nutricional (02 §7) por intercambios (RF-19), por composición (RF-20) o menú semanal (RF-21): un borrador que
+ * parte de una prescripción energética con sus metas (RF-18) y que se edita entero con If-Match. La modalidad se elige
+ * al crearlo y no cambia. Publicado es inmutable (RN-E15). Exige escribir datos de salud del paciente (RN-A05, RN-B01)
+ * y cada escritura deja su evento para la auditoría (RN-B03).
  */
 @Injectable()
 export class NutritionPlanCommands {
@@ -94,7 +86,7 @@ export class NutritionPlanCommands {
   create(
     context: SecurityContext,
     patientId: string,
-    input: { readonly energyPrescriptionId: string; readonly exchangeListId: string },
+    input: CreatePlanInput,
   ): Promise<Result<{ id: string }, DomainError>> {
     return atomically(this.uow, context, async () => {
       const patient = await this.clinical.ensureRecordWritable(context, patientId);
@@ -104,15 +96,16 @@ export class NutritionPlanCommands {
       const organizationId = this.#organization(context);
       const userId = context.userId;
       if (!userId) throw new Error('Un plan necesita quién lo crea.');
-      const calculated = await this.calculator.calculate(
+      const calculated = await this.#calculate(
         organizationId,
         prescription,
-        input.exchangeListId,
-        NEW_DRAFT,
+        input.modality === 'EXCHANGES' ? input.exchangeListId : null,
+        newDraft(input.modality),
       );
       if (!calculated.ok) return calculated;
       const id = this.ids.newId<'NutritionPlanId'>();
       const lineageId = this.ids.newId<'PlanLineageId'>();
+      const list = listOf(calculated.value);
       await this.plans.insert(
         {
           id,
@@ -121,18 +114,19 @@ export class NutritionPlanCommands {
           lineageId,
           versionNo: 1,
           energyPrescriptionId: prescription.id,
-          exchangeListId: calculated.value.list.id,
-          exchangeListVersion: calculated.value.list.version,
-          targets: calculated.value.targets,
+          exchangeListId: list.id,
+          exchangeListVersion: list.version,
+          targets: calculated.value.value.targets,
           createdBy: userId,
           now: this.clock.now(),
         },
-        calculated.value.calculation.plan,
+        contentOf(calculated.value),
       );
       await this.#event(context, 'nutrition.plan.created', id, {
         patientId,
         lineageId,
         versionNo: 1,
+        modality: input.modality,
       });
       return ok({ id });
     });
@@ -142,7 +136,7 @@ export class NutritionPlanCommands {
     context: SecurityContext,
     planId: string,
     version: number,
-    input: PlanDraftInput,
+    input: PlanDraft,
   ): Promise<Result<{ id: string; version: number }, DomainError>> {
     return atomically(this.uow, context, async () => {
       const existing = await this.plans.find(planId);
@@ -150,9 +144,10 @@ export class NutritionPlanCommands {
       const patient = await this.clinical.ensureRecordWritable(context, existing.patientId);
       if (!patient.ok) return patient;
       if (existing.status !== 'DRAFT') return err(PLAN_NOT_DRAFT);
+      if (input.modality !== existing.modality) return err(PLAN_MODALITY_MISMATCH);
       const prescription = await this.prescriptions.find(existing.energyPrescriptionId);
       if (!prescription) return err(PRESCRIPTION_NOT_FOUND);
-      const calculated = await this.calculator.calculate(
+      const calculated = await this.#calculate(
         this.#organization(context),
         prescription,
         existing.exchangeListId,
@@ -162,7 +157,7 @@ export class NutritionPlanCommands {
       const saved = await this.plans.replaceDraft(
         planId,
         version,
-        calculated.value.calculation.plan,
+        contentOf(calculated.value),
         this.clock.now(),
       );
       if (!saved) return err(PLAN_VERSION_CONFLICT);
@@ -176,8 +171,9 @@ export class NutritionPlanCommands {
 
   /**
    * Publica el borrador (RF-23, RN-E14, RN-E15): congela su snapshot con su hash, vale desde hoy en la fecha local del
-   * paciente y el plan que estaba publicado pasa a SUPERSEDED. Sin hidratación o sin un alimento permitido por grupo
-   * con intercambios en cada tiempo no se publica (RN-E13, RN-G05).
+   * paciente y el plan que estaba publicado pasa a SUPERSEDED. Sin hidratación no se publica (RN-E13); tampoco con un
+   * tiempo del que el paciente no pueda registrar: en intercambios, sin un alimento permitido por grupo con
+   * intercambios; en composición, sin alimentos; en el menú, sin la opción A algún día (RN-G05).
    */
   publish(
     context: SecurityContext,
@@ -195,23 +191,20 @@ export class NutritionPlanCommands {
       if (!userId) throw new Error('Un plan necesita quién lo publica.');
       const prescription = await this.prescriptions.find(existing.energyPrescriptionId);
       if (!prescription) return err(PRESCRIPTION_NOT_FOUND);
-      const calculated = await this.calculator.calculate(
+      const calculated = await this.#calculate(
         this.#organization(context),
         prescription,
         existing.exchangeListId,
         existing.draft,
       );
       if (!calculated.ok) return calculated;
-      const names = Object.fromEntries(
-        calculated.value.list.groups.map((g) => [g.code, g.name]),
-      ) as Record<ExchangeGroupCode, string>;
-      const problems = publishProblems(calculated.value.calculation.plan, names);
+      const problems = problemsOf(calculated.value);
       if (problems.length > 0) return err(planNotReady(problems));
 
       const now = this.clock.now();
       const validFrom = localDateOf(now, patient.value.timezone);
       const superseded = await this.plans.supersedePublished(existing.patientId, now);
-      const { snapshot, hash } = planSnapshot(planDocument(calculated.value, existing.mealIds), {
+      const { snapshot, hash } = planSnapshot(documentOf(calculated.value, existing.mealIds), {
         planId,
         lineageId: existing.lineageId,
         versionNo: existing.versionNo,
@@ -264,7 +257,7 @@ export class NutritionPlanCommands {
       const prescription = await this.prescriptions.find(source.energyPrescriptionId);
       if (!prescription) return err(PRESCRIPTION_NOT_FOUND);
       const organizationId = this.#organization(context);
-      const calculated = await this.calculator.calculate(
+      const calculated = await this.#calculate(
         organizationId,
         prescription,
         source.exchangeListId,
@@ -283,11 +276,11 @@ export class NutritionPlanCommands {
           energyPrescriptionId: source.energyPrescriptionId,
           exchangeListId: source.exchangeListId,
           exchangeListVersion: source.exchangeListVersion,
-          targets: calculated.value.targets,
+          targets: calculated.value.value.targets,
           createdBy: userId,
           now: this.clock.now(),
         },
-        calculated.value.calculation.plan,
+        contentOf(calculated.value),
       );
       await this.#event(context, 'nutrition.plan.created', id, {
         patientId: source.patientId,
@@ -297,6 +290,15 @@ export class NutritionPlanCommands {
       });
       return ok({ id });
     });
+  }
+
+  #calculate(
+    organizationId: OrganizationId,
+    prescription: EnergyPrescriptionRecord,
+    exchangeListId: string | null,
+    draft: PlanDraft,
+  ): Promise<Result<CalculatedDraft, DomainError>> {
+    return calculateDraft(this.calculator, organizationId, prescription, exchangeListId, draft);
   }
 
   #organization(context: SecurityContext): OrganizationId {

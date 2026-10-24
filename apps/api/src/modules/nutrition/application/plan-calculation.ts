@@ -80,7 +80,8 @@ type Run<T> =
   | { readonly ok: true; readonly outputs: T; readonly method: PlanMethodRun }
   | { readonly ok: false; readonly error: DomainError };
 
-function run<T>(method: AnyMethod, inputs: Record<string, unknown>): Run<T> {
+/** Un método del motor con su sobre (RN-D01); un ERROR sale como error del plan con su regla (RN-D06). */
+export function runPlanMethod<T>(method: AnyMethod, inputs: Record<string, unknown>): Run<T> {
   const result = runMethod(method, inputs as never);
   if (!result.ok) {
     const [issue] = result.errors;
@@ -110,25 +111,36 @@ export function calculatePlan(
   list: PlanList,
   rangePct: readonly [number, number],
 ): Result<PlanCalculation, DomainError> {
-  const exchanges = run<{ servings: Record<ExchangeGroupCode, number> }>(EXCHANGES_CLASSIC, {
-    target: { choG: targets.choG, proteinG: targets.proteinG, fatG: targets.fatG },
-    fixedServings: input.fixedServings,
-    list: {
-      code: list.code,
-      version: list.version,
-      provisional: list.provisional,
-      groups: list.groups.map(({ code, choG, proteinG, fatG }) => ({ code, choG, proteinG, fatG })),
+  const exchanges = runPlanMethod<{ servings: Record<ExchangeGroupCode, number> }>(
+    EXCHANGES_CLASSIC,
+    {
+      target: { choG: targets.choG, proteinG: targets.proteinG, fatG: targets.fatG },
+      fixedServings: input.fixedServings,
+      list: {
+        code: list.code,
+        version: list.version,
+        provisional: list.provisional,
+        groups: list.groups.map(({ code, choG, proteinG, fatG }) => ({
+          code,
+          choG,
+          proteinG,
+          fatG,
+        })),
+      },
     },
-  });
+  );
   if (!exchanges.ok) return err(exchanges.error);
 
   const splits: PlanMethodRun[] = [];
   const meals = input.meals.map((meal, index) => ({ meal: String(index), pct: meal.sharePct }));
   const split = (total: number): readonly number[] => {
-    const result = run<{ servingsByMeal: { servings: number }[] }>(MEAL_SPLIT_LARGEST_REMAINDER, {
-      totalServings: total,
-      meals,
-    });
+    const result = runPlanMethod<{ servingsByMeal: { servings: number }[] }>(
+      MEAL_SPLIT_LARGEST_REMAINDER,
+      {
+        totalServings: total,
+        meals,
+      },
+    );
     // El dominio reparte solo con porcentajes que suman 100 y totales enteros: un ERROR aquí es una falla técnica.
     if (!result.ok) throw new Error(`Reparto imposible: ${result.error.message}`);
     splits.push(result.method);
@@ -152,7 +164,7 @@ export function calculatePlan(
 
   const adequacyRuns: PlanMethodRun[] = [];
   const adequacy = (prescribed: number, planned: number): Result<Adequacy, DomainError> => {
-    const result = run<{ adequacyPct: number; daysInRange: number }>(ADEQUACY, {
+    const result = runPlanMethod<{ adequacyPct: number; daysInRange: number }>(ADEQUACY, {
       prescribed,
       consumedDaily: [planned],
       acceptableRangePct: rangePct,

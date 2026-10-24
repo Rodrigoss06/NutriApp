@@ -112,6 +112,7 @@ async function fillAllowedFoodsByApi(ownerEmail: string, planId: string): Promis
   const updated = await api.put(`/api/v1/nutrition-plans/${planId}`, {
     headers: { 'If-Match': `"${String(plan.version)}"` },
     data: {
+      modality: 'EXCHANGES',
       fixedServings: { VEG: fixed('VEG'), FRU: fixed('FRU'), MILK: fixed('MILK') },
       overrides: {},
       splitOverrides: {},
