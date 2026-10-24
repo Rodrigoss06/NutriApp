@@ -126,7 +126,8 @@ jobs:
   ui-e2e:
     name: Interfaz y recorridos con Playwright, axe y Mailpit
     runs-on: ubuntu-24.04
-    timeout-minutes: 30
+    # Holgura para que, si la instalación de Playwright se corta a los 20 minutos, alcance a guardar su caché.
+    timeout-minutes: 40
     env:
       # Solo la pila local del compose y llaves sintéticas de env.local.example: no son secretos.
       APP_ENV: local
@@ -156,9 +157,54 @@ jobs:
       - name: Instalar dependencias
         run: pnpm install --frozen-lockfile
 
-      # Escritorio en Chromium y celular en WebKit (iPhone).
+      # Escritorio en Chromium y celular en WebKit (iPhone). Los navegadores y los .deb de sus dependencias van en
+      # caché: el espejo de apt del runner a veces baja a 50 KB/s y la instalación se comía los 30 minutos del job.
+      # La llave cambia en cada corrida para guardar también lo que alcanzó a bajar una instalación cortada; la
+      # siguiente corrida retoma desde ahí. Playwright borra los navegadores que ya no usa al cambiar de versión.
+      - name: Restaurar los navegadores y paquetes de Playwright
+        uses: actions/cache/restore@v6
+        with:
+          path: |
+            ~/.cache/ms-playwright
+            ~/.cache/playwright-apt
+          key: playwright-${{ runner.os }}-${{ github.run_id }}-${{ github.run_attempt }}
+          restore-keys: playwright-${{ runner.os }}-
+
+      - name: Huella de la caché de Playwright
+        id: playwright-before
+        run: |
+          mkdir -p ~/.cache/ms-playwright ~/.cache/playwright-apt/partial
+          echo "files=$(find ~/.cache/ms-playwright ~/.cache/playwright-apt -maxdepth 2 | sort | sha256sum | cut -d' ' -f1)" >> "$GITHUB_OUTPUT"
+
+      # apt baja los .deb directo a la carpeta en caché y solo pide al espejo los que no están o cambiaron.
       - name: Instalar Chromium y WebKit para Playwright
-        run: pnpm --filter web exec playwright install --with-deps chromium webkit
+        timeout-minutes: 20
+        run: |
+          printf 'Dir::Cache::Archives "%s/";\nAPT::Sandbox::User "root";\n' "$HOME/.cache/playwright-apt" \
+            | sudo tee /etc/apt/apt.conf.d/99playwright-cache
+          pnpm --filter web exec playwright install --with-deps chromium webkit
+          # Fuera los .deb que el espejo ya reemplazó por otra versión: la caché no crece sin fin.
+          sudo apt-get autoclean -qq
+
+      # También si la instalación se cortó: lo que ya bajó queda para la siguiente corrida.
+      - name: Ver si cambió la caché de Playwright
+        id: playwright-after
+        if: ${{ !cancelled() && steps.playwright-before.outcome == 'success' }}
+        run: |
+          sudo chown -R "$(id -u):$(id -g)" ~/.cache/playwright-apt
+          files=$(find ~/.cache/ms-playwright ~/.cache/playwright-apt -maxdepth 2 | sort | sha256sum | cut -d' ' -f1)
+          if [ "$files" != "${{ steps.playwright-before.outputs.files }}" ]; then
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Guardar los navegadores y paquetes de Playwright
+        if: ${{ !cancelled() && steps.playwright-after.outputs.changed == 'true' }}
+        uses: actions/cache/save@v6
+        with:
+          path: |
+            ~/.cache/ms-playwright
+            ~/.cache/playwright-apt
+          key: playwright-${{ runner.os }}-${{ github.run_id }}-${{ github.run_attempt }}
 
       # Después del checkout: los services de Actions arrancan antes y no pueden montar infra/db/init.
       - name: Levantar PostgreSQL 18 y Mailpit
