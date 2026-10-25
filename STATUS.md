@@ -17,7 +17,7 @@ Próxima demo: Demo 1 · Base y evaluación · semana 2
 | P7 Evaluación y cálculo, Demo 1 | ✅ | Rodrigo | #14 a #18 | E2E de la Demo 1 en escritorio y celular (G-01 a G-17), ninguna cifra sin método, recálculo con SUPERSEDED y guion; RF-18 adelantado. Etiqueta v0.1.0 (abf0d42) y Notion sincronizado; staging, pendiente de P4 |
 | P8 Datos maestros de alimentos | ✅ | Rodrigo | #21 a #24 | 3 criterios en verde (integración y E2E en escritorio y celular); Biblioteca, alimento propio, «Armar un plato», listas de intercambio y «Acerca de» con la atribución (ADR-055, ADR-056). /notion-sync aplicado (21 cambios) |
 | P9 Dieta por intercambios | ✅ | Rodrigo | #25, #26 y #27 | 3 criterios en verde (integración y E2E de Luis en escritorio y celular): borrador (ADR-057), publicación y tracking (ADR-058) y pantallas (ADR-059). /notion-sync aplicado (15 cambios en 02, 03 y 05.2) |
-| P10 Composición, menú y recetario | 🟨 | Rodrigo | #28 | PR 1 fusionado (recetario, criterio 1 en verde); PR 2 listo (composición y menú en la API, criterio 2 en verde); falta PR 3 (pantallas) |
+| P10 Composición, menú y recetario | ✅ | Rodrigo | #28, #30 y PR 3 | 2 criterios en verde (integración y E2E en escritorio y celular): recetario (ADR-061), composición y menú en la API (ADR-062) y pantallas (ADR-063). Plantillas (RF-22, deseable) fuera. /notion-sync pendiente |
 | P11 Fichas PDF, Demo 2 | ⬜ | Rodrigo | | |
 | P12 Ejercicios y rutinas | ⬜ | Rodrigo | | |
 | P13 App del paciente | ⬜ | Rodrigo | | |
@@ -28,17 +28,15 @@ Próxima demo: Demo 1 · Base y evaluación · semana 2
 Leyenda: ⬜ pendiente · 🟨 en curso · ✅ terminado · ⛔ bloqueado
 
 ## En curso
-- P10, PR 2 listo para PR (rama feat/nut-composicion-menu) (ADR-062):
-  - modalidades COMPOSITION y WEEKLY_MENU en la API: se eligen al crear el plan y no cambian (NC-NUT-014);
-  - composición: alimentos con gramos por tiempo; menú: de lunes a domingo, opciones A y B con alimentos o recetas;
-  - totales con RECIPE_NUTRIENTS por tiempo, celda y día (el día del menú con la opción A), promedio semanal y
-    adecuación con lo conocido («al menos» cuando falta un macronutriente, RN-I03);
-  - publicar exige hidratación y algo en cada tiempo (en el menú, la opción A los siete días); snapshot por modalidad
-    con los alimentos y las recetas congelados;
-  - criterio 2 en integración: el menú publicado aparece en tracking.active_plan_view con la meta de hoy;
-  - migración 202610232000_plan_modalities; la web de P9 manda modality y el historial muestra la modalidad.
-- P10, PR 1 fusionado (#28, 18eab3f) (ADR-061): recetario en /panel/biblioteca/recetas con nutrientes por porción
-  (RECIPE_NUTRIENTS 1.1.0, motor 1.3.0), «al menos X · falta en N de M» y caché recalculada; criterio 1 en verde.
+- P10, PR 3 listo para PR (rama feat/nut-pantallas-menu) (ADR-063):
+  - plan nuevo con la modalidad; editor por composición con alimentos por tiempo, nutrientes del día y adecuación;
+  - menú semanal con pestañas de lunes a domingo, opciones A y B, copiar un día a los demás y resumen de la semana;
+  - vista de lo publicado: grilla de la semana en escritorio y pestañas en el celular;
+  - piezas comunes a los tres editores (usePlanDraft, panel del borrador, metas, hidratación);
+  - E2E e2e/menu.spec.ts: Luis con una composición y un menú con una receta, publicados, en escritorio y celular.
+- P10, PR 2 fusionado (#30, 8446004) (ADR-062): composición y menú semanal en la API, con totales del motor,
+  adecuación con lo conocido, publicación con snapshot por modalidad y criterio 2 en integración.
+- P10, PR 1 fusionado (#28, 18eab3f) (ADR-061): recetario con nutrientes por porción y «al menos» cuando falta un dato.
 - P9, PR 3 fusionado (#27, e30f9ac) (ADR-059, ADR-060):
   - editor en tres pasos (metas con la referencia de hidratación, intercambios, reparto y alimentos) con la
     adecuación en vivo por POST /nutrition-plans/:id/preview, y publicar con confirmación;
@@ -84,8 +82,9 @@ Leyenda: ⬜ pendiente · 🟨 en curso · ✅ terminado · ⛔ bloqueado
 ## Siguiente paso
 - Antes de la Demo 1: la matriz manual de navegadores (RNF-19: Chrome, Edge, Safari y Firefox; la E2E cubre Chromium
   y WebKit) y, el mismo día, base local limpia y semilla («Antes de empezar» del guion). La demo es en local
-- P10, PR 3: pantallas de composición y menú semanal (editor con buscador, grilla de la semana, vista publicada y E2E)
-- PR #29 (caché de Playwright en el CI): fusionar antes de abrir el PR 2
+- /notion-sync de P10 (aprobado para el final de P10): 03 RN-I03, RN-E10, RN-E16 y RN-G05; 05.2 food.recipe,
+  nutrition.plan y plan_item; 02 §7 y §8; 04 RF-20 a RF-22
+- P11: fichas PDF y Demo 2
 - Cada base nueva necesita los catálogos: `pnpm --filter api build && pnpm catalog:load plataforma@demo.example.com`
   en local; en staging y producción, con el correo de su PLATFORM_ADMIN
 - db:seed carga el caso Luis: sus resultados aparecen cuando corre el worker
@@ -154,10 +153,14 @@ Leyenda: ⬜ pendiente · 🟨 en curso · ✅ terminado · ⛔ bloqueado
   siempre una sola vez (ADR-056)
 - Reimportar un catálogo global (TPCA) no recalcula la caché de nutrientes de las recetas: hace falta un recálculo
   de las recetas que usan los alimentos cambiados (ADR-061). Los planes publicados no cambian: llevan su snapshot
+- Plantillas de plan (RF-22, deseable) no se hicieron en P10 (ADR-063)
 - E2E de la Demo 1 inestable en el CI: axe corrió antes de que la página tuviera su título (document-title) y pasó al
   reintentar (#29, 2026-10-24); esperar el título antes de axe
 
 ## Registro de sesiones (solo las 5 últimas)
+- 2026-10-24 · P10 (PR 3) · #29 y #30 fusionados. Pantallas de composición y menú semanal (ADR-063): plan nuevo con
+  la modalidad, editores con la adecuación en vivo, pestañas de la semana y vista publicada; E2E en escritorio y
+  celular. P10 cumple sus dos criterios; RF-22 queda fuera
 - 2026-10-23 · P10 (PR 1 y PR 2) · recetario fusionado (#28). El CI de main se cortaba a los 30 minutos instalando
   WebKit (espejo de apt lento): caché de navegadores y paquetes en #29, probada en frío y con la caché llena. PR 2:
   composición y menú semanal en la API (ADR-062); Rodrigo eligió la opción A para el día y la adecuación con lo
@@ -173,6 +176,3 @@ Leyenda: ⬜ pendiente · 🟨 en curso · ✅ terminado · ⛔ bloqueado
   consultar con un abogado (ADR-055): sin sourceFoodCode ni licencia en la API y la atribución en «Acerca de».
   Pantallas de la Biblioteca, «Armar un plato» y «Acerca de» (ADR-056, #24); E2E de P8 en escritorio y celular;
   /notion-sync de P8 con 21 cambios. P9: decisiones de Rodrigo y borrador por intercambios con G-17 a G-19 (ADR-057)
-- 2026-10-21 · P8 (PR 2) · respuesta a Jeremy sobre periodización y lectura de su paquete operativo (plantilla V3 y
-  formularios); el modelo V3, sin el reloj, documentado en Notion (07 y siete páginas más). TAFERA 2016 extraída del
-  PDF del INS y enlazada con la TPCA 2017 (933 medidas y 213 factores), migración, importadores y ADR-053

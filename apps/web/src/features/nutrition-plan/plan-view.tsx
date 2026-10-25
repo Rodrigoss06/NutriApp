@@ -5,7 +5,8 @@ import { AdequacyTable, ExchangeTable, SplitTable } from './plan-tables';
 
 const ML = new Intl.NumberFormat('es-PE');
 
-function Block({
+/** Un bloque de un plan publicado, con su título y su lugar en la entrada escalonada. */
+export function Block({
   id,
   title,
   order,

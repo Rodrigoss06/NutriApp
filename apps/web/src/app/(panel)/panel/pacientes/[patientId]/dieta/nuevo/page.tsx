@@ -10,7 +10,7 @@ import { serverApi } from '@/lib/api/server';
 
 export const metadata: Metadata = { title: 'Nuevo plan' };
 
-/** Un plan por intercambios nuevo, desde una prescripción energética y una lista de intercambio (RF-19). */
+/** Un plan nuevo de cualquier modalidad, desde una prescripción energética (RF-19 a RF-21). */
 export default async function NewPlanPage({ params }: { params: Promise<{ patientId: string }> }) {
   const { patientId } = await params;
   const [patient, prescriptions, lists] = await Promise.all([
@@ -44,7 +44,7 @@ export default async function NewPlanPage({ params }: { params: Promise<{ patien
   return (
     <Section
       title="Nuevo plan"
-      description="Dieta por intercambios. Después eliges los intercambios, el reparto por tiempos de comida y los alimentos permitidos."
+      description="Elige la modalidad y la prescripción de la que salen las metas. Después armas el plan en el editor."
     >
       <NewPlanForm
         patientId={patientId}

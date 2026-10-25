@@ -1111,3 +1111,30 @@ Consecuencias:
 - Para Notion (/notion-sync): 03 RN-E16 y RN-G05 (lo que se exige para publicar composición y menú) y RN-E10 (con lo
   conocido); 05.2 nutrition.plan y plan_item (CHECK nuevos y `option_label` A o B en vez de «Opción A»); 02 §7
   (modalidad fija y snapshot por modalidad); 04 RF-20 y RF-21.
+
+## ADR-063 · Pantallas de composición y menú semanal — aceptada (2026-10-24)
+Contexto: P10 (PR 3) pide el editor por composición con buscador, el menú semanal en grilla y la vista de lo publicado
+(RF-20, RF-21), sobre la API del PR 2 (ADR-062).
+Decisión:
+- Plan nuevo: se elige la modalidad (Intercambios, Composición o Menú semanal) junto con la prescripción; la lista de
+  intercambio aparece solo para los intercambios.
+- Composición, en una página: metas, hidratación con sus referencias, tiempos de comida (nombre, hora y % que suman
+  100) y, en cada tiempo, sus alimentos en gramos o en medidas caseras con lo que aporta; abajo, todos los nutrientes
+  del día; al costado, la adecuación y el panel para guardar y publicar.
+- Menú semanal: los tiempos de comida comunes y, debajo, pestañas de lunes a domingo (patrón de pestañas de WAI-ARIA,
+  con las kcal de cada día); en cada tiempo, la opción A y la B una debajo de la otra, con alimentos o recetas. «Copiar
+  el lunes a los demás días» (con confirmación) llena la semana desde un día. El resumen de la semana muestra cada día
+  con la opción A y el promedio. Lo publicado se ve en una grilla de días por tiempos en escritorio y por pestañas en el
+  celular.
+- El buscador de alimentos (y de recetas, en el menú) se abre a pedido con «Agregar», para no llenar la pantalla de
+  buscadores; el resto del nombre del botón («a Almuerzo del lunes, opción A») queda para el lector de pantalla, y así
+  el botón no ensancha la página en el celular.
+- Adecuación de composición y menú en tres columnas: lo planeado con su meta debajo, y la adecuación. Con datos que
+  faltan: «al menos» y «Faltan datos», salvo que lo conocido ya pase el máximo («Por encima»).
+- Las medidas caseras de los alimentos de un borrador las trae la página del plan, como al editar una receta.
+- Piezas comunes a los tres editores: usePlanDraft (vista previa, guardar con If-Match, publicar y aviso al salir con
+  cambios), el panel del borrador, las metas y la hidratación; el editor por intercambios también las usa. El buscador
+  de alimentos del recetario pasa a features/food y se suma uno de recetas.
+- Las pruebas unitarias de la web resuelven el alias @, como tsconfig.
+Consecuencias:
+- Las plantillas de plan (RF-22, deseable) quedan fuera de P10.
