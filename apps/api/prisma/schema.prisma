@@ -596,6 +596,8 @@ model GeneratedDocument {
   generatedBy     String   @map("generated_by") @db.Uuid
   generatedAt     DateTime @default(now()) @map("generated_at") @db.Timestamptz(6)
 
+  @@unique([organizationId, kind, sourceType, sourceId, sourceHash, templateVersion, brandingHash], map: "generated_document_reuse")
+  @@index([organizationId, patientId, generatedAt(sort: Desc)], map: "generated_document_by_patient")
   @@map("generated_document")
   @@schema("documents")
 }
@@ -611,6 +613,7 @@ model DocumentTemplate {
   status         String  @default("ACTIVE")
 
   @@unique([organizationId, kind, version])
+  @@unique([organizationId, kind], map: "template_one_active", where: raw("(status = 'ACTIVE'::text)"))
   @@map("template")
   @@schema("documents")
 }

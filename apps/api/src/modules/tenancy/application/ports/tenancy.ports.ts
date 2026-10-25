@@ -80,6 +80,21 @@ export interface MembershipRecord {
   readonly status: MemberStatus;
 }
 
+/** tenancy.branding (RN-H03): la marca de la organización (sin miembro) o la propia de un profesional. */
+export interface BrandingRecord {
+  readonly displayName: string | null;
+  readonly logoFileId: string | null;
+  readonly primaryColor: string | null;
+  readonly secondaryColor: string | null;
+  /** Teléfono, correo y web; lo que falta es null. */
+  readonly contact: {
+    readonly phone: string | null;
+    readonly email: string | null;
+    readonly website: string | null;
+  };
+  readonly pdfFooter: string | null;
+}
+
 /** tenancy con la transacción de la UnitOfWork; la RLS limita a la organización del contexto. */
 export interface TenancyStore {
   /** pg_advisory_xact_lock de la organización: cupos (RN-A03) y «al menos un dueño» (RN-A04). */
@@ -106,6 +121,11 @@ export interface TenancyStore {
   listMembers(organizationId: OrganizationId): Promise<readonly MemberRecord[]>;
   findMember(organizationId: OrganizationId, memberId: string): Promise<MemberRecord | null>;
   findMemberByUser(organizationId: OrganizationId, userId: UserId): Promise<MemberRecord | null>;
+  /** La marca de la organización (memberId null) o la propia del miembro; null si no la fijó. */
+  findBranding(
+    organizationId: OrganizationId,
+    memberId: string | null,
+  ): Promise<BrandingRecord | null>;
   countActiveMembers(organizationId: OrganizationId): Promise<number>;
   countActiveOwners(organizationId: OrganizationId): Promise<number>;
   insertMember(member: MemberRecord): Promise<void>;

@@ -25,9 +25,20 @@ import { tenancyEvent } from './tenancy-events.js';
 import { ALREADY_MEMBER } from './tenancy-errors.js';
 import {
   TENANCY_STORE,
+  type BrandingRecord,
   type OrganizationRecord,
   type TenancyStore,
 } from './ports/tenancy.ports.js';
+
+/**
+ * La marca de una ficha PDF (RN-H03): la de la organización y la propia de quien la firma, si es miembro. El nombre de
+ * la organización queda para lo que nadie fijó.
+ */
+export interface SheetBranding {
+  readonly organizationName: string;
+  readonly organization: BrandingRecord | null;
+  readonly member: BrandingRecord | null;
+}
 
 /**
  * API pública de tenancy para otros contextos (02 §3, Open Host Service). Se llama DENTRO de la transacción de su
@@ -41,6 +52,21 @@ export class TenancyApi {
     @Inject(CLOCK) private readonly clock: Clock,
     @Inject(ID_GENERATOR) private readonly ids: IdGenerator,
   ) {}
+
+  /** La marca de las fichas que firma un usuario; null si el contexto no ve la organización. */
+  async sheetBranding(
+    organizationId: OrganizationId,
+    authorUserId: UserId,
+  ): Promise<SheetBranding | null> {
+    const organization = await this.store.findOrganization(organizationId);
+    if (!organization) return null;
+    const member = await this.store.findMemberByUser(organizationId, authorUserId);
+    return {
+      organizationName: organization.name,
+      organization: await this.store.findBranding(organizationId, null),
+      member: member ? await this.store.findBranding(organizationId, member.id) : null,
+    };
+  }
 
   /** Candado de la organización para el resto de la transacción (RN-A03, RN-A04). */
   lockOrganization(organizationId: OrganizationId): Promise<void> {

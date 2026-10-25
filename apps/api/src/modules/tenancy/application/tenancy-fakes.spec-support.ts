@@ -13,6 +13,7 @@ import {
 import { v7 as uuidv7 } from 'uuid';
 import type { MemberRole, MemberStatus } from '../domain/tenancy-rules.js';
 import type {
+  BrandingRecord,
   MemberChanges,
   MemberRecord,
   MembershipRecord,
@@ -68,6 +69,8 @@ export class MemoryTenancyStore implements TenancyStore {
   readonly subscriptions = new Map<string, Mutable<SubscriptionRecord>>();
   readonly plans = new Map<string, PlanRecord>();
   readonly settings = new Map<string, number>();
+  /** Marcas por «organización:miembro» (miembro vacío = la de la organización). */
+  readonly brandings = new Map<string, BrandingRecord>();
   locks = 0;
 
   addPlan(plan: Partial<PlanRecord> & { code: string }): PlanRecord {
@@ -199,6 +202,9 @@ export class MemoryTenancyStore implements TenancyStore {
     return Promise.resolve(
       this.#membersOf(organizationId).find((m) => m.userId === userId) ?? null,
     );
+  }
+  findBranding(organizationId: OrganizationId, memberId: string | null) {
+    return Promise.resolve(this.brandings.get(`${organizationId}:${memberId ?? ''}`) ?? null);
   }
   countActiveMembers(organizationId: OrganizationId) {
     return Promise.resolve(

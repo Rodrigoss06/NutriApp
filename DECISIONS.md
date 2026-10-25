@@ -1138,3 +1138,48 @@ Decisión:
 - Las pruebas unitarias de la web resuelven el alias @, como tsconfig.
 Consecuencias:
 - Las plantillas de plan (RF-22, deseable) quedan fuera de P10.
+
+## ADR-064 · Fichas PDF: contexto documents, PDF reutilizado por sus hashes y generado en el worker — aceptada (2026-10-25)
+Contexto: P11 (PR 1) pide fichas PDF reproducibles con la marca del profesional (RF-24, RN-H02, RN-H03), generadas en
+el worker y reutilizadas si nada cambió. Rodrigo decidió (2026-10-25): un plan por composición se imprime con la ficha
+del menú, como un plan de un día (siguen siendo cinco fichas, RN-H01); la ficha lleva el nombre y el código del
+paciente; la marca es la del profesional que firma o, si no, la de la organización, y en P11 solo se edita la de la
+organización; la semilla de la Demo 2 deja intercambios y composición publicados y el menú se arma en vivo.
+Decisión:
+- Contexto `documents` (02 §2). SheetSources arma la ficha desde las API públicas: NutritionApi.publishedPlan,
+  `planStatus` y `energySummary` (las metas con sus métodos, RN-D02), ClinicalApi.patientCard (nombre y código; solo
+  para documents) y TenancyApi.sheetBranding.
+- Un PDF se identifica por su tipo, su origen, el SHA-256 del JSON canónico de lo que muestra (source_hash, sin la
+  marca), la versión de la plantilla y el SHA-256 de la marca resuelta (branding_hash). Con todo igual se reutiliza; si
+  dos trabajos lo generan a la vez, el índice único generated_document_reuse deja uno y el otro descarta su archivo.
+  Regenerar da los mismos bytes: la fecha del PDF es la del origen (publicación o cierre), nunca el reloj, y la edad
+  del paciente es la cumplida ese día.
+- La marca se resuelve dato por dato: la propia de quien publicó el plan o hizo la evaluación; si no fijó ese dato, la
+  de la organización; sin nombre, el de la organización; sin color, la paleta provisional (DEFAULT_BRAND).
+- Generación en el worker con el consumidor `documents.sheets`: de `nutrition.plan.published`, sin que nadie la pida, y
+  de `documents.document.requested`. API: `POST /patients/:id/documents` responde 200 con la ficha si ya existe o 202
+  y la pide al worker (vale en solo lectura: exportar, RN-A02); `GET …/documents/status` dice si ya está;
+  `GET /documents/:id/file` la entrega como adjunto, auditada como EXPORT (RN-B03). Cada PDF nuevo deja
+  `documents.document.generated`, auditado como CREATE. Errores NC-DOC-001 (404) y NC-DOC-002 (422, RN-H02: un
+  borrador no tiene ficha).
+- Render con @react-pdf/renderer 4.9.0, fijo en el catálogo porque los bytes dependen de la versión, y la letra Archivo
+  (OFL) de @fontsource, la misma del panel. Las plantillas se escriben en TypeScript con createElement: con JSX, SWC
+  leería todos los `.ts` de la API como TSX y rompería los genéricos en flecha. El interlineado va en el cuerpo y no en
+  la página: en la página, react-pdf saca de la hoja el pie con posición absoluta y calcula sobre sus 18 pt por defecto.
+- Plantillas registradas por tipo y versión en el código; `documents.template` guarda la versión activa, una por tipo y
+  alcance. Migración 202610250000_documents_generation: CHECK del estado de la plantilla, del tipo y del origen de la
+  ficha, índices de reutilización y por paciente, y la plantilla global EXCHANGE_DIET 1.0.0.
+- `formatNumber` (RN-D09) y `brandTokens` pasan de @nutricoach/ui a @nutricoach/contracts, que ui reexporta: la ficha
+  redondea y contrasta igual que el panel, como ya pasaba con las etiquetas de los métodos (ADR-027).
+- La ficha de intercambios tarda unos 220 ms en dibujarse. El p95 de RNF-04 (3 s o menos) se mide en la integración:
+  20 fichas generadas por el worker con la base, una tras otra. En las unitarias no se mide: con los paquetes probándose
+  en paralelo y la cobertura, una ficha llega a tardar 3 s. El renderizador registra la duración y el tamaño de cada
+  ficha, sin datos del paciente.
+Consecuencias:
+- Una versión nueva de react-pdf puede cambiar los bytes aunque el origen no cambie: lo ya generado se reutiliza, y
+  todo cambio visual sube la versión de la plantilla.
+- Los PDF con datos del paciente quedan en el almacenamiento (cifrado en disco, RNF-14): la supresión (RN-B05, P15)
+  tiene que borrarlos.
+- Para Notion (/notion-sync): 02 §3 (ClinicalApi.patientCard, NutritionApi y TenancyApi), §7 y §8 (documents, su
+  consumidor y sus eventos); 05.3 (CHECK e índices de documents); 03 RN-H02 (qué identifica un PDF) y RN-H03 (la marca
+  dato por dato).

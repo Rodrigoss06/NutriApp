@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { formatNumber, parseDecimal } from './format-number';
+import { formatNumber, parseDecimal } from './format-number.js';
 
 describe('RN-D09 · se redondea solo al presentar', () => {
   it.each([
