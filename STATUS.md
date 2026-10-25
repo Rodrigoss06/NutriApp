@@ -18,7 +18,7 @@ Próxima demo: Demo 1 · Base y evaluación · semana 2
 | P8 Datos maestros de alimentos | ✅ | Rodrigo | #21 a #24 | 3 criterios en verde (integración y E2E en escritorio y celular); Biblioteca, alimento propio, «Armar un plato», listas de intercambio y «Acerca de» con la atribución (ADR-055, ADR-056). /notion-sync aplicado (21 cambios) |
 | P9 Dieta por intercambios | ✅ | Rodrigo | #25, #26 y #27 | 3 criterios en verde (integración y E2E de Luis en escritorio y celular): borrador (ADR-057), publicación y tracking (ADR-058) y pantallas (ADR-059). /notion-sync aplicado (15 cambios en 02, 03 y 05.2) |
 | P10 Composición, menú y recetario | ✅ | Rodrigo | #28, #30 y #31 | 2 criterios en verde (integración y E2E en escritorio y celular): recetario (ADR-061), composición y menú en la API (ADR-062) y pantallas (ADR-063). Plantillas (RF-22, deseable) fuera. /notion-sync aplicado (17 cambios en 02, 03, 04, 05 y 05.2) |
-| P11 Fichas PDF, Demo 2 | ⬜ | Rodrigo | | |
+| P11 Fichas PDF, Demo 2 | 🟨 | Rodrigo | PR 1 | Plan aprobado (2026-10-25): 4 PR. PR 1, contexto documents y ficha de intercambios (ADR-064) |
 | P12 Ejercicios y rutinas | ⬜ | Rodrigo | | |
 | P13 App del paciente | ⬜ | Rodrigo | | |
 | P14 Analítica y evolución, Demo 3 | ⬜ | Rodrigo | | |
@@ -28,6 +28,8 @@ Próxima demo: Demo 1 · Base y evaluación · semana 2
 Leyenda: ⬜ pendiente · 🟨 en curso · ✅ terminado · ⛔ bloqueado
 
 ## En curso
+- P11, PR 1 en la rama feat/doc-fichas (ADR-064): contexto documents, ficha de la dieta por intercambios con
+  react-pdf en el worker, generación al publicar y a pedido, reutilización por hashes y descarga auditada.
 - P10, PR 3 abierto (#31, los cuatro checks en verde) (ADR-063):
   - plan nuevo con la modalidad; editor por composición con alimentos por tiempo, nutrientes del día y adecuación;
   - menú semanal con pestañas de lunes a domingo, opciones A y B, copiar un día a los demás y resumen de la semana;

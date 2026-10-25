@@ -21,5 +21,6 @@ export {
   PLAN_NOT_FOUND,
   SLUG_TAKEN,
 } from './application/tenancy-errors.js';
-export { TenancyApi } from './application/tenancy-api.js';
+export { TenancyApi, type SheetBranding } from './application/tenancy-api.js';
+export type { BrandingRecord } from './application/ports/tenancy.ports.js';
 export { TenancyModule } from './tenancy.module.js';

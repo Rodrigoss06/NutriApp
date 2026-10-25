@@ -6,7 +6,7 @@ import {
   DARKEST_SURFACE,
   DEFAULT_BRAND,
   parseBrand,
-} from './brand-tokens';
+} from './brand-tokens.js';
 
 const WHITE = '#ffffff';
 /** El papel de las páginas (--background). */

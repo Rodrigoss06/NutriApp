@@ -4,6 +4,7 @@ import type { OrganizationId, UserId } from '@nutricoach/shared-kernel';
 import type { Db } from '../../../../../platform/index.js';
 import type { MemberRole, MemberStatus, Profession } from '../../../domain/tenancy-rules.js';
 import type {
+  BrandingRecord,
   MemberRecord,
   MemberChanges,
   MembershipRecord,
@@ -18,6 +19,13 @@ import type {
 
 /** Fecha de PostgreSQL (date) como YYYY-MM-DD: Prisma la trae como medianoche UTC. */
 const isoDate = (value: Date): string => value.toISOString().slice(0, 10);
+
+/** Un dato de contacto de tenancy.branding.contact: texto no vacío o null. */
+const contactText = (contact: unknown, key: string): string | null => {
+  const value =
+    contact && typeof contact === 'object' ? (contact as Record<string, unknown>)[key] : null;
+  return typeof value === 'string' && value.trim() !== '' ? value : null;
+};
 const asDate = (value: string): Date => new Date(`${value}T00:00:00Z`);
 
 interface OrganizationRow {
@@ -182,6 +190,26 @@ export class PrismaTenancyStore implements TenancyStore {
       select: MEMBER_FIELDS,
     });
     return row ? toMember(row) : null;
+  }
+
+  async findBranding(
+    organizationId: OrganizationId,
+    memberId: string | null,
+  ): Promise<BrandingRecord | null> {
+    const row = await this.db.tx.branding.findFirst({ where: { organizationId, memberId } });
+    if (!row) return null;
+    return {
+      displayName: row.displayName,
+      logoFileId: row.logoFileId,
+      primaryColor: row.primaryColor,
+      secondaryColor: row.secondaryColor,
+      contact: {
+        phone: contactText(row.contact, 'phone'),
+        email: contactText(row.contact, 'email'),
+        website: contactText(row.contact, 'website'),
+      },
+      pdfFooter: row.pdfFooter,
+    };
   }
 
   countActiveMembers(organizationId: OrganizationId): Promise<number> {

@@ -38,6 +38,15 @@ export interface PatientRef {
   readonly status: PatientStatus;
 }
 
+/**
+ * Lo que una ficha PDF dice del paciente (RN-H01): su nombre y su código, además de PatientRef. Solo lo pide documents
+ * (ADR-064); ningún otro contexto lee nombres.
+ */
+export interface PatientCard extends PatientRef {
+  readonly code: string;
+  readonly fullName: string;
+}
+
 const refOf = (patient: PatientRecord): PatientRef => ({
   id: patient.id,
   sex: patient.sex,
@@ -63,6 +72,18 @@ export class ClinicalApi {
   async patientRef(patientId: string): Promise<PatientRef | null> {
     const patient = await this.patients.find(patientId);
     return patient ? refOf(patient) : null;
+  }
+
+  /** El paciente como lo muestra su ficha PDF; null si el contexto no lo ve (RN-A05). Solo para documents. */
+  async patientCard(patientId: string): Promise<PatientCard | null> {
+    const patient = await this.patients.find(patientId);
+    return patient
+      ? {
+          ...refOf(patient),
+          code: patient.code,
+          fullName: `${patient.firstName} ${patient.lastName}`,
+        }
+      : null;
   }
 
   /**

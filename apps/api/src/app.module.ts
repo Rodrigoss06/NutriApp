@@ -6,6 +6,7 @@ import { FoodModule } from './modules/food/index.js';
 import { NutritionModule } from './modules/nutrition/index.js';
 import { BackofficeModule } from './modules/backoffice/index.js';
 import { ClinicalModule } from './modules/clinical/index.js';
+import { DocumentsModule } from './modules/documents/index.js';
 import { IamModule } from './modules/iam/index.js';
 import { TenancyModule } from './modules/tenancy/index.js';
 import { TrackingModule } from './modules/tracking/index.js';
@@ -26,6 +27,7 @@ import { AuthModule, HealthModule, IdempotencyModule, PlatformModule } from './p
     FoodModule,
     NutritionModule,
     TrackingModule,
+    DocumentsModule,
     AuditLogModule,
     BackofficeModule,
   ],
