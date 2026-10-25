@@ -17,7 +17,7 @@ Próxima demo: Demo 1 · Base y evaluación · semana 2
 | P7 Evaluación y cálculo, Demo 1 | ✅ | Rodrigo | #14 a #18 | E2E de la Demo 1 en escritorio y celular (G-01 a G-17), ninguna cifra sin método, recálculo con SUPERSEDED y guion; RF-18 adelantado. Etiqueta v0.1.0 (abf0d42) y Notion sincronizado; staging, pendiente de P4 |
 | P8 Datos maestros de alimentos | ✅ | Rodrigo | #21 a #24 | 3 criterios en verde (integración y E2E en escritorio y celular); Biblioteca, alimento propio, «Armar un plato», listas de intercambio y «Acerca de» con la atribución (ADR-055, ADR-056). /notion-sync aplicado (21 cambios) |
 | P9 Dieta por intercambios | ✅ | Rodrigo | #25, #26 y #27 | 3 criterios en verde (integración y E2E de Luis en escritorio y celular): borrador (ADR-057), publicación y tracking (ADR-058) y pantallas (ADR-059). /notion-sync aplicado (15 cambios en 02, 03 y 05.2) |
-| P10 Composición, menú y recetario | ✅ | Rodrigo | #28, #30 y PR 3 | 2 criterios en verde (integración y E2E en escritorio y celular): recetario (ADR-061), composición y menú en la API (ADR-062) y pantallas (ADR-063). Plantillas (RF-22, deseable) fuera. /notion-sync pendiente |
+| P10 Composición, menú y recetario | ✅ | Rodrigo | #28, #30 y #31 | 2 criterios en verde (integración y E2E en escritorio y celular): recetario (ADR-061), composición y menú en la API (ADR-062) y pantallas (ADR-063). Plantillas (RF-22, deseable) fuera. /notion-sync aplicado (17 cambios en 02, 03, 04, 05 y 05.2) |
 | P11 Fichas PDF, Demo 2 | ⬜ | Rodrigo | | |
 | P12 Ejercicios y rutinas | ⬜ | Rodrigo | | |
 | P13 App del paciente | ⬜ | Rodrigo | | |
@@ -28,7 +28,7 @@ Próxima demo: Demo 1 · Base y evaluación · semana 2
 Leyenda: ⬜ pendiente · 🟨 en curso · ✅ terminado · ⛔ bloqueado
 
 ## En curso
-- P10, PR 3 listo para PR (rama feat/nut-pantallas-menu) (ADR-063):
+- P10, PR 3 abierto (#31, los cuatro checks en verde) (ADR-063):
   - plan nuevo con la modalidad; editor por composición con alimentos por tiempo, nutrientes del día y adecuación;
   - menú semanal con pestañas de lunes a domingo, opciones A y B, copiar un día a los demás y resumen de la semana;
   - vista de lo publicado: grilla de la semana en escritorio y pestañas en el celular;
@@ -82,8 +82,7 @@ Leyenda: ⬜ pendiente · 🟨 en curso · ✅ terminado · ⛔ bloqueado
 ## Siguiente paso
 - Antes de la Demo 1: la matriz manual de navegadores (RNF-19: Chrome, Edge, Safari y Firefox; la E2E cubre Chromium
   y WebKit) y, el mismo día, base local limpia y semilla («Antes de empezar» del guion). La demo es en local
-- /notion-sync de P10 (aprobado para el final de P10): 03 RN-I03, RN-E10, RN-E16 y RN-G05; 05.2 food.recipe,
-  nutrition.plan y plan_item; 02 §7 y §8; 04 RF-20 a RF-22
+- Fusionar #31 (P10, PR 3)
 - P11: fichas PDF y Demo 2
 - Cada base nueva necesita los catálogos: `pnpm --filter api build && pnpm catalog:load plataforma@demo.example.com`
   en local; en staging y producción, con el correo de su PLATFORM_ADMIN
@@ -160,7 +159,10 @@ Leyenda: ⬜ pendiente · 🟨 en curso · ✅ terminado · ⛔ bloqueado
 ## Registro de sesiones (solo las 5 últimas)
 - 2026-10-24 · P10 (PR 3) · #29 y #30 fusionados. Pantallas de composición y menú semanal (ADR-063): plan nuevo con
   la modalidad, editores con la adecuación en vivo, pestañas de la semana y vista publicada; E2E en escritorio y
-  celular. P10 cumple sus dos criterios; RF-22 queda fuera
+  celular. P10 cumple sus dos criterios; RF-22 queda fuera. #31 abierto con los cuatro checks en verde; /notion-sync
+  de P10 aprobado y aplicado: RN-I03, RN-E10, RN-E16 y RN-G05 en 03 (versión 1.10), RF-21 en 04, Recipe,
+  NutritionPlan, FoodApi y auditoría en 02, el DDL de food.recipe, plan y plan_item en 05.2, y en 05 el buscador de
+  recetas y las filas 1.7 (P9, que faltaba) y 1.8
 - 2026-10-23 · P10 (PR 1 y PR 2) · recetario fusionado (#28). El CI de main se cortaba a los 30 minutos instalando
   WebKit (espejo de apt lento): caché de navegadores y paquetes en #29, probada en frío y con la caché llena. PR 2:
   composición y menú semanal en la API (ADR-062); Rodrigo eligió la opción A para el día y la adecuación con lo
