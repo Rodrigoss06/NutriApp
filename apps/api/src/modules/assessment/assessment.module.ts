@@ -14,6 +14,7 @@ import {
 } from './application/ports/assessment.ports.js';
 import { EvaluationQueries } from './application/queries/evaluation.queries.js';
 import { ResultsQueries } from './application/queries/results.queries.js';
+import { ResultsAssembly } from './application/results-assembly.js';
 import { CalculationConsumer } from './adapters/in/events/calculation.consumer.js';
 import {
   EvaluationController,
@@ -56,6 +57,7 @@ import {
     AssessmentApi,
     CalculationCommands,
     ResultsQueries,
+    ResultsAssembly,
     CalculationConsumer,
     AssessmentTimelineSource,
     { provide: EVALUATION_STORE, useClass: PrismaEvaluationStore },

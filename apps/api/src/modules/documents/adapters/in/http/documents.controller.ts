@@ -16,10 +16,13 @@ import {
 } from '../../../../../platform/index.js';
 import { DocumentRequests, type DocumentStatus } from '../../../application/document-requests.js';
 import type { SheetSource } from '../../../application/sheet-sources.js';
-import { DOCUMENT_NOT_FOUND } from '../../../domain/document-errors.js';
+import { DOCUMENT_NOT_FOUND, SOURCE_NOT_READY } from '../../../domain/document-errors.js';
 import { sheetFileName } from '../../../domain/sheet.js';
 
-const STATUS_BY_CODE: Readonly<Record<string, number>> = { [DOCUMENT_NOT_FOUND.code]: 404 };
+const STATUS_BY_CODE: Readonly<Record<string, number>> = {
+  [DOCUMENT_NOT_FOUND.code]: 404,
+  [SOURCE_NOT_READY.code]: 409,
+};
 
 const problem = (error: DomainError) =>
   problemFromDomainError(error, STATUS_BY_CODE[error.code] ?? 422);

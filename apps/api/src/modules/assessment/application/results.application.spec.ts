@@ -22,6 +22,7 @@ import { CalculationCommands } from './commands/calculation.commands.js';
 import { EvaluationCommands } from './commands/evaluation.commands.js';
 import { TechnicalErrorCommands } from './commands/technical-error.commands.js';
 import { ResultsQueries } from './queries/results.queries.js';
+import { ResultsAssembly } from './results-assembly.js';
 
 const RESPONSIBLE = '0192f0a0-0000-7000-8000-0000000000a1';
 const COLLEAGUE = '0192f0a0-0000-7000-8000-0000000000a2';
@@ -115,6 +116,16 @@ const queries = () =>
     errors,
     clinical.asApi(),
     service(),
+    new ResultsAssembly(evaluations, memoryCatalog, calculations, service()),
+  );
+
+const assessmentApi = () =>
+  new AssessmentApi(
+    evaluations,
+    memoryCatalog,
+    calculations,
+    service(),
+    new ResultsAssembly(evaluations, memoryCatalog, calculations, service()),
   );
 
 function value<T>(result: Result<T, DomainError>): T {
@@ -575,7 +586,7 @@ describe('RF-17 · la composición que usa la prescripción energética', () => 
   it('es la última cerrada con peso y talla: una solo de bioimpedancia posterior no la reemplaza', async () => {
     const id = await current();
     await closedBiaOnly('2026-10-13T15:00:00.000Z');
-    const api = new AssessmentApi(evaluations, memoryCatalog, calculations, service());
+    const api = assessmentApi();
     const basis = await api.compositionBasis(PATIENT, null);
     expect(basis?.evaluationId).toBe(id);
     expect(basis?.weightKg).toBe(80);
@@ -584,5 +595,31 @@ describe('RF-17 · la composición que usa la prescripción energética', () => 
     const [bia] = await evaluations.listByPatient(PATIENT);
     expect(bia?.kind).toBe('BIA');
     expect(await api.compositionBasis(PATIENT, bia?.id ?? '')).toBeNull();
+  });
+});
+
+describe('RN-H04 · RN-D02 · lo que la ficha de resultados dice de una evaluación', () => {
+  it('las medidas consolidadas en el orden del catálogo y cada resultado con su método e interpretación', async () => {
+    const id = await current();
+    const sheet = await assessmentApi().evaluationSheet(id);
+    expect(sheet?.evaluation).toMatchObject({
+      id,
+      patientId: PATIENT,
+      status: 'CLOSED',
+      revision: 1,
+    });
+    expect(sheet?.sites.find((site) => site.code === 'BASIC_WEIGHT')).toMatchObject({
+      family: 'BASIC',
+      unit: 'kg',
+      value: 80,
+    });
+    expect(sheet?.results.status).toBe('READY');
+    const dw = sheet?.results.results.find((r) => r.methodCode === 'FAT_DW1974_SIRI1961');
+    expect(dw?.metrics.find((m) => m.metricCode === 'FAT_PCT')?.value).toBeCloseTo(20.26, 2);
+    expect(dw?.principalFor).toContain('FAT_PCT');
+    expect(sheet?.bia).toEqual([]);
+    expect(
+      await assessmentApi().evaluationSheet('00000000-0000-7000-8000-000000000000'),
+    ).toBeNull();
   });
 });

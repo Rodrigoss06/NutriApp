@@ -124,6 +124,10 @@ export const fixed = (value: number, digits: number): string =>
     maximumFractionDigits: digits,
   }).format(value);
 
+/** Un número tal cual, con hasta dos decimales: porciones y lecturas que no se redondean por RN-D09. */
+export const plain = (value: number): string =>
+  new Intl.NumberFormat('es-PE', { maximumFractionDigits: 2 }).format(value);
+
 /** Una fecha local YYYY-MM-DD como «24 de octubre de 2026». */
 export const longDate = (isoDate: string): string =>
   new Intl.DateTimeFormat('es-PE', { dateStyle: 'long', timeZone: 'UTC' }).format(

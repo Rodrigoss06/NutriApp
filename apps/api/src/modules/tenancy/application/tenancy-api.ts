@@ -53,14 +53,20 @@ export class TenancyApi {
     @Inject(ID_GENERATOR) private readonly ids: IdGenerator,
   ) {}
 
-  /** La marca de las fichas que firma un usuario; null si el contexto no ve la organización. */
+  /**
+   * La marca de las fichas que firma un usuario o un miembro (el evaluador de una evaluación); null si el contexto no ve
+   * la organización.
+   */
   async sheetBranding(
     organizationId: OrganizationId,
-    authorUserId: UserId,
+    author: { readonly userId: UserId } | { readonly memberId: string },
   ): Promise<SheetBranding | null> {
     const organization = await this.store.findOrganization(organizationId);
     if (!organization) return null;
-    const member = await this.store.findMemberByUser(organizationId, authorUserId);
+    const member =
+      'userId' in author
+        ? await this.store.findMemberByUser(organizationId, author.userId)
+        : await this.store.findMember(organizationId, author.memberId);
     return {
       organizationName: organization.name,
       organization: await this.store.findBranding(organizationId, null),

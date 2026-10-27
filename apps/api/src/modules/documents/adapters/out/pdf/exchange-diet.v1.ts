@@ -13,6 +13,7 @@ import {
   table,
   type SheetFrame,
 } from './sheet-kit.js';
+import { energyCard, patientLine } from './plan-parts.js';
 
 /**
  * Ficha de la dieta por intercambios, versión 1.0.0 (RF-24, RN-H01): metas con su método (RN-D02, RN-H04), lo que
@@ -21,17 +22,8 @@ import {
  * Lo que se publica no cambia: cambiar cómo se ve exige una versión nueva de la plantilla.
  */
 
-const SEX = { M: 'Hombre', F: 'Mujer' } as const;
-
 const exchanges = (value: number): string =>
   `${num(value, 'exchanges')} ${value === 1 ? 'intercambio' : 'intercambios'}`;
-
-function adjustment(kcal: number): string {
-  if (Math.round(kcal) === 0) return 'sin ajuste por objetivo';
-  return kcal < 0
-    ? `déficit de ${num(-kcal, 'kcal')} kcal`
-    : `superávit de ${num(kcal, 'kcal')} kcal`;
-}
 
 function targets(sheet: ExchangeDietSheet, frame: SheetFrame): ReactElement {
   const { energy, targets: t, totals, adequacy } = sheet;
@@ -79,40 +71,7 @@ function targets(sheet: ExchangeDietSheet, frame: SheetFrame): ReactElement {
         ],
       ],
     ),
-    energy
-      ? h(
-          View,
-          { style: [styles.card, { marginTop: 6 }] },
-          h(
-            Text,
-            null,
-            ...emphasis(
-              'Energía: ',
-              `${methodLabel(energy.rmr.methodCode)} ${num(energy.rmr.kcal, 'kcal')} kcal`,
-              ` × PAL ${fixed(energy.pal, 2)}`,
-              energy.strategy === 'ADDITIVE'
-                ? ` + ejercicio ${num(energy.exerciseKcal, 'kcal')} kcal`
-                : ' (el ejercicio va en el PAL)',
-              ` = ${methodLabel(energy.tee.methodCode)} `,
-              `${num(energy.tee.kcal, 'kcal')} kcal`,
-              `; ${adjustment(energy.adjustmentKcal)}: meta de `,
-              `${num(energy.targetKcal, 'kcal')} kcal`,
-              '.',
-            ),
-          ),
-          h(
-            Text,
-            null,
-            ...emphasis(
-              `${methodLabel(energy.macros.methodCode)}: proteína `,
-              `${fixed(energy.macros.proteinGPerKg, 1)} g/kg`,
-              ' de peso, grasa ',
-              `${num(energy.macros.fatPctKcal, 'percent')} %`,
-              ' de las kcal y carbohidratos con lo que queda.',
-            ),
-          ),
-        )
-      : null,
+    energyCard(energy),
   );
 }
 
@@ -198,19 +157,7 @@ export function exchangeDietV1(
   const { patient } = sheet;
   return sheetDocument(
     frame,
-    h(
-      View,
-      { style: styles.row },
-      h(
-        Text,
-        null,
-        ...emphasis(
-          'Paciente: ',
-          patient.fullName,
-          ` (${patient.code}) · ${String(patient.ageYears)} años · ${SEX[patient.sex]}`,
-        ),
-      ),
-    ),
+    patientLine(patient),
     targets(sheet, frame),
     sheet.hydrationMl === null
       ? null

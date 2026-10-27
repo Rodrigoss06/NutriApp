@@ -6,6 +6,8 @@ import type {
   PlanSnapshot,
 } from '../../../nutrition/index.js';
 import { ageOn } from '../../domain/sheet.js';
+import type { AnthropometrySheet } from './anthropometry-sheet.js';
+import type { MenuSheet } from './menu-sheet.js';
 
 /**
  * Lo que una ficha muestra, sin la marca: datos planos que la plantilla dibuja tal cual. Su hash es el source_hash de
@@ -85,7 +87,7 @@ export interface ExchangeDietSheet {
   readonly methods: readonly SheetMethod[];
 }
 
-export type SheetContent = ExchangeDietSheet;
+export type SheetContent = ExchangeDietSheet | MenuSheet | AnthropometrySheet;
 
 export function sheetPatient(card: PatientCard, onDate: string): SheetPatient {
   return {
