@@ -1,6 +1,6 @@
-import { crc32, deflateSync } from 'node:zlib';
 import { expect, test } from '@playwright/test';
 import { seriousViolations } from './support/axe';
+import { pngLogo } from './support/images';
 import {
   acceptByApi,
   createOrganization,
@@ -15,30 +15,6 @@ import {
  * el nombre, el contacto y el pie, con la vista previa de la ficha en vivo; queda guardado; un profesional la ve sin
  * poder cambiarla. axe en la pantalla.
  */
-
-/** Un bloque de PNG con su CRC. */
-function chunk(type: string, data: Buffer): Buffer {
-  const length = Buffer.alloc(4);
-  length.writeUInt32BE(data.length);
-  const crc = Buffer.alloc(4);
-  crc.writeUInt32BE(crc32(Buffer.concat([Buffer.from(type, 'latin1'), data])));
-  return Buffer.concat([length, Buffer.from(type, 'latin1'), data, crc]);
-}
-
-/** Un logo sintético: PNG RGBA de un solo color, sin filtro. */
-function png(width: number, height: number): Buffer {
-  const header = Buffer.alloc(13);
-  header.writeUInt32BE(width, 0);
-  header.writeUInt32BE(height, 4);
-  header.set([8, 6, 0, 0, 0], 8);
-  const row = Buffer.concat([Buffer.from([0]), Buffer.alloc(width * 4, 0x7f)]);
-  return Buffer.concat([
-    Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]),
-    chunk('IHDR', header),
-    chunk('IDAT', deflateSync(Buffer.concat(Array.from({ length: height }, () => row)))),
-    chunk('IEND', Buffer.alloc(0)),
-  ]);
-}
 
 test.describe('P11 · Marca de las fichas', () => {
   test('RN-H03 · el dueño fija el logo, el color, el nombre y el contacto; un profesional la ve sin cambiarla', async ({
@@ -61,7 +37,11 @@ test.describe('P11 · Marca de las fichas', () => {
         buffer: Buffer.from('%PDF-1.7\n'),
       });
       await expect(section.getByText('El logo debe ser una imagen PNG o JPG.')).toBeVisible();
-      await input.setInputFiles({ name: 'logo.png', mimeType: 'image/png', buffer: png(120, 40) });
+      await input.setInputFiles({
+        name: 'logo.png',
+        mimeType: 'image/png',
+        buffer: pngLogo(120, 40),
+      });
       const logo = section.getByRole('img', { name: 'Logo actual de las fichas' });
       await expect(logo).toBeVisible();
       await expect

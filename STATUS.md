@@ -18,7 +18,7 @@ Próxima demo: Demo 1 · Base y evaluación · semana 2
 | P8 Datos maestros de alimentos | ✅ | Rodrigo | #21 a #24 | 3 criterios en verde (integración y E2E en escritorio y celular); Biblioteca, alimento propio, «Armar un plato», listas de intercambio y «Acerca de» con la atribución (ADR-055, ADR-056). /notion-sync aplicado (21 cambios) |
 | P9 Dieta por intercambios | ✅ | Rodrigo | #25, #26 y #27 | 3 criterios en verde (integración y E2E de Luis en escritorio y celular): borrador (ADR-057), publicación y tracking (ADR-058) y pantallas (ADR-059). /notion-sync aplicado (15 cambios en 02, 03 y 05.2) |
 | P10 Composición, menú y recetario | ✅ | Rodrigo | #28, #30 y #31 | 2 criterios en verde (integración y E2E en escritorio y celular): recetario (ADR-061), composición y menú en la API (ADR-062) y pantallas (ADR-063). Plantillas (RF-22, deseable) fuera. /notion-sync aplicado (17 cambios en 02, 03, 04, 05 y 05.2) |
-| P11 Fichas PDF, Demo 2 | 🟨 | Rodrigo | #32, #33 y PR 3 | Plan aprobado (2026-10-25). #32: contexto documents y ficha de intercambios (ADR-064), criterios 1 y 3. #33: fichas del menú (también la composición) y de resultados (ADR-065), criterio 2. PR 3: marca mínima de las fichas (ADR-066). Faltan las descargas en la web y la Demo 2 |
+| P11 Fichas PDF, Demo 2 | 🟨 | Rodrigo | #32, #33, #34 y PR 4 | Plan aprobado (2026-10-25). #32: contexto documents y ficha de intercambios (ADR-064), criterios 1 y 3. #33: fichas del menú (también la composición) y de resultados (ADR-065), criterio 2. #34: marca mínima de las fichas (ADR-066). PR 4: descargas en el panel (ADR-067). Falta la Demo 2 |
 | P12 Ejercicios y rutinas | ⬜ | Rodrigo | | |
 | P13 App del paciente | ⬜ | Rodrigo | | |
 | P14 Analítica y evolución, Demo 3 | ⬜ | Rodrigo | | |
@@ -28,14 +28,16 @@ Próxima demo: Demo 1 · Base y evaluación · semana 2
 Leyenda: ⬜ pendiente · 🟨 en curso · ✅ terminado · ⛔ bloqueado
 
 ## En curso
-- P11, PR 3 en la rama feat/ten-marca-fichas (ADR-066): marca mínima de las fichas.
+- P11, PR 4 en la rama feat/doc-descargas-web (ADR-067): «Descargar ficha (PDF)» en el plan publicado o reemplazado
+  y en la evaluación con resultados; «Generando…» mientras el worker la dibuja; E2E e2e/fichas.spec.ts con la dieta y
+  los resultados de Luis y el logo de la marca. Lo que sigue: la Demo 2 (PR 5).
+- P11, PR 3 fusionado (#34, a2a0e03) (ADR-066): marca mínima de las fichas.
   - API: GET y PUT /organization/branding y el logo aparte (PUT, DELETE y GET), con tenancy.branding.changed
     auditado;
   - logo PNG o JPEG de hasta 1 MB y 2000 px, revisado entero antes de guardarlo (un logo dañado rompería todas las
     fichas);
   - pantalla «Marca de las fichas» en /panel/organizacion, con el contraste del color y una vista previa de la ficha;
   - E2E e2e/marca.spec.ts en escritorio y celular.
-  Lo que sigue: las descargas en la web (PR 4) y la Demo 2 (PR 5).
 - P11, PR 2 fusionado (#33, 8cf6423) (ADR-065): ficha del menú semanal, que también imprime la composición como un
   plan de un día, y ficha de resultados antropométricos con el método junto a cada número (criterio 2).
 - P11, PR 1 fusionado (#32, 0ad742f) (ADR-064): contexto documents, ficha de la dieta por intercambios con react-pdf en
@@ -94,7 +96,7 @@ Leyenda: ⬜ pendiente · 🟨 en curso · ✅ terminado · ⛔ bloqueado
 ## Siguiente paso
 - Antes de la Demo 1: la matriz manual de navegadores (RNF-19: Chrome, Edge, Safari y Firefox; la E2E cubre Chromium
   y WebKit) y, el mismo día, base local limpia y semilla («Antes de empezar» del guion). La demo es en local
-- P11: descargas en la web (PR 4) y Demo 2 (PR 5); al cerrar, /notion-sync de P11 (ADR-064 a ADR-066)
+- P11: Demo 2 (PR 5); al cerrar, /notion-sync de P11 (ADR-064 a ADR-067)
 - Cada base nueva necesita los catálogos: `pnpm --filter api build && pnpm catalog:load plataforma@demo.example.com`
   en local; en staging y producción, con el correo de su PLATFORM_ADMIN
 - db:seed carga el caso Luis: sus resultados aparecen cuando corre el worker
@@ -171,10 +173,9 @@ Leyenda: ⬜ pendiente · 🟨 en curso · ✅ terminado · ⛔ bloqueado
   reintentar (#29, 2026-10-24); esperar el título antes de axe
 
 ## Registro de sesiones (solo las 5 últimas)
-- 2026-10-27 · P11 (PR 2 y PR 3) · #33 fusionado con los cuatro checks en verde. PR 3: marca mínima de las fichas
-  (ADR-066) con la API, el logo revisado entero, el evento auditado y la pantalla «Marca de las fichas»; la ficha
-  generada por el worker lleva el nombre, el contacto, el pie y el logo puestos por la API. Solo el color principal:
-  las plantillas no usan el secundario
+- 2026-10-27 · P11 (PR 2 a PR 4) · #33 y #34 fusionados con los cuatro checks en verde. #34: marca mínima de las
+  fichas (ADR-066) con la API, el logo revisado entero, el evento auditado y la pantalla «Marca de las fichas»; solo el
+  color principal, porque las plantillas no usan el secundario. PR 4: descargas en el panel (ADR-067) con su E2E
 - 2026-10-26 · P11 (PR 1 y PR 2) · #32 fusionado con los cuatro checks en verde. PR 2: fichas del menú, la
   composición y los resultados (ADR-065), con el criterio 2 en la integración. Un apagado brusco dejó archivos del
   PR 2 cortados en el disco NTFS (tamaño viejo, contenido nuevo, y git no lo ve): se rehicieron desde git y se
