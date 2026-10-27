@@ -20,6 +20,7 @@ let org: StaffOrganization;
 let cookie: string;
 let patientId: string;
 let prescriptionId: string;
+let evaluationId: string;
 let plan: Plan;
 const foods: Record<string, string> = {};
 
@@ -140,7 +141,7 @@ beforeAll(async () => {
   await harness.start();
   org = await harness.createStaffOrganization();
   cookie = org.staff.responsible.cookie;
-  ({ patientId, prescriptionId } = await luisWithPrescription(harness, org));
+  ({ patientId, prescriptionId, evaluationId } = await luisWithPrescription(harness, org));
   for (const group of GROUPS) {
     const created = await harness.post(
       '/foods',
@@ -314,6 +315,162 @@ describe('RN-A05 · RN-H02 · quién y desde qué', () => {
   it('un origen mal escrito es 400', async () => {
     const response = await requestSheet(cookie, { sourceType: 'PLAN', sourceId: plan.id });
     expect(response.status).toBe(400);
+  });
+});
+
+describe('RN-H01 · la ficha del menú, también para la composición', () => {
+  interface FoodPlan {
+    id: string;
+    version: number;
+    meals: { slotCode: string; name: string; timeOfDay: string | null; sharePct: number }[];
+  }
+  const headers = (p: FoodPlan) =>
+    p.meals.map(({ slotCode, name, timeOfDay, sharePct }) => ({
+      slotCode,
+      name,
+      timeOfDay,
+      sharePct,
+    }));
+  const food = (foodId: string | undefined, grams: number) => ({
+    itemType: 'FOOD',
+    foodId,
+    grams,
+    householdText: null,
+  });
+
+  /** Crea, llena y publica un plan de esa modalidad; devuelve el publicado. */
+  async function published(modality: 'COMPOSITION' | 'WEEKLY_MENU', body: (p: FoodPlan) => object) {
+    const created = await harness.post(
+      `/patients/${patientId}/nutrition-plans`,
+      { modality, energyPrescriptionId: prescriptionId },
+      cookie,
+    );
+    const draft = created.body as FoodPlan;
+    const saved = await harness
+      .put(`/nutrition-plans/${draft.id}`, body(draft), cookie)
+      .set('If-Match', String(draft.version));
+    expect(saved.status, JSON.stringify(saved.body)).toBe(200);
+    const ready = saved.body as FoodPlan;
+    const response = await harness
+      .post(`/nutrition-plans/${ready.id}/publish`, undefined, cookie)
+      .set('If-Match', String(ready.version));
+    expect(response.status, JSON.stringify(response.body)).toBe(200);
+    return response.body as FoodPlan;
+  }
+
+  async function sheetText(planId: string): Promise<{ kind: string; text: string }> {
+    await harness.deliver('documents.sheets');
+    const status = (
+      await harness.get(
+        `/patients/${patientId}/documents/status?sourceType=NUTRITION_PLAN&sourceId=${planId}`,
+        cookie,
+      )
+    ).body as Status;
+    expect(status.status).toBe('READY');
+    const pdf = (await binary(harness.get(`/documents/${status.document?.id ?? ''}/file`, cookie)))
+      .body as Buffer;
+    return { kind: status.document?.kind ?? '', text: await pdfText(pdf) };
+  }
+
+  it('al publicar una dieta por composición, su ficha sale con la plantilla del menú', async () => {
+    const composition = await published('COMPOSITION', (p) => ({
+      modality: 'COMPOSITION',
+      meals: headers(p).map((meal) => ({ ...meal, items: [food(foods.STA, 120)] })),
+      hydrationTargetMl: 2_000,
+      instructions: null,
+    }));
+    const { kind, text } = await sheetText(composition.id);
+    expect(kind).toBe('WEEKLY_MENU');
+    expect(text).toContain('Dieta por composición');
+    expect(text).toContain('Alimento STA (fichas) · 120 g');
+    expect(text).toContain('Total del día');
+  });
+
+  it('al publicar un menú semanal con una receta, su ficha trae los siete días y la receta', async () => {
+    const recipe = await harness.post(
+      '/recipes',
+      {
+        name: 'Guiso sintético',
+        servings: 2,
+        ingredients: [
+          { foodId: foods.STA, grams: 200 },
+          { foodId: foods.MEAT, grams: 150 },
+        ],
+      },
+      cookie,
+    );
+    expect(recipe.status, JSON.stringify(recipe.body)).toBe(201);
+    const recipeId = (recipe.body as { id: string }).id;
+    const menu = await published('WEEKLY_MENU', (p) => ({
+      modality: 'WEEKLY_MENU',
+      meals: headers(p),
+      days: Array.from({ length: 7 }, () => ({
+        meals: headers(p).map((_, m) =>
+          m === 2
+            ? {
+                optionA: [{ itemType: 'RECIPE', recipeId, servings: 1 }],
+                optionB: [food(foods.MEAT, 120)],
+              }
+            : { optionA: [food(foods.FRU, 100)], optionB: [] },
+        ),
+      })),
+      hydrationTargetMl: 2_000,
+      instructions: null,
+    }));
+    const { kind, text } = await sheetText(menu.id);
+    expect(kind).toBe('WEEKLY_MENU');
+    for (const expected of [
+      'Menú semanal',
+      'Lunes',
+      'Domingo',
+      'Guiso sintético · 1 porción',
+      'Opción B',
+      'Promedio de la semana',
+      'Guiso sintético · rinde 2 porciones',
+    ]) {
+      expect(text).toContain(expected);
+    }
+  });
+});
+
+describe('RN-H04 · criterio 2 · la ficha de resultados de Luis', () => {
+  const evaluationSource = () => ({ sourceType: 'EVALUATION', sourceId: evaluationId });
+
+  it('se pide desde el panel, la genera el worker y muestra el método junto al % de grasa', async () => {
+    const pending = await requestSheet(cookie, evaluationSource());
+    expect(pending.status, JSON.stringify(pending.body)).toBe(202);
+    await harness.deliver('documents.sheets');
+    const ready = await requestSheet(cookie, evaluationSource());
+    expect(ready.status).toBe(200);
+    const status = ready.body as Status;
+    expect(status.document).toMatchObject({
+      kind: 'ANTHROPOMETRY',
+      fileName: 'ficha-resultados-antropometricos.pdf',
+    });
+    const pdf = (await binary(harness.get(`/documents/${status.document?.id ?? ''}/file`, cookie)))
+      .body as Buffer;
+    const text = await pdfText(pdf);
+    for (const expected of [
+      'Resultados antropométricos',
+      'Luis Ejemplo Sintético',
+      // G-06: 20.26 % con Durnin y Womersley + Siri, con su método al lado (RN-D02).
+      '% de grasa (Durnin & Womersley (1974) + Siri)',
+      '20.3 %',
+      'Medidas consolidadas',
+    ]) {
+      expect(text).toContain(expected);
+    }
+    // Pedida desde el panel: la firma quien la pidió.
+    const [row] = await owner<{ generated_by: string }>(
+      'SELECT generated_by FROM documents.generated_document WHERE source_id = $1',
+      [evaluationId],
+    );
+    expect(row?.generated_by).toBe(org.staff.responsible.userId);
+  });
+
+  it('un profesional fuera del equipo de atención no la pide', async () => {
+    const denied = await requestSheet(org.staff.outsider.cookie, evaluationSource());
+    expect(denied.status).toBe(404);
   });
 });
 

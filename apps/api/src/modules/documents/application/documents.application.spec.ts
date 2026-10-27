@@ -16,6 +16,7 @@ import {
 } from '@nutricoach/shared-kernel';
 import { v7 as uuidv7 } from 'uuid';
 import { beforeEach, describe, expect, it } from 'vitest';
+import type { AssessmentApi, EvaluationSheet } from '../../assessment/index.js';
 import type { ClinicalApi, PatientCard } from '../../clinical/index.js';
 import type {
   EnergySummary,
@@ -35,6 +36,7 @@ import type {
   PdfRenderer,
   SheetRender,
 } from './ports/documents.ports.js';
+import { menuSheet } from './sheets/menu-sheet.js';
 import { exchangeDietSheet, uniqueMethods } from './sheets/sheet-content.js';
 import { documentKey, SheetSources } from './sheet-sources.js';
 
@@ -45,6 +47,11 @@ const REQUESTER = asId<'UserId'>(uuidv7()) as UserId;
 const PATIENT = uuidv7();
 const PLAN = uuidv7();
 const PRESCRIPTION = uuidv7();
+const EVALUATION = uuidv7();
+const EVALUATOR = uuidv7();
+const RICE = uuidv7();
+const CHICKEN = uuidv7();
+const RECIPE = uuidv7();
 
 const context: SecurityContext = {
   organizationId: ORG,
@@ -163,6 +170,200 @@ const CARD: PatientCard = {
   fullName: 'Luis Demo',
 };
 
+/** Totales de un alimento o un día: energía, macronutrientes y fibra; la fibra del pollo no está en la tabla. */
+const totals = (kcal: number, missingFiber = 0) => ({
+  ingredientCount: 2,
+  nutrients: {
+    ENERC_KCAL: { value: kcal, known: kcal, missing: 0 },
+    CHOCDF: { value: 46, known: 46, missing: 0 },
+    PROCNT: { value: 34, known: 34, missing: 0 },
+    FAT: { value: 4, known: 4, missing: 0 },
+    FIBTG: { value: missingFiber > 0 ? null : 1, known: 0.6, missing: missingFiber },
+  },
+});
+
+const FOOD_PLAN_BASE = {
+  schemaVersion: 1,
+  planId: PLAN,
+  lineageId: uuidv7(),
+  versionNo: 1,
+  patientId: PATIENT,
+  energyPrescriptionId: PRESCRIPTION,
+  validFrom: '2026-10-24',
+  publishedAt: '2026-10-24T15:00:00.000Z',
+  publishedBy: PUBLISHER,
+  engineVersion: '1.3.0',
+  targets: { kcal: 1834.54, choG: 183.6, proteinG: 160, fatG: 50.96 },
+  nutrients: [],
+  foods: {
+    [RICE]: { name: 'Arroz cocido', state: 'COOKED', nutrientsPer100g: {} },
+    [CHICKEN]: { name: 'Pollo', state: 'RAW', nutrientsPer100g: {} },
+  },
+  adequacy: {
+    rangePct: [90, 110],
+    kcal: { pct: 22, daysInRange: 0, days: 1, missing: 0, of: 2 },
+    cho: { pct: 25, daysInRange: 0, days: 1, missing: 0, of: 2 },
+    protein: { pct: 21, daysInRange: 0, days: 1, missing: 0, of: 2 },
+    fat: { pct: 8, daysInRange: 0, days: 1, missing: 0, of: 2 },
+  },
+  methods: [
+    { methodCode: 'RECIPE_NUTRIENTS', methodVersion: '1.1.0', inputsHash: 'a', warnings: [] },
+  ],
+  hydrationTargetMl: 2_000,
+  instructions: null,
+};
+
+const COMPOSITION_SNAPSHOT = {
+  ...FOOD_PLAN_BASE,
+  modality: 'COMPOSITION',
+  meals: [
+    {
+      id: uuidv7(),
+      slotCode: 'LUNCH',
+      name: 'Almuerzo',
+      timeOfDay: '13:00',
+      sharePct: 100,
+      items: [
+        {
+          itemType: 'FOOD',
+          foodId: RICE,
+          grams: 200,
+          householdText: '1 taza',
+          foodName: 'Arroz cocido',
+        },
+        { itemType: 'FOOD', foodId: CHICKEN, grams: 150, householdText: null, foodName: 'Pollo' },
+      ],
+      totals: totals(408, 1),
+    },
+  ],
+  totals: totals(408, 1),
+} as unknown as PlanSnapshot;
+
+const MENU_SNAPSHOT = {
+  ...FOOD_PLAN_BASE,
+  modality: 'WEEKLY_MENU',
+  meals: [{ slotCode: 'LUNCH', name: 'Almuerzo', timeOfDay: null, sharePct: 100 }],
+  days: Array.from({ length: 7 }, (_, d) => ({
+    dayOfWeek: d + 1,
+    meals: [
+      {
+        id: uuidv7(),
+        optionA: [
+          { itemType: 'RECIPE', recipeId: RECIPE, servings: 1, recipeName: 'Arroz con pollo' },
+        ],
+        optionB:
+          d === 0
+            ? [
+                {
+                  itemType: 'FOOD',
+                  foodId: CHICKEN,
+                  grams: 120,
+                  householdText: null,
+                  foodName: 'Pollo',
+                },
+              ]
+            : [],
+        totalsA: totals(204),
+        totalsB: totals(143, 1),
+      },
+    ],
+    totals: totals(204),
+  })),
+  weeklyAverage: {
+    ENERC_KCAL: { value: 204, known: 204, missingDays: 0 },
+    FIBTG: { value: null, known: 0.6, missingDays: 2 },
+  },
+  recipes: {
+    [RECIPE]: {
+      name: 'Arroz con pollo',
+      servings: 2,
+      ingredients: [
+        { foodId: RICE, grams: 200 },
+        { foodId: CHICKEN, grams: 150 },
+      ],
+      perServing: totals(204),
+    },
+  },
+} as unknown as PlanSnapshot;
+
+const EVALUATION_SHEET: EvaluationSheet = {
+  evaluation: {
+    id: EVALUATION,
+    patientId: PATIENT,
+    kind: 'ANTHROPOMETRY',
+    level: 'ISAK2',
+    status: 'CLOSED',
+    revision: 1,
+    localDate: '2026-10-13',
+    measuredAt: new Date('2026-10-13T13:30:00.000Z'),
+    closedAt: new Date('2026-10-13T14:00:00.000Z'),
+    conditions: { schemaVersion: 1, fasting: true, intenseActivityLast24h: false, hydration: null },
+    subject: { sex: 'M', ageYears: 27.97, population: 'ADULT' },
+    evaluatorMemberId: EVALUATOR,
+    createdBy: PUBLISHER,
+  },
+  results: {
+    evaluationId: EVALUATION,
+    status: 'READY',
+    results: [
+      {
+        id: uuidv7(),
+        evaluationId: EVALUATION,
+        patientId: PATIENT,
+        methodCode: 'FAT_DW1974_SIRI1961',
+        methodVersion: '1.1.0',
+        engineVersion: '1.3.0',
+        inputs: {},
+        inputsHash: 'a',
+        outputs: {},
+        warnings: [
+          {
+            rule: 'RN-D06',
+            severity: 'WARNING',
+            code: 'NC-ENG-001',
+            message: 'Fuera de la muestra.',
+          },
+        ],
+        status: 'CURRENT',
+        supersededBy: null,
+        measuredAt: new Date('2026-10-13T13:30:00.000Z'),
+        computedAt: new Date('2026-10-13T14:00:01.000Z'),
+        principalFor: ['FAT_PCT'],
+        metrics: [
+          {
+            metricCode: 'FAT_PCT',
+            value: 20.26,
+            unit: '%',
+            methodCode: 'FAT_DW1974_SIRI1961',
+            zScore: null,
+            stored: true,
+            interpretation: { label: 'Adecuado', tone: 'NEUTRAL', source: 'ACE' },
+            interpretationNote: null,
+            referenceScale: null,
+          },
+        ],
+      },
+    ],
+    unavailable: [],
+    populationNote: null,
+    siteInterpretations: [
+      {
+        siteCode: 'GIRTH_WAIST',
+        value: 86,
+        unit: 'cm',
+        interpretation: null,
+        interpretationNote: 'Sin interpretación pediátrica.',
+        referenceScale: null,
+      },
+    ],
+  },
+  sites: [
+    { code: 'BASIC_WEIGHT', family: 'BASIC', name: 'Peso', unit: 'kg', value: 80 },
+    { code: 'GIRTH_WAIST', family: 'GIRTH', name: 'Cintura', unit: 'cm', value: 86 },
+  ],
+  bia: [],
+};
+
 const ORGANIZATION_BRAND: BrandingRecord = {
   displayName: null,
   logoFileId: null,
@@ -187,7 +388,12 @@ class World {
     organization: ORGANIZATION_BRAND,
     member: null,
   };
-  brandingAuthor: string | null = null;
+  brandingAuthor: unknown = null;
+  evaluation: EvaluationSheet | null = EVALUATION_SHEET;
+
+  readonly assessment = {
+    evaluationSheet: (id: string) => Promise.resolve(id === EVALUATION ? this.evaluation : null),
+  } as unknown as AssessmentApi;
 
   readonly nutrition = {
     publishedPlan: (id: string) => Promise.resolve(id === PLAN ? this.plan : null),
@@ -200,14 +406,14 @@ class World {
   } as unknown as ClinicalApi;
 
   readonly tenancy = {
-    sheetBranding: (_org: OrganizationId, author: UserId) => {
+    sheetBranding: (_org: OrganizationId, author: unknown) => {
       this.brandingAuthor = author;
       return Promise.resolve(this.branding);
     },
   } as unknown as TenancyApi;
 
   sources(): SheetSources {
-    return new SheetSources(this.nutrition, this.clinical, this.tenancy);
+    return new SheetSources(this.assessment, this.nutrition, this.clinical, this.tenancy);
   }
 }
 
@@ -382,7 +588,7 @@ describe('RN-H03 · RN-H02 · preparar la ficha', () => {
   it('la firma quien publicó, con la edad del día del origen y la fecha del PDF de la publicación', async () => {
     const prepared = await world.sources().prepare(ORG, PLAN_SOURCE);
     if (!prepared.ok) throw new Error(prepared.reason);
-    expect(world.brandingAuthor).toBe(PUBLISHER);
+    expect(world.brandingAuthor).toEqual({ userId: PUBLISHER });
     expect(prepared.sheet.authorUserId).toBe(PUBLISHER);
     expect(prepared.sheet.issuedAt.toISOString()).toBe('2026-10-24T15:00:00.000Z');
     // Cumple 28 el 25 de octubre: el día del origen todavía tiene 27.
@@ -407,16 +613,18 @@ describe('RN-H03 · RN-H02 · preparar la ficha', () => {
     });
   });
 
-  it('sin paciente visible o sin organización no hay ficha; las evaluaciones llegan en el PR 2', async () => {
+  it('sin paciente visible o sin organización no hay ficha', async () => {
     world.card = null;
     expect((await world.sources().prepare(ORG, PLAN_SOURCE)).ok).toBe(false);
+    expect((await world.sources().prepare(ORG, { type: 'EVALUATION', id: EVALUATION })).ok).toBe(
+      false,
+    );
     world.card = CARD;
     world.branding = null;
     expect((await world.sources().prepare(ORG, PLAN_SOURCE)).ok).toBe(false);
-    expect(await world.sources().prepare(ORG, { type: 'EVALUATION', id: uuidv7() })).toEqual({
-      ok: false,
-      reason: 'NOT_SUPPORTED',
-    });
+    expect((await world.sources().prepare(ORG, { type: 'EVALUATION', id: EVALUATION })).ok).toBe(
+      false,
+    );
   });
 
   it('el hash del contenido no depende de la marca, y el de la marca no depende del contenido', async () => {
@@ -554,5 +762,158 @@ describe('RF-24 · pedir la ficha desde el panel', () => {
     await expect(
       requests.request({ ...context, organizationId: null }, PATIENT, PLAN_SOURCE),
     ).rejects.toThrow('organización activa');
+  });
+});
+
+describe('RN-H01 · RN-E16 · la ficha del menú, también para la composición', () => {
+  it('el menú: cada día con la opción A y la B, el promedio y cada receta con sus ingredientes', () => {
+    const sheet = menuSheet(
+      MENU_SNAPSHOT as Parameters<typeof menuSheet>[0],
+      { code: 'P-1', fullName: 'Luis Demo', sex: 'M', ageYears: 28 },
+      null,
+    );
+    expect(sheet).toMatchObject({ kind: 'WEEKLY_MENU', modality: 'WEEKLY_MENU' });
+    expect(sheet.days).toHaveLength(7);
+    expect(sheet.days[0]?.dayOfWeek).toBe(1);
+    expect(sheet.days[0]?.cells[0]).toEqual({
+      optionA: [{ kind: 'RECIPE', name: 'Arroz con pollo', servings: 1 }],
+      optionB: [{ kind: 'FOOD', name: 'Pollo', grams: 120, householdText: null }],
+    });
+    expect(sheet.days[1]?.cells[0]?.optionB).toEqual([]);
+    // El promedio de la semana: un nutriente sin dato en algún día queda con lo conocido (RN-I03).
+    expect(sheet.average?.kcal).toEqual({ value: 204, known: 204, missing: 0 });
+    expect(sheet.average?.fiber).toEqual({ value: null, known: 0.6, missing: 2 });
+    // Lo que el snapshot no trae, sin dato en todos los días.
+    expect(sheet.average?.protein).toEqual({ value: null, known: 0, missing: 7 });
+    expect(sheet.recipes).toEqual([
+      {
+        name: 'Arroz con pollo',
+        servings: 2,
+        ingredients: [
+          { name: 'Arroz cocido', grams: 200 },
+          { name: 'Pollo', grams: 150 },
+        ],
+        perServing: expect.objectContaining({ of: 2 }) as unknown,
+      },
+    ]);
+  });
+
+  it('la composición es un plan de un día: sin día de la semana, sin opción B ni promedio', () => {
+    const sheet = menuSheet(
+      COMPOSITION_SNAPSHOT as Parameters<typeof menuSheet>[0],
+      { code: 'P-1', fullName: 'Luis Demo', sex: 'M', ageYears: 28 },
+      ENERGY,
+    );
+    expect(sheet).toMatchObject({
+      kind: 'WEEKLY_MENU',
+      modality: 'COMPOSITION',
+      average: null,
+      recipes: [],
+    });
+    expect(sheet.days).toHaveLength(1);
+    expect(sheet.days[0]?.dayOfWeek).toBeNull();
+    expect(sheet.days[0]?.cells[0]?.optionA).toEqual([
+      { kind: 'FOOD', name: 'Arroz cocido', grams: 200, householdText: '1 taza' },
+      { kind: 'FOOD', name: 'Pollo', grams: 150, householdText: null },
+    ]);
+    expect(sheet.days[0]?.totals.fiber).toEqual({ value: null, known: 0.6, missing: 1 });
+    expect(sheet.days[0]?.totals.of).toBe(2);
+  });
+
+  it('un plan por composición se prepara con la ficha del menú', async () => {
+    world.plan = {
+      planId: PLAN,
+      patientId: PATIENT,
+      status: 'PUBLISHED',
+      snapshot: COMPOSITION_SNAPSHOT,
+    };
+    const prepared = await world.sources().prepare(ORG, PLAN_SOURCE);
+    expect(prepared.ok && prepared.sheet.kind).toBe('WEEKLY_MENU');
+    expect(prepared.ok && prepared.sheet.content.kind).toBe('WEEKLY_MENU');
+  });
+});
+
+describe('RN-H01 · RN-D02 · RN-D10 · la ficha de resultados de una evaluación', () => {
+  const EVALUATION_SOURCE = { type: 'EVALUATION', id: EVALUATION } as const;
+
+  it('la firma el evaluador, con la fecha del cierre y la edad del día de la medición', async () => {
+    const prepared = await world.sources().prepare(ORG, EVALUATION_SOURCE);
+    if (!prepared.ok) throw new Error(prepared.reason);
+    expect(world.brandingAuthor).toEqual({ memberId: EVALUATOR });
+    expect(prepared.sheet.kind).toBe('ANTHROPOMETRY');
+    expect(prepared.sheet.issuedAt.toISOString()).toBe('2026-10-13T14:00:00.000Z');
+    const content = prepared.sheet.content;
+    if (content.kind !== 'ANTHROPOMETRY') throw new Error(content.kind);
+    expect(content.patient.ageYears).toBe(27);
+    expect(content.evaluation).toEqual({
+      kind: 'ANTHROPOMETRY',
+      level: 'ISAK2',
+      measuredOn: '2026-10-13',
+      revision: 1,
+      amended: false,
+      fasting: true,
+      intenseActivityLast24h: false,
+      hydration: null,
+    });
+    expect(content.results[0]).toEqual({
+      methodCode: 'FAT_DW1974_SIRI1961',
+      methodVersion: '1.1.0',
+      engineVersion: '1.3.0',
+      principalFor: ['FAT_PCT'],
+      metrics: [
+        {
+          metricCode: 'FAT_PCT',
+          methodCode: 'FAT_DW1974_SIRI1961',
+          value: 20.26,
+          unit: '%',
+          interpretation: { label: 'Adecuado', tone: 'NEUTRAL', source: 'ACE' },
+          note: null,
+        },
+      ],
+      warnings: [{ severity: 'WARNING', message: 'Fuera de la muestra.' }],
+    });
+    expect(content.siteInterpretations).toEqual([
+      {
+        name: 'Cintura',
+        value: 86,
+        unit: 'cm',
+        interpretation: null,
+        note: 'Sin interpretación pediátrica.',
+      },
+    ]);
+    expect(content.sites.map((site) => site.name)).toEqual(['Peso', 'Cintura']);
+  });
+
+  it('un borrador no tiene ficha; con los resultados en cálculo, todavía no', async () => {
+    world.evaluation = {
+      ...EVALUATION_SHEET,
+      evaluation: { ...EVALUATION_SHEET.evaluation, status: 'DRAFT', closedAt: null },
+    };
+    expect(await world.sources().prepare(ORG, EVALUATION_SOURCE)).toEqual({
+      ok: false,
+      reason: 'NOT_PUBLISHED',
+    });
+    world.evaluation = {
+      ...EVALUATION_SHEET,
+      results: { ...EVALUATION_SHEET.results, status: 'PENDING', results: [] },
+    };
+    expect(await world.sources().prepare(ORG, EVALUATION_SOURCE)).toEqual({
+      ok: false,
+      reason: 'NOT_READY',
+    });
+    const pending = await requests.request(context, PATIENT, EVALUATION_SOURCE);
+    expect(isErr(pending) && pending.error.code).toBe('NC-DOC-003');
+    world.evaluation = null;
+    expect(await world.sources().prepare(ORG, EVALUATION_SOURCE)).toEqual({
+      ok: false,
+      reason: 'NOT_FOUND',
+    });
+  });
+
+  it('una rutina todavía no tiene ficha (P12)', async () => {
+    expect(await world.sources().prepare(ORG, { type: 'TRAINING_PROGRAM', id: uuidv7() })).toEqual({
+      ok: false,
+      reason: 'NOT_SUPPORTED',
+    });
   });
 });

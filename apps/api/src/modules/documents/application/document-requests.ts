@@ -20,7 +20,11 @@ import {
   type UnitOfWork,
 } from '@nutricoach/shared-kernel';
 import { FileRegistry } from '../../../platform/index.js';
-import { DOCUMENT_NOT_FOUND, SOURCE_NOT_PUBLISHED } from '../domain/document-errors.js';
+import {
+  DOCUMENT_NOT_FOUND,
+  SOURCE_NOT_PUBLISHED,
+  SOURCE_NOT_READY,
+} from '../domain/document-errors.js';
 import { sheetFileName } from '../domain/sheet.js';
 import { documentsEvent } from './documents-events.js';
 import {
@@ -29,6 +33,13 @@ import {
   type GeneratedDocumentRecord,
 } from './ports/documents.ports.js';
 import { documentKey, SheetSources, type SheetSource } from './sheet-sources.js';
+
+const PREPARATION_ERRORS = {
+  NOT_FOUND: DOCUMENT_NOT_FOUND,
+  NOT_PUBLISHED: SOURCE_NOT_PUBLISHED,
+  NOT_READY: SOURCE_NOT_READY,
+  NOT_SUPPORTED: DOCUMENT_NOT_FOUND,
+} as const;
 
 /** La ficha de un origen: lista para descargar, o en la cola del worker. */
 export type DocumentStatus =
@@ -112,9 +123,7 @@ export class DocumentRequests {
     source: SheetSource,
   ): Promise<Result<DocumentStatus, DomainError>> {
     const prepared = await this.sources.prepare(this.#organization(context), source);
-    if (!prepared.ok) {
-      return err(prepared.reason === 'NOT_PUBLISHED' ? SOURCE_NOT_PUBLISHED : DOCUMENT_NOT_FOUND);
-    }
+    if (!prepared.ok) return err(PREPARATION_ERRORS[prepared.reason]);
     if (prepared.sheet.patientId !== patientId) return err(DOCUMENT_NOT_FOUND);
     const templateVersion = await this.store.activeTemplateVersion(prepared.sheet.kind);
     if (!templateVersion) throw new Error(`No hay una plantilla activa de ${prepared.sheet.kind}.`);

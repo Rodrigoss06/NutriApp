@@ -12,3 +12,10 @@ export const SOURCE_NOT_PUBLISHED = domainError({
   rule: 'RN-H02',
   message: 'Esa ficha sale de un plan publicado o de una evaluación cerrada.',
 });
+
+/** La evaluación está cerrada pero el worker todavía calcula sus resultados: la ficha sale cuando terminen (RN-D01). */
+export const SOURCE_NOT_READY = domainError({
+  code: 'NC-DOC-003',
+  message:
+    'Los resultados de esa evaluación todavía se están calculando: inténtalo en unos segundos.',
+});

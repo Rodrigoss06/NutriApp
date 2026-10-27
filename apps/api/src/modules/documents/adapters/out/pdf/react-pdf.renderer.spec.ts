@@ -3,7 +3,10 @@ import { describe, expect, it } from 'vitest';
 import type { SheetRender } from '../../../application/ports/documents.ports.js';
 import {
   DEMO_BRAND,
+  LUIS_COMPOSITION_SHEET,
   LUIS_EXCHANGE_SHEET,
+  LUIS_MENU_SHEET,
+  LUIS_RESULTS_SHEET,
 } from '../../../application/sheets/sheet-fixtures.spec-support.js';
 import { pdfText } from '../../../../../../test/support/pdf-text.js';
 import { ReactPdfRenderer } from './react-pdf.renderer.js';
@@ -59,6 +62,13 @@ describe('RN-H02 · la misma ficha da el mismo PDF', () => {
       'No existe la plantilla EXCHANGE_DIET 9.9.9.',
     );
   });
+
+  it('el menú y los resultados también dan los mismos bytes', SLOW, async () => {
+    for (const content of [LUIS_MENU_SHEET, LUIS_RESULTS_SHEET]) {
+      const input = { ...INPUT, content };
+      expect(sha256(await renderer.render(input))).toBe(sha256(await renderer.render(input)));
+    }
+  });
 });
 
 describe('RN-D02 · RN-H04 · cada número de la ficha con su método', () => {
@@ -102,6 +112,81 @@ describe('RN-D02 · RN-H04 · cada número de la ficha con su método', () => {
       ]) {
         expect(text).toContain(expected);
       }
+    },
+  );
+});
+
+describe('RN-H01 · RN-E16 · la ficha del menú', () => {
+  it(
+    'el menú de Luis: cada día con su opción A y B, el promedio y la receta con una porción',
+    SLOW,
+    async () => {
+      const text = await pdfText(await renderer.render({ ...INPUT, content: LUIS_MENU_SHEET }));
+      for (const expected of [
+        'Menú semanal',
+        'Promedio de la semana',
+        'Lunes',
+        'Domingo',
+        'Opción A',
+        'Arroz con pollo · 1 porción',
+        'Opción B',
+        'Pollo, carne pulpa · 120 g',
+        // Con la opción A y la fibra que la TPCA no trae del pollo (RN-I03).
+        'Total del día con la opción A: 204 kcal',
+        'fibra al menos 1 g · falta en 1 de 2 alimentos',
+        '0 de 7 días en rango',
+        'Arroz con pollo · rinde 2 porciones',
+        'Composición de receta, una porción',
+        'Mifflin-St Jeor (1990)',
+      ]) {
+        expect(text).toContain(expected);
+      }
+    },
+  );
+
+  it('la composición se imprime con la misma plantilla, como un plan de un día', SLOW, async () => {
+    const text = await pdfText(
+      await renderer.render({ ...INPUT, content: LUIS_COMPOSITION_SHEET }),
+    );
+    expect(text).toContain('Dieta por composición');
+    expect(text).toContain('Alimentos por tiempo');
+    expect(text).toContain('Arroz pilado o pulido cocido · 200 g (1 taza)');
+    expect(text).toContain('Total del día: 409 kcal');
+    expect(text).not.toContain('Opción A');
+    expect(text).not.toContain('Promedio de la semana');
+  });
+});
+
+describe('RN-H04 · criterio 2 · la ficha de resultados muestra el método junto al % de grasa', () => {
+  it(
+    'cada número con su método, su interpretación con fuente y la bioimpedancia como lectura',
+    SLOW,
+    async () => {
+      const text = await pdfText(await renderer.render({ ...INPUT, content: LUIS_RESULTS_SHEET }));
+      for (const expected of [
+        'Resultados antropométricos',
+        'ISAK 2 · antropometría y bioimpedancia · medida el 13 de octubre de 2026',
+        'En ayunas: sí',
+        '% de grasa (Durnin & Womersley (1974) + Siri)',
+        '20.3 %',
+        'Promedio · ACE',
+        'Método principal para % de grasa de este paciente.',
+        'Masa ósea (Masa ósea (Rocha))',
+        'Aviso: Rocha modifica la fórmula',
+        'Sobrepeso · OMS 2008',
+        'Cintura (mínima)',
+        'Sin riesgo aumentado · OMS 2008',
+        'Medidas consolidadas',
+        'Pliegues',
+        '12.0 mm',
+        'Lectura del equipo Marca sintética BIA-1',
+        'Ángulo de fase (Phase angle)',
+        '6.8°',
+      ]) {
+        expect(text).toContain(expected);
+      }
+      // El IMC no repite su nombre como método.
+      expect(text).not.toContain('IMC (IMC)');
     },
   );
 });

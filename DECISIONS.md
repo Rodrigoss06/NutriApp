@@ -1183,3 +1183,32 @@ Consecuencias:
 - Para Notion (/notion-sync): 02 §3 (ClinicalApi.patientCard, NutritionApi y TenancyApi), §7 y §8 (documents, su
   consumidor y sus eventos); 05.3 (CHECK e índices de documents); 03 RN-H02 (qué identifica un PDF) y RN-H03 (la marca
   dato por dato).
+
+## ADR-065 · Fichas del menú, la composición y los resultados antropométricos — aceptada (2026-10-26)
+Contexto: P11 (PR 2) pide las otras dos fichas de la Demo 2 (RF-24, RN-H01): el menú semanal y los resultados
+antropométricos, con el método junto a cada número (RN-D02, RN-H04, criterio 2). Rodrigo decidió (2026-10-25) que la
+composición se imprima con la ficha del menú (ADR-064).
+Decisión:
+- Ficha del menú (WEEKLY_MENU 1.0.0): metas con su método, la adecuación del promedio con los días en rango (RN-G09),
+  cada día con lo de cada tiempo en su opción A y B y el total con la opción A (RN-E16), el promedio de la semana y
+  cada receta con sus ingredientes y lo de una porción (RN-E12). Un dato que falta se ve como «al menos X · falta en
+  N de M» (ADR-061). La composición usa la misma plantilla como un plan de un día: un solo día sin nombre, sin opción
+  B ni promedio, y el título «Dieta por composición».
+- Ficha de resultados (ANTHROPOMETRY 1.0.0): condiciones de la medición (RN-C09), cada resultado vigente con su método
+  y versión, cada indicador con su método al lado («% de grasa (Durnin & Womersley (1974) + Siri)»; el IMC no lo
+  repite), su interpretación con la fuente de la tabla vigente en la fecha (RN-D10), los avisos (RN-D06), las medidas
+  con interpretación propia, las medidas consolidadas por familia (RN-C03) y la bioimpedancia como lectura del equipo
+  (RN-C08). La firma el evaluador (su marca propia, RN-H03) y lleva como fecha la del cierre.
+- AssessmentApi.evaluationSheet entrega la evaluación con sus resultados. El armado de los resultados pasa a
+  ResultsAssembly, que usan la pantalla y la ficha: dicen lo mismo. Las etiquetas y el redondeo de la evaluación
+  (niveles, familias, indicadores, unidades y bioimpedancia) pasan de la web a @nutricoach/contracts.
+- La ficha de resultados se genera a pedido, no al cerrar: los resultados los calcula el worker después del cierre.
+  Mientras tanto, pedirla responde 409 con NC-DOC-003.
+- El paciente y la explicación de las metas pasan a piezas comunes (plan-parts); la ficha de intercambios 1.0.0 sigue
+  dando los mismos bytes.
+- Migración 202610250100_documents_templates: las plantillas globales WEEKLY_MENU y ANTHROPOMETRY 1.0.0.
+- La marca mínima, que el plan ponía en este PR, pasa a uno propio (PR 3) para que cada PR se revise solo.
+Consecuencias:
+- Para Notion (/notion-sync): 02 §3 (AssessmentApi.evaluationSheet) y el error NC-DOC-003; 03 RN-H01 (la composición
+  se imprime con la ficha del menú).
+

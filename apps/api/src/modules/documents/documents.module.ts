@@ -1,4 +1,5 @@
 import { Module } from '@nestjs/common';
+import { AssessmentModule } from '../assessment/index.js';
 import { NutritionModule } from '../nutrition/index.js';
 import { SheetsConsumer } from './adapters/in/events/sheets.consumer.js';
 import {
@@ -17,7 +18,7 @@ import { SheetSources } from './application/sheet-sources.js';
  * publicado o una evaluación cerrada, y reutilizadas mientras nada cambie (RN-H02).
  */
 @Module({
-  imports: [NutritionModule],
+  imports: [AssessmentModule, NutritionModule],
   controllers: [PatientDocumentsController, DocumentsController],
   providers: [
     SheetSources,
