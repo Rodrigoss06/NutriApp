@@ -15,7 +15,8 @@ export type TenancyEventType =
   | 'tenancy.member.removed'
   | 'tenancy.subscription.changed'
   | 'tenancy.subscription.expired'
-  | 'tenancy.setting.changed';
+  | 'tenancy.setting.changed'
+  | 'tenancy.branding.changed';
 
 export function tenancyEvent<TPayload>(
   type: TenancyEventType & EventType,

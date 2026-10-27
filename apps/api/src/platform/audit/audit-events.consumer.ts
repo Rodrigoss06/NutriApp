@@ -24,8 +24,8 @@ const namesOf = (value: unknown): readonly string[] =>
   Array.isArray(value) ? value.filter((v): v is string => typeof v === 'string') : [];
 
 /**
- * Escrituras auditadas desde sus eventos (02 §10): invitaciones, roles, bajas, contraseñas, suscripciones y
- * ajustes. Las lecturas, los ingresos y las sesiones se auditan en su caso de uso.
+ * Escrituras auditadas desde sus eventos (02 §10): invitaciones, roles, bajas, contraseñas, suscripciones, ajustes
+ * y marca. Las lecturas, los ingresos y las sesiones se auditan en su caso de uso.
  */
 export const AUDITED_EVENTS: Readonly<Record<string, AuditMapping>> = {
   'iam.invitation.created': { action: 'CREATE', resourceType: 'iam.invitation' },
@@ -190,6 +190,11 @@ export const AUDITED_EVENTS: Readonly<Record<string, AuditMapping>> = {
     action: 'UPDATE',
     resourceType: 'tenancy.organization_setting',
     fields: (p) => (typeof p.key === 'string' ? [p.key] : []),
+  },
+  'tenancy.branding.changed': {
+    action: 'UPDATE',
+    resourceType: 'tenancy.branding',
+    fields: (p) => namesOf(p.fields),
   },
 };
 

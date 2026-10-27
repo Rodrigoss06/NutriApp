@@ -1,6 +1,6 @@
 # STATUS — NutriCoach v1.0
 
-Actualizado: 2026-10-23 · Por: Rodrigo, con Claude Code
+Actualizado: 2026-10-27 · Por: Rodrigo, con Claude Code
 Inicio del proyecto: POR CONFIRMAR (día siguiente al Pago 1) · Semana actual: 0 de 9
 Próxima demo: Demo 1 · Base y evaluación · semana 2
 
@@ -18,7 +18,7 @@ Próxima demo: Demo 1 · Base y evaluación · semana 2
 | P8 Datos maestros de alimentos | ✅ | Rodrigo | #21 a #24 | 3 criterios en verde (integración y E2E en escritorio y celular); Biblioteca, alimento propio, «Armar un plato», listas de intercambio y «Acerca de» con la atribución (ADR-055, ADR-056). /notion-sync aplicado (21 cambios) |
 | P9 Dieta por intercambios | ✅ | Rodrigo | #25, #26 y #27 | 3 criterios en verde (integración y E2E de Luis en escritorio y celular): borrador (ADR-057), publicación y tracking (ADR-058) y pantallas (ADR-059). /notion-sync aplicado (15 cambios en 02, 03 y 05.2) |
 | P10 Composición, menú y recetario | ✅ | Rodrigo | #28, #30 y #31 | 2 criterios en verde (integración y E2E en escritorio y celular): recetario (ADR-061), composición y menú en la API (ADR-062) y pantallas (ADR-063). Plantillas (RF-22, deseable) fuera. /notion-sync aplicado (17 cambios en 02, 03, 04, 05 y 05.2) |
-| P11 Fichas PDF, Demo 2 | 🟨 | Rodrigo | #32 y PR 2 | Plan aprobado (2026-10-25). #32: contexto documents y ficha de intercambios (ADR-064), criterios 1 y 3. PR 2: fichas del menú (también la composición) y de resultados (ADR-065), criterio 2. Faltan la marca, las descargas en la web y la Demo 2 |
+| P11 Fichas PDF, Demo 2 | 🟨 | Rodrigo | #32, #33 y PR 3 | Plan aprobado (2026-10-25). #32: contexto documents y ficha de intercambios (ADR-064), criterios 1 y 3. #33: fichas del menú (también la composición) y de resultados (ADR-065), criterio 2. PR 3: marca mínima de las fichas (ADR-066). Faltan las descargas en la web y la Demo 2 |
 | P12 Ejercicios y rutinas | ⬜ | Rodrigo | | |
 | P13 App del paciente | ⬜ | Rodrigo | | |
 | P14 Analítica y evolución, Demo 3 | ⬜ | Rodrigo | | |
@@ -28,12 +28,19 @@ Próxima demo: Demo 1 · Base y evaluación · semana 2
 Leyenda: ⬜ pendiente · 🟨 en curso · ✅ terminado · ⛔ bloqueado
 
 ## En curso
-- P11, PR 2 en la rama feat/doc-fichas-menu-resultados (ADR-065): ficha del menú semanal, que también imprime la
-  composición como un plan de un día, y ficha de resultados antropométricos con el método junto a cada número
-  (criterio 2). Lo que sigue: la marca mínima (PR 3), las descargas en la web (PR 4) y la Demo 2 (PR 5).
+- P11, PR 3 en la rama feat/ten-marca-fichas (ADR-066): marca mínima de las fichas.
+  - API: GET y PUT /organization/branding y el logo aparte (PUT, DELETE y GET), con tenancy.branding.changed
+    auditado;
+  - logo PNG o JPEG de hasta 1 MB y 2000 px, revisado entero antes de guardarlo (un logo dañado rompería todas las
+    fichas);
+  - pantalla «Marca de las fichas» en /panel/organizacion, con el contraste del color y una vista previa de la ficha;
+  - E2E e2e/marca.spec.ts en escritorio y celular.
+  Lo que sigue: las descargas en la web (PR 4) y la Demo 2 (PR 5).
+- P11, PR 2 fusionado (#33, 8cf6423) (ADR-065): ficha del menú semanal, que también imprime la composición como un
+  plan de un día, y ficha de resultados antropométricos con el método junto a cada número (criterio 2).
 - P11, PR 1 fusionado (#32, 0ad742f) (ADR-064): contexto documents, ficha de la dieta por intercambios con react-pdf en
   el worker, generación al publicar y a pedido, reutilización por hashes y descarga auditada; criterios 1 y 3.
-- P10, PR 3 abierto (#31, los cuatro checks en verde) (ADR-063):
+- P10, PR 3 fusionado (#31, 44cedaf) (ADR-063):
   - plan nuevo con la modalidad; editor por composición con alimentos por tiempo, nutrientes del día y adecuación;
   - menú semanal con pestañas de lunes a domingo, opciones A y B, copiar un día a los demás y resumen de la semana;
   - vista de lo publicado: grilla de la semana en escritorio y pestañas en el celular;
@@ -87,8 +94,7 @@ Leyenda: ⬜ pendiente · 🟨 en curso · ✅ terminado · ⛔ bloqueado
 ## Siguiente paso
 - Antes de la Demo 1: la matriz manual de navegadores (RNF-19: Chrome, Edge, Safari y Firefox; la E2E cubre Chromium
   y WebKit) y, el mismo día, base local limpia y semilla («Antes de empezar» del guion). La demo es en local
-- Fusionar #31 (P10, PR 3)
-- P11: fichas PDF y Demo 2
+- P11: descargas en la web (PR 4) y Demo 2 (PR 5); al cerrar, /notion-sync de P11 (ADR-064 a ADR-066)
 - Cada base nueva necesita los catálogos: `pnpm --filter api build && pnpm catalog:load plataforma@demo.example.com`
   en local; en staging y producción, con el correo de su PLATFORM_ADMIN
 - db:seed carga el caso Luis: sus resultados aparecen cuando corre el worker
@@ -158,10 +164,17 @@ Leyenda: ⬜ pendiente · 🟨 en curso · ✅ terminado · ⛔ bloqueado
 - Reimportar un catálogo global (TPCA) no recalcula la caché de nutrientes de las recetas: hace falta un recálculo
   de las recetas que usan los alimentos cambiados (ADR-061). Los planes publicados no cambian: llevan su snapshot
 - Plantillas de plan (RF-22, deseable) no se hicieron en P10 (ADR-063)
+- Ficha de resultados 1.0.0: «Masa ósea (Masa ósea (Rocha))» repite el indicador cuando el nombre del método ya lo
+  lleva; corregirlo pide la plantilla 1.0.1 y su migración, antes de la Demo 2 (ADR-065)
+- Los logos reemplazados quedan guardados sin uso: limpieza con la marca completa de P15 (ADR-066)
 - E2E de la Demo 1 inestable en el CI: axe corrió antes de que la página tuviera su título (document-title) y pasó al
   reintentar (#29, 2026-10-24); esperar el título antes de axe
 
 ## Registro de sesiones (solo las 5 últimas)
+- 2026-10-27 · P11 (PR 2 y PR 3) · #33 fusionado con los cuatro checks en verde. PR 3: marca mínima de las fichas
+  (ADR-066) con la API, el logo revisado entero, el evento auditado y la pantalla «Marca de las fichas»; la ficha
+  generada por el worker lleva el nombre, el contacto, el pie y el logo puestos por la API. Solo el color principal:
+  las plantillas no usan el secundario
 - 2026-10-26 · P11 (PR 1 y PR 2) · #32 fusionado con los cuatro checks en verde. PR 2: fichas del menú, la
   composición y los resultados (ADR-065), con el criterio 2 en la integración. Un apagado brusco dejó archivos del
   PR 2 cortados en el disco NTFS (tamaño viejo, contenido nuevo, y git no lo ve): se rehicieron desde git y se
@@ -179,7 +192,3 @@ Leyenda: ⬜ pendiente · 🟨 en curso · ✅ terminado · ⛔ bloqueado
 - 2026-10-23 · P9 cerrado · #27 fusionado con los cuatro checks en verde; /notion-sync de P9 aprobado y aplicado:
   RN-E08, RN-E10, RN-E13, RN-E14 y RN-G05 en 03 (versión 1.9), mapa de contextos, NutritionPlan y auditoría en 02, y
   el DDL de nutrition en 05.2 como la migración 202610230000_nutrition_plans
-- 2026-10-22 · P9 (PR 2 y PR 3) · #25 fusionado; PR 2 abierto (#26). Pantallas de la dieta por intercambios: editor en
-  tres pasos con vista previa en la API, porción sugerida, referencias de hidratación, historial y vista del plan
-  publicado (ADR-059); E2E de Luis en escritorio y celular. P9 cumple sus tres criterios. #26 fusionado; Rodrigo
-  eligió los carbohidratos totales; texto de marca contra --muted y useDebounced sin objetos (ADR-060)

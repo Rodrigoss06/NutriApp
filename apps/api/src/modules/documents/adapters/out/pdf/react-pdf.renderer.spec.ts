@@ -1,4 +1,5 @@
 import { createHash } from 'node:crypto';
+import { BRANDING_LIMITS } from '@nutricoach/contracts';
 import { describe, expect, it } from 'vitest';
 import type { SheetRender } from '../../../application/ports/documents.ports.js';
 import {
@@ -8,7 +9,8 @@ import {
   LUIS_MENU_SHEET,
   LUIS_RESULTS_SHEET,
 } from '../../../application/sheets/sheet-fixtures.spec-support.js';
-import { pdfText } from '../../../../../../test/support/pdf-text.js';
+import { pngImage } from '../../../../../../test/support/images.js';
+import { pdfText, pdfTextItems } from '../../../../../../test/support/pdf-text.js';
 import { ReactPdfRenderer } from './react-pdf.renderer.js';
 
 /** Un PNG de 1 × 1 píxel: el logo más chico posible. */
@@ -189,4 +191,46 @@ describe('RN-H04 · criterio 2 · la ficha de resultados muestra el método junt
       expect(text).not.toContain('IMC (IMC)');
     },
   );
+});
+
+describe('ADR-066 · la marca más larga cabe en el encabezado y el pie', () => {
+  /** Repite el texto hasta el largo justo. */
+  const fill = (text: string, length: number) =>
+    text.repeat(Math.ceil(length / text.length)).slice(0, length);
+
+  it('con cada dato en su largo máximo y un logo ancho, nada pisa el cuerpo', SLOW, async () => {
+    const brand = {
+      ...DEMO_BRAND,
+      displayName: fill('Centro de Nutrición Deportiva ', BRANDING_LIMITS.displayName),
+      logoFileId: 'logo',
+      contact: {
+        phone: fill('+51 (01) 999-000 ', BRANDING_LIMITS.phone),
+        email: fill('citas.nutricion.deportiva@consultorio.pe', BRANDING_LIMITS.email),
+        website: fill('www.consultorio-nutricion.pe/', BRANDING_LIMITS.website),
+      },
+      footer: fill('Colegiatura CNP 0000 · Atención con cita previa · ', BRANDING_LIMITS.pdfFooter),
+    };
+    const pdf = await renderer.render({
+      ...INPUT,
+      brand,
+      logo: { content: pngImage({ width: 600, height: 200 }), mimeType: 'image/png' },
+    });
+    const items = (await pdfTextItems(pdf)).filter((item) => item.page === 1);
+    const spaced = (text: string) => text.replace(/\s+/g, ' ');
+    const { phone, email, website } = brand.contact;
+    const footer = spaced(`${[phone, email, website].join(' · ')} · ${brand.footer}`);
+    // Las líneas enteras del encabezado y del pie; los trozos sueltos del cuerpo («.») no cuentan.
+    const header = items.filter((item) => brand.displayName.includes(item.text));
+    const bottom = items.filter(
+      (item) =>
+        (item.text.length >= 10 && footer.includes(spaced(item.text))) ||
+        /^Página \d+ de \d+$/.test(item.text),
+    );
+    expect(header.map((item) => item.text).join(' ')).toBe(brand.displayName.trim());
+    expect(spaced(bottom.map((item) => item.text).join(' '))).toContain(phone.trim());
+    expect(spaced(bottom.map((item) => item.text).join(' '))).toContain(brand.footer.slice(-20));
+    // A4 mide 842 pt de alto; el cuerpo va de 64 pt (el margen de abajo) a 746 pt (842 − 96 del de arriba).
+    for (const item of header) expect(item.y - 0.25 * item.height).toBeGreaterThan(746);
+    for (const item of bottom) expect(item.y + item.height).toBeLessThan(64);
+  });
 });

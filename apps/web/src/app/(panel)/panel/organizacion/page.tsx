@@ -1,5 +1,6 @@
 import type {
   AccountResponse,
+  BrandingResponse,
   InvitationListResponse,
   MemberListResponse,
   OrganizationResponse,
@@ -8,6 +9,7 @@ import type {
 import { Notice } from '@nutricoach/ui';
 import type { Metadata } from 'next';
 import type { ReactNode } from 'react';
+import { BrandingSection } from '@/features/organization/branding-section';
 import { InvitationsSection } from '@/features/organization/invitations-section';
 import { MembersSection } from '@/features/organization/members-section';
 import { OrganizationForm } from '@/features/organization/organization-form';
@@ -16,14 +18,18 @@ import { serverApi } from '@/lib/api/server';
 
 export const metadata: Metadata = { title: 'Organización' };
 
-/** La organización activa (RF-02, RF-03). La interfaz oculta lo que el rol no puede hacer; la API decide. */
+/**
+ * La organización activa (RF-02, RF-03) y la marca de sus fichas (RN-H03). La interfaz oculta lo que el rol no puede
+ * hacer; la API decide.
+ */
 export default async function OrganizationPage() {
-  const [account, organization, members] = await Promise.all([
+  const [account, organization, members, branding] = await Promise.all([
     serverApi<AccountResponse>('/account'),
     serverApi<OrganizationResponse>('/organization'),
     serverApi<MemberListResponse>('/organization/members'),
+    serverApi<BrandingResponse>('/organization/branding'),
   ]);
-  if (!account.ok || !organization.ok || !members.ok) {
+  if (!account.ok || !organization.ok || !members.ok || !branding.ok) {
     return <Notice tone="danger" title="No pudimos cargar la organización" />;
   }
   const role = account.data.memberships.find(
@@ -52,6 +58,9 @@ export default async function OrganizationPage() {
           />
         </Section>
       ) : null}
+      <Section title="Marca de las fichas">
+        <BrandingSection branding={branding.data} organizationName={organization.data.name} />
+      </Section>
       <Section title="Miembros">
         <MembersSection members={members.data.members} />
       </Section>

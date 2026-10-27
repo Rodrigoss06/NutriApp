@@ -4,7 +4,7 @@ import type { OrganizationId, UserId } from '@nutricoach/shared-kernel';
 import type { Db } from '../../../../../platform/index.js';
 import type { MemberRole, MemberStatus, Profession } from '../../../domain/tenancy-rules.js';
 import type {
-  BrandingRecord,
+  BrandingRow,
   MemberRecord,
   MemberChanges,
   MembershipRecord,
@@ -195,10 +195,13 @@ export class PrismaTenancyStore implements TenancyStore {
   async findBranding(
     organizationId: OrganizationId,
     memberId: string | null,
-  ): Promise<BrandingRecord | null> {
+  ): Promise<BrandingRow | null> {
     const row = await this.db.tx.branding.findFirst({ where: { organizationId, memberId } });
     if (!row) return null;
     return {
+      id: row.id,
+      organizationId,
+      memberId: row.memberId,
       displayName: row.displayName,
       logoFileId: row.logoFileId,
       primaryColor: row.primaryColor,
@@ -209,7 +212,39 @@ export class PrismaTenancyStore implements TenancyStore {
         website: contactText(row.contact, 'website'),
       },
       pdfFooter: row.pdfFooter,
+      updatedAt: row.updatedAt,
     };
+  }
+
+  async saveBranding(branding: BrandingRow): Promise<void> {
+    const data = {
+      displayName: branding.displayName,
+      logoFileId: branding.logoFileId,
+      primaryColor: branding.primaryColor,
+      secondaryColor: branding.secondaryColor,
+      // Solo lo fijado: el contacto sin un dato no guarda la clave (lo que falta es null al leer).
+      contact: Object.fromEntries(
+        Object.entries(branding.contact).filter(([, value]) => value !== null),
+      ),
+      pdfFooter: branding.pdfFooter,
+      updatedAt: branding.updatedAt,
+    };
+    const { count } = await this.db.tx.branding.updateMany({
+      where: { id: branding.id },
+      data,
+    });
+    if (count === 0) {
+      await this.db.tx.branding.createMany({
+        data: [
+          {
+            id: branding.id,
+            organizationId: branding.organizationId,
+            memberId: branding.memberId,
+            ...data,
+          },
+        ],
+      });
+    }
   }
 
   countActiveMembers(organizationId: OrganizationId): Promise<number> {

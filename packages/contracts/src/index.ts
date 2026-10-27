@@ -8,6 +8,7 @@ export { METHOD_LABELS, methodLabel, type LabeledMethodCode } from './methods/la
 export * from './methods/issue.js';
 export * from './iam/access.js';
 export * from './tenancy/organization.js';
+export * from './tenancy/branding.js';
 export * from './clinical/patient.js';
 export * from './clinical/records.js';
 export * from './audit/events.js';

@@ -57,6 +57,7 @@ export {
 export { JobRegistry, type ScheduledJob } from './jobs/job-registry.js';
 export { EXTENSIONS, MAX_UPLOAD_BYTES, sniffMime, type AllowedMime } from './storage/file-type.js';
 export { FileRegistry, UNSUPPORTED_FILE, type StoredFile } from './storage/file-registry.js';
+export { inspectImage, type ImageInspection, type ImageMime } from './storage/image-info.js';
 export type { CatalogImport, ImportRowError, ImportStatus } from './import/catalog-import.js';
 export {
   CatalogImporter,

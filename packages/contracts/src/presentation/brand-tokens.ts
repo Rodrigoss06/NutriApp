@@ -21,13 +21,17 @@ export interface BrandColorTokens {
 }
 
 const HEX = /^#[0-9a-f]{6}$/i;
-const hexColor = z
+/** Un color #RRGGBB, guardado en minúsculas. */
+export const hexColorSchema = z
   .string()
-  .regex(HEX)
+  .regex(HEX, 'Elige un color #RRGGBB.')
   .transform((value) => value.toLowerCase());
 
 /** Marca de la organización o tema del paciente (RN-H03): solo colores #RRGGBB. */
-export const brandSchema = z.object({ primary: hexColor, secondary: hexColor.optional() });
+export const brandSchema = z.object({
+  primary: hexColorSchema,
+  secondary: hexColorSchema.optional(),
+});
 
 /** Valida la marca; lo inválido vuelve a la paleta provisional y nunca llega al CSS. */
 export function parseBrand(input: unknown): Brand {

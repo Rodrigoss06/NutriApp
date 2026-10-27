@@ -1212,3 +1212,38 @@ Consecuencias:
 - Para Notion (/notion-sync): 02 §3 (AssessmentApi.evaluationSheet) y el error NC-DOC-003; 03 RN-H01 (la composición
   se imprime con la ficha del menú).
 
+
+## ADR-066 · Marca mínima de las fichas: API, logo revisado entero y pantalla — aceptada (2026-10-27)
+Contexto: P11 (alcance 4) pide la edición mínima de logo y colores si P15 no llegó; la marca completa (RF-36: avatar,
+vista previa del tema del paciente y marca propia de cada profesional) es de P15. ADR-065 la separó en su propio PR.
+Decisión:
+- API de tenancy: GET y PUT /organization/branding (nombre visible, colores, teléfono, correo, web y pie) y el logo
+  aparte: PUT /organization/branding/logo (multipart, campo «logo»), DELETE y GET (como adjunto y con nosniff; no se
+  audita, no es un dato personal). La ven todos los miembros (organization.read) y la cambian el dueño y los
+  administradores (organization.update). Solo la de la organización (member_id NULL); la de cada profesional, en P15.
+  Sin If-Match, como los ajustes: gana la última escritura. Texto y logo se guardan por separado para no pisarse, y
+  cada escritura toma el candado de la organización (una fila por organización y miembro).
+- Evento tenancy.branding.changed con memberId y los nombres de los campos, nunca los valores; audit lo registra
+  como UPDATE de tenancy.branding. Lo que no cambia no se escribe ni se audita.
+- Logo: PNG o JPEG de hasta 1 MB (lo corta el parser: 413) y 2000 px por lado (422, NC-TEN-041), revisado entero
+  antes de guardarlo (platform/storage/image-info): en PNG, el CRC de cada bloque, datos que se descomprimen al
+  tamaño exacto y un filtro válido por fila; en JPEG, los marcadores, un SOF de base o progresivo de 8 bits con 1, 3
+  o 4 componentes y el cierre. react-pdf solo mira el encabezado al cargarlo y descomprime al dibujar: un logo
+  dañado rompería todas las fichas de la organización, también las que se generan al publicar. Lo que no pasa es
+  415 (NC-TEN-040). Se guarda con FileRegistry (purpose BRANDING_LOGO); el anterior queda guardado, sin uso.
+- Largos: nombre 60, teléfono 30, correo 80, web 60 y pie 120 caracteres. Con todos al máximo y un logo ancho, el
+  encabezado y el pie de la ficha no pisan el cuerpo (una prueba lo mide con las posiciones del texto en el PDF): las
+  plantillas siguen en 1.0.0.
+- Pantalla «Marca de las fichas» en /panel/organizacion: el logo se sube al elegirlo (el navegador revisa antes el
+  tipo, el peso y las medidas); el color de la ficha con su contraste (blanco o negro encima y, como texto sobre el
+  papel, oscurecido lo justo, con brandTokens); nombre, contacto y pie; y una vista previa del encabezado y el pie
+  con las variables --brand-* redefinidas solo en ella. Solo el color principal: las plantillas solo usan ese
+  (encabezado, nombre y títulos); el secundario queda en la API para P15. Solo cambian las fichas: el panel y el tema
+  del paciente siguen con la paleta provisional hasta P15.
+- Con otra marca cambia el branding_hash: la ficha se vuelve a generar al pedirla y las ya generadas no cambian
+  (RN-H02, ADR-064).
+Consecuencias:
+- Para Notion (/notion-sync): 02 §8 (tenancy.branding.changed hacia audit); 05.1 tenancy.branding (las claves de
+  contact y los largos); los códigos NC-TEN-040 a NC-TEN-044; 04 RF-36 adelantado en parte por P11.
+- P15 completa la marca: la propia de cada profesional (la ficha ya la usa si existe), el avatar, la vista previa del
+  tema del paciente, la marca en el panel y la limpieza de los logos sin uso.
