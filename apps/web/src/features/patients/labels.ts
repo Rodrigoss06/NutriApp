@@ -149,6 +149,7 @@ export const AUDIT_RESOURCE_LABELS: Readonly<Record<string, string>> = {
   'iam.user_account': 'Cuenta',
   'iam.password_reset': 'Recuperación de contraseña',
   'tenancy.member': 'Miembro',
+  'tenancy.branding': 'Marca de las fichas',
   'tenancy.organization': 'Organización',
   'tenancy.organization_setting': 'Ajuste',
   'tenancy.subscription': 'Suscripción',

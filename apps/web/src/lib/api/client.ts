@@ -26,12 +26,16 @@ export async function apiFetch<T>(path: string, request: ApiRequest = {}): Promi
 }
 
 /**
- * Un multipart desde el navegador (la evidencia del consentimiento va en el mismo pedido, ADR-038). El navegador pone
- * el Content-Type con su boundary.
+ * Un multipart desde el navegador (la evidencia del consentimiento va en el mismo pedido, ADR-038; el logo de la marca
+ * reemplaza al anterior con PUT). El navegador pone el Content-Type con su boundary.
  */
-export async function apiUpload<T>(path: string, form: FormData): Promise<T> {
+export async function apiUpload<T>(
+  path: string,
+  form: FormData,
+  method: 'POST' | 'PUT' = 'POST',
+): Promise<T> {
   const response = await fetch(`/api/v1${path}`, {
-    method: 'POST',
+    method,
     credentials: 'same-origin',
     cache: 'no-store',
     headers: { Accept: 'application/json' },

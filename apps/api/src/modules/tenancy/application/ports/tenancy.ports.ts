@@ -1,4 +1,5 @@
 import type { OrganizationId, UserId } from '@nutricoach/shared-kernel';
+import type { BrandingText } from '../../domain/branding.js';
 import type { MemberRole, MemberStatus, Profession } from '../../domain/tenancy-rules.js';
 
 export type OrganizationStatus = 'ACTIVE' | 'READ_ONLY' | 'SUSPENDED' | 'CLOSED';
@@ -81,18 +82,16 @@ export interface MembershipRecord {
 }
 
 /** tenancy.branding (RN-H03): la marca de la organización (sin miembro) o la propia de un profesional. */
-export interface BrandingRecord {
-  readonly displayName: string | null;
+export interface BrandingRecord extends BrandingText {
   readonly logoFileId: string | null;
-  readonly primaryColor: string | null;
-  readonly secondaryColor: string | null;
-  /** Teléfono, correo y web; lo que falta es null. */
-  readonly contact: {
-    readonly phone: string | null;
-    readonly email: string | null;
-    readonly website: string | null;
-  };
-  readonly pdfFooter: string | null;
+}
+
+/** La fila entera: lo que se guarda y lo que ve la configuración. */
+export interface BrandingRow extends BrandingRecord {
+  readonly id: string;
+  readonly organizationId: OrganizationId;
+  readonly memberId: string | null;
+  readonly updatedAt: Date;
 }
 
 /** tenancy con la transacción de la UnitOfWork; la RLS limita a la organización del contexto. */
@@ -125,7 +124,9 @@ export interface TenancyStore {
   findBranding(
     organizationId: OrganizationId,
     memberId: string | null,
-  ): Promise<BrandingRecord | null>;
+  ): Promise<BrandingRow | null>;
+  /** Crea o reemplaza la marca (una por organización y miembro). Quien llama toma antes el candado de la organización. */
+  saveBranding(branding: BrandingRow): Promise<void>;
   countActiveMembers(organizationId: OrganizationId): Promise<number>;
   countActiveOwners(organizationId: OrganizationId): Promise<number>;
   insertMember(member: MemberRecord): Promise<void>;

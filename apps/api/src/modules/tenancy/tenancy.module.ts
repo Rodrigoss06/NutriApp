@@ -1,29 +1,34 @@
 import { Global, Module } from '@nestjs/common';
 import { TENANT_DIRECTORY } from '../../platform/index.js';
+import { BrandingCommands } from './application/commands/branding.commands.js';
 import { ExpireSubscriptionsHandler } from './application/commands/expire-subscriptions.handler.js';
 import { OrganizationCommands } from './application/commands/organization.commands.js';
 import { PlatformTenancy } from './application/platform-tenancy.js';
 import { TENANCY_STORE } from './application/ports/tenancy.ports.js';
+import { BrandingQueries } from './application/queries/branding.queries.js';
 import {
   DirectoryQueries,
   OrganizationQueries,
 } from './application/queries/organization.queries.js';
 import { TenancyApi } from './application/tenancy-api.js';
+import { BrandingController } from './adapters/in/http/branding.controller.js';
 import { OrganizationController } from './adapters/in/http/organization.controller.js';
 import { ExpireSubscriptionsJob } from './adapters/in/jobs/expire-subscriptions.job.js';
 import { TenancyTenantDirectory } from './adapters/in/tenant-directory.adapter.js';
 import { PrismaTenancyStore } from './adapters/out/persistence/prisma-tenancy.store.js';
 
 /**
- * tenancy (02 §2): organizaciones, miembros, planes de membresía, suscripciones y ajustes. Global para exportar
+ * tenancy (02 §2): organizaciones, miembros, planes de membresía, suscripciones, marca y ajustes. Global para exportar
  * TENANT_DIRECTORY a las guardias de la plataforma.
  */
 @Global()
 @Module({
-  controllers: [OrganizationController],
+  controllers: [OrganizationController, BrandingController],
   providers: [
     OrganizationCommands,
     OrganizationQueries,
+    BrandingCommands,
+    BrandingQueries,
     DirectoryQueries,
     ExpireSubscriptionsHandler,
     ExpireSubscriptionsJob,

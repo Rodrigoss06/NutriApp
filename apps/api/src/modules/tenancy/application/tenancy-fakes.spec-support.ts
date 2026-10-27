@@ -12,8 +12,9 @@ import {
 } from '@nutricoach/shared-kernel';
 import { v7 as uuidv7 } from 'uuid';
 import type { MemberRole, MemberStatus } from '../domain/tenancy-rules.js';
+import type { FileRegistry } from '../../../platform/index.js';
 import type {
-  BrandingRecord,
+  BrandingRow,
   MemberChanges,
   MemberRecord,
   MembershipRecord,
@@ -70,7 +71,7 @@ export class MemoryTenancyStore implements TenancyStore {
   readonly plans = new Map<string, PlanRecord>();
   readonly settings = new Map<string, number>();
   /** Marcas por «organización:miembro» (miembro vacío = la de la organización). */
-  readonly brandings = new Map<string, BrandingRecord>();
+  readonly brandings = new Map<string, BrandingRow>();
   locks = 0;
 
   addPlan(plan: Partial<PlanRecord> & { code: string }): PlanRecord {
@@ -206,6 +207,10 @@ export class MemoryTenancyStore implements TenancyStore {
   findBranding(organizationId: OrganizationId, memberId: string | null) {
     return Promise.resolve(this.brandings.get(`${organizationId}:${memberId ?? ''}`) ?? null);
   }
+  saveBranding(branding: BrandingRow) {
+    this.brandings.set(`${branding.organizationId}:${branding.memberId ?? ''}`, branding);
+    return Promise.resolve();
+  }
   countActiveMembers(organizationId: OrganizationId) {
     return Promise.resolve(
       this.#membersOf(organizationId).filter((m) => m.status === 'ACTIVE').length,
@@ -309,6 +314,40 @@ export class MemoryTenancyStore implements TenancyStore {
           ) ?? null,
       })),
     );
+  }
+}
+
+/** FileRegistry falsa: guarda PNG y JPEG en memoria (el tipo, por el primer byte) y cuenta lo descartado. */
+export class FakeFiles {
+  readonly stored = new Map<
+    string,
+    { content: Uint8Array; mimeType: string; purpose: string | null }
+  >();
+  discarded = 0;
+  write(_organizationId: OrganizationId, content: Uint8Array) {
+    const mimeType = ({ 0x89: 'image/png', 0xff: 'image/jpeg' } as const)[content[0] ?? 0];
+    if (!mimeType) return Promise.resolve(null);
+    const id = uuidv7();
+    this.stored.set(id, { content, mimeType, purpose: null });
+    return Promise.resolve({ id, key: `org/${id}`, mimeType, sha256: new Uint8Array(32) });
+  }
+  register(file: { id: string; purpose: string }) {
+    const row = this.stored.get(file.id);
+    if (row) row.purpose = file.purpose;
+    return Promise.resolve();
+  }
+  discard() {
+    this.discarded += 1;
+    return Promise.resolve();
+  }
+  read(id: string) {
+    const row = this.stored.get(id);
+    return Promise.resolve(
+      row ? { content: Buffer.from(row.content), mimeType: row.mimeType } : null,
+    );
+  }
+  asRegistry(): FileRegistry {
+    return this as unknown as FileRegistry;
   }
 }
 

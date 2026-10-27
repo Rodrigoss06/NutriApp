@@ -1,9 +1,10 @@
 import { createHash } from 'node:crypto';
 import type { IncomingMessage } from 'node:http';
-import type request from 'supertest';
+import request from 'supertest';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
+import { pngImage } from '../support/images.js';
 import { pdfText } from '../support/pdf-text.js';
-import { ApiHarness, type StaffOrganization } from './support/api-harness.js';
+import { ApiHarness, ORIGIN, type StaffOrganization } from './support/api-harness.js';
 import { pool } from './support/database.js';
 import { luisWithPrescription } from './support/luis.js';
 
@@ -471,6 +472,55 @@ describe('RN-H04 · criterio 2 · la ficha de resultados de Luis', () => {
   it('un profesional fuera del equipo de atención no la pide', async () => {
     const denied = await requestSheet(org.staff.outsider.cookie, evaluationSource());
     expect(denied.status).toBe(404);
+  });
+});
+
+describe('RN-H03 · la marca editada en la configuración llega a la ficha', () => {
+  it('el nombre, el contacto, el pie y el logo que fija el dueño salen en la ficha siguiente', async () => {
+    const saved = await harness.put(
+      '/organization/branding',
+      {
+        displayName: 'Consulta Demo de Prueba',
+        primaryColor: '#7c3aed',
+        secondaryColor: null,
+        contact: {
+          phone: '+51 999 000 222',
+          email: 'fichas@demo.test',
+          website: 'consulta.demo.test',
+        },
+        pdfFooter: 'Colegiatura CNP 0000 · Lima',
+      },
+      org.staff.owner.cookie,
+    );
+    expect(saved.status).toBe(200);
+    // Un logo con transparencia: react-pdf lo descomprime entero al dibujarlo.
+    const logo = await request(harness.app.getHttpServer())
+      .put('/api/v1/organization/branding/logo')
+      .set('Origin', ORIGIN)
+      .set('Cookie', org.staff.owner.cookie)
+      .attach('logo', pngImage({ width: 120, height: 40 }), {
+        filename: 'logo.png',
+        contentType: 'image/png',
+      });
+    expect(logo.status).toBe(200);
+
+    expect((await requestSheet()).status).toBe(202);
+    await harness.deliver('documents.sheets');
+    const status = await statusOf();
+    expect(status.status).toBe('READY');
+    const pdf = (await binary(harness.get(`/documents/${status.document?.id ?? ''}/file`, cookie)))
+      .body as Buffer;
+    const text = await pdfText(pdf);
+    for (const expected of [
+      'Consulta Demo de Prueba',
+      '+51 999 000 222',
+      'fichas@demo.test',
+      'consulta.demo.test',
+      'Colegiatura CNP 0000 · Lima',
+    ]) {
+      expect(text).toContain(expected);
+    }
+    expect(pdf.includes('/Subtype /Image')).toBe(true);
   });
 });
 
