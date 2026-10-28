@@ -18,7 +18,7 @@ Próxima demo: Demo 1 · Base y evaluación · semana 2
 | P8 Datos maestros de alimentos | ✅ | Rodrigo | #21 a #24 | 3 criterios en verde (integración y E2E en escritorio y celular); Biblioteca, alimento propio, «Armar un plato», listas de intercambio y «Acerca de» con la atribución (ADR-055, ADR-056). /notion-sync aplicado (21 cambios) |
 | P9 Dieta por intercambios | ✅ | Rodrigo | #25, #26 y #27 | 3 criterios en verde (integración y E2E de Luis en escritorio y celular): borrador (ADR-057), publicación y tracking (ADR-058) y pantallas (ADR-059). /notion-sync aplicado (15 cambios en 02, 03 y 05.2) |
 | P10 Composición, menú y recetario | ✅ | Rodrigo | #28, #30 y #31 | 2 criterios en verde (integración y E2E en escritorio y celular): recetario (ADR-061), composición y menú en la API (ADR-062) y pantallas (ADR-063). Plantillas (RF-22, deseable) fuera. /notion-sync aplicado (17 cambios en 02, 03, 04, 05 y 05.2) |
-| P11 Fichas PDF, Demo 2 | 🟨 | Rodrigo | #32 a #36 y el arreglo | Plan aprobado (2026-10-25). #32: contexto documents y ficha de intercambios (ADR-064), criterios 1 y 3. #33: fichas del menú (también la composición) y de resultados (ADR-065), criterio 2. #34: marca mínima de las fichas (ADR-066). #35: descargas en el panel (ADR-067). #36: semilla, guion y acta de la Demo 2 (ADR-068), criterio 4. Arreglo: ficha de resultados 1.0.1 (ADR-069). Faltan la etiqueta v0.2.0 y el cierre |
+| P11 Fichas PDF, Demo 2 | ✅ | Rodrigo | #32 a #37 | 4 criterios en verde (integración y E2E en escritorio y celular): contexto documents y ficha de intercambios (ADR-064), fichas del menú y de resultados (ADR-065; 1.0.1 en ADR-069), marca mínima (ADR-066), descargas (ADR-067), semilla, guion y acta de la Demo 2 (ADR-068). Etiqueta v0.2.0 (e05f8de); staging, pendiente de P4. /notion-sync aplicado (17 cambios en 02, 03, 04, 05, 05.1, 05.3 y 06) |
 | P12 Ejercicios y rutinas | ⬜ | Rodrigo | | |
 | P13 App del paciente | ⬜ | Rodrigo | | |
 | P14 Analítica y evolución, Demo 3 | ⬜ | Rodrigo | | |
@@ -28,23 +28,14 @@ Próxima demo: Demo 1 · Base y evaluación · semana 2
 Leyenda: ⬜ pendiente · 🟨 en curso · ✅ terminado · ⛔ bloqueado
 
 ## En curso
-- P11, arreglo en la rama fix/doc-ficha-resultados-etiquetas (ADR-069): la plantilla de resultados 1.0.1 dice «Masa
-  ósea (Rocha)»; la migración retira la 1.0.0, que sigue en el código con los mismos bytes (RN-H02). Lo que sigue: la
-  etiqueta v0.2.0 y el cierre de P11.
-- P11, PR 5 fusionado (#36, 06133b4) (ADR-068): `pnpm demo:2` siembra por la API la receta y las dos dietas de Luis
-  (intercambios reemplazada y composición vigente); guion docs/demos/demo-2.md, ensayado por las pantallas sobre una
-  base nueva; borrador del acta docs/actas/demo-2.md (criterio 4).
-- P11, PR 3 fusionado (#34, a2a0e03) (ADR-066): marca mínima de las fichas.
-  - API: GET y PUT /organization/branding y el logo aparte (PUT, DELETE y GET), con tenancy.branding.changed
-    auditado;
-  - logo PNG o JPEG de hasta 1 MB y 2000 px, revisado entero antes de guardarlo (un logo dañado rompería todas las
-    fichas);
-  - pantalla «Marca de las fichas» en /panel/organizacion, con el contraste del color y una vista previa de la ficha;
-  - E2E e2e/marca.spec.ts en escritorio y celular.
-- P11, PR 2 fusionado (#33, 8cf6423) (ADR-065): ficha del menú semanal, que también imprime la composición como un
-  plan de un día, y ficha de resultados antropométricos con el método junto a cada número (criterio 2).
-- P11, PR 1 fusionado (#32, 0ad742f) (ADR-064): contexto documents, ficha de la dieta por intercambios con react-pdf en
-  el worker, generación al publicar y a pedido, reutilización por hashes y descarga auditada; criterios 1 y 3.
+- P11 terminado (#32 a #37), con la etiqueta v0.2.0 en e05f8de:
+  - #32 (ADR-064): contexto documents, ficha de la dieta por intercambios con react-pdf en el worker, generación al
+    publicar y a pedido, reutilización por hashes y descarga auditada; criterios 1 y 3;
+  - #33 (ADR-065): ficha del menú semanal, que también imprime la composición, y de resultados antropométricos con el
+    método junto a cada número (criterio 2); #37 (ADR-069): su plantilla 1.0.1 dice «Masa ósea (Rocha)»;
+  - #34 (ADR-066): marca mínima de las fichas, con el logo revisado entero y la pantalla «Marca de las fichas»;
+  - #35 (ADR-067): «Descargar ficha (PDF)» en el plan y en la evaluación;
+  - #36 (ADR-068): `pnpm demo:2`, guion docs/demos/demo-2.md y borrador del acta docs/actas/demo-2.md (criterio 4).
 - P10, PR 3 fusionado (#31, 44cedaf) (ADR-063):
   - plan nuevo con la modalidad; editor por composición con alimentos por tiempo, nutrientes del día y adecuación;
   - menú semanal con pestañas de lunes a domingo, opciones A y B, copiar un día a los demás y resumen de la semana;
@@ -99,8 +90,8 @@ Leyenda: ⬜ pendiente · 🟨 en curso · ✅ terminado · ⛔ bloqueado
 ## Siguiente paso
 - Antes de la Demo 1: la matriz manual de navegadores (RNF-19: Chrome, Edge, Safari y Firefox; la E2E cubre Chromium
   y WebKit) y, el mismo día, base local limpia y semilla («Antes de empezar» del guion). La demo es en local
-- P11: fusionar el arreglo de la ficha de resultados (ADR-069), etiqueta v0.2.0 con confirmación y, al cerrar,
-  /notion-sync de P11 (ADR-064 a ADR-069)
+- P12 (Ejercicios y rutinas): /prompt P12. Depende de P2 y P3; se construye con la propuesta de cada pregunta abierta
+  de 07 §15
 - Demo 2: «Antes de empezar» de docs/demos/demo-2.md (base limpia, db:seed, catalog:load, pnpm dev y pnpm demo:2) y
   enviar el acta al terminar
 - Cada base nueva necesita los catálogos: `pnpm --filter api build && pnpm catalog:load plataforma@demo.example.com`
@@ -121,6 +112,8 @@ Leyenda: ⬜ pendiente · 🟨 en curso · ✅ terminado · ⛔ bloqueado
 - [ ] ⚠️ Rangos de rechazo de perímetros, diámetros y longitudes, y condiciones de la evaluación con umbral de 2 h:
   validarlos con quien revisa los cálculos clínicos
 - [ ] P7: «etiqueta v0.1.0 desplegada en staging» queda pendiente de P4; la Demo 1 se hace en local con la semilla
+- [ ] P11: la v0.2.0 tampoco está en staging (P4); la Demo 2 se hace en local con `pnpm demo:2`
+- [ ] Acta de la Demo 2: confirmar los nombres de las partes contra el contrato antes de enviarla (ADR-068)
 - [x] N13: alternativa, regresión y progresión en la biblioteca (RF-25); Jeremy lo confirma en P-13
 - [x] N7: lo resuelve el registro diario de la plantilla V3 (RN-G11)
 - [ ] Método de entrenamiento de Jeremy: preguntas P-01 a P-14 (Notion 07 §15). Mientras no respondan, P12 a P14 se
@@ -173,12 +166,18 @@ Leyenda: ⬜ pendiente · 🟨 en curso · ✅ terminado · ⛔ bloqueado
   de las recetas que usan los alimentos cambiados (ADR-061). Los planes publicados no cambian: llevan su snapshot
 - Plantillas de plan (RF-22, deseable) no se hicieron en P10 (ADR-063)
 - Los logos reemplazados quedan guardados sin uso: limpieza con la marca completa de P15 (ADR-066)
+- Los PDF de las fichas llevan datos del paciente: la supresión de P15 (RN-B05) tiene que borrarlos (ADR-064)
 - E2E de P6 inestable en el celular (patients.spec.ts): «Enfermedad: Hipotiroidismo» no apareció en 5 s y pasó al
   reintentar (#35, 2026-10-27)
 - E2E de la Demo 1 inestable en el CI: axe corrió antes de que la página tuviera su título (document-title) y pasó al
   reintentar (#29, 2026-10-24); esperar el título antes de axe
 
 ## Registro de sesiones (solo las 5 últimas)
+- 2026-10-28 · P11 (arreglo y cierre) · #36 y #37 fusionados con los cuatro checks en verde. #37: ficha de resultados
+  1.0.1 con «Masa ósea (Rocha)» (ADR-069), rebasada sobre el #36. Etiqueta v0.2.0 en e05f8de con el CI de main en
+  verde. P11 cumple sus cuatro criterios. /notion-sync aprobado y aplicado: RN-H01 a RN-H03 en 03 (versión 1.11),
+  documents y la marca en 02 (§3, §7 y §8), RF-36 en 04, contact de tenancy.branding en 05.1, los CHECK e índices de
+  documents en 05.3, la fila 1.9 de 05 y `demo:2` en 06
 - 2026-10-28 · P11 (PR 5) · #35 fusionado con los cuatro checks en verde. PR 5: `pnpm demo:2` (ADR-068), probada dos
   veces en integración y en una base local nueva; guion de la Demo 2 ensayado por las pantallas, con las cuatro fichas
   y la marca; borrador del acta. Rodrigo eligió arreglar «Masa ósea» de la ficha de resultados en un PR aparte
@@ -195,7 +194,3 @@ Leyenda: ⬜ pendiente · 🟨 en curso · ✅ terminado · ⛔ bloqueado
   de P10 aprobado y aplicado: RN-I03, RN-E10, RN-E16 y RN-G05 en 03 (versión 1.10), RF-21 en 04, Recipe,
   NutritionPlan, FoodApi y auditoría en 02, el DDL de food.recipe, plan y plan_item en 05.2, y en 05 el buscador de
   recetas y las filas 1.7 (P9, que faltaba) y 1.8
-- 2026-10-23 · P10 (PR 1 y PR 2) · recetario fusionado (#28). El CI de main se cortaba a los 30 minutos instalando
-  WebKit (espejo de apt lento): caché de navegadores y paquetes en #29, probada en frío y con la caché llena. PR 2:
-  composición y menú semanal en la API (ADR-062); Rodrigo eligió la opción A para el día y la adecuación con lo
-  conocido; criterio 2 en verde
