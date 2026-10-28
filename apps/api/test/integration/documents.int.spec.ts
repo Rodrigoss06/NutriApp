@@ -444,8 +444,10 @@ describe('RN-H04 · criterio 2 · la ficha de resultados de Luis', () => {
     const ready = await requestSheet(cookie, evaluationSource());
     expect(ready.status).toBe(200);
     const status = ready.body as Status;
+    // La plantilla vigente es la 1.0.1: el método no repite el indicador (ADR-069).
     expect(status.document).toMatchObject({
       kind: 'ANTHROPOMETRY',
+      templateVersion: '1.0.1',
       fileName: 'ficha-resultados-antropometricos.pdf',
     });
     const pdf = (await binary(harness.get(`/documents/${status.document?.id ?? ''}/file`, cookie)))
@@ -457,10 +459,12 @@ describe('RN-H04 · criterio 2 · la ficha de resultados de Luis', () => {
       // G-06: 20.26 % con Durnin y Womersley + Siri, con su método al lado (RN-D02).
       '% de grasa (Durnin & Womersley (1974) + Siri)',
       '20.3 %',
+      'Masa ósea (Rocha)',
       'Medidas consolidadas',
     ]) {
       expect(text).toContain(expected);
     }
+    expect(text).not.toContain('Masa ósea (Masa ósea');
     // Pedida desde el panel: la firma quien la pidió.
     const [row] = await owner<{ generated_by: string }>(
       'SELECT generated_by FROM documents.generated_document WHERE source_id = $1',

@@ -1288,5 +1288,20 @@ Decisión:
 - La etiqueta v0.2.0 va sobre main después de fusionar, con la confirmación de Rodrigo para el push.
 Consecuencias:
 - La ficha de resultados repite «Masa ósea (Masa ósea (Rocha))»: su arreglo, con la plantilla 1.0.1, va en un PR
-  aparte antes de la demo (decidido por Rodrigo, 2026-10-28).
+  aparte antes de la demo (decidido por Rodrigo, 2026-10-28; ADR-069).
 - Para Notion (/notion-sync de P11): el comando de la semilla de la Demo 2 en la creación del proyecto, si se lista ahí.
+
+## ADR-069 · Ficha de resultados 1.0.1: el método sin repetir el indicador — aceptada (2026-10-28)
+Contexto: la ficha de resultados 1.0.0 (ADR-065) pone cada indicador con su método entre paréntesis y solo evita
+repetirlo cuando los dos se llaman igual (IMC). Cuando el nombre del método ya empieza con el del indicador, se repite:
+«Masa ósea (Masa ósea (Rocha))», «Masa residual (Masa residual (Würch))» y la masa muscular de Lee. Rodrigo eligió
+arreglarlo en un PR aparte, antes de la Demo 2.
+Decisión:
+- Plantilla ANTHROPOMETRY 1.0.1: si el nombre del método empieza con el del indicador, va solo el método: «Masa ósea
+  (Rocha)». Lo demás no cambia.
+- Un cambio visual es una versión nueva (ADR-064): la migración 202610280000_documents_anthropometry_1_0_1 retira la
+  1.0.0 y activa la 1.0.1. El código sigue dibujando la 1.0.0, con los mismos bytes, para volver a generar lo que ya se
+  generó con ella (RN-H02).
+- La ficha siguiente de cada evaluación sale con la 1.0.1: la versión de plantilla es parte de la clave de la ficha.
+Consecuencias:
+- Para Notion (/notion-sync de P11): la plantilla 1.0.1 de resultados en 05.3, si la página lista las versiones.

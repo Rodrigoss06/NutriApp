@@ -5,7 +5,7 @@ import type { PdfRenderer, SheetRender } from '../../../application/ports/docume
 import type { AnthropometrySheet } from '../../../application/sheets/anthropometry-sheet.js';
 import type { MenuSheet } from '../../../application/sheets/menu-sheet.js';
 import type { ExchangeDietSheet, SheetContent } from '../../../application/sheets/sheet-content.js';
-import { anthropometryTitles, anthropometryV1 } from './anthropometry.v1.js';
+import { anthropometryTitles, anthropometryV1, anthropometryV101 } from './anthropometry.v1.js';
 import { exchangeDietTitles, exchangeDietV1 } from './exchange-diet.v1.js';
 import { sheetColors, type SheetFrame } from './sheet-kit.js';
 import { weeklyMenuTitles, weeklyMenuV1 } from './weekly-menu.v1.js';
@@ -50,6 +50,11 @@ const TEMPLATES: Readonly<Record<string, Template>> = {
   'ANTHROPOMETRY@1.0.0': template<AnthropometrySheet>(
     'ANTHROPOMETRY',
     anthropometryV1,
+    anthropometryTitles,
+  ),
+  'ANTHROPOMETRY@1.0.1': template<AnthropometrySheet>(
+    'ANTHROPOMETRY',
+    anthropometryV101,
     anthropometryTitles,
   ),
 };

@@ -198,6 +198,7 @@ Pestaña «Evaluaciones» → la ISAK 2 de hoy → «Descargar ficha (PDF)».
 |---|---|
 | `ficha-resultados-antropometricos.pdf`, de 6 páginas, con la fecha de la medición y sus condiciones | RN-C09 |
 | «% de grasa (Durnin & Womersley (1974) + Siri) 20.3 %», «Promedio · ACE» | G-06, criterio 2 de P11 |
+| «Masa ósea (Rocha)», sin repetir el indicador (plantilla 1.0.1) | RN-D02, ADR-069 |
 | IMC 26.1 kg/m², «Sobrepeso · OMS»; índice cintura/talla 0.49, «Sin riesgo aumentado · NICE…» | G-05, RN-D10 |
 | La lectura de bioimpedancia, «cargada a mano»: no se compara con los pliegues | RN-C08 |
 
