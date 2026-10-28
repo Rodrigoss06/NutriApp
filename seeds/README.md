@@ -155,7 +155,8 @@ El caso Luis de la guía de dominio, completo para la Demo 1:
 - dos evaluaciones ISAK 2 completas: la actual, cuyas tomas consolidan exactamente en los insumos del caso dorado de
   03, y una anterior, 28 días antes, con cambios por encima y por debajo del CMD95 (RN-C06). La actual es mixta: trae
   una lectura de bioimpedancia sintética, con marca y modelo inventados (RN-C08);
-- la prescripción energética de G-13 a G-17, que el guion carga en vivo;
+- la prescripción energética de G-13 a G-17, que el guion de la Demo 1 carga en vivo (la de la Demo 2 la crea
+  `pnpm demo:2`);
 - `expected`: los valores de G-01 a G-17 tal como los fija 03, sin redondear para presentar (RN-D09).
 
 Las fechas son relativas a la evaluación actual (`daysBeforeCurrentEvaluation`). Luis cumple 28 años ese mismo día: la
@@ -163,6 +164,22 @@ edad decimal al medir es 28.00 y así G-13 cuadra.
 
 Lo usan la semilla de la demo (pnpm db:seed), el guion (docs/demos/demo-1.md), el E2E de la Demo 1 y las pantallas
 mientras la API no existe. packages/contracts/src/assessment/seeds.spec.ts lo valida contra los contratos y el motor.
+
+## luis/demo-2.json
+
+Lo que la Demo 2 encuentra cargado (decisión 4 de P11): lo usa `pnpm demo:2` (apps/api/scripts/demo-2.ts), que lo
+crea por la API con la API y el worker corriendo, después de `pnpm db:seed` y `catalog:load`:
+
+- `mealTimes`: la hora de cada tiempo de comida de los dos planes;
+- `recipe`: la receta de P10, 200 g de arroz cocido y 150 g de pollo crudo en 2 porciones (204 kcal por porción);
+- `exchanges`: la dieta por intercambios de G-18 (4 verduras, 3 frutas y 3 lácteos fijos) con dos o tres alimentos
+  permitidos por grupo. Cada porción es la sugerida del editor: los gramos que aportan lo que define al grupo en la
+  lista (ADR-057);
+- `composition`: la dieta por composición, alimentos de la TPCA por tiempo de comida, con gramos o con una medida
+  casera de la TAFERA y su cantidad. Queda en el rango de adecuación de la organización (de 94 a 103 %).
+
+Los nombres son los de la TPCA y la TAFERA tal cual: si un catálogo cambia, la semilla avisa qué alimento o medida no
+encontró. test/integration/demo-2.int.spec.ts la corre dos veces sobre la TPCA cargada.
 
 ## ana/ana.json
 

@@ -20,6 +20,7 @@
     "db:migrate": "pnpm --filter api db:migrate",
     "db:pull": "pnpm --filter api db:pull",
     "db:seed": "pnpm --filter api seed",
+    "demo:2": "pnpm --filter api demo:2",
     "seed:load": "pnpm --filter api seed:load",
     "catalog:import": "pnpm --filter api catalog:import",
     "catalog:load": "pnpm --filter api catalog:load",

@@ -17,6 +17,7 @@
     "db:migrate": "prisma migrate deploy",
     "db:pull": "prisma db pull && node scripts/prisma-naming.ts && prisma format && prisma generate",
     "seed": "node scripts/seed.ts",
+    "demo:2": "node scripts/demo-2.ts",
     "platform-admin:create": "node dist/cli/create-platform-admin.js",
     "catalog:import": "node dist/cli/import-catalog.js",
     "catalog:load": "node dist/cli/load-catalogs.js",
