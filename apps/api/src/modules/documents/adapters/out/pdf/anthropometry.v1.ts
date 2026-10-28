@@ -31,7 +31,7 @@ import {
 } from './sheet-kit.js';
 
 /**
- * Ficha de resultados antropométricos, versión 1.0.0 (RF-15, RF-24, RN-H01): las condiciones de la medición (RN-C09),
+ * Ficha de resultados antropométricos, versiones 1.0.0 y 1.0.1 (RF-15, RF-24, RN-H01): las condiciones de la medición (RN-C09),
  * cada resultado vigente con su método al lado del número (RN-D02, RN-H04: «% de grasa (Durnin & Womersley (1974) +
  * Siri)»), su interpretación con la fuente de la tabla (RN-D10) y los avisos de validez (RN-D06), las medidas que se
  * interpretan solas, las medidas consolidadas por familia (RN-C03) y la bioimpedancia como lectura del equipo (RN-C08).
@@ -50,12 +50,24 @@ function metricValue(code: string, value: number, unit: string): string {
   return label ? `${num(value, kind)} ${label}` : num(value, kind);
 }
 
-/** «% de grasa (Durnin & Womersley (1974) + Siri)»; sin repetir cuando el método se llama como el indicador (IMC). */
-function metricLabel(metricCode: string, methodCode: string): string {
+type MetricLabel = (metricCode: string, methodCode: string) => string;
+
+/** 1.0.0: «% de grasa (Durnin & Womersley (1974) + Siri)»; sin repetir cuando el método se llama como el indicador (IMC). */
+const metricLabelV100: MetricLabel = (metricCode, methodCode) => {
   const metric = lookup(METRIC_LABELS, metricCode) ?? metricCode;
   const method = methodLabel(methodCode);
   return method === metric ? metric : `${metric} (${method})`;
-}
+};
+
+/**
+ * 1.0.1 (ADR-069): tampoco cuando el nombre del método ya empieza con el del indicador: «Masa ósea (Rocha)», no «Masa
+ * ósea (Masa ósea (Rocha))». Igual con la masa residual de Würch y la muscular de Lee.
+ */
+const metricLabelV101: MetricLabel = (metricCode, methodCode) => {
+  const metric = lookup(METRIC_LABELS, metricCode) ?? metricCode;
+  const method = methodLabel(methodCode);
+  return method === metric || method.startsWith(`${metric} `) ? method : `${metric} (${method})`;
+};
 
 function interpretationText(
   interpretation: SheetInterpretation | null,
@@ -89,7 +101,11 @@ function conditions(sheet: AnthropometrySheet, frame: SheetFrame): ReactElement 
   );
 }
 
-function results(sheet: AnthropometrySheet, frame: SheetFrame): ReactElement {
+function results(
+  sheet: AnthropometrySheet,
+  frame: SheetFrame,
+  metricLabel: MetricLabel,
+): ReactElement {
   return section(
     'Resultados',
     frame.colors,
@@ -209,16 +225,17 @@ function bia(sheet: AnthropometrySheet, frame: SheetFrame): ReactElement | null 
   );
 }
 
-export function anthropometryV1(
+function anthropometry(
   sheet: AnthropometrySheet,
   frame: SheetFrame,
+  metricLabel: MetricLabel,
 ): ReactElement<DocumentProps> {
   const engines = [...new Set(sheet.results.map((result) => result.engineVersion))];
   return sheetDocument(
     frame,
     patientLine(sheet.patient),
     conditions(sheet, frame),
-    results(sheet, frame),
+    results(sheet, frame, metricLabel),
     siteInterpretations(sheet, frame),
     sites(sheet, frame),
     bia(sheet, frame),
@@ -235,6 +252,14 @@ export function anthropometryV1(
     ),
   );
 }
+
+/** La 1.0.0 se queda para volver a dibujar lo que ya se generó con ella (RN-H02). */
+export const anthropometryV1 = (sheet: AnthropometrySheet, frame: SheetFrame) =>
+  anthropometry(sheet, frame, metricLabelV100);
+
+/** La vigente: el método sin repetir el indicador (ADR-069). */
+export const anthropometryV101 = (sheet: AnthropometrySheet, frame: SheetFrame) =>
+  anthropometry(sheet, frame, metricLabelV101);
 
 export function anthropometryTitles(sheet: AnthropometrySheet): {
   title: string;

@@ -18,7 +18,7 @@ Próxima demo: Demo 1 · Base y evaluación · semana 2
 | P8 Datos maestros de alimentos | ✅ | Rodrigo | #21 a #24 | 3 criterios en verde (integración y E2E en escritorio y celular); Biblioteca, alimento propio, «Armar un plato», listas de intercambio y «Acerca de» con la atribución (ADR-055, ADR-056). /notion-sync aplicado (21 cambios) |
 | P9 Dieta por intercambios | ✅ | Rodrigo | #25, #26 y #27 | 3 criterios en verde (integración y E2E de Luis en escritorio y celular): borrador (ADR-057), publicación y tracking (ADR-058) y pantallas (ADR-059). /notion-sync aplicado (15 cambios en 02, 03 y 05.2) |
 | P10 Composición, menú y recetario | ✅ | Rodrigo | #28, #30 y #31 | 2 criterios en verde (integración y E2E en escritorio y celular): recetario (ADR-061), composición y menú en la API (ADR-062) y pantallas (ADR-063). Plantillas (RF-22, deseable) fuera. /notion-sync aplicado (17 cambios en 02, 03, 04, 05 y 05.2) |
-| P11 Fichas PDF, Demo 2 | 🟨 | Rodrigo | #32 a #35 y PR 5 | Plan aprobado (2026-10-25). #32: contexto documents y ficha de intercambios (ADR-064), criterios 1 y 3. #33: fichas del menú (también la composición) y de resultados (ADR-065), criterio 2. #34: marca mínima de las fichas (ADR-066). #35: descargas en el panel (ADR-067). PR 5: semilla, guion y acta de la Demo 2 (ADR-068), criterio 4. Faltan el arreglo de la ficha de resultados, la etiqueta v0.2.0 y el cierre |
+| P11 Fichas PDF, Demo 2 | 🟨 | Rodrigo | #32 a #36 y el arreglo | Plan aprobado (2026-10-25). #32: contexto documents y ficha de intercambios (ADR-064), criterios 1 y 3. #33: fichas del menú (también la composición) y de resultados (ADR-065), criterio 2. #34: marca mínima de las fichas (ADR-066). #35: descargas en el panel (ADR-067). #36: semilla, guion y acta de la Demo 2 (ADR-068), criterio 4. Arreglo: ficha de resultados 1.0.1 (ADR-069). Faltan la etiqueta v0.2.0 y el cierre |
 | P12 Ejercicios y rutinas | ⬜ | Rodrigo | | |
 | P13 App del paciente | ⬜ | Rodrigo | | |
 | P14 Analítica y evolución, Demo 3 | ⬜ | Rodrigo | | |
@@ -28,12 +28,12 @@ Próxima demo: Demo 1 · Base y evaluación · semana 2
 Leyenda: ⬜ pendiente · 🟨 en curso · ✅ terminado · ⛔ bloqueado
 
 ## En curso
-- P11, PR 5 en la rama feat/demo-2 (ADR-068): `pnpm demo:2` siembra por la API la receta y las dos dietas de Luis
+- P11, arreglo en la rama fix/doc-ficha-resultados-etiquetas (ADR-069): la plantilla de resultados 1.0.1 dice «Masa
+  ósea (Rocha)»; la migración retira la 1.0.0, que sigue en el código con los mismos bytes (RN-H02). Lo que sigue: la
+  etiqueta v0.2.0 y el cierre de P11.
+- P11, PR 5 fusionado (#36, 06133b4) (ADR-068): `pnpm demo:2` siembra por la API la receta y las dos dietas de Luis
   (intercambios reemplazada y composición vigente); guion docs/demos/demo-2.md, ensayado por las pantallas sobre una
-  base nueva; borrador del acta docs/actas/demo-2.md (criterio 4). Lo que sigue: el arreglo de «Masa ósea» en un PR
-  aparte, la etiqueta v0.2.0 y el cierre de P11.
-- P11, PR 4 fusionado (#35, c1bdc11) (ADR-067): «Descargar ficha (PDF)» en el plan publicado o reemplazado y en la
-  evaluación con resultados, con «Generando…» mientras el worker la dibuja; E2E e2e/fichas.spec.ts.
+  base nueva; borrador del acta docs/actas/demo-2.md (criterio 4).
 - P11, PR 3 fusionado (#34, a2a0e03) (ADR-066): marca mínima de las fichas.
   - API: GET y PUT /organization/branding y el logo aparte (PUT, DELETE y GET), con tenancy.branding.changed
     auditado;
@@ -99,8 +99,8 @@ Leyenda: ⬜ pendiente · 🟨 en curso · ✅ terminado · ⛔ bloqueado
 ## Siguiente paso
 - Antes de la Demo 1: la matriz manual de navegadores (RNF-19: Chrome, Edge, Safari y Firefox; la E2E cubre Chromium
   y WebKit) y, el mismo día, base local limpia y semilla («Antes de empezar» del guion). La demo es en local
-- P11: fusionar el PR 5, arreglar «Masa ósea» en la ficha de resultados (plantilla 1.0.1, PR aparte), etiqueta
-  v0.2.0 con confirmación y, al cerrar, /notion-sync de P11 (ADR-064 a ADR-068)
+- P11: fusionar el arreglo de la ficha de resultados (ADR-069), etiqueta v0.2.0 con confirmación y, al cerrar,
+  /notion-sync de P11 (ADR-064 a ADR-069)
 - Demo 2: «Antes de empezar» de docs/demos/demo-2.md (base limpia, db:seed, catalog:load, pnpm dev y pnpm demo:2) y
   enviar el acta al terminar
 - Cada base nueva necesita los catálogos: `pnpm --filter api build && pnpm catalog:load plataforma@demo.example.com`
@@ -172,8 +172,6 @@ Leyenda: ⬜ pendiente · 🟨 en curso · ✅ terminado · ⛔ bloqueado
 - Reimportar un catálogo global (TPCA) no recalcula la caché de nutrientes de las recetas: hace falta un recálculo
   de las recetas que usan los alimentos cambiados (ADR-061). Los planes publicados no cambian: llevan su snapshot
 - Plantillas de plan (RF-22, deseable) no se hicieron en P10 (ADR-063)
-- Ficha de resultados 1.0.0: «Masa ósea (Masa ósea (Rocha))» repite el indicador cuando el nombre del método ya lo
-  lleva; corregirlo pide la plantilla 1.0.1 y su migración, antes de la Demo 2 (ADR-065)
 - Los logos reemplazados quedan guardados sin uso: limpieza con la marca completa de P15 (ADR-066)
 - E2E de P6 inestable en el celular (patients.spec.ts): «Enfermedad: Hipotiroidismo» no apareció en 5 s y pasó al
   reintentar (#35, 2026-10-27)

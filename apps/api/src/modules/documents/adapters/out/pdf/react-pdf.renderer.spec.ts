@@ -164,7 +164,9 @@ describe('RN-H04 · criterio 2 · la ficha de resultados muestra el método junt
     'cada número con su método, su interpretación con fuente y la bioimpedancia como lectura',
     SLOW,
     async () => {
-      const text = await pdfText(await renderer.render({ ...INPUT, content: LUIS_RESULTS_SHEET }));
+      const text = await pdfText(
+        await renderer.render({ ...INPUT, content: LUIS_RESULTS_SHEET, templateVersion: '1.0.1' }),
+      );
       for (const expected of [
         'Resultados antropométricos',
         'ISAK 2 · antropometría y bioimpedancia · medida el 13 de octubre de 2026',
@@ -173,7 +175,7 @@ describe('RN-H04 · criterio 2 · la ficha de resultados muestra el método junt
         '20.3 %',
         'Promedio · ACE',
         'Método principal para % de grasa de este paciente.',
-        'Masa ósea (Masa ósea (Rocha))',
+        'Masa ósea (Rocha)',
         'Aviso: Rocha modifica la fórmula',
         'Sobrepeso · OMS 2008',
         'Cintura (mínima)',
@@ -187,8 +189,20 @@ describe('RN-H04 · criterio 2 · la ficha de resultados muestra el método junt
       ]) {
         expect(text).toContain(expected);
       }
-      // El IMC no repite su nombre como método.
+      // El IMC no repite su nombre como método; la masa ósea tampoco (ADR-069).
       expect(text).not.toContain('IMC (IMC)');
+      expect(text).not.toContain('Masa ósea (Masa ósea');
+    },
+  );
+
+  it(
+    'ADR-069 · la 1.0.0 se sigue dibujando igual, para volver a generar lo que ya se generó con ella',
+    SLOW,
+    async () => {
+      const input = { ...INPUT, content: LUIS_RESULTS_SHEET };
+      const old = await renderer.render(input);
+      expect(await pdfText(old)).toContain('Masa ósea (Masa ósea (Rocha))');
+      expect(sha256(await renderer.render(input))).toBe(sha256(old));
     },
   );
 });
