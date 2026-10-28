@@ -1247,3 +1247,20 @@ Consecuencias:
   contact y los largos); los códigos NC-TEN-040 a NC-TEN-044; 04 RF-36 adelantado en parte por P11.
 - P15 completa la marca: la propia de cada profesional (la ficha ya la usa si existe), el avatar, la vista previa del
   tema del paciente, la marca en el panel y la limpieza de los logos sin uso.
+
+## ADR-067 · Descargas de las fichas en el panel — aceptada (2026-10-27)
+Contexto: P11 (alcance 3) pide el botón de descarga en el plan y en la evaluación. La API ya pide la ficha (200 si
+existe un PDF igual, 202 si la genera el worker), dice si está lista y la entrega como adjunto auditado (ADR-064).
+Decisión:
+- «Descargar ficha (PDF)» en el plan publicado o reemplazado y en la evaluación cerrada o enmendada, solo cuando sus
+  resultados ya están calculados: antes, la API respondería 409 (NC-DOC-003). No depende de poder escribir: exportar
+  vale en solo lectura (RN-A02).
+- Al pulsarlo se pide la ficha; si queda en la cola del worker, el botón dice «Generando…» (y un aviso para lectores de
+  pantalla) y se pregunta cada segundo, un minuto como máximo. Pasado el minuto se avisa que tarda más de lo normal y
+  que basta con volver a pedirla. Si se sale de la pantalla, se deja de preguntar.
+- La descarga es un enlace a /api/v1/documents/:id/file con el nombre de la ficha: el navegador la guarda como adjunto,
+  sin pasar por la memoria de la página, y la API la audita como EXPORT (RN-B03).
+Consecuencias:
+- E2E e2e/fichas.spec.ts: la dieta publicada y los resultados de Luis se descargan como PDF con el logo de la marca, en
+  escritorio y celular.
+- La app del paciente descargará sus fichas por /api/v1/me en P13.

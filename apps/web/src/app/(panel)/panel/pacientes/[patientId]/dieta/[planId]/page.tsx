@@ -2,6 +2,7 @@ import type { FoodDetail, NutritionPlan } from '@nutricoach/contracts';
 import { Notice, StatusBadge } from '@nutricoach/ui';
 import type { Metadata } from 'next';
 import Link from 'next/link';
+import { DownloadSheetButton } from '@/features/documents/download-sheet-button';
 import { CompositionEditor } from '@/features/food-plan/composition-editor';
 import type { Measures } from '@/features/food-plan/draft';
 import { MenuEditor } from '@/features/food-plan/menu-editor';
@@ -58,7 +59,7 @@ async function measuresOf(plan: NutritionPlan): Promise<Measures> {
 
 /**
  * Un plan nutricional (RF-19 a RF-21, RF-23), según su modalidad: el borrador se edita; lo publicado se lee de su
- * snapshot y, para cambiarlo, se crea una versión nueva (RN-E15).
+ * snapshot y, para cambiarlo, se crea una versión nueva (RN-E15). Lo publicado o reemplazado tiene su ficha PDF (RF-24).
  */
 export default async function NutritionPlanPage({
   params,
@@ -139,9 +140,15 @@ export default async function NutritionPlanPage({
           {PLAN_MODALITY_LABELS[current.modality]}
         </span>
       </p>
-      {patient.data.status === 'ARCHIVED' ? null : (
-        <RevisePlanButton patientId={patientId} planId={current.id} />
-      )}
+      <div className="flex flex-wrap items-start gap-3">
+        {patient.data.status === 'ARCHIVED' ? null : (
+          <RevisePlanButton patientId={patientId} planId={current.id} />
+        )}
+        <DownloadSheetButton
+          patientId={patientId}
+          source={{ sourceType: 'NUTRITION_PLAN', sourceId: current.id }}
+        />
+      </div>
       {current.modality === 'EXCHANGES' ? (
         <PlanView plan={current} />
       ) : current.modality === 'COMPOSITION' ? (

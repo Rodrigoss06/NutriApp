@@ -32,6 +32,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { TextAreaField, TextField } from '@/features/forms/fields';
+import { DownloadSheetButton } from '@/features/documents/download-sheet-button';
 import { FormError } from '@/features/forms/form-error';
 import { useCanWrite } from '@/features/session/panel-session';
 import { apiFetch } from '@/lib/api/client';
@@ -74,8 +75,9 @@ const KERR_COLORS = new Map<string, string>(KERR_SEGMENTS.map((s) => [s.code, s.
 
 /**
  * Resultados de una evaluación cerrada (RF-15): cada número con su método (RN-D02) y cada interpretación con su fuente
- * (RN-D10). Mientras el worker calcula, «Calculando…» y se consulta otra vez. Recalcular es explícito y deja lo
- * anterior como histórico (RN-D08); una evaluación cerrada no se edita: se enmienda con motivo (RN-C07).
+ * (RN-D10). Mientras el worker calcula, «Calculando…» y se consulta otra vez; con los resultados, la ficha PDF (RF-24).
+ * Recalcular es explícito y deja lo anterior como histórico (RN-D08); una evaluación cerrada no se edita: se enmienda
+ * con motivo (RN-C07).
  */
 export function EvaluationResults({
   evaluation,
@@ -97,21 +99,35 @@ export function EvaluationResults({
   });
   const evaluator = members.find((m) => m.id === evaluation.evaluatorMemberId);
   const base = `/panel/pacientes/${patientId}/evaluaciones/${evaluation.id}`;
+  // La ficha de resultados existe cuando el worker terminó de calcular (NC-DOC-003 mientras tanto).
+  const sheetReady = results.data?.status === 'READY';
 
   return (
     <div className="flex flex-col gap-8">
-      {evaluation.status === 'CLOSED' ? (
-        <div className="flex flex-wrap gap-2">
-          {evaluation.kind === 'BIA' ? null : (
-            <Button asChild variant="secondary">
-              <Link href={`${base}/comparacion`}>Comparar con la anterior</Link>
-            </Button>
-          )}
-          <Button asChild variant="secondary">
-            <Link href={`/panel/pacientes/${patientId}/energia/nueva?evaluacion=${evaluation.id}`}>
-              Prescribir energía
-            </Link>
-          </Button>
+      {evaluation.status === 'CLOSED' || sheetReady ? (
+        <div className="flex flex-wrap items-start gap-2">
+          {evaluation.status === 'CLOSED' ? (
+            <>
+              {evaluation.kind === 'BIA' ? null : (
+                <Button asChild variant="secondary">
+                  <Link href={`${base}/comparacion`}>Comparar con la anterior</Link>
+                </Button>
+              )}
+              <Button asChild variant="secondary">
+                <Link
+                  href={`/panel/pacientes/${patientId}/energia/nueva?evaluacion=${evaluation.id}`}
+                >
+                  Prescribir energía
+                </Link>
+              </Button>
+            </>
+          ) : null}
+          {sheetReady ? (
+            <DownloadSheetButton
+              patientId={patientId}
+              source={{ sourceType: 'EVALUATION', sourceId: evaluation.id }}
+            />
+          ) : null}
         </div>
       ) : null}
 
