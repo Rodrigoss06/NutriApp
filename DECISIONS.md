@@ -1264,3 +1264,29 @@ Consecuencias:
 - E2E e2e/fichas.spec.ts: la dieta publicada y los resultados de Luis se descargan como PDF con el logo de la marca, en
   escritorio y celular.
 - La app del paciente descargará sus fichas por /api/v1/me en P13.
+
+## ADR-068 · Semilla, guion y acta de la Demo 2 — aceptada (2026-10-28)
+Contexto: P11 (alcance 5) pide la semilla con los planes de Luis, el guion y el borrador del acta. Rodrigo decidió
+(2026-10-25) que la semilla deje la dieta por intercambios publicada y después reemplazada por la composición, que
+queda vigente, con la receta de arroz con pollo; el menú semanal se arma en vivo.
+Decisión:
+- `pnpm demo:2` (apps/api/scripts/demo-2.ts) siembra por la API, con la API y el worker corriendo, como la dueña demo
+  de `pnpm db:seed`. Así los snapshots, la adecuación y las fichas son los reales: nada se escribe a mano en la base.
+  Crea la prescripción de Luis si no la tiene (esperando a que el worker calcule sus resultados), la receta, la dieta
+  por intercambios y después la de composición, cada una publicada.
+- Se puede correr dos veces: un plan publicado o reemplazado de esa modalidad no se repite; el borrador de una corrida
+  cortada se retoma. Con la composición ya publicada no se crea la dieta por intercambios, porque quedaría vigente.
+- Los datos van en seeds/luis/demo-2.json, con los nombres de la TPCA y la TAFERA. La porción de cada alimento
+  permitido es la sugerida del editor (ADR-057). La composición usa medidas caseras de la TAFERA y queda en el rango
+  de adecuación de la organización: de 94 a 103 %.
+- El guion (docs/demos/demo-2.md) sigue el formato de la Demo 1. Sus cifras salen de un ensayo por las pantallas
+  sobre una base nueva, bajando cada ficha.
+- La Demo 2 no tiene un spec propio: cada paso ya tiene su E2E en escritorio y celular (biblioteca, dieta, recetas,
+  menú, fichas y marca), y test/integration/demo-2.int.spec.ts corre la semilla dos veces.
+- El acta (docs/actas/demo-2.md) es un borrador: los nombres de las partes como en Notion, sin DNI ni correos, y la
+  fecha, la modalidad y las firmas en blanco. Se confirma contra el contrato antes de enviarla.
+- La etiqueta v0.2.0 va sobre main después de fusionar, con la confirmación de Rodrigo para el push.
+Consecuencias:
+- La ficha de resultados repite «Masa ósea (Masa ósea (Rocha))»: su arreglo, con la plantilla 1.0.1, va en un PR
+  aparte antes de la demo (decidido por Rodrigo, 2026-10-28).
+- Para Notion (/notion-sync de P11): el comando de la semilla de la Demo 2 en la creación del proyecto, si se lista ahí.

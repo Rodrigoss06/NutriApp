@@ -1,0 +1,76 @@
+{
+  "mealTimes": {
+    "BREAKFAST": "07:00",
+    "MID_MORNING": "10:00",
+    "LUNCH": "13:00",
+    "AFTERNOON": "16:30",
+    "DINNER": "19:30"
+  },
+  "recipe": {
+    "name": "Arroz con pollo",
+    "servings": 2,
+    "ingredients": [
+      { "food": "Arroz pilado o pulido cocido", "grams": 200 },
+      { "food": "Pollo, carne pulpa", "grams": 150 }
+    ]
+  },
+  "exchanges": {
+    "fixedServings": { "VEG": 4, "FRU": 3, "MILK": 3 },
+    "hydrationTargetMl": 2500,
+    "instructions": "Toma agua durante el día y evita las bebidas azucaradas. Cada alimento de la lista vale un intercambio de su grupo en la porción indicada.",
+    "allowedFoods": {
+      "VEG": ["Zanahoria", "Tomate"],
+      "FRU": ["Papaya", "Plátano de isla"],
+      "MILK": ["Leche fresca de vaca, descremada", "Yogurt natural de leche descremada"],
+      "STA": ["Arroz pilado o pulido cocido", "Pan francés fortificado con hierro", "Papa blanca"],
+      "MEAT": ["Pollo, carne pulpa", "Pescado bonito"],
+      "FAT": ["Aceite vegetal de olivo", "Palta"]
+    }
+  },
+  "composition": {
+    "hydrationTargetMl": 2500,
+    "instructions": "Toma agua durante el día y evita las bebidas azucaradas.",
+    "meals": {
+      "BREAKFAST": [
+        { "food": "Avena, hojuela cruda", "measure": "Cucharada colmada", "amount": 3 },
+        { "food": "Leche fresca de vaca, descremada", "grams": 250 },
+        { "food": "Huevo de gallina entero, sancochado en agua", "grams": 100 },
+        { "food": "Papaya", "grams": 150 }
+      ],
+      "MID_MORNING": [
+        { "food": "Yogurt natural de leche descremada", "grams": 200 },
+        { "food": "Plátano de isla", "measure": "Unidad pequeña", "amount": 1 }
+      ],
+      "LUNCH": [
+        { "food": "Arroz pilado o pulido cocido", "measure": "Espumadera llena", "amount": 1 },
+        {
+          "food": "Pollo, carne pulpa",
+          "measure": "Unidad mediana (Pollo, trozo superior de media pechuga de)",
+          "amount": 1
+        },
+        { "food": "Lentejas chicas cocidas", "measure": "Cucharada colmada", "amount": 4 },
+        { "food": "Tomate", "grams": 100 },
+        { "food": "Lechuga redonda", "grams": 50 },
+        { "food": "Aceite vegetal de olivo", "grams": 15 }
+      ],
+      "AFTERNOON": [
+        { "food": "Pescado atún, enlatado en agua", "grams": 80 },
+        {
+          "food": "Pan francés fortificado con hierro",
+          "measure": "Unidad mediana (Pan francés de panaderias)",
+          "amount": 1
+        }
+      ],
+      "DINNER": [
+        { "food": "Pescado bonito", "grams": 150 },
+        {
+          "food": "Papa blanca",
+          "measure": "Unidad pequeña (Papa blanca “perricholi”)",
+          "amount": 1
+        },
+        { "food": "Zanahoria", "measure": "Unidad pequeña (Zanahoria amarilla)", "amount": 1 },
+        { "food": "Palta", "grams": 80 }
+      ]
+    }
+  }
+}
