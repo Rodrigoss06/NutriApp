@@ -3,6 +3,17 @@
 Cambiar una fórmula o una constante sube la versión del método afectado y la del motor (02 §9).
 Los resultados guardados conservan la versión con que se calcularon (RN-D01, RN-D08).
 
+## 1.4.0 — 2026-10-30
+
+- Nuevo método `PRI_JV` 2.0.0: perfil de rendimiento de la anamnesis de JV Fitness (RN-F16, 07 §12). Cada dominio vale de
+  0 a 100 con sus preguntas respondidas, el PRI pondera solo los dominios respondidos (P-10) y las clases salen sin dato
+  si falta uno de sus dominios, como la hoja. Respuesta inválida: NC-ENG-405.
+- Reglas puras de la plantilla V3, sin sobre porque no son un cálculo guardado: `screeningStatus`, `movementTestStatus`
+  y `prescriptionStatus` (RN-F15, `SAFETY_RULE_VERSION` 1.0.0); `routineSplit`, `sessionName`, `suggestedExercise` y
+  `proposeRoutine` (RN-F14, `ROUTINE_TEMPLATE_VERSION` 1.0.0); `macrocycleWeeks`, `macrocycleMesocycles`, `weekSets` y
+  `proposalWeek` (RN-F13, P-06, P-07). Las tablas de fases y de patrón por nivel son datos: el motor las recibe.
+- Ningún método existente cambia: G-01 a G-28 siguen igual.
+
 ## 1.3.0 — 2026-10-23
 
 - `RECIPE_NUTRIENTS` 1.1.0: además de los totales, suma aparte lo que sí se conoce (`knownTotals` y

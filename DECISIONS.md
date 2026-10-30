@@ -1305,3 +1305,47 @@ Decisión:
 - La ficha siguiente de cada evaluación sale con la 1.0.1: la versión de plantilla es parte de la clave de la ficha.
 Consecuencias:
 - Para Notion (/notion-sync de P11): la plantilla 1.0.1 de resultados en 05.3, si la página lista las versiones.
+
+## ADR-070 · Método de JV Fitness en el motor: perfil de rendimiento, llaves de seguridad, propuesta y macrociclo — aceptada (2026-10-30)
+Contexto: P12 (PR 1). G-29 a G-35 y G-40 reproducen la plantilla V3 (07 §14). El paquete de Jeremy trae el libro de
+formularios con dos versiones del cribado y de la anamnesis, y las preguntas abiertas de 07 §15 dejan huecos que el
+prompt manda construir con su propuesta. Rodrigo decidió los puntos abiertos el 2026-10-30.
+Decisión:
+- `PRI_JV` 2.0.0, en el registro de métodos, con su sobre (RN-D01): puntos de las 29 preguntas, dominios de 0 a 100, PRI y
+  clases (RN-F16, 07 §12). Semver y no «V2» como dice el comentario de 05.2, porque el registro lo exige. Sin ninguna
+  respuesta no hay PRI. Una clase queda sin dato si falta uno de sus dominios, como la hoja, y la prioridad es el dominio
+  más bajo con empate para el primero de la hoja.
+- Reglas sin sobre, porque no son un cálculo que se guarde como resultado, sino estados con su versión (`rule_version`
+  de 05.2): `screeningStatus`, `movementTestStatus` y `prescriptionStatus` (`SAFETY_RULE_VERSION`), en el motor para que
+  las usen clinical, assessment y training sin cruzar dominios.
+- Propuesta y macrociclo como funciones puras que reciben las tablas: `proposeRoutine` (`ROUTINE_TEMPLATE_VERSION`),
+  `macrocycleWeeks`, `macrocycleMesocycles`, `weekSets` y `proposalWeek`. Las tablas son datos: seeds/training/
+  periodization-v3.json (48 filas, valid_from 2026-10-15, la fecha de corte del paquete) y seeds/exercise/
+  pattern-choice-v3.json (45 filas). Los casos dorados leen esos mismos archivos.
+- Lo que decidió Rodrigo:
+  - Formularios: manda Notion. Notion y G-35 usan `01_Form_Anamnesis` y `02_Form_Cribado`, las que tienen puntaje, aunque
+    las llama V2; `08_ANAMNESIS_V2` y `09_CRIBADO_V2` tienen otros códigos y no puntúan (con la 09, S02 no es crítica y
+    G-35 no daría rojo). Se pregunta a Jeremy (P-15).
+  - P-06, RIR: las series de la semana son máx(1, redondeo de base × factor) y el RIR de cada serie es el objetivo de su
+    semana (4 en descarga). La plantilla conserva el RIR 2 de la hoja: con ella se compara el criterio 4.
+  - Llaves: sin cribado respondido, bloquea (BLOQUEADO · CRIBADO SIN REVISAR); sin evaluación postural no bloquea, como
+    la V3, y la pantalla avisa; con la revisión «derivar» sigue bloqueado con un estado nuevo, BLOQUEADO · DERIVADO, aunque
+    Notion dice que cualquier revisión abre la llave.
+  - Programa manual con una llave cerrada: se permite con un aviso visible, porque la V3 solo bloquea «la asignación
+    automática». La propuesta no se genera ni se publica con una llave cerrada.
+  - P-04, quinto día: Notion dice que la V3 no lo trae, pero la hoja PRESCRIPCION tiene sus fórmulas, cortadas porque solo
+    la primera fila lleva el día: empuje horizontal, tracción horizontal, sentadilla, bisagra, hombro, bíceps, tríceps y
+    acondicionamiento. Se usan, con «Sesión 1» a «Sesión 5». Jeremy lo confirma.
+  - El CSV de ejercicios base lo redacta Claude, marcado «Provisional» hasta que Jeremy lo revise (PR 2).
+- Propuestas de 07 §15 que entran aquí: P-01 (las cuatro tablas), P-03 (los rótulos de la V3), P-07 (la tabla se corta),
+  P-10 (el PRI pondera solo los dominios respondidos), P-11 (manda la tabla; «RDL con mancuernas» es un alias) y P-14 (el
+  dolor manda aunque falte un lado).
+- La propuesta da a todos los bloques 3 × 8-12, RIR 2, tempo 2-1-2 y 90 s, también a «Caminata inclinada», porque la hoja
+  lo hace así y el criterio 4 pide que coincida. El coach lo ajusta y se pregunta a Jeremy (P-16).
+Consecuencias:
+- Motor 1.4.0. Ningún método existente cambia.
+- `ROUTINE_TEMPLATE_VERSION` se guarda en el snapshot del programa (PR 5): el DDL no tiene columna para ella.
+- Para Notion (/notion-sync de P12): 07 §6 (el quinto día y BLOQUEADO · DERIVADO), 07 §15 (P-04, P-06 con el RIR, P-15 y
+  P-16), 03 RN-F15 (sin cribado bloquea y derivar sigue bloqueado), el comentario de `method_version` en 05.2, 06 §6
+  (casos dorados G-01 a G-28) y la copia de packages/engine/CLAUDE.md, si «Archivos del repositorio» la incluye.
+

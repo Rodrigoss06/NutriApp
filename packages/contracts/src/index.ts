@@ -25,3 +25,4 @@ export * from './food/recipe.js';
 export * from './documents/document.js';
 export * from './presentation/format-number.js';
 export * from './presentation/brand-tokens.js';
+export * from './training/labels.js';
