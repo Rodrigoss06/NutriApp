@@ -128,6 +128,20 @@ Las equivalencias que ya trae el Compendium se copian tal cual, aunque no sean e
 frente a mph), 17220, 17231 (5.0–5.5 mph como 8.8–8.9 km/h) y 17346 (mph frente a km/h), y 17018, 17313, 17315
 (20–30 lb como 9.0–15.0 kg), 17434 y 17438 (lb frente a kg).
 
+## training/periodization-v3.json y exercise/pattern-choice-v3.json
+
+Plantilla de periodización V3 de JV Fitness, paquete operativo del 2026-10-15 (hojas CONFIG y PRESCRIPCION del archivo
+`01_PERIODIZACION_AUTOMATIZADA_PLANTILLA_V3.xlsx`, SHA-256
+483e20dc18281fd7c28f6e1967424be41cb6f2a6265497f69f56b5f1ef094763). Los xlsx no van en el repositorio.
+
+- **Fases** (RN-F13, 07 §7): 12 semanas por cada uno de los 4 objetivos, 48 filas. `validFrom` es la fecha de corte del
+  paquete y es la versión de la tabla que guarda cada programa. `isDeload` son las semanas «Descarga» y `reviewKind` es
+  CONTROL en las semanas 4, 8 y 12, como la hoja MACROCICLO.
+- **Patrón × nivel** (RN-F14, 07 §5): 15 patrones por 3 niveles, 45 filas, con el código y el nombre del ejercicio en la
+  biblioteca. Manda la tabla (P-11): «RDL con mancuernas» se llama como en Notion, «Peso muerto rumano con mancuernas».
+
+Los leen los casos dorados G-29, G-30 y G-32, y la comparación de la propuesta con la hoja PRESCRIPCION.
+
 ## assessment/measurement-sites.json
 
 Catálogo global de sitios de medición (assessment.measurement_site, RN-C01, RN-C04). Tiene 45 sitios:

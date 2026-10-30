@@ -43,6 +43,7 @@ export const METHOD_LABELS = {
   FRACTIONAL_SETS: 'Series fraccionadas',
   SFR: 'Relación estímulo/fatiga',
   COMPLIANCE: '% de cumplimiento',
+  PRI_JV: 'Perfil de rendimiento (PRI de JV Fitness)',
 } as const satisfies Record<string, string>;
 
 export type LabeledMethodCode = keyof typeof METHOD_LABELS;

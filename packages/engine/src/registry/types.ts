@@ -40,6 +40,7 @@ export const METHOD_CODES = [
   'FRACTIONAL_SETS',
   'SFR',
   'COMPLIANCE',
+  'PRI_JV',
 ] as const;
 
 export type MethodCode = (typeof METHOD_CODES)[number];

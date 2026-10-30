@@ -1,6 +1,6 @@
 # STATUS — NutriCoach v1.0
 
-Actualizado: 2026-10-28 · Por: Rodrigo, con Claude Code
+Actualizado: 2026-10-30 · Por: Rodrigo, con Claude Code
 Inicio del proyecto: POR CONFIRMAR (día siguiente al Pago 1) · Semana actual: 0 de 9
 Próxima demo: Demo 1 · Base y evaluación · semana 2
 
@@ -19,7 +19,7 @@ Próxima demo: Demo 1 · Base y evaluación · semana 2
 | P9 Dieta por intercambios | ✅ | Rodrigo | #25, #26 y #27 | 3 criterios en verde (integración y E2E de Luis en escritorio y celular): borrador (ADR-057), publicación y tracking (ADR-058) y pantallas (ADR-059). /notion-sync aplicado (15 cambios en 02, 03 y 05.2) |
 | P10 Composición, menú y recetario | ✅ | Rodrigo | #28, #30 y #31 | 2 criterios en verde (integración y E2E en escritorio y celular): recetario (ADR-061), composición y menú en la API (ADR-062) y pantallas (ADR-063). Plantillas (RF-22, deseable) fuera. /notion-sync aplicado (17 cambios en 02, 03, 04, 05 y 05.2) |
 | P11 Fichas PDF, Demo 2 | ✅ | Rodrigo | #32 a #37 | 4 criterios en verde (integración y E2E en escritorio y celular): contexto documents y ficha de intercambios (ADR-064), fichas del menú y de resultados (ADR-065; 1.0.1 en ADR-069), marca mínima (ADR-066), descargas (ADR-067), semilla, guion y acta de la Demo 2 (ADR-068). Etiqueta v0.2.0 (e05f8de); staging, pendiente de P4. /notion-sync aplicado (17 cambios en 02, 03, 04, 05, 05.1, 05.3 y 06) |
-| P12 Ejercicios y rutinas | ⬜ | Rodrigo | | |
+| P12 Ejercicios y rutinas | 🟨 | Rodrigo | | PR 1 de 7: motor del método de JV Fitness (ADR-070) |
 | P13 App del paciente | ⬜ | Rodrigo | | |
 | P14 Analítica y evolución, Demo 3 | ⬜ | Rodrigo | | |
 | P15 Marca, calendario, admin y migración | ⬜ | Rodrigo | | |
@@ -28,6 +28,9 @@ Próxima demo: Demo 1 · Base y evaluación · semana 2
 Leyenda: ⬜ pendiente · 🟨 en curso · ✅ terminado · ⛔ bloqueado
 
 ## En curso
+- P12, PR 1 de 7 (ADR-070): en el motor, `PRI_JV`, las llaves de seguridad, la propuesta y el macrociclo, con G-29 a
+  G-35 y G-40 en verde y la propuesta de 4 días comparada fila por fila con la hoja PRESCRIPCION. Las tablas de la V3,
+  en seeds/. Motor 1.4.0. Faltan: biblioteca, anamnesis, seguridad, programa (API y web) y ficha de rutina.
 - P11 terminado (#32 a #37), con la etiqueta v0.2.0 en e05f8de:
   - #32 (ADR-064): contexto documents, ficha de la dieta por intercambios con react-pdf en el worker, generación al
     publicar y a pedido, reutilización por hashes y descarga auditada; criterios 1 y 3;
@@ -90,8 +93,8 @@ Leyenda: ⬜ pendiente · 🟨 en curso · ✅ terminado · ⛔ bloqueado
 ## Siguiente paso
 - Antes de la Demo 1: la matriz manual de navegadores (RNF-19: Chrome, Edge, Safari y Firefox; la E2E cubre Chromium
   y WebKit) y, el mismo día, base local limpia y semilla («Antes de empezar» del guion). La demo es en local
-- P12 (Ejercicios y rutinas): /prompt P12. Depende de P2 y P3; se construye con la propuesta de cada pregunta abierta
-  de 07 §15
+- P12, PR 2: biblioteca de ejercicios (catálogos, CSV de 150 o más ejercicios marcados «Provisional», importador,
+  ejercicios propios y pantalla). Se construye con la propuesta de cada pregunta abierta de 07 §15
 - Demo 2: «Antes de empezar» de docs/demos/demo-2.md (base limpia, db:seed, catalog:load, pnpm dev y pnpm demo:2) y
   enviar el acta al terminar
 - Cada base nueva necesita los catálogos: `pnpm --filter api build && pnpm catalog:load plataforma@demo.example.com`
@@ -118,6 +121,9 @@ Leyenda: ⬜ pendiente · 🟨 en curso · ✅ terminado · ⛔ bloqueado
 - [x] N7: lo resuelve el registro diario de la plantilla V3 (RN-G11)
 - [ ] Método de entrenamiento de Jeremy: preguntas P-01 a P-14 (Notion 07 §15). Mientras no respondan, P12 a P14 se
   construyen con la propuesta de cada una
+- [ ] Preguntas nuevas para Jeremy (ADR-070): P-15, cuál formulario manda (`01` y `02` con puntaje, o `08_ANAMNESIS_V2` y
+  `09_CRIBADO_V2`, sin puntaje y con otros códigos); P-16, si «Caminata inclinada» va de verdad con 3 × 8-12 y RIR 2; y
+  confirmar el quinto día (P-04)
 - [ ] R4: permiso de uso de las listas Dextre y ADA
 - [x] Porción sugerida de verduras, frutas y almidones: carbohidratos totales de la TPCA (CHOCDF), los que la app
   muestra como «Carbohidratos»; lo decidió Rodrigo (2026-10-22, ADR-059)
@@ -131,6 +137,8 @@ Leyenda: ⬜ pendiente · 🟨 en curso · ✅ terminado · ⛔ bloqueado
   registrar quién es el tutor (ADR-042). Pendiente de confirmar con el abogado
 
 ## Deuda técnica
+- P16, antes de la entrega: revisar y quitar los mensajes de «Provisional» (ejercicios base, lista DEMO, textos legales) o
+  dejar marcado lo que siga sin confirmar (pedido de Rodrigo, 2026-10-30)
 - P14: medir care_team_scope con seed:load. Si el costo por fila pesa en tracking, pasar a
   patient_id = ANY((SELECT app.visible_patient_ids())), que se evalúa una vez por consulta (ADR-037)
 - P5 sin desplegar a staging (06 §9): queda pendiente de P4. Al desplegar: APP_URL con https,
@@ -173,6 +181,8 @@ Leyenda: ⬜ pendiente · 🟨 en curso · ✅ terminado · ⛔ bloqueado
   reintentar (#29, 2026-10-24); esperar el título antes de axe
 
 ## Registro de sesiones (solo las 5 últimas)
+- 2026-10-30 · P12 (PR 1) · Plan aprobado con las 6 decisiones de Rodrigo (ADR-070). #38 fusionado. Motor 1.4.0:
+  `PRI_JV`, llaves de seguridad, propuesta y macrociclo, con G-29 a G-35 y G-40 en verde. Tablas de la V3 en seeds/
 - 2026-10-28 · P11 (arreglo y cierre) · #36 y #37 fusionados con los cuatro checks en verde. #37: ficha de resultados
   1.0.1 con «Masa ósea (Rocha)» (ADR-069), rebasada sobre el #36. Etiqueta v0.2.0 en e05f8de con el CI de main en
   verde. P11 cumple sus cuatro criterios. /notion-sync aprobado y aplicado: RN-H01 a RN-H03 en 03 (versión 1.11),
@@ -188,9 +198,3 @@ Leyenda: ⬜ pendiente · 🟨 en curso · ✅ terminado · ⛔ bloqueado
   composición y los resultados (ADR-065), con el criterio 2 en la integración. Un apagado brusco dejó archivos del
   PR 2 cortados en el disco NTFS (tamaño viejo, contenido nuevo, y git no lo ve): se rehicieron desde git y se
   verificó todo el árbol con git hash-object; la migración recreada tiene el mismo checksum que la aplicada
-- 2026-10-24 · P10 (PR 3) · #29 y #30 fusionados. Pantallas de composición y menú semanal (ADR-063): plan nuevo con
-  la modalidad, editores con la adecuación en vivo, pestañas de la semana y vista publicada; E2E en escritorio y
-  celular. P10 cumple sus dos criterios; RF-22 queda fuera. #31 abierto con los cuatro checks en verde; /notion-sync
-  de P10 aprobado y aplicado: RN-I03, RN-E10, RN-E16 y RN-G05 en 03 (versión 1.10), RF-21 en 04, Recipe,
-  NutritionPlan, FoodApi y auditoría en 02, el DDL de food.recipe, plan y plan_item en 05.2, y en 05 el buscador de
-  recetas y las filas 1.7 (P9, que faltaba) y 1.8

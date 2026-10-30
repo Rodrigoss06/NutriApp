@@ -42,6 +42,7 @@ import {
   FRACTIONAL_SETS,
   ONERM_BRZYCKI1993,
   ONERM_EPLEY1985,
+  PRI_JV,
   RPE_FROM_RIR,
   SFR,
   TONNAGE,
@@ -93,6 +94,7 @@ export const METHODS: Readonly<Record<MethodCode, AnyMethod>> = Object.freeze({
   FRACTIONAL_SETS,
   SFR,
   COMPLIANCE,
+  PRI_JV,
 } satisfies Record<MethodCode, unknown>);
 
 /**

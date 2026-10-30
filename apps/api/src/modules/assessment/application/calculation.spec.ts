@@ -136,7 +136,7 @@ describe('Casos dorados de punta a punta: los 42 sitios de Luis, consolidados y 
   it('RN-D01 · cada resultado lleva método, versión, versión del motor e insumos con su hash; mismos insumos, mismo hash', () => {
     for (const result of outcome.results) {
       expect(result.methodVersion).toMatch(/^\d+\.\d+\.\d+$/);
-      expect(result.engineVersion).toBe('1.3.0');
+      expect(result.engineVersion).toBe('1.4.0');
       expect(result.inputsHash).toMatch(/^[0-9a-f]{64}$/);
     }
     expect(luis().results.map((r) => r.inputsHash)).toEqual(
