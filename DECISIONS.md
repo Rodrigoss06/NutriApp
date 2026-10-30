@@ -1349,3 +1349,42 @@ Consecuencias:
   P-16), 03 RN-F15 (sin cribado bloquea y derivar sigue bloqueado), el comentario de `method_version` en 05.2, 06 §6
   (casos dorados G-01 a G-28) y la copia de packages/engine/CLAUDE.md, si «Archivos del repositorio» la incluye.
 
+## ADR-071 · Biblioteca de ejercicios: CSV provisional, ejercicios propios y tabla patrón × nivel — aceptada (2026-10-30)
+Contexto: P12 (PR 2). RF-25 pide la biblioteca global y propia, y RF-38 los ejercicios base con importador. El prompt pide
+150 o más desde un «CSV del equipo» que no existía: el paquete de Jeremy trae 23. Rodrigo decidió (2026-10-30) que Claude
+redacte los demás y queden marcados como provisionales hasta que Jeremy los revise, y que en P16 se revisen todas las
+marcas de «Provisional».
+Decisión:
+- seeds/exercise/ejercicios-base.csv, 169 ejercicios: los 23 de la hoja EJERCICIOS con sus datos, comparados con la hoja;
+  15 que pide la tabla patrón × nivel; 14 que la hoja nombra como alternativa; y 117 más. La columna `provisional` llega a
+  exercise.exercise y la app lo muestra en la lista, la ficha y la tabla. A los 23 de la V3 también les agregamos regresión
+  y progresión (P-13), que Jeremy tiene que revisar.
+- Importador EXERCISE_LIBRARY en catalog:load (RN-I04): upsert por código, que un ejercicio sin cambios no toca; las
+  variantes se enlazan cuando ya existen todos los ejercicios del archivo. Una variante que no existe, un músculo o un
+  equipo desconocidos hacen fallar el archivo entero.
+- La tabla patrón × nivel pasa de JSON a seeds/exercise/pattern-choice-v3.csv, una sola fuente para el importador
+  EXERCISE_PATTERN_CHOICES y para los casos dorados del motor. Cada fila comprueba que el código exista, que el nombre
+  coincida y que el ejercicio sea de ese patrón.
+- Diferencias con 05.2, para llevar a Notion: `exercise.code` con índice único (07 §5 lo pide y el importador lo necesita);
+  `version` y `updated_at` para If-Match; `base_measure` (REPS, SECONDS o MINUTES), porque la hoja pone 20 «repeticiones» a
+  la caminata y son minutos; `provisional`; el CHECK de `status`; y RLS global también en muscle_group y equipment, que
+  no la tenían.
+- FULL_GYM («Gimnasio completo») es un equipo del catálogo solo para el perfil de entrenamiento (07 §2): ningún ejercicio
+  lo lleva. Un ejercicio tiene un solo equipo, como el DDL: si la hoja da dos opciones, va el que menos pide.
+- Ejercicios propios (RN-I01): POST y PUT con If-Match, archivar y restaurar, sin borrar. Editar reemplaza los músculos.
+  Los globales responden 403 (NC-EXE-003). Un músculo va en una sola lista, porque cuentan distinto (RN-F06); el enlace del
+  video solo con https. Eventos exercise.exercise.created, .updated, .archived y .restored, auditados con los nombres de
+  los campos.
+- Búsqueda sin tildes también por los alias, con filtros por patrón, nivel, equipo y músculo. El catálogo es de unos cientos
+  de filas, así que los alias no llevan índice.
+- Tabla patrón × nivel configurable por organización (07 §5): PUT y DELETE en /exercise-pattern-choices/:pattern/:level.
+  Solo admite un ejercicio activo de ese patrón (NC-EXE-006, RN-F14) y solo cuenta para las propuestas siguientes. Evento
+  exercise.choice.changed, auditado.
+- Pantallas: Biblioteca > Ejercicios (lista con filtros en la dirección, ficha, ejercicio propio) y Biblioteca > Patrón y
+  nivel. ExercisePicker queda para las sustituciones del editor de programas.
+Consecuencias:
+- ExerciseApi entrega la biblioteca y la tabla: la usa training en el PR 5.
+- Las series de cardio cuentan «Cardiorrespiratorio» como grupo: P14 lo deja fuera del volumen por grupo muscular (RN-F06).
+- Para Notion (/notion-sync de P12): lo de arriba en 05.2; 02 §8 (eventos de exercise hacia audit) y §3 (ExerciseApi); 03
+  RN-I02 (los ejercicios base provisionales); los códigos NC-EXE-001 a NC-EXE-006.
+

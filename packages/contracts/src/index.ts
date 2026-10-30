@@ -26,3 +26,4 @@ export * from './documents/document.js';
 export * from './presentation/format-number.js';
 export * from './presentation/brand-tokens.js';
 export * from './training/labels.js';
+export * from './exercise/library.js';

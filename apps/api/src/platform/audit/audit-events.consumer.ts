@@ -182,6 +182,27 @@ export const AUDITED_EVENTS: Readonly<Record<string, AuditMapping>> = {
     resourceType: 'food.recipe',
     fields: () => ['status'],
   },
+  'exercise.exercise.created': { action: 'CREATE', resourceType: 'exercise.exercise' },
+  'exercise.exercise.updated': {
+    action: 'UPDATE',
+    resourceType: 'exercise.exercise',
+    fields: (p) => namesOf(p.fields),
+  },
+  'exercise.exercise.archived': {
+    action: 'UPDATE',
+    resourceType: 'exercise.exercise',
+    fields: () => ['status'],
+  },
+  'exercise.exercise.restored': {
+    action: 'UPDATE',
+    resourceType: 'exercise.exercise',
+    fields: () => ['status'],
+  },
+  'exercise.choice.changed': {
+    action: 'UPDATE',
+    resourceType: 'exercise.pattern_choice',
+    fields: () => ['exercise_id'],
+  },
   'documents.document.generated': {
     action: 'CREATE',
     resourceType: 'documents.generated_document',

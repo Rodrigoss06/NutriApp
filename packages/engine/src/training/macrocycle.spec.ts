@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import patternChoiceSeed from '../../../../seeds/exercise/pattern-choice-v3.json' with { type: 'json' };
 import periodizationSeed from '../../../../seeds/training/periodization-v3.json' with { type: 'json' };
+import { patternChoiceSeed } from '../../test/support.js';
 import {
   macrocycleMesocycles,
   macrocycleWeeks,
@@ -9,10 +9,10 @@ import {
   weekSets,
   type PeriodizationPhase,
 } from './macrocycle.js';
-import { BASE_BLOCK, proposeRoutine, type PatternChoice } from './routine-proposal.js';
+import { BASE_BLOCK, proposeRoutine } from './routine-proposal.js';
 
 const PHASES = periodizationSeed.phases as readonly PeriodizationPhase[];
-const CHOICES = patternChoiceSeed.choices as readonly PatternChoice[];
+const CHOICES = patternChoiceSeed();
 
 describe('RN-F13 · tabla de fases de la V3 (07 §7)', () => {
   it.each(TRAINING_OBJECTIVES)('%s tiene las 12 semanas, en orden', (objective) => {

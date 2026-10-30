@@ -33,6 +33,20 @@ export const MOVEMENT_PATTERN_LABELS = {
   CONDITIONING: 'Acondicionamiento',
 } as const satisfies Record<string, string>;
 
+export const EXERCISE_MODALITY_LABELS = {
+  STRENGTH: 'Fuerza',
+  CARDIO: 'Cardio',
+  MOBILITY: 'Movilidad',
+  PLYOMETRIC: 'Pliometría',
+} as const satisfies Record<string, string>;
+
+/** Con qué se miden los valores base de un ejercicio. */
+export const EXERCISE_BASE_MEASURE_LABELS = {
+  REPS: 'repeticiones',
+  SECONDS: 'segundos',
+  MINUTES: 'minutos',
+} as const satisfies Record<string, string>;
+
 export const ROUTINE_SPLIT_LABELS = {
   FULL_BODY: 'Cuerpo completo',
   FULL_BODY_ABC: 'Cuerpo completo A/B/C',

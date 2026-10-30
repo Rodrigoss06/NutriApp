@@ -1,5 +1,14 @@
 import { Inject, Injectable } from '@nestjs/common';
 import type { CompendiumActivity } from '../domain/compendium-activity.js';
+import {
+  EXERCISE_STORE,
+  type ExerciseCatalog,
+  type ExerciseRecord,
+  type ExerciseSearch,
+  type ExerciseStore,
+  type ExerciseSummaryRecord,
+  type PatternChoiceRecord,
+} from './ports/exercise.port.js';
 
 /** Actividad del Compendium 2024 con su MET (exercise.physical_activity). */
 export interface PhysicalActivityRecord {
@@ -21,13 +30,14 @@ export interface PhysicalActivityStore {
 export const PHYSICAL_ACTIVITY_STORE = Symbol.for('nutricoach.exercise.PhysicalActivityStore');
 
 /**
- * API pública de exercise (02 §2): actividades con MET para el gasto por ejercicio (RN-E03). P8 carga el Compendium
- * completo y P12 la biblioteca de ejercicios. Se llama dentro de la transacción de quien la usa.
+ * API pública de exercise (02 §2): actividades con MET para el gasto por ejercicio (RN-E03) y la biblioteca de ejercicios
+ * con su tabla patrón × nivel (RF-25, RN-F14). Se llama dentro de la transacción de quien la usa.
  */
 @Injectable()
 export class ExerciseApi {
   constructor(
     @Inject(PHYSICAL_ACTIVITY_STORE) private readonly activities: PhysicalActivityStore,
+    @Inject(EXERCISE_STORE) private readonly exercises: ExerciseStore,
   ) {}
 
   /** Búsqueda sin tildes en la descripción; sin texto, todo el catálogo. */
@@ -37,5 +47,23 @@ export class ExerciseApi {
 
   activitiesByCode(codes: readonly string[]): Promise<readonly PhysicalActivityRecord[]> {
     return this.activities.byCodes(codes);
+  }
+
+  catalog(): Promise<ExerciseCatalog> {
+    return this.exercises.catalog();
+  }
+
+  searchExercises(search: ExerciseSearch): Promise<readonly ExerciseSummaryRecord[]> {
+    return this.exercises.search(search);
+  }
+
+  /** Por id, también los archivados: un programa sigue con el ejercicio que usó. */
+  exercisesById(ids: readonly string[]): Promise<readonly ExerciseRecord[]> {
+    return this.exercises.byIds(ids);
+  }
+
+  /** La tabla vigente para la organización: su fila o, si no puso, la de la V3 (07 §5). */
+  patternChoices(): Promise<readonly PatternChoiceRecord[]> {
+    return this.exercises.patternChoices();
   }
 }

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import patternChoiceSeed from '../../../../seeds/exercise/pattern-choice-v3.json' with { type: 'json' };
+import { patternChoiceSeed } from '../../test/support.js';
 import {
   MOVEMENT_PATTERNS,
   proposeRoutine,
@@ -7,10 +7,9 @@ import {
   sessionName,
   suggestedExercise,
   TRAINING_LEVELS,
-  type PatternChoice,
 } from './routine-proposal.js';
 
-const CHOICES = patternChoiceSeed.choices as readonly PatternChoice[];
+const CHOICES = patternChoiceSeed();
 
 describe('RN-F14 · tabla patrón × nivel de la V3 (07 §5)', () => {
   it('tiene un ejercicio para cada uno de los 15 patrones en cada nivel', () => {
