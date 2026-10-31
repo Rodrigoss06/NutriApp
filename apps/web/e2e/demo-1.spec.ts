@@ -86,7 +86,12 @@ async function typeAttempts(page: Page, code: string, attempts: readonly number[
   const name = siteName(code);
   for (const [index, value] of attempts.entries()) {
     const input = page.getByLabel(`${name}, toma ${String(index + 1)}`, { exact: true });
-    await input.fill(value.toFixed(1));
+    const text = value.toFixed(1);
+    // Enter mueve el foco a otra fila: en WebKit, lo escrito justo después puede caer en ese otro campo (#88).
+    await expect(async () => {
+      await input.fill(text);
+      await expect(input).toHaveValue(text, { timeout: 500 });
+    }).toPass({ timeout: 5_000 });
     if (index === attempts.length - 1) await input.press('Enter');
   }
 }
@@ -257,8 +262,13 @@ test.describe('Demo 1 · base y evaluación (P7)', () => {
     await test.step('4 · ETM de la evaluadora y las evaluaciones ISAK 2 de Luis (RF-12, RF-13, RF-15, RF-16)', async () => {
       // ETM calculado con pares (RF-12, G-04).
       await page.goto('/panel/cuenta');
-      await page.getByRole('button', { name: 'Registrar ETM' }).click();
-      await page.getByRole('button', { name: 'Agregar los 6 pliegues de la suma' }).click();
+      // Un clic antes de que la página se hidrate se pierde: se repite hasta que abre el formulario (#88).
+      const addSkinfolds = page.getByRole('button', { name: 'Agregar los 6 pliegues de la suma' });
+      await expect(async () => {
+        await page.getByRole('button', { name: 'Registrar ETM' }).click({ timeout: 2_000 });
+        await expect(addSkinfolds).toBeVisible({ timeout: 2_000 });
+      }).toPass({ timeout: 30_000 });
+      await addSkinfolds.click();
       for (const study of luis.technicalErrorStudy.sites) {
         await page
           .getByLabel(`Pares de ${siteName(study.siteCode).toLowerCase()}`)

@@ -191,6 +191,9 @@ Leyenda: ⬜ pendiente · 🟨 en curso · ✅ terminado · ⛔ bloqueado
   texto libre, las pruebas y su evidencia, también los archivos quitados de un borrador, que quedan sin ruta (ADR-075)
 - La exportación y la supresión de P15 (RN-B04, RN-B05) tienen que incluir las respuestas de la anamnesis V2 y los insumos
   de `clinical.performance_profile` (ADR-072)
+- E2E de la Demo 1 inestable en el celular, en main (run #88, 1943c5b): lo escrito tras un Enter cayó en otro campo y el
+  reintento se quedó 10 minutos con un clic anterior a la hidratación. La prueba ahora comprueba y repite. No se guardó nada
+  incorrecto: el formulario lo detuvo. El siguiente run de main (#91) pasó
 - E2E en el celular: `page.goto: WebKit encountered an internal error` una vez en seguridad.spec.ts, al navegar; repetida
   5 veces pasó las 5 (2026-10-31). Es del navegador, no de una aserción
 - E2E de P6 inestable en el celular (patients.spec.ts): «Enfermedad: Hipotiroidismo» no apareció en 5 s y pasó al
