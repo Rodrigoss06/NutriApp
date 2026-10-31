@@ -28,6 +28,8 @@ Próxima demo: Demo 1 · Base y evaluación · semana 2
 Leyenda: ⬜ pendiente · 🟨 en curso · ✅ terminado · ⛔ bloqueado
 
 ## En curso
+- Exclusión de alimentos por alergia o intolerancia (ADR-074): RN-E17. Cada condición activa se enlaza con sus alimentos, y
+  un plan con alguno no se guarda ni se publica, tampoco dentro de una receta. Lo publicado no cambia: se avisa.
 - P12, PR 3 de 7 (ADR-072): anamnesis `JV_ANAMNESIS` V2 como revisión de la historia clínica, presencial u online, con
   su perfil de rendimiento (`clinical.performance_profile`, G-40 por HTTP y en pantalla). La historia v1 queda de solo
   lectura y cada revisión se abre por su número. La dieta avisa de las alergias e intolerancias registradas, sin cruzarlas
@@ -131,8 +133,7 @@ Leyenda: ⬜ pendiente · 🟨 en curso · ✅ terminado · ⛔ bloqueado
 - [ ] Preguntas nuevas para Jeremy (ADR-070): P-15, cuál formulario manda (`01` y `02` con puntaje, o `08_ANAMNESIS_V2` y
   `09_CRIBADO_V2`, sin puntaje y con otros códigos); P-16, si «Caminata inclinada» va de verdad con 3 × 8-12 y RIR 2; y
   confirmar el quinto día (P-04)
-- [ ] Pregunta nueva para Jeremy (ADR-073): P-17, cómo se enlaza una alergia con los alimentos para excluirlos de verdad
-  (07 §12). Mientras tanto, la dieta muestra un aviso con las alergias e intolerancias y no las cruza
+- [x] P-17: un plan no lleva el alimento enlazado a una alergia o intolerancia activa; Jeremy dio el visto bueno (ADR-074)
 - [ ] R4: permiso de uso de las listas Dextre y ADA
 - [x] Porción sugerida de verduras, frutas y almidones: carbohidratos totales de la TPCA (CHOCDF), los que la app
   muestra como «Carbohidratos»; lo decidió Rodrigo (2026-10-22, ADR-059)
@@ -192,6 +193,8 @@ Leyenda: ⬜ pendiente · 🟨 en curso · ✅ terminado · ⛔ bloqueado
   reintentar (#29, 2026-10-24); esperar el título antes de axe
 
 ## Registro de sesiones (solo las 5 últimas)
+- 2026-10-30 · Exclusión de alimentos (ADR-074) · #41 fusionado. Jeremy dio el visto bueno: RN-E17, enlace de alergias e
+  intolerancias con alimentos y bloqueo al guardar y publicar, también dentro de una receta; aviso si el plan vigente lleva uno
 - 2026-10-30 · P12 (PR 3) · #40 fusionado. Anamnesis V2 con su perfil de rendimiento (ADR-072): 43 preguntas de la hoja,
   G-40 por HTTP y en pantalla, revisiones de solo lectura, la historia v1 sin edición y el formulario de solo lectura para
   quien no tiene escritura en el equipo de atención. Aviso de alergias al armar la dieta (ADR-073); P-17 para Jeremy
@@ -206,6 +209,3 @@ Leyenda: ⬜ pendiente · 🟨 en curso · ✅ terminado · ⛔ bloqueado
   verde. P11 cumple sus cuatro criterios. /notion-sync aprobado y aplicado: RN-H01 a RN-H03 en 03 (versión 1.11),
   documents y la marca en 02 (§3, §7 y §8), RF-36 en 04, contact de tenancy.branding en 05.1, los CHECK e índices de
   documents en 05.3, la fila 1.9 de 05 y `demo:2` en 06
-- 2026-10-28 · P11 (PR 5) · #35 fusionado con los cuatro checks en verde. PR 5: `pnpm demo:2` (ADR-068), probada dos
-  veces en integración y en una base local nueva; guion de la Demo 2 ensayado por las pantallas, con las cuatro fichas
-  y la marca; borrador del acta. Rodrigo eligió arreglar «Masa ósea» de la ficha de resultados en un PR aparte

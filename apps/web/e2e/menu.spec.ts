@@ -74,6 +74,65 @@ async function saveAndPublish(page: Page): Promise<void> {
 }
 
 test.describe('P10 · Composición y menú semanal', () => {
+  test('RN-E17: el alimento enlazado a una alergia no se guarda en la dieta, tampoco dentro de una receta', async ({
+    page,
+  }) => {
+    test.setTimeout(3 * 60_000);
+    const organization = await createOrganization();
+    const patientId = await luisWithPrescription(organization.ownerEmail);
+    await recipeByApi(organization.ownerEmail);
+    await loginInPage(page, organization.ownerEmail);
+
+    // La condición se registra y se enlaza con su alimento desde el expediente.
+    await page.goto(`/panel/pacientes/${patientId}/registros`);
+    const newCondition = page.getByRole('form', { name: 'Registrar una condición' });
+    await newCondition.getByRole('combobox', { name: 'Tipo' }).click();
+    await page.getByRole('option', { name: 'Alergia' }).click();
+    await newCondition.getByLabel('Descripción').fill('Pollo');
+    await page.getByRole('button', { name: 'Registrar condición' }).click();
+    await expect(page.getByText('Ningún alimento enlazado')).toBeVisible();
+    await page.getByRole('button', { name: 'Agregar alimento a Pollo' }).click();
+    await page
+      .getByRole('searchbox', { name: 'Buscar alimento para Pollo' })
+      .fill('pollo carne pulpa');
+    await page.getByRole('button', { name: `Excluir ${CHICKEN}` }).click();
+    await expect(page.getByRole('list', { name: 'Alimentos excluidos por Pollo' })).toContainText(
+      CHICKEN,
+    );
+    await expect(page.getByText('Ningún alimento enlazado')).toHaveCount(0);
+    expect(await seriousViolations(page)).toEqual([]);
+
+    // En la composición, no se guarda con ese alimento; se avisa antes de guardar y dice dónde está.
+    await newPlan(page, patientId, 'Composición');
+    await expect(page.getByText('Alergias e intolerancias registradas')).toBeVisible();
+    await expect(page.getByText(`Alergia: Pollo · no se puede usar: ${CHICKEN}`)).toBeVisible();
+    await addFood(page, 'Almuerzo', 'pollo carne pulpa', CHICKEN);
+    await page.getByLabel(`Gramos de ${CHICKEN}`).fill('150');
+    const problem = `${CHICKEN} (Almuerzo): excluido por una alergia, «Pollo» (RN-E17).`;
+    await expect(page.getByText(problem)).toBeVisible();
+    await page.getByRole('button', { name: 'Guardar borrador' }).click();
+    await expect(page.getByText('No se guardó el borrador')).toBeVisible();
+    expect(await seriousViolations(page)).toEqual([]);
+
+    await page.getByRole('button', { name: `Quitar ${CHICKEN} de Almuerzo` }).click();
+    await addFood(page, 'Almuerzo', 'arroz pilado cocido', RICE);
+    await page.getByLabel(`Gramos de ${RICE}`).fill('200');
+    await page.getByRole('button', { name: 'Guardar borrador' }).click();
+    await expect(page.getByText('Guardado', { exact: true })).toBeVisible();
+    await expect(page.getByText(problem)).toHaveCount(0);
+
+    // En el menú, tampoco dentro de una receta: el recetario la tiene, porque no es de un paciente.
+    await newPlan(page, patientId, 'Menú semanal');
+    await page.getByRole('button', { name: 'Agregar a Almuerzo del lunes, opción A' }).click();
+    await page.getByRole('button', { name: `Agregar la receta ${RECIPE}` }).click();
+    await page.getByRole('button', { name: 'Listo' }).click();
+    await expect(
+      page.getByText(/Receta «Arroz con pollo» .*lleva Pollo, carne pulpa/),
+    ).toBeVisible();
+    await page.getByRole('button', { name: 'Guardar borrador' }).click();
+    await expect(page.getByText('No se guardó el borrador')).toBeVisible();
+  });
+
   test('RF-20 · RF-21 · criterio 2: Luis con una dieta por composición y un menú semanal con una receta, publicados', async ({
     page,
   }) => {

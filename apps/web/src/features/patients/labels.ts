@@ -137,6 +137,7 @@ export const AUDIT_RESOURCE_LABELS: Readonly<Record<string, string>> = {
   'clinical.goal': 'Objetivos',
   'clinical.clinical_note': 'Notas',
   'clinical.timeline': 'Línea de tiempo',
+  'nutrition.food_exclusion': 'Alimentos excluidos',
   'assessment.evaluation': 'Evaluación',
   'assessment.measurement': 'Medidas de una evaluación',
   'assessment.bia_reading': 'Bioimpedancia',

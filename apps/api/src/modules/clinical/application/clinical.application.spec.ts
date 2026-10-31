@@ -17,6 +17,7 @@ import {
   FakeUow,
   MemoryConsents,
   MemoryPatients,
+  MemoryRecords,
   staffContext,
 } from './clinical-fakes.spec-support.js';
 import { PatientQueries } from './queries/patient.queries.js';
@@ -333,7 +334,7 @@ describe('RF-05 · consentimiento', () => {
   });
 
   it('ConsentPolicy · sin HEALTH_DATA vigente, la API pública lo niega con RN-B01', async () => {
-    const api = new ClinicalApi(patients, consents, new TimelineSources());
+    const api = new ClinicalApi(patients, consents, new TimelineSources(), new MemoryRecords());
     const id = await registered();
     const without = await api.ensureHealthDataConsent(id);
     expect(isErr(without) && without.error.rule).toBe('RN-B01');
@@ -351,7 +352,7 @@ describe('RF-05 · consentimiento', () => {
   });
 
   it('RN-A05 · RN-B01 · otro contexto guarda datos de salud solo con escritura en el equipo y HEALTH_DATA', async () => {
-    const api = new ClinicalApi(patients, consents, new TimelineSources());
+    const api = new ClinicalApi(patients, consents, new TimelineSources(), new MemoryRecords());
     const id = await registered();
     expect(await api.patientRef(id)).toMatchObject({
       id,

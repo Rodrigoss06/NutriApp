@@ -28,6 +28,7 @@ import {
   valuesOf,
   type AnamnesisValues,
 } from './anamnesis-values';
+import { useWritesRecord } from './use-writes-record';
 
 type Current = ClinicalHistoryResponse['current'];
 
@@ -115,9 +116,8 @@ export function AnamnesisForm({
   archived: boolean;
 }) {
   const router = useRouter();
-  const { timezone, userId } = usePanelSession();
-  const memberId = members.find((m) => m.userId === userId)?.id;
-  const writesRecord = careTeam.some((m) => m.memberId === memberId && m.access === 'WRITE');
+  const { timezone } = usePanelSession();
+  const writesRecord = useWritesRecord(careTeam, members);
   const canWrite = useCanWrite() && !archived && writesRecord;
   const names = new Map(members.map((m) => [m.userId, m.displayName]));
   const [expectedRevision, setExpectedRevision] = useState(history.current?.revision ?? 0);

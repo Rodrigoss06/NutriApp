@@ -16,6 +16,7 @@ import { ClinicalApi } from '../../../clinical/index.js';
 import { FoodApi } from '../../../food/index.js';
 import type { PlanDraft } from '../../domain/food-plan.js';
 import { PLAN_MODALITY_MISMATCH, PLAN_NOT_DRAFT } from '../../domain/nutrition-plan.js';
+import { FoodExclusions } from '../food-exclusions.js';
 import { PlanCalculator } from '../plan-calculator.js';
 import type { PlanDocument, PlanSnapshot } from '../plan-document.js';
 import { calculateDraft, documentOf, problemsOf } from '../plan-drafts.js';
@@ -64,6 +65,7 @@ export class NutritionPlanQueries {
     @Inject(ClinicalApi) private readonly clinical: ClinicalApi,
     @Inject(FoodApi) private readonly foods: FoodApi,
     @Inject(PlanCalculator) private readonly calculator: PlanCalculator,
+    @Inject(FoodExclusions) private readonly exclusions: FoodExclusions,
   ) {}
 
   /** null si no se ve al paciente. */
@@ -112,7 +114,10 @@ export class NutritionPlanQueries {
       return {
         record,
         document: documentOf(calculated.value, record.mealIds),
-        publishProblems: problemsOf(calculated.value),
+        publishProblems: [
+          ...(await this.exclusions.problems(record.patientId, record.draft)),
+          ...problemsOf(calculated.value),
+        ],
         snapshot: null,
       };
     });
@@ -152,7 +157,10 @@ export class NutritionPlanQueries {
         record,
         result: ok({
           document: documentOf(calculated.value, []),
-          publishProblems: problemsOf(calculated.value),
+          publishProblems: [
+            ...(await this.exclusions.problems(record.patientId, input)),
+            ...problemsOf(calculated.value),
+          ],
         }),
       };
     });

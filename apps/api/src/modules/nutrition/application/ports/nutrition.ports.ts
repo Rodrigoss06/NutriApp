@@ -153,3 +153,21 @@ export interface NutritionPlanStore {
 }
 
 export const NUTRITION_PLAN_STORE = Symbol.for('nutricoach.nutrition.NutritionPlanStore');
+
+/** nutrition.food_exclusion, con la transacción de quien llama: la RLS aplica RN-A01 y RN-A05. */
+export interface FoodExclusionStore {
+  forPatient(
+    patientId: string,
+  ): Promise<readonly { readonly conditionId: string; readonly foodId: string }[]>;
+  /** Reemplaza los alimentos de la condición. */
+  replace(row: {
+    readonly organizationId: OrganizationId;
+    readonly patientId: string;
+    readonly conditionId: string;
+    readonly foodIds: readonly string[];
+    readonly createdBy: UserId;
+    readonly now: Date;
+  }): Promise<void>;
+}
+
+export const FOOD_EXCLUSION_STORE = Symbol.for('nutricoach.nutrition.FoodExclusionStore');

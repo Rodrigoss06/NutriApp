@@ -652,9 +652,30 @@ describe('RN-A06 y RN-B01 · inscripción desde la invitación', () => {
 });
 
 describe('RF-06 · códigos de paciente para la auditoría', () => {
+  it('RN-E17 · la API pública da solo las alergias e intolerancias activas', async () => {
+    const id = await registered();
+    await consented(id);
+    const add = (kind: 'ALLERGY' | 'INTOLERANCE' | 'DISEASE', label: string) =>
+      commands().addCondition(responsible, id, { kind, label });
+    await add('ALLERGY', 'Maní');
+    await add('INTOLERANCE', 'Lactosa');
+    await add('DISEASE', 'Hipotiroidismo');
+    const resolved = await add('ALLERGY', 'Penicilina');
+    if (isOk(resolved)) {
+      await commands().updateCondition(responsible, id, resolved.value.id, { status: 'RESOLVED' });
+    }
+
+    const found = await new ClinicalApi(patients, consents, sources, records).dietaryConditions(id);
+
+    expect(found.map((c) => [c.kind, c.label])).toEqual([
+      ['ALLERGY', 'Maní'],
+      ['INTOLERANCE', 'Lactosa'],
+    ]);
+  });
+
   it('la API pública da el código de los pacientes que el contexto ve', async () => {
     const id = await registered();
-    const codes = await new ClinicalApi(patients, consents, sources).patientCodes([
+    const codes = await new ClinicalApi(patients, consents, sources, records).patientCodes([
       id,
       'no-existe',
     ]);

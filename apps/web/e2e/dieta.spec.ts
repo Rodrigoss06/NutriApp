@@ -100,7 +100,7 @@ const saved = async (page: Page) => {
 };
 
 test.describe('P9 · Dieta por intercambios', () => {
-  test('07 §12: las alergias e intolerancias activas se ven al armar la dieta y al leerla, y avisa que no las cruza', async ({
+  test('07 §12: las alergias e intolerancias activas se ven al armar la dieta y al leerla, y avisa qué no se bloquea', async ({
     page,
   }) => {
     const organization = await createOrganization();
@@ -136,7 +136,7 @@ test.describe('P9 · Dieta por intercambios', () => {
       await expect(page.getByText('Alergia: Maní')).toBeVisible();
       await expect(page.getByText('Intolerancia: Lactosa')).toBeVisible();
       await expect(page.getByText('En la anamnesis: No come mariscos.')).toBeVisible();
-      await expect(page.getByText('La app no las cruza con los alimentos del plan')).toBeVisible();
+      await expect(page.getByText('Lo que no esté enlazado no se bloquea')).toBeVisible();
       await expect(page.getByText('Penicilina')).toHaveCount(0);
       await expect(page.getByText('Hipotiroidismo')).toHaveCount(0);
     };

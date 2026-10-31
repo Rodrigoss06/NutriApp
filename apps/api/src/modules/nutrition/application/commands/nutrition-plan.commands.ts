@@ -18,6 +18,7 @@ import {
 import { atomically } from '../../../../platform/index.js';
 import { ClinicalApi } from '../../../clinical/index.js';
 import { PRESCRIPTION_NOT_FOUND } from '../../domain/energy-rules.js';
+import { planHasExcludedFoods } from '../../domain/food-exclusion.js';
 import type { PlanDraft } from '../../domain/food-plan.js';
 import {
   draftExists,
@@ -28,6 +29,7 @@ import {
   planNotReady,
 } from '../../domain/nutrition-plan.js';
 import { localDateOf } from '../energy-basis.js';
+import { FoodExclusions } from '../food-exclusions.js';
 import { nutritionEvent, type NutritionEventType } from '../nutrition-events.js';
 import { PlanCalculator } from '../plan-calculator.js';
 import { planSnapshot } from '../plan-document.js';
@@ -81,6 +83,7 @@ export class NutritionPlanCommands {
     @Inject(ENERGY_PRESCRIPTION_STORE) private readonly prescriptions: EnergyPrescriptionStore,
     @Inject(ClinicalApi) private readonly clinical: ClinicalApi,
     @Inject(PlanCalculator) private readonly calculator: PlanCalculator,
+    @Inject(FoodExclusions) private readonly exclusions: FoodExclusions,
   ) {}
 
   create(
@@ -154,6 +157,8 @@ export class NutritionPlanCommands {
         input,
       );
       if (!calculated.ok) return calculated;
+      const excluded = await this.exclusions.problems(existing.patientId, input);
+      if (excluded.length > 0) return err(planHasExcludedFoods(excluded));
       const saved = await this.plans.replaceDraft(
         planId,
         version,
@@ -173,7 +178,8 @@ export class NutritionPlanCommands {
    * Publica el borrador (RF-23, RN-E14, RN-E15): congela su snapshot con su hash, vale desde hoy en la fecha local del
    * paciente y el plan que estaba publicado pasa a SUPERSEDED. Sin hidratación no se publica (RN-E13); tampoco con un
    * tiempo del que el paciente no pueda registrar: en intercambios, sin un alimento permitido por grupo con
-   * intercambios; en composición, sin alimentos; en el menú, sin la opción A algún día (RN-G05).
+   * intercambios; en composición, sin alimentos; en el menú, sin la opción A algún día (RN-G05). Ni con un alimento
+   * excluido por una alergia o intolerancia, que puede haberse enlazado después de guardar (RN-E17).
    */
   publish(
     context: SecurityContext,
@@ -198,6 +204,8 @@ export class NutritionPlanCommands {
         existing.draft,
       );
       if (!calculated.ok) return calculated;
+      const excluded = await this.exclusions.problems(existing.patientId, existing.draft);
+      if (excluded.length > 0) return err(planHasExcludedFoods(excluded));
       const problems = problemsOf(calculated.value);
       if (problems.length > 0) return err(planNotReady(problems));
 
@@ -241,7 +249,7 @@ export class NutritionPlanCommands {
 
   /**
    * Versión nueva de un plan publicado o reemplazado (02 §7): un borrador con lo mismo, que se edita y se publica. Un
-   * plan tiene a lo más un borrador a la vez.
+   * plan tiene a lo más un borrador a la vez. Se crea aunque lleve un alimento excluido: es como se corrige (RN-E17).
    */
   revise(context: SecurityContext, planId: string): Promise<Result<{ id: string }, DomainError>> {
     return atomically(this.uow, context, async () => {

@@ -1969,3 +1969,18 @@ model PerformanceProfile {
   @@map("performance_profile")
   @@schema("clinical")
 }
+
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model FoodExclusion {
+  conditionId    String   @map("condition_id") @db.Uuid
+  foodId         String   @map("food_id") @db.Uuid
+  organizationId String   @map("organization_id") @db.Uuid
+  patientId      String   @map("patient_id") @db.Uuid
+  createdBy      String   @map("created_by") @db.Uuid
+  createdAt      DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  @@id([conditionId, foodId])
+  @@index([organizationId, patientId], map: "food_exclusion_by_patient")
+  @@map("food_exclusion")
+  @@schema("nutrition")
+}

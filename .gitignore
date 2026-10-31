@@ -1,6 +1,9 @@
 # Dependencias
 node_modules/
 
+# Temporales de escritura atómica
+*.tmp.*
+
 # Salidas de compilación y pruebas
 dist/
 dist-worker/

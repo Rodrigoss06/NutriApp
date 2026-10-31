@@ -1,16 +1,25 @@
 'use client';
 
-import { CONDITION_KINDS, type Condition, type CreateCondition } from '@nutricoach/contracts';
+import {
+  CONDITION_KINDS,
+  type CareTeamMember,
+  type Condition,
+  type CreateCondition,
+  type FoodExclusionListResponse,
+  type MemberResponse,
+} from '@nutricoach/contracts';
 import { Button, Select, StatusBadge } from '@nutricoach/ui';
 import { useMutation } from '@tanstack/react-query';
 import { useRouter } from 'next/navigation';
 import { Controller, useForm } from 'react-hook-form';
 import { submitWith, TextAreaField, TextField } from '@/features/forms/fields';
 import { FormError } from '@/features/forms/form-error';
+import { ExcludedFoods } from '@/features/nutrition-plan/excluded-foods';
 import { useCanWrite } from '@/features/session/panel-session';
 import { apiFetch } from '@/lib/api/client';
 import { formatDate } from '@/lib/dates';
 import { CONDITION_KIND_LABELS, CONDITION_STATUS_LABELS } from './labels';
+import { useWritesRecord } from './use-writes-record';
 
 interface ConditionValues {
   readonly kind: string;
@@ -23,19 +32,27 @@ interface ConditionValues {
 
 /**
  * Condiciones como filas propias (RF-09): enfermedades, alergias, intolerancias, medicamentos, suplementos, cirugías y
- * lesiones. Lo registrado no se reescribe: solo cambian el estado y las notas.
+ * lesiones. Lo registrado no se reescribe: solo cambian el estado y las notas. Una alergia o intolerancia activa se enlaza
+ * además con los alimentos que excluye de la dieta (RN-E17).
  */
 export function ConditionsSection({
   patientId,
   conditions,
+  exclusions,
+  careTeam,
+  members,
   archived,
 }: {
   patientId: string;
   conditions: readonly Condition[];
+  exclusions: FoodExclusionListResponse['conditions'];
+  careTeam: readonly CareTeamMember[];
+  members: readonly MemberResponse[];
   archived: boolean;
 }) {
   const router = useRouter();
   const canWrite = useCanWrite() && !archived;
+  const writesRecord = useWritesRecord(careTeam, members);
   const form = useForm<ConditionValues>({
     defaultValues: { kind: 'DISEASE', label: '', codeSystem: '', code: '', since: '', notes: '' },
   });
@@ -65,44 +82,56 @@ export function ConditionsSection({
         <p className="text-sm text-muted-foreground">Sin condiciones registradas.</p>
       ) : (
         <ul className="divide-y divide-border rounded-lg border border-border bg-card">
-          {conditions.map((condition) => (
-            <li key={condition.id} className="flex flex-col gap-2 p-4 sm:flex-row sm:items-start">
-              <div className="flex min-w-0 flex-1 flex-col gap-1">
-                <div className="flex flex-wrap items-center gap-2">
-                  <span className="font-medium">
-                    {CONDITION_KIND_LABELS[condition.kind]}: {condition.label}
+          {conditions.map((condition) => {
+            const dietary = exclusions.find((e) => e.conditionId === condition.id);
+            return (
+              <li key={condition.id} className="flex flex-col gap-2 p-4 sm:flex-row sm:items-start">
+                <div className="flex min-w-0 flex-1 flex-col gap-1">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <span className="font-medium">
+                      {CONDITION_KIND_LABELS[condition.kind]}: {condition.label}
+                    </span>
+                    <StatusBadge tone={condition.status === 'ACTIVE' ? 'warning' : 'success'}>
+                      {CONDITION_STATUS_LABELS[condition.status]}
+                    </StatusBadge>
+                  </div>
+                  <span className="text-sm text-muted-foreground">
+                    {[
+                      condition.code
+                        ? `${condition.codeSystem ?? 'Código'} ${condition.code}`
+                        : null,
+                      condition.since ? `desde el ${formatDate(condition.since)}` : null,
+                    ]
+                      .filter(Boolean)
+                      .join(' · ') || 'Sin código ni fecha'}
                   </span>
-                  <StatusBadge tone={condition.status === 'ACTIVE' ? 'warning' : 'success'}>
-                    {CONDITION_STATUS_LABELS[condition.status]}
-                  </StatusBadge>
+                  {condition.notes ? (
+                    <p className="text-sm whitespace-pre-wrap">{condition.notes}</p>
+                  ) : null}
+                  {dietary ? (
+                    <ExcludedFoods
+                      patientId={patientId}
+                      condition={dietary}
+                      canWrite={canWrite && writesRecord}
+                    />
+                  ) : null}
                 </div>
-                <span className="text-sm text-muted-foreground">
-                  {[
-                    condition.code ? `${condition.codeSystem ?? 'Código'} ${condition.code}` : null,
-                    condition.since ? `desde el ${formatDate(condition.since)}` : null,
-                  ]
-                    .filter(Boolean)
-                    .join(' · ') || 'Sin código ni fecha'}
-                </span>
-                {condition.notes ? (
-                  <p className="text-sm whitespace-pre-wrap">{condition.notes}</p>
-                ) : null}
-              </div>
-              <Button
-                variant="secondary"
-                size="sm"
-                disabled={!canWrite || change.isPending}
-                onClick={() => {
-                  change.mutate({
-                    id: condition.id,
-                    status: condition.status === 'ACTIVE' ? 'RESOLVED' : 'ACTIVE',
-                  });
-                }}
-              >
-                {condition.status === 'ACTIVE' ? 'Marcar resuelta' : 'Marcar activa'}
-              </Button>
-            </li>
-          ))}
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  disabled={!canWrite || change.isPending}
+                  onClick={() => {
+                    change.mutate({
+                      id: condition.id,
+                      status: condition.status === 'ACTIVE' ? 'RESOLVED' : 'ACTIVE',
+                    });
+                  }}
+                >
+                  {condition.status === 'ACTIVE' ? 'Marcar resuelta' : 'Marcar activa'}
+                </Button>
+              </li>
+            );
+          })}
         </ul>
       )}
       <form

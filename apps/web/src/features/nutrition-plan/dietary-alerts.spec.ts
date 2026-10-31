@@ -1,23 +1,6 @@
-import type { ClinicalHistoryRevision, Condition } from '@nutricoach/contracts';
+import type { ClinicalHistoryRevision } from '@nutricoach/contracts';
 import { describe, expect, it } from 'vitest';
-import { dietaryAlertsOf } from './dietary-alerts';
-
-const condition = (
-  kind: Condition['kind'],
-  label: string,
-  status: Condition['status'] = 'ACTIVE',
-) =>
-  ({
-    id: `${kind}-${label}`,
-    kind,
-    label,
-    status,
-    codeSystem: null,
-    code: null,
-    since: null,
-    notes: null,
-    createdAt: '2026-10-30T12:00:00.000Z',
-  }) satisfies Condition;
+import { anamnesisNoteOf } from './dietary-alerts';
 
 const META = {
   revision: 1,
@@ -42,38 +25,22 @@ const legacy = (answers: {
   profile: null,
 });
 
-describe('07 §12 · lo que hay que tener a la vista al armar una dieta', () => {
-  it('solo las alergias e intolerancias activas', () => {
-    const { conditions } = dietaryAlertsOf(
-      [
-        condition('ALLERGY', 'Maní'),
-        condition('INTOLERANCE', 'Lactosa'),
-        condition('ALLERGY', 'Penicilina', 'RESOLVED'),
-        condition('DISEASE', 'Hipotiroidismo'),
-      ],
-      null,
-    );
-
-    expect(conditions.map((c) => c.label)).toEqual(['Maní', 'Lactosa']);
-  });
-
-  it('lo que se respondió en la anamnesis V2, aunque no se haya registrado como condición', () => {
-    expect(dietaryAlertsOf([], anamnesis(' No come mariscos. ')).anamnesisNote).toBe(
-      'No come mariscos.',
-    );
-    expect(dietaryAlertsOf([], anamnesis()).anamnesisNote).toBeNull();
-    expect(dietaryAlertsOf([], anamnesis('   ')).anamnesisNote).toBeNull();
+describe('07 §12 · lo que dice la anamnesis de las alergias e intolerancias', () => {
+  it('la respuesta de la anamnesis V2, aunque no se haya registrado como condición', () => {
+    expect(anamnesisNoteOf(anamnesis(' No come mariscos. '))).toBe('No come mariscos.');
+    expect(anamnesisNoteOf(anamnesis())).toBeNull();
+    expect(anamnesisNoteOf(anamnesis('   '))).toBeNull();
   });
 
   it('los bloques de alergias e intolerancias de la historia v1', () => {
-    expect(
-      dietaryAlertsOf([], legacy({ allergies: 'Maní', intolerances: 'Lactosa' })).anamnesisNote,
-    ).toBe('Maní · Lactosa');
-    expect(dietaryAlertsOf([], legacy({ intolerances: 'Lactosa' })).anamnesisNote).toBe('Lactosa');
-    expect(dietaryAlertsOf([], legacy({})).anamnesisNote).toBeNull();
+    expect(anamnesisNoteOf(legacy({ allergies: 'Maní', intolerances: 'Lactosa' }))).toBe(
+      'Maní · Lactosa',
+    );
+    expect(anamnesisNoteOf(legacy({ intolerances: 'Lactosa' }))).toBe('Lactosa');
+    expect(anamnesisNoteOf(legacy({}))).toBeNull();
   });
 
-  it('sin historia ni condiciones, no hay nada que mostrar', () => {
-    expect(dietaryAlertsOf([], null)).toEqual({ conditions: [], anamnesisNote: null });
+  it('sin historia, nada', () => {
+    expect(anamnesisNoteOf(null)).toBeNull();
   });
 });
