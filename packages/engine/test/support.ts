@@ -1,5 +1,7 @@
+import { readFileSync } from 'node:fs';
 import { expect } from 'vitest';
 import type { CalculationResult, MethodRun } from '../src/registry/types.js';
+import type { MovementPattern, PatternChoice, TrainingLevel } from '../src/training/index.js';
 
 /** Devuelve el resultado de una ejecución exitosa o hace fallar la prueba con sus errores. */
 export function expectOk<TInput, TOutput>(
@@ -23,3 +25,24 @@ export function expectKcal(actual: number, expected: number): void {
 /** Redondeo a la mitad hacia arriba, como `r()` de docs/reference/examples.ts. Solo para comparar en pruebas. */
 export const roundHalfUp = (value: number, decimals: number): number =>
   Math.round(value * 10 ** decimals) / 10 ** decimals;
+
+/** La tabla patrón × nivel de la V3: el mismo CSV que carga la biblioteca (seeds/exercise/pattern-choice-v3.csv). */
+export function patternChoiceSeed(): readonly PatternChoice[] {
+  const csv = readFileSync(
+    new URL('../../../seeds/exercise/pattern-choice-v3.csv', import.meta.url),
+    'utf8',
+  );
+  return csv
+    .trim()
+    .split('\n')
+    .slice(1)
+    .map((line) => {
+      const [pattern, level, exerciseCode, exerciseName] = line.split(',') as [
+        MovementPattern,
+        TrainingLevel,
+        string,
+        string,
+      ];
+      return { pattern, level, exerciseCode, exerciseName };
+    });
+}

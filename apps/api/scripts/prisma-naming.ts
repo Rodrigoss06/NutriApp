@@ -29,6 +29,14 @@ const RELATION_OVERRIDES: Readonly<Record<string, string>> = {
   'exercise.exercise.other_exercise_exercise_easier_variant_idToexercise': 'easierVariantOf',
   'exercise.exercise.exercise_exercise_harder_variant_idToexercise': 'harderVariant',
   'exercise.exercise.other_exercise_exercise_harder_variant_idToexercise': 'harderVariantOf',
+  'exercise.exercise.exercise_exercise_alternative_idToexercise': 'alternative',
+  'exercise.exercise.other_exercise_exercise_alternative_idToexercise': 'alternativeOf',
+  'exercise.exercise.movement_pattern_exercise_movement_patternTomovement_pattern': 'pattern',
+  'exercise.movement_pattern.exercise_exercise_movement_patternTomovement_pattern': 'exercises',
+  'exercise.movement_pattern.pattern_choice_pattern_choice_movement_patternTomovement_pattern':
+    'patternChoices',
+  'exercise.pattern_choice.movement_pattern_pattern_choice_movement_patternTomovement_pattern':
+    'pattern',
 };
 
 interface Field {

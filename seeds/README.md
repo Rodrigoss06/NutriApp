@@ -17,6 +17,8 @@ no corre; antes hay que compilar la API (`pnpm --filter api build`). Un archivo 
 | food/tafera-2016-medidas.csv | TAFERA_MEASURES | 933 | cfe7781b411c68e8510f85a53b25a64b7d3a12b0ad26db8aa9df7e0572bdeb35 |
 | food/tafera-2016-factores.csv | TAFERA_COOKING_FACTORS | 213 | a8b0967c7892e737a588fedd6e10934812eeb34f8cdac7f9a9d3fa526ff16e71 |
 | exercise/compendium-2024.csv | COMPENDIUM_ACTIVITIES | 560 | bc7fdf041739c180b1934e0d6c39f414889246b3da57fea44ee47486c5fca6b5 |
+| exercise/ejercicios-base.csv | EXERCISE_LIBRARY | 169 | 8b98317a527e0e2a3cd5b4abce53e1d16c7e40150bc445ab09c4253a0de00f11 |
+| exercise/pattern-choice-v3.csv | EXERCISE_PATTERN_CHOICES | 45 | d2d6dfdbce753cd04c15b1debdf0ae95b28540ad054077b5ce194e8def262d80 |
 
 Un CSV nuevo cambia su hash: se carga como un lote nuevo y actualiza por código lo que cambió (ADR-052).
 
@@ -128,17 +130,43 @@ Las equivalencias que ya trae el Compendium se copian tal cual, aunque no sean e
 frente a mph), 17220, 17231 (5.0–5.5 mph como 8.8–8.9 km/h) y 17346 (mph frente a km/h), y 17018, 17313, 17315
 (20–30 lb como 9.0–15.0 kg), 17434 y 17438 (lb frente a kg).
 
-## training/periodization-v3.json y exercise/pattern-choice-v3.json
+## exercise/ejercicios-base.csv
+
+La biblioteca base de ejercicios (RF-25, RF-38): 169 ejercicios de los 15 patrones de movimiento. ⚠️ **Provisional:**
+solo 23 vienen de JV Fitness. Rodrigo decidió (2026-10-30, ADR-071) que los demás los redacte Claude y queden marcados
+como provisionales hasta que Jeremy los revise; la app muestra la marca. En P16 se revisan todas las marcas.
+
+- Columnas: `codigo,patron,nombre,alias,modalidad,nivel,equipo,unilateral,principal,secundarios,precaucion,alternativa,regresion,progresion,series,reps_min,reps_max,medida,descanso_s,provisional`.
+  `alias` y `secundarios` van separados por `;`. `alternativa`, `regresion` y `progresion` son códigos de este archivo.
+- **Los 23 de la V3** (`provisional` = `no`, hoja EJERCICIOS de `01_PERIODIZACION_AUTOMATIZADA_PLANTILLA_V3.xlsx`): código,
+  patrón, nombre, músculos, precaución, alternativa, repeticiones, series y descanso son los de la hoja, comparados con
+  un script. Lo que no viene de la hoja, y Jeremy también tiene que revisar: la regresión y la progresión (la V3 solo
+  trae alternativa, P-13), si es unilateral y el código del equipo.
+- **El nivel** es el más bajo en que lo usa la tabla patrón × nivel: manda la tabla (P-11). Por eso `SQ02`, `SQ03`, `HT01`
+  y `LN01` difieren de la hoja EJERCICIOS.
+- **El equipo** es uno solo por ejercicio. Si la hoja da dos opciones («Polea / banda»), va el que menos pide (banda);
+  «Barra / banco» pide los dos y va la barra.
+- **`medida`** dice qué cuentan las repeticiones base: `REPS`, `SECONDS` (una plancha) o `MINUTES`. La hoja pone 20
+  repeticiones y 1 serie a la caminata y la bicicleta: son minutos.
+- **Provisionales** (146): 15 que pide la tabla patrón × nivel y no están en la hoja, 14 que la hoja nombra como
+  alternativa, y 117 más para llegar a una biblioteca completa por patrón y nivel, redactados por Claude con el estilo de
+  la hoja.
+
+Una prueba comprueba el archivo: 150 o más, sin códigos ni nombres repetidos, variantes que existen y regresiones y
+progresiones que respetan el nivel.
+
+## exercise/pattern-choice-v3.csv y training/periodization-v3.json
 
 Plantilla de periodización V3 de JV Fitness, paquete operativo del 2026-10-15 (hojas CONFIG y PRESCRIPCION del archivo
 `01_PERIODIZACION_AUTOMATIZADA_PLANTILLA_V3.xlsx`, SHA-256
 483e20dc18281fd7c28f6e1967424be41cb6f2a6265497f69f56b5f1ef094763). Los xlsx no van en el repositorio.
 
+- **Patrón × nivel** (RN-F14, 07 §5): 15 patrones por 3 niveles, 45 filas, con el código y el nombre del ejercicio en la
+  biblioteca. Manda la tabla (P-11): «RDL con mancuernas» se llama como en Notion, «Peso muerto rumano con mancuernas», y
+  queda como alias. Se carga con catalog:load después de los ejercicios; cada organización puede reemplazar una fila.
 - **Fases** (RN-F13, 07 §7): 12 semanas por cada uno de los 4 objetivos, 48 filas. `validFrom` es la fecha de corte del
   paquete y es la versión de la tabla que guarda cada programa. `isDeload` son las semanas «Descarga» y `reviewKind` es
   CONTROL en las semanas 4, 8 y 12, como la hoja MACROCICLO.
-- **Patrón × nivel** (RN-F14, 07 §5): 15 patrones por 3 niveles, 45 filas, con el código y el nombre del ejercicio en la
-  biblioteca. Manda la tabla (P-11): «RDL con mancuernas» se llama como en Notion, «Peso muerto rumano con mancuernas».
 
 Los leen los casos dorados G-29, G-30 y G-32, y la comparación de la propuesta con la hoja PRESCRIPCION.
 

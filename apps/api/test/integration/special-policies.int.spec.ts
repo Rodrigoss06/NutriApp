@@ -162,6 +162,80 @@ describe('RN-G01 · el paciente solo ve lo permitido y escribe solo sus registro
     });
   });
 
+  it('no borra lo que puede leer, y el equipo sí: DELETE no pasa por el WITH CHECK de patient_scope (05 §3)', async () => {
+    const [foodId, recipeId, exerciseId] = [id(), id(), id()];
+    await owner(
+      `INSERT INTO food.food (id, organization_id, source_code, source_food_code, name_es)
+       VALUES ($1, $2, 'ORG', 'PARA-BORRAR', 'Alimento para borrar')`,
+      [foodId, a.orgId],
+    );
+    await owner(
+      `INSERT INTO food.household_measure (id, food_id, organization_id, name_es, grams)
+       VALUES ($1, $2, $3, 'Taza', 200)`,
+      [id(), foodId, a.orgId],
+    );
+    await owner(
+      `INSERT INTO food.recipe (id, organization_id, name_es, servings, created_by)
+       VALUES ($1, $2, 'Receta para borrar', 1, $3)`,
+      [recipeId, a.orgId, a.memberUserId],
+    );
+    await owner(
+      `INSERT INTO food.recipe_ingredient (recipe_id, position, organization_id, food_id, grams)
+       VALUES ($1, 1, $2, $3, 100)`,
+      [recipeId, a.orgId, foodId],
+    );
+    await owner(
+      `INSERT INTO exercise.exercise (id, organization_id, name_es, modality)
+       VALUES ($1, $2, 'Ejercicio para borrar', 'STRENGTH')`,
+      [exerciseId, a.orgId],
+    );
+    await owner(
+      `INSERT INTO exercise.exercise_muscle (exercise_id, muscle_code, organization_id, role)
+       VALUES ($1, 'CHEST', $2, 'PRIMARY')`,
+      [exerciseId, a.orgId],
+    );
+    await owner(
+      `INSERT INTO analytics.patient_daily_summary (patient_id, local_date, organization_id)
+       VALUES ($1, $2, $3)`,
+      [a.patientId, LOCAL_DATE, a.orgId],
+    );
+    await owner(
+      `INSERT INTO analytics.patient_weekly_muscle_volume (patient_id, week_start, muscle_code, organization_id,
+                                                           fractional_sets_done)
+       VALUES ($1, $2, 'CHEST', $3, 3)`,
+      [a.patientId, LOCAL_DATE, a.orgId],
+    );
+    await owner(
+      `INSERT INTO analytics.exercise_one_rm_series (patient_id, exercise_id, local_date, formula, organization_id,
+                                                     best_estimated_1rm_kg, source_set_id)
+       VALUES ($1, $2, $3, 'EPLEY', $4, 100, $5)`,
+      [a.patientId, exerciseId, LOCAL_DATE, a.orgId, id()],
+    );
+    const tables = [
+      'exercise.exercise_muscle',
+      'food.household_measure',
+      'food.recipe_ingredient',
+      'analytics.patient_daily_summary',
+      'analytics.patient_weekly_muscle_volume',
+      'analytics.exercise_one_rm_series',
+    ];
+
+    await withContext('user', patient(a), async (client) => {
+      for (const table of tables) {
+        const read = await client.query(`SELECT 1 FROM ${table}`);
+        expect(read.rowCount, `${table}: el paciente lo lee`).toBeGreaterThan(0);
+        const deleted = await client.query(`DELETE FROM ${table}`);
+        expect(deleted.rowCount, `${table}: el paciente no lo borra`).toBe(0);
+      }
+    });
+    await withContext('user', professional(a), async (client) => {
+      for (const table of tables) {
+        const deleted = await client.query(`DELETE FROM ${table}`);
+        expect(deleted.rowCount, `${table}: el equipo lo borra`).toBeGreaterThan(0);
+      }
+    });
+  });
+
   it('otorga y revoca su consentimiento, nada más del consentimiento cambia', async () => {
     const documentId = id();
     await owner(

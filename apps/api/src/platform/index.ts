@@ -59,6 +59,7 @@ export { EXTENSIONS, MAX_UPLOAD_BYTES, sniffMime, type AllowedMime } from './sto
 export { FileRegistry, UNSUPPORTED_FILE, type StoredFile } from './storage/file-registry.js';
 export { inspectImage, type ImageInspection, type ImageMime } from './storage/image-info.js';
 export type { CatalogImport, ImportRowError, ImportStatus } from './import/catalog-import.js';
+export { readCatalogFile } from './import/catalog-import.js';
 export {
   CatalogImporter,
   MAX_STORED_ERRORS,

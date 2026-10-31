@@ -646,13 +646,30 @@ model Exercise {
   searchText      String?          @default(dbgenerated("app.unaccent_immutable(lower(name_es))")) @map("search_text")
   createdBy       String?          @map("created_by") @db.Uuid
   createdAt       DateTime         @default(now()) @map("created_at") @db.Timestamptz(6)
+  code            String?
+  level           String?
+  cautionEs       String?          @map("caution_es")
+  alternativeId   String?          @map("alternative_id") @db.Uuid
+  baseSets        Int?             @map("base_sets") @db.SmallInt
+  baseRepsMin     Int?             @map("base_reps_min") @db.SmallInt
+  baseRepsMax     Int?             @map("base_reps_max") @db.SmallInt
+  baseMeasure     String           @default("REPS") @map("base_measure")
+  baseRestSeconds Int?             @map("base_rest_seconds") @db.SmallInt
+  provisional     Boolean          @default(false)
+  updatedAt       DateTime         @default(now()) @map("updated_at") @db.Timestamptz(6)
+  version         Int              @default(0)
+  alternative     Exercise?        @relation("exercise_alternative_idToexercise", fields: [alternativeId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  alternativeOf   Exercise[]       @relation("exercise_alternative_idToexercise")
   easierVariant   Exercise?        @relation("exercise_easier_variant_idToexercise", fields: [easierVariantId], references: [id], onDelete: NoAction, onUpdate: NoAction)
   easierVariantOf Exercise[]       @relation("exercise_easier_variant_idToexercise")
   equipment       Equipment?       @relation(fields: [equipmentCode], references: [code], onDelete: NoAction, onUpdate: NoAction)
   harderVariant   Exercise?        @relation("exercise_harder_variant_idToexercise", fields: [harderVariantId], references: [id], onDelete: NoAction, onUpdate: NoAction)
   harderVariantOf Exercise[]       @relation("exercise_harder_variant_idToexercise")
+  pattern         MovementPattern? @relation("exercise_movement_patternTomovement_pattern", fields: [movementPattern], references: [code], onDelete: NoAction, onUpdate: NoAction)
   exerciseMuscles ExerciseMuscle[]
+  patternChoices  PatternChoice[]
 
+  @@unique([organizationId, code], map: "exercise_code", where: raw("(code IS NOT NULL)"))
   @@index([searchText(ops: raw("gin_trgm_ops"))], map: "exercise_search", type: Gin)
   @@map("exercise")
   @@schema("exercise")
@@ -1898,4 +1915,32 @@ model CookingFactor {
   @@index([foodId], map: "cooking_factor_by_food")
   @@map("cooking_factor")
   @@schema("food")
+}
+
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model MovementPattern {
+  code           String          @id
+  nameEs         String          @map("name_es")
+  displayOrder   Int             @map("display_order") @db.SmallInt
+  exercises      Exercise[]      @relation("exercise_movement_patternTomovement_pattern")
+  patternChoices PatternChoice[] @relation("pattern_choice_movement_patternTomovement_pattern")
+
+  @@map("movement_pattern")
+  @@schema("exercise")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model PatternChoice {
+  id              String          @id @db.Uuid
+  organizationId  String?         @map("organization_id") @db.Uuid
+  movementPattern String          @map("movement_pattern")
+  level           String
+  exerciseId      String          @map("exercise_id") @db.Uuid
+  exercise        Exercise        @relation(fields: [exerciseId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  pattern         MovementPattern @relation("pattern_choice_movement_patternTomovement_pattern", fields: [movementPattern], references: [code], onDelete: NoAction, onUpdate: NoAction)
+
+  @@unique([organizationId, movementPattern, level])
+  @@map("pattern_choice")
+  @@schema("exercise")
 }

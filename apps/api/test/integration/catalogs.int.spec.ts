@@ -92,10 +92,12 @@ describe('RF-38 · RN-I04 · importador de catálogos', () => {
     first = await run('TPCA_FOODS', tpca, 'tpca-2017.csv');
   });
 
-  it('la CLI registra los catálogos de P8', () => {
+  it('la CLI registra los catálogos de P8 y de P12', () => {
     expect(importer.kinds()).toEqual(
       expect.arrayContaining([
         'COMPENDIUM_ACTIVITIES',
+        'EXERCISE_LIBRARY',
+        'EXERCISE_PATTERN_CHOICES',
         'TAFERA_COOKING_FACTORS',
         'TAFERA_MEASURES',
         'TPCA_FOODS',

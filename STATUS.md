@@ -19,7 +19,7 @@ Próxima demo: Demo 1 · Base y evaluación · semana 2
 | P9 Dieta por intercambios | ✅ | Rodrigo | #25, #26 y #27 | 3 criterios en verde (integración y E2E de Luis en escritorio y celular): borrador (ADR-057), publicación y tracking (ADR-058) y pantallas (ADR-059). /notion-sync aplicado (15 cambios en 02, 03 y 05.2) |
 | P10 Composición, menú y recetario | ✅ | Rodrigo | #28, #30 y #31 | 2 criterios en verde (integración y E2E en escritorio y celular): recetario (ADR-061), composición y menú en la API (ADR-062) y pantallas (ADR-063). Plantillas (RF-22, deseable) fuera. /notion-sync aplicado (17 cambios en 02, 03, 04, 05 y 05.2) |
 | P11 Fichas PDF, Demo 2 | ✅ | Rodrigo | #32 a #37 | 4 criterios en verde (integración y E2E en escritorio y celular): contexto documents y ficha de intercambios (ADR-064), fichas del menú y de resultados (ADR-065; 1.0.1 en ADR-069), marca mínima (ADR-066), descargas (ADR-067), semilla, guion y acta de la Demo 2 (ADR-068). Etiqueta v0.2.0 (e05f8de); staging, pendiente de P4. /notion-sync aplicado (17 cambios en 02, 03, 04, 05, 05.1, 05.3 y 06) |
-| P12 Ejercicios y rutinas | 🟨 | Rodrigo | | PR 1 de 7: motor del método de JV Fitness (ADR-070) |
+| P12 Ejercicios y rutinas | 🟨 | Rodrigo | #39 | PR 1 de 7 fusionado: motor (ADR-070). PR 2: biblioteca (ADR-071) |
 | P13 App del paciente | ⬜ | Rodrigo | | |
 | P14 Analítica y evolución, Demo 3 | ⬜ | Rodrigo | | |
 | P15 Marca, calendario, admin y migración | ⬜ | Rodrigo | | |
@@ -28,9 +28,12 @@ Próxima demo: Demo 1 · Base y evaluación · semana 2
 Leyenda: ⬜ pendiente · 🟨 en curso · ✅ terminado · ⛔ bloqueado
 
 ## En curso
-- P12, PR 1 de 7 (ADR-070): en el motor, `PRI_JV`, las llaves de seguridad, la propuesta y el macrociclo, con G-29 a
-  G-35 y G-40 en verde y la propuesta de 4 días comparada fila por fila con la hoja PRESCRIPCION. Las tablas de la V3,
-  en seeds/. Motor 1.4.0. Faltan: biblioteca, anamnesis, seguridad, programa (API y web) y ficha de rutina.
+- P12, PR 2 de 7 (ADR-071): biblioteca de ejercicios. CSV de 169 ejercicios (23 de la V3 y 146 provisionales), tabla
+  patrón × nivel, ejercicios propios, búsqueda sin tildes y por alias, pantallas Ejercicios y Patrón y nivel. La revisión
+  cerró un hueco de RLS: el paciente podía borrar en 6 tablas que puede leer (`patient_no_delete`). Faltan: anamnesis,
+  seguridad, programa (API y web) y ficha de rutina.
+- P12, PR 1 fusionado (#39, 7724d37) (ADR-070): en el motor, `PRI_JV`, las llaves de seguridad, la propuesta y el
+  macrociclo, con G-29 a G-35 y G-40 en verde. Motor 1.4.0.
 - P11 terminado (#32 a #37), con la etiqueta v0.2.0 en e05f8de:
   - #32 (ADR-064): contexto documents, ficha de la dieta por intercambios con react-pdf en el worker, generación al
     publicar y a pedido, reutilización por hashes y descarga auditada; criterios 1 y 3;
@@ -93,8 +96,8 @@ Leyenda: ⬜ pendiente · 🟨 en curso · ✅ terminado · ⛔ bloqueado
 ## Siguiente paso
 - Antes de la Demo 1: la matriz manual de navegadores (RNF-19: Chrome, Edge, Safari y Firefox; la E2E cubre Chromium
   y WebKit) y, el mismo día, base local limpia y semilla («Antes de empezar» del guion). La demo es en local
-- P12, PR 2: biblioteca de ejercicios (catálogos, CSV de 150 o más ejercicios marcados «Provisional», importador,
-  ejercicios propios y pantalla). Se construye con la propuesta de cada pregunta abierta de 07 §15
+- P12, PR 3: anamnesis de JV Fitness como versión 2 de la historia clínica y perfil de rendimiento (RF-43). Se construye
+  con la propuesta de cada pregunta abierta de 07 §15
 - Demo 2: «Antes de empezar» de docs/demos/demo-2.md (base limpia, db:seed, catalog:load, pnpm dev y pnpm demo:2) y
   enviar el acta al terminar
 - Cada base nueva necesita los catálogos: `pnpm --filter api build && pnpm catalog:load plataforma@demo.example.com`
@@ -121,6 +124,7 @@ Leyenda: ⬜ pendiente · 🟨 en curso · ✅ terminado · ⛔ bloqueado
 - [x] N7: lo resuelve el registro diario de la plantilla V3 (RN-G11)
 - [ ] Método de entrenamiento de Jeremy: preguntas P-01 a P-14 (Notion 07 §15). Mientras no respondan, P12 a P14 se
   construyen con la propuesta de cada una
+- [ ] Jeremy revisa los 146 ejercicios base provisionales, y la regresión y progresión de los 23 de la V3 (ADR-071)
 - [ ] Preguntas nuevas para Jeremy (ADR-070): P-15, cuál formulario manda (`01` y `02` con puntaje, o `08_ANAMNESIS_V2` y
   `09_CRIBADO_V2`, sin puntaje y con otros códigos); P-16, si «Caminata inclinada» va de verdad con 3 × 8-12 y RIR 2; y
   confirmar el quinto día (P-04)
@@ -181,6 +185,10 @@ Leyenda: ⬜ pendiente · 🟨 en curso · ✅ terminado · ⛔ bloqueado
   reintentar (#29, 2026-10-24); esperar el título antes de axe
 
 ## Registro de sesiones (solo las 5 últimas)
+- 2026-10-30 · P12 (PR 2) · #39 fusionado. Biblioteca de ejercicios (ADR-071): CSV de 169 ejercicios redactados y
+  comparados con la hoja de la V3, importadores, ejercicios propios, tabla patrón × nivel por organización y pantallas.
+  Revisión: `patient_no_delete` en 6 tablas, la tabla la cambian el dueño y el administrador, y una fila sin ejercicio
+  válido vuelve a la de la V3
 - 2026-10-30 · P12 (PR 1) · Plan aprobado con las 6 decisiones de Rodrigo (ADR-070). #38 fusionado. Motor 1.4.0:
   `PRI_JV`, llaves de seguridad, propuesta y macrociclo, con G-29 a G-35 y G-40 en verde. Tablas de la V3 en seeds/
 - 2026-10-28 · P11 (arreglo y cierre) · #36 y #37 fusionados con los cuatro checks en verde. #37: ficha de resultados
@@ -194,7 +202,3 @@ Leyenda: ⬜ pendiente · 🟨 en curso · ✅ terminado · ⛔ bloqueado
 - 2026-10-27 · P11 (PR 2 a PR 4) · #33 y #34 fusionados con los cuatro checks en verde. #34: marca mínima de las
   fichas (ADR-066) con la API, el logo revisado entero, el evento auditado y la pantalla «Marca de las fichas»; solo el
   color principal, porque las plantillas no usan el secundario. PR 4: descargas en el panel (ADR-067) con su E2E
-- 2026-10-26 · P11 (PR 1 y PR 2) · #32 fusionado con los cuatro checks en verde. PR 2: fichas del menú, la
-  composición y los resultados (ADR-065), con el criterio 2 en la integración. Un apagado brusco dejó archivos del
-  PR 2 cortados en el disco NTFS (tamaño viejo, contenido nuevo, y git no lo ve): se rehicieron desde git y se
-  verificó todo el árbol con git hash-object; la migración recreada tiene el mismo checksum que la aplicada

@@ -1,5 +1,4 @@
 import { describe, expect, it } from 'vitest';
-import patternChoiceSeed from '../../../../seeds/exercise/pattern-choice-v3.json' with { type: 'json' };
 import periodizationSeed from '../../../../seeds/training/periodization-v3.json' with { type: 'json' };
 import { runMethod } from '../../src/registry/run-method.js';
 import {
@@ -11,15 +10,14 @@ import {
   routineSplit,
   screeningStatus,
   suggestedExercise,
-  type PatternChoice,
   type PeriodizationPhase,
   type SafetyKeys,
 } from '../../src/training/index.js';
-import { expectOk } from '../support.js';
+import { expectOk, patternChoiceSeed } from '../support.js';
 
 /** G-29 a G-35 y G-40 reproducen la plantilla V3 de JV Fitness (Notion 03 y 07 §14): puntajes y factores exactos. */
 const PHASES = periodizationSeed.phases as readonly PeriodizationPhase[];
-const CHOICES = patternChoiceSeed.choices as readonly PatternChoice[];
+const CHOICES = patternChoiceSeed();
 
 describe('G-29 · RN-F13 · fase de una semana', () => {
   it('hipertrofia, semana 4: «Hipertrofia», «Sobrecarga», factor 1.1, moderada-alta, RIR 1, control y ajuste', () => {

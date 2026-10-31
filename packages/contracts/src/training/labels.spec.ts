@@ -15,6 +15,14 @@ import {
 } from '@nutricoach/engine';
 import { describe, expect, it } from 'vitest';
 import {
+  EXERCISE_BASE_MEASURES,
+  EXERCISE_MODALITIES,
+  MOVEMENT_PATTERNS as CONTRACT_PATTERNS,
+  TRAINING_LEVELS as CONTRACT_LEVELS,
+} from '../exercise/library.js';
+import {
+  EXERCISE_BASE_MEASURE_LABELS,
+  EXERCISE_MODALITY_LABELS,
   MEDICAL_CLEARANCE_LABELS,
   MOVEMENT_PATTERN_LABELS,
   MOVEMENT_TEST_STATUS_LABELS,
@@ -37,6 +45,13 @@ PERFORMANCE_CLASS_LABELS satisfies {
   };
 };
 
+describe('07 §5 · los códigos de los contratos son los del motor', () => {
+  it('patrones y niveles', () => {
+    expect(CONTRACT_PATTERNS).toEqual(MOVEMENT_PATTERNS);
+    expect(CONTRACT_LEVELS).toEqual(TRAINING_LEVELS);
+  });
+});
+
 describe('RN-D02 · cada código del motor tiene su texto', () => {
   it.each([
     ['objetivos', TRAINING_OBJECTIVE_LABELS, TRAINING_OBJECTIVES],
@@ -51,6 +66,8 @@ describe('RN-D02 · cada código del motor tiene su texto', () => {
     ['pruebas posturales', MOVEMENT_TEST_STATUS_LABELS, MOVEMENT_TEST_STATUSES],
     ['estados de la propuesta', PRESCRIPTION_STATUS_LABELS, PRESCRIPTION_STATUSES],
     ['dominios', PROFILE_DOMAIN_LABELS, PROFILE_DOMAINS],
+    ['modalidades', EXERCISE_MODALITY_LABELS, EXERCISE_MODALITIES],
+    ['medidas', EXERCISE_BASE_MEASURE_LABELS, EXERCISE_BASE_MEASURES],
   ] as const)('%s: ni falta ni sobra ninguno', (_name, labels, codes) => {
     expect(Object.keys(labels).sort()).toEqual([...codes].sort());
   });
