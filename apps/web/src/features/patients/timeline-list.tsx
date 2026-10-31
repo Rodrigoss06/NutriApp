@@ -42,6 +42,7 @@ export function timelineDetail(item: TimelineItem): string {
     case 'ENERGY_PRESCRIBED':
       return `Objetivo: ${label(ENERGY_GOAL_LABELS, item.label).toLowerCase()}`;
     case 'NUTRITION_PLAN_PUBLISHED':
+    case 'TRAINING_PROGRAM_PUBLISHED':
       return `Versión ${item.label}`;
   }
 }

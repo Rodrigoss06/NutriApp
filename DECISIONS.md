@@ -1546,3 +1546,42 @@ Consecuencias:
 - La API sigue decidiendo y sus pruebas no cambian. Si cambia una regla en `clinical-rules.ts`, hay que cambiarla también en
   `record-access.ts`.
 - La pestaña Historia ya lo hacía a su manera (ADR-072) y queda como estaba.
+
+## ADR-077 · Programa de entrenamiento: manual o propuesta, por semanas, con aprobación por bloque — aceptada (2026-10-31)
+Contexto: P12, PR 5 (RF-26, RN-F01 a RN-F04, RN-F10, RN-F12 a RN-F14). El motor ya da la propuesta y el macrociclo (ADR-070) y
+las llaves se conocen por el PR 4 (ADR-075); falta el agregado, publicarlo y que llegue a la app.
+Decisión:
+- Dos orígenes. A mano (`MANUAL`) nace vacío y se le agregan mesociclos, contiguos (02 §7). La propuesta (`PROPOSAL`) sale del perfil vigente
+  con las semanas de su macrociclo y guarda la versión de la tabla de fases, la de la plantilla y el perfil que usó; sus mesociclos no se
+  agregan ni se quitan.
+- Se edita de a una semana (`PUT /training-programs/:id/weeks/:weekId`), no el árbol entero: un macrociclo de 12 semanas pasa de 1000 series
+  y no cabe cómodo en un pedido. Duplicar copia las sesiones a las semanas de destino, reemplaza lo que tuvieran y no toca su fase.
+- La aprobación es por bloque: el día y el orden en la plantilla, en todas las semanas (`POST .../blocks/approve`), con sustitución y nota. Un
+  bloque se repite en cada semana, y aprobar 384 filas una por una no sería una revisión. Lo que es de la propuesta (patrón, sugerido,
+  aprobación) no viene del navegador: el servidor lo conserva por fila, y cambiar el ejercicio de una fila le quita la aprobación.
+- Publicar una propuesta exige todos los bloques aprobados y las llaves abiertas (RN-F14, RN-F15), también si se cerraron después de generarla.
+  A mano se permite con una llave cerrada (ADR-070): la pantalla avisa y el evento lleva `closedKey` para la auditoría.
+- El snapshot congela los músculos, la precaución y las variantes de cada ejercicio (RN-F11, RN-F12), con su hash. Un borrador se arma con la
+  biblioteca de hoy; publicado se lee del snapshot. Las series por músculo las da `FRACTIONAL_SETS` con su método (RN-F06, RN-D01). Los hijos
+  de un programa publicado tampoco cambian en la base (`guard_program_children`), como los de un plan.
+- La fórmula de 1RM es del paciente (RN-F04): el primer programa la elige, Epley por defecto; los siguientes la heredan y no aceptan otra.
+- La tabla de fases de la V3 entra por la migración, y una prueba comprueba que coincide con `seeds/training/periodization-v3.json`. Vale la
+  versión más reciente de la organización si tiene una; si no, la de la V3.
+- tracking guarda la copia del programa en `active_plan_view` y la meta de entrenamiento del día en `daily_target`: `planned_sessions` y
+  `planned_sets`. Sigue 07 §8: los días 1 a N de cada semana son las sesiones 1 a N y los demás, descanso; una sesión con su día de la semana va
+  ese día. El snapshot lleva un `schedule` corto para que el trabajo de cada hora no lea el programa entero.
+- Corrige un hueco de P9: `setDailyTarget` en modo KEEP hacía `DO NOTHING`, así que una fila creada por el programa dejaba el día sin la meta de
+  la dieta. Ahora completa la fila si le falta. Lo mismo a la inversa.
+- Códigos: NC-TRA-003 a NC-TRA-019.
+Consecuencias:
+- Un día sin sesión tiene meta con `planned_sessions` 0: descansar es la meta del día, no la falta de ella. Fuera del programa no hay fila.
+- `template_version` no está en 05.2: hace falta en el borrador, porque la plantilla puede cambiar entre generar la propuesta y publicarla.
+- El plan semanal no lleva las kcal por tipo de día (P-08, sin responder): solo entrenamiento y descanso.
+- El bloque de acondicionamiento sigue la plantilla (3 series de 8 a 12): la V3 no lo prescribe en minutos. El coach puede cambiarlo a duración y
+  MET (RN-F10).
+- La exportación y la supresión de P15 (RN-B04, RN-B05) tienen que incluir los programas y sus snapshots.
+- El snapshot lleva las notas del coach y la nota de sustitución, que pueden hablar de una lesión: la app del paciente (P13) no debe
+  mostrarlas sin que se decida.
+- Para Notion (/notion-sync de P12): 05.2 (`template_version`, `program_published_has_snapshot`, `program_one_draft`,
+  `prescribed_exercise_approved_together`, `guard_program_children`, `program_by_patient`, índices de los hijos); 02 §3 (rutas de `training-programs`, `TrainingApi`) y §8
+  (`training.program.created` y `.updated`); los códigos de arriba.

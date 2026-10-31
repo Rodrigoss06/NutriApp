@@ -10,6 +10,7 @@ import {
 import { ClinicalApi } from '../../clinical/index.js';
 import { TenancyApi } from '../../tenancy/index.js';
 import { localDate } from '../domain/active-plan.js';
+import { trainingTargetOf } from '../domain/active-program.js';
 import { TRACKING_STORE, type TrackingStore } from './ports/tracking.ports.js';
 
 /** Contexto de plataforma para listar las organizaciones: la RLS de tenancy se lo permite a PLATFORM_ADMIN. */
@@ -21,7 +22,7 @@ const platformContext: SecurityContext = {
 };
 
 /**
- * Cada hora en el worker: a cada paciente con un plan vigente le crea la meta de su día local si aún no la tiene
+ * Cada hora en el worker: a cada paciente con un plan o un programa vigente le crea la meta de su día local si aún no la tiene
  * (RN-G03, RN-G04). Nunca reescribe un día que ya tiene meta. Idempotente.
  */
 @Injectable()
@@ -54,6 +55,18 @@ export class DailyTargetsHandler {
               planId: plan.planId,
               target: plan.target,
             },
+            'KEEP',
+          );
+          if (written) count += 1;
+        }
+        for (const program of await this.store.activePrograms()) {
+          const patient = await this.clinical.patientRef(program.patientId);
+          if (!patient || patient.status === 'ARCHIVED') continue;
+          const today = localDate(now, patient.timezone);
+          const target = trainingTargetOf(program.calendar, today);
+          if (!target) continue;
+          const written = await this.store.setTrainingTarget(
+            { patientId: program.patientId, organizationId, localDate: today, target },
             'KEEP',
           );
           if (written) count += 1;
