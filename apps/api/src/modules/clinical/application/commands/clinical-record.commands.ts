@@ -33,6 +33,7 @@ import {
   type NoteVisibility,
 } from '../../domain/clinical-rules.js';
 import { clinicalEvent, type ClinicalEventType } from '../clinical-events.js';
+import { computePerformanceProfile } from '../performance-profile.js';
 import {
   CLINICAL_RECORD_STORE,
   CONSENT_STORE,
@@ -84,12 +85,15 @@ export class ClinicalRecordCommands {
     @Inject(CLINICAL_RECORD_STORE) private readonly records: ClinicalRecordStore,
   ) {}
 
-  /** Guarda una revisión nueva sobre la que se editó (bloqueo optimista); la ficha queda bloqueada hasta el final. */
+  /**
+   * Guarda una revisión nueva de la anamnesis V2 sobre la que se editó (bloqueo optimista), con su perfil de rendimiento
+   * (RF-43, RN-F16); la ficha queda bloqueada hasta el final.
+   */
   saveHistory(
     context: SecurityContext,
     patientId: string,
     expectedRevision: number,
-    answers: unknown,
+    answers: Readonly<Record<string, unknown>>,
   ): Promise<Result<{ revision: number }, DomainError>> {
     const actor = actorOf(context);
     return atomically(this.uow, context, async () => {
@@ -98,9 +102,13 @@ export class ClinicalRecordCommands {
       await this.records.lockPatient(patientId);
       const current = (await this.records.latestHistory(patientId))?.revision ?? 0;
       if (current !== expectedRevision) return err(HISTORY_REVISION_CONFLICT);
+      const profile = computePerformanceProfile(answers);
+      if (!profile.ok) return profile;
       const revision = current + 1;
+      const historyId = this.ids.newId<'ClinicalHistoryId'>();
+      const recordedAt = this.clock.now();
       await this.records.insertHistory({
-        id: this.ids.newId<'ClinicalHistoryId'>(),
+        id: historyId,
         organizationId: actor.organizationId,
         patientId,
         revision,
@@ -108,7 +116,15 @@ export class ClinicalRecordCommands {
         formVersion: HISTORY_FORM.version,
         answers,
         recordedBy: actor.userId,
-        recordedAt: this.clock.now(),
+        recordedAt,
+      });
+      await this.records.insertPerformanceProfile({
+        ...profile.value,
+        id: this.ids.newId<'PerformanceProfileId'>(),
+        organizationId: actor.organizationId,
+        patientId,
+        clinicalHistoryId: historyId,
+        computedAt: recordedAt,
       });
       await this.#emit(context, 'clinical.history.revised', patientId, patientId, { revision });
       return ok({ revision });

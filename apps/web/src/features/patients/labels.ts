@@ -2,6 +2,7 @@ import type {
   AuditEventsQuery,
   CareTeamMember,
   ClinicalHistoryAnswersV1,
+  ClinicalHistoryResponse,
   ClinicalNote,
   Condition,
   Consent,
@@ -156,6 +157,12 @@ export const AUDIT_RESOURCE_LABELS: Readonly<Record<string, string>> = {
 };
 
 /** Los bloques de la historia clínica v1, en el orden de la consulta (⚠️ provisional, ADR-041). */
+/** Con qué formulario se guardó una revisión de la historia clínica. */
+export const HISTORY_FORM_LABELS = {
+  JV_ANAMNESIS: 'Anamnesis V2',
+  ANAMNESIS: 'Historia v1, de texto libre',
+} as const satisfies Record<ClinicalHistoryResponse['revisions'][number]['formCode'], string>;
+
 export const HISTORY_BLOCKS: readonly { key: keyof ClinicalHistoryAnswersV1; label: string }[] = [
   { key: 'personalHistory', label: 'Antecedentes personales' },
   { key: 'familyHistory', label: 'Antecedentes familiares' },

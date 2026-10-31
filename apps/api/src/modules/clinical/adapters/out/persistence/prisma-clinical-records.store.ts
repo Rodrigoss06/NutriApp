@@ -15,6 +15,7 @@ import type {
   GoalRecord,
   HistoryRevisionRecord,
   NoteRecord,
+  PerformanceProfileRecord,
   TimelineKind,
   TimelineRecord,
 } from '../../../application/ports/clinical.ports.js';
@@ -57,6 +58,63 @@ const NOTE_FIELDS = {
   amendsNoteId: true,
   createdAt: true,
 } as const;
+
+const HISTORY_FIELDS = {
+  id: true,
+  revision: true,
+  formCode: true,
+  formVersion: true,
+  answers: true,
+  recordedAt: true,
+  recordedBy: true,
+  performanceProfiles: {
+    orderBy: { computedAt: 'desc' },
+    take: 1,
+    select: {
+      methodCode: true,
+      methodVersion: true,
+      engineVersion: true,
+      pri: true,
+      domainScores: true,
+      classes: true,
+      computedAt: true,
+    },
+  },
+} as const;
+
+const toHistory = (row: {
+  id: string;
+  revision: number;
+  formCode: string;
+  formVersion: string;
+  answers: unknown;
+  recordedAt: Date;
+  recordedBy: string;
+  performanceProfiles: {
+    methodCode: string;
+    methodVersion: string;
+    engineVersion: string;
+    pri: { toNumber(): number } | null;
+    domainScores: unknown;
+    classes: unknown;
+    computedAt: Date;
+  }[];
+}): HistoryRevisionRecord => {
+  const { performanceProfiles, ...revision } = row;
+  const [profile] = performanceProfiles;
+  return {
+    ...revision,
+    recordedBy: row.recordedBy as UserId,
+    profile: profile
+      ? {
+          ...profile,
+          pri: profile.pri?.toNumber() ?? null,
+          domainScores: profile.domainScores as PerformanceProfileRecord['domainScores'],
+          classes: profile.classes as PerformanceProfileRecord['classes'],
+        }
+      : null,
+  };
+};
 
 const toCondition = (row: {
   id: string;
@@ -104,26 +162,31 @@ export class PrismaClinicalRecordStore implements ClinicalRecordStore {
     const row = await this.db.tx.clinicalHistory.findFirst({
       where: { patientId },
       orderBy: { revision: 'desc' },
-      select: {
-        id: true,
-        revision: true,
-        formCode: true,
-        formVersion: true,
-        answers: true,
-        recordedAt: true,
-        recordedBy: true,
-      },
+      select: HISTORY_FIELDS,
     });
-    return row ? { ...row, recordedBy: row.recordedBy as UserId } : null;
+    return row ? toHistory(row) : null;
+  }
+
+  async historyRevision(
+    patientId: string,
+    revision: number,
+  ): Promise<HistoryRevisionRecord | null> {
+    const row = await this.db.tx.clinicalHistory.findFirst({
+      where: { patientId, revision },
+      select: HISTORY_FIELDS,
+    });
+    return row ? toHistory(row) : null;
   }
 
   async historyRevisions(
     patientId: string,
-  ): Promise<readonly { revision: number; recordedAt: Date; recordedBy: UserId }[]> {
+  ): Promise<
+    readonly { revision: number; formCode: string; recordedAt: Date; recordedBy: UserId }[]
+  > {
     const rows = await this.db.tx.clinicalHistory.findMany({
       where: { patientId },
       orderBy: { revision: 'desc' },
-      select: { revision: true, recordedAt: true, recordedBy: true },
+      select: { revision: true, formCode: true, recordedAt: true, recordedBy: true },
     });
     return rows.map((row) => ({ ...row, recordedBy: row.recordedBy as UserId }));
   }
@@ -133,6 +196,22 @@ export class PrismaClinicalRecordStore implements ClinicalRecordStore {
   ): Promise<void> {
     await this.db.tx.clinicalHistory.createMany({
       data: [{ ...revision, answers: revision.answers as object }],
+    });
+  }
+
+  async insertPerformanceProfile(
+    profile: Parameters<ClinicalRecordStore['insertPerformanceProfile']>[0],
+  ): Promise<void> {
+    const { inputs, inputsHash, classes, ...rest } = profile;
+    await this.db.tx.performanceProfile.createMany({
+      data: [
+        {
+          ...rest,
+          inputs: inputs as object,
+          inputsHash: new Uint8Array(Buffer.from(inputsHash, 'hex')),
+          classes: { ...classes },
+        },
+      ],
     });
   }
 

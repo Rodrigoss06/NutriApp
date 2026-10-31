@@ -7,6 +7,7 @@ import { CompositionEditor } from '@/features/food-plan/composition-editor';
 import type { Measures } from '@/features/food-plan/draft';
 import { MenuEditor } from '@/features/food-plan/menu-editor';
 import { CompositionView, MenuView } from '@/features/food-plan/plan-views';
+import { DietaryAlertsNotice } from '@/features/nutrition-plan/dietary-alerts-notice';
 import {
   PLAN_MODALITY_LABELS,
   PLAN_STATUS_LABELS,
@@ -99,6 +100,7 @@ export default async function NutritionPlanPage({
         description={`Borrador de la versión ${String(current.versionNo)}. ${DESCRIPTIONS[current.modality]}`}
       >
         {back}
+        <DietaryAlertsNotice patientId={patientId} />
         {current.modality === 'EXCHANGES' ? (
           <PlanEditor initial={current} patientId={patientId} patientSex={sex} />
         ) : current.modality === 'COMPOSITION' ? (
@@ -132,6 +134,7 @@ export default async function NutritionPlanPage({
       }
     >
       {back}
+      <DietaryAlertsNotice patientId={patientId} />
       <p className="flex flex-wrap items-center gap-2">
         <StatusBadge tone={PLAN_STATUS_TONES[current.status]}>
           {PLAN_STATUS_LABELS[current.status]}

@@ -19,7 +19,7 @@ Próxima demo: Demo 1 · Base y evaluación · semana 2
 | P9 Dieta por intercambios | ✅ | Rodrigo | #25, #26 y #27 | 3 criterios en verde (integración y E2E de Luis en escritorio y celular): borrador (ADR-057), publicación y tracking (ADR-058) y pantallas (ADR-059). /notion-sync aplicado (15 cambios en 02, 03 y 05.2) |
 | P10 Composición, menú y recetario | ✅ | Rodrigo | #28, #30 y #31 | 2 criterios en verde (integración y E2E en escritorio y celular): recetario (ADR-061), composición y menú en la API (ADR-062) y pantallas (ADR-063). Plantillas (RF-22, deseable) fuera. /notion-sync aplicado (17 cambios en 02, 03, 04, 05 y 05.2) |
 | P11 Fichas PDF, Demo 2 | ✅ | Rodrigo | #32 a #37 | 4 criterios en verde (integración y E2E en escritorio y celular): contexto documents y ficha de intercambios (ADR-064), fichas del menú y de resultados (ADR-065; 1.0.1 en ADR-069), marca mínima (ADR-066), descargas (ADR-067), semilla, guion y acta de la Demo 2 (ADR-068). Etiqueta v0.2.0 (e05f8de); staging, pendiente de P4. /notion-sync aplicado (17 cambios en 02, 03, 04, 05, 05.1, 05.3 y 06) |
-| P12 Ejercicios y rutinas | 🟨 | Rodrigo | #39 | PR 1 de 7 fusionado: motor (ADR-070). PR 2: biblioteca (ADR-071) |
+| P12 Ejercicios y rutinas | 🟨 | Rodrigo | #39 y #40 | PR 1 y 2 de 7 fusionados: motor (ADR-070) y biblioteca (ADR-071). PR 3: anamnesis V2 (ADR-072) |
 | P13 App del paciente | ⬜ | Rodrigo | | |
 | P14 Analítica y evolución, Demo 3 | ⬜ | Rodrigo | | |
 | P15 Marca, calendario, admin y migración | ⬜ | Rodrigo | | |
@@ -28,10 +28,13 @@ Próxima demo: Demo 1 · Base y evaluación · semana 2
 Leyenda: ⬜ pendiente · 🟨 en curso · ✅ terminado · ⛔ bloqueado
 
 ## En curso
-- P12, PR 2 de 7 (ADR-071): biblioteca de ejercicios. CSV de 169 ejercicios (23 de la V3 y 146 provisionales), tabla
-  patrón × nivel, ejercicios propios, búsqueda sin tildes y por alias, pantallas Ejercicios y Patrón y nivel. La revisión
-  cerró un hueco de RLS: el paciente podía borrar en 6 tablas que puede leer (`patient_no_delete`). Faltan: anamnesis,
-  seguridad, programa (API y web) y ficha de rutina.
+- P12, PR 3 de 7 (ADR-072): anamnesis `JV_ANAMNESIS` V2 como revisión de la historia clínica, presencial u online, con
+  su perfil de rendimiento (`clinical.performance_profile`, G-40 por HTTP y en pantalla). La historia v1 queda de solo
+  lectura y cada revisión se abre por su número. La dieta avisa de las alergias e intolerancias registradas, sin cruzarlas
+  con los alimentos (ADR-073). Faltan: seguridad, programa (API y web) y ficha de rutina.
+- P12, PR 2 fusionado (#40, beb2fc2) (ADR-071): biblioteca de ejercicios. CSV de 169 ejercicios (23 de la V3 y 146
+  provisionales), tabla patrón × nivel, ejercicios propios, búsqueda sin tildes y por alias, pantallas Ejercicios y Patrón
+  y nivel. La revisión cerró un hueco de RLS: el paciente podía borrar en 6 tablas que puede leer (`patient_no_delete`).
 - P12, PR 1 fusionado (#39, 7724d37) (ADR-070): en el motor, `PRI_JV`, las llaves de seguridad, la propuesta y el
   macrociclo, con G-29 a G-35 y G-40 en verde. Motor 1.4.0.
 - P11 terminado (#32 a #37), con la etiqueta v0.2.0 en e05f8de:
@@ -96,8 +99,8 @@ Leyenda: ⬜ pendiente · 🟨 en curso · ✅ terminado · ⛔ bloqueado
 ## Siguiente paso
 - Antes de la Demo 1: la matriz manual de navegadores (RNF-19: Chrome, Edge, Safari y Firefox; la E2E cubre Chromium
   y WebKit) y, el mismo día, base local limpia y semilla («Antes de empezar» del guion). La demo es en local
-- P12, PR 3: anamnesis de JV Fitness como versión 2 de la historia clínica y perfil de rendimiento (RF-43). Se construye
-  con la propuesta de cada pregunta abierta de 07 §15
+- P12, PR 4: seguridad antes de prescribir (RF-41, RN-F15): perfil de entrenamiento con alta médica, cribado con la
+  revisión del coach, evaluación postural y pruebas físicas, presenciales u online, con evidencia por archivo o enlace
 - Demo 2: «Antes de empezar» de docs/demos/demo-2.md (base limpia, db:seed, catalog:load, pnpm dev y pnpm demo:2) y
   enviar el acta al terminar
 - Cada base nueva necesita los catálogos: `pnpm --filter api build && pnpm catalog:load plataforma@demo.example.com`
@@ -128,6 +131,8 @@ Leyenda: ⬜ pendiente · 🟨 en curso · ✅ terminado · ⛔ bloqueado
 - [ ] Preguntas nuevas para Jeremy (ADR-070): P-15, cuál formulario manda (`01` y `02` con puntaje, o `08_ANAMNESIS_V2` y
   `09_CRIBADO_V2`, sin puntaje y con otros códigos); P-16, si «Caminata inclinada» va de verdad con 3 × 8-12 y RIR 2; y
   confirmar el quinto día (P-04)
+- [ ] Pregunta nueva para Jeremy (ADR-073): P-17, cómo se enlaza una alergia con los alimentos para excluirlos de verdad
+  (07 §12). Mientras tanto, la dieta muestra un aviso con las alergias e intolerancias y no las cruza
 - [ ] R4: permiso de uso de las listas Dextre y ADA
 - [x] Porción sugerida de verduras, frutas y almidones: carbohidratos totales de la TPCA (CHOCDF), los que la app
   muestra como «Carbohidratos»; lo decidió Rodrigo (2026-10-22, ADR-059)
@@ -179,12 +184,17 @@ Leyenda: ⬜ pendiente · 🟨 en curso · ✅ terminado · ⛔ bloqueado
 - Plantillas de plan (RF-22, deseable) no se hicieron en P10 (ADR-063)
 - Los logos reemplazados quedan guardados sin uso: limpieza con la marca completa de P15 (ADR-066)
 - Los PDF de las fichas llevan datos del paciente: la supresión de P15 (RN-B05) tiene que borrarlos (ADR-064)
+- La exportación y la supresión de P15 (RN-B04, RN-B05) tienen que incluir las respuestas de la anamnesis V2 y los insumos
+  de `clinical.performance_profile` (ADR-072)
 - E2E de P6 inestable en el celular (patients.spec.ts): «Enfermedad: Hipotiroidismo» no apareció en 5 s y pasó al
   reintentar (#35, 2026-10-27)
 - E2E de la Demo 1 inestable en el CI: axe corrió antes de que la página tuviera su título (document-title) y pasó al
   reintentar (#29, 2026-10-24); esperar el título antes de axe
 
 ## Registro de sesiones (solo las 5 últimas)
+- 2026-10-30 · P12 (PR 3) · #40 fusionado. Anamnesis V2 con su perfil de rendimiento (ADR-072): 43 preguntas de la hoja,
+  G-40 por HTTP y en pantalla, revisiones de solo lectura, la historia v1 sin edición y el formulario de solo lectura para
+  quien no tiene escritura en el equipo de atención. Aviso de alergias al armar la dieta (ADR-073); P-17 para Jeremy
 - 2026-10-30 · P12 (PR 2) · #39 fusionado. Biblioteca de ejercicios (ADR-071): CSV de 169 ejercicios redactados y
   comparados con la hoja de la V3, importadores, ejercicios propios, tabla patrón × nivel por organización y pantallas.
   Revisión: `patient_no_delete` en 6 tablas, la tabla la cambian el dueño y el administrador, y una fila sin ejercicio
@@ -199,6 +209,3 @@ Leyenda: ⬜ pendiente · 🟨 en curso · ✅ terminado · ⛔ bloqueado
 - 2026-10-28 · P11 (PR 5) · #35 fusionado con los cuatro checks en verde. PR 5: `pnpm demo:2` (ADR-068), probada dos
   veces en integración y en una base local nueva; guion de la Demo 2 ensayado por las pantallas, con las cuatro fichas
   y la marca; borrador del acta. Rodrigo eligió arreglar «Masa ósea» de la ficha de resultados en un PR aparte
-- 2026-10-27 · P11 (PR 2 a PR 4) · #33 y #34 fusionados con los cuatro checks en verde. #34: marca mínima de las
-  fichas (ADR-066) con la API, el logo revisado entero, el evento auditado y la pantalla «Marca de las fichas»; solo el
-  color principal, porque las plantillas no usan el secundario. PR 4: descargas en el panel (ADR-067) con su E2E

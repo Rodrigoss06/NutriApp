@@ -24,7 +24,12 @@ import { newestFirst, TimelineSources } from '../timeline-sources.js';
 
 export interface HistoryView {
   readonly current: HistoryRevisionRecord | null;
-  readonly revisions: readonly { revision: number; recordedAt: Date; recordedBy: UserId }[];
+  readonly revisions: readonly {
+    revision: number;
+    formCode: string;
+    recordedAt: Date;
+    recordedBy: UserId;
+  }[];
 }
 
 export interface TimelinePage {
@@ -69,6 +74,17 @@ export class ClinicalRecordQueries {
       current: await this.records.latestHistory(patientId),
       revisions: await this.records.historyRevisions(patientId),
     }));
+  }
+
+  /** Una revisión por su número: así se sigue leyendo la v1, que ya no se edita, y cada perfil anterior. */
+  historyRevision(
+    context: SecurityContext,
+    patientId: string,
+    revision: number,
+  ): Promise<HistoryRevisionRecord | null> {
+    return this.#read(context, patientId, 'clinical.clinical_history', () =>
+      this.records.historyRevision(patientId, revision),
+    );
   }
 
   conditions(

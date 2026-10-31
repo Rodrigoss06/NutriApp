@@ -1,6 +1,6 @@
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { ApiHarness, type StaffMember, type StaffOrganization } from './support/api-harness.js';
-import { errorCode, PG, pool, withContext } from './support/database.js';
+import { errorCode, id as uuid, PG, pool, withContext } from './support/database.js';
 
 /**
  * P6 · expediente por HTTP contra PostgreSQL como app_user: historia clínica versionada, condiciones, objetivos y notas
@@ -18,9 +18,24 @@ interface Problem {
   code: string;
   rule?: string;
 }
+interface Revision {
+  revision: number;
+  formCode: string;
+  formVersion: string;
+  answers: Record<string, unknown>;
+  profile: {
+    methodCode: string;
+    methodVersion: string;
+    engineVersion: string;
+    pri: number | null;
+    domainScores: Record<string, number | null>;
+    classes: Record<string, string | null>;
+    computedAt: string;
+  } | null;
+}
 interface History {
-  current: { revision: number; answers: Record<string, string> } | null;
-  revisions: { revision: number }[];
+  current: Revision | null;
+  revisions: { revision: number; formCode: string }[];
 }
 interface Timeline {
   items: {
@@ -92,12 +107,245 @@ afterAll(async () => {
   await harness.stop();
 });
 
+/** Respuestas que dan 80, 60, 70, 90, 50, 70 y 60, de objetivo a adherencia (G-40). */
+const G40_ANSWERS = {
+  G03: 4,
+  G04: 4,
+  A01: 3,
+  A02: 45,
+  A03: 3,
+  A04: 3,
+  E01: 'Y1_3',
+  E02: 'INTERMITTENT',
+  E03: 4,
+  E04: 3,
+  R01: 8,
+  R02: 5,
+  R03: 4,
+  R04: 2,
+  R05: 2,
+  R06: 5,
+  L01: 8,
+  L02: 3000,
+  L03: 'WEEKLY',
+  L04: 'YES',
+  N01: 'VARIABLE',
+  N02: 'USUALLY',
+  N03: 'MODERATE',
+  N04: 1.5,
+  H01: 3,
+  H02: 3,
+  H03: 3,
+  H04: 3,
+  H05: 3,
+};
+
+describe('RF-43 · RN-F16 · anamnesis V2 y perfil de rendimiento', () => {
+  const saveAnamnesis = (id: string, expectedRevision: number, answers: object) =>
+    harness.put(
+      `/patients/${id}/clinical-history`,
+      { expectedRevision, answers: { modality: 'ONLINE', ...answers } },
+      org.staff.responsible.cookie,
+    );
+
+  it('G-40: la revisión queda como JV_ANAMNESIS V2 con su perfil, su método y sus insumos (RN-D01)', async () => {
+    const { responsible } = org.staff;
+    const id = await register(responsible.cookie);
+    await grantHealthData(responsible.cookie, id);
+
+    const saved = await saveAnamnesis(id, 0, { ...G40_ANSWERS, G02: 'Volver a correr.' });
+    expect(saved.status, JSON.stringify(saved.body)).toBe(200);
+
+    const history = (await harness.get(`/patients/${id}/clinical-history`, responsible.cookie))
+      .body as History;
+    expect(history.current).toMatchObject({
+      revision: 1,
+      formCode: 'JV_ANAMNESIS',
+      formVersion: 'V2',
+      answers: { modality: 'ONLINE', G02: 'Volver a correr.', R01: 8 },
+      profile: {
+        methodCode: 'PRI_JV',
+        methodVersion: '2.0.0',
+        pri: 69.5,
+        domainScores: {
+          OBJECTIVE: 80,
+          AVAILABILITY: 60,
+          EXPERIENCE: 70,
+          RECOVERY: 90,
+          LIFESTYLE: 50,
+          NUTRITION: 70,
+          ADHERENCE: 60,
+        },
+        classes: {
+          recoveryCapacity: 'HIGH',
+          volumeTolerance: 'MODERATE',
+          supervision: 'MODERATE',
+          checkIn: 'WEEKLY_OR_BIWEEKLY',
+          topPriority: 'LIFESTYLE',
+        },
+      },
+    });
+    expect(history.revisions).toMatchObject([{ revision: 1, formCode: 'JV_ANAMNESIS' }]);
+    const { rows } = await pool('owner').query<{
+      inputs: { answers: Record<string, unknown> };
+      hash_bytes: number;
+    }>(
+      `SELECT inputs, octet_length(inputs_hash) AS hash_bytes FROM clinical.performance_profile
+       WHERE patient_id = $1`,
+      [id],
+    );
+    expect(rows).toHaveLength(1);
+    expect(rows[0]?.hash_bytes).toBe(32);
+    expect(Object.keys(rows[0]?.inputs.answers ?? {})).toHaveLength(29);
+    expect(rows[0]?.inputs.answers).not.toHaveProperty('G02');
+  });
+
+  it('se guarda aunque falten respuestas: lo vacío no cuenta y sin puntaje no hay PRI (P-10)', async () => {
+    const { responsible } = org.staff;
+    const id = await register(responsible.cookie);
+    await grantHealthData(responsible.cookie, id);
+
+    await saveAnamnesis(id, 0, { G02: 'Solo texto.' });
+    await saveAnamnesis(id, 1, { R01: 7 });
+
+    const first = (
+      await harness.get(`/patients/${id}/clinical-history/revisions/1`, responsible.cookie)
+    ).body as Revision;
+    const second = (
+      await harness.get(`/patients/${id}/clinical-history/revisions/2`, responsible.cookie)
+    ).body as Revision;
+    expect(first.profile).toMatchObject({ pri: null, domainScores: { RECOVERY: null } });
+    expect(first.profile?.classes['topPriority']).toBeNull();
+    expect(second.profile).toMatchObject({
+      pri: 80,
+      domainScores: { RECOVERY: 80, ADHERENCE: null },
+    });
+    expect(second.profile?.classes['topPriority']).toBe('RECOVERY');
+  });
+
+  it('el contrato valida: una escala fuera de 1 a 5, sin modalidad o con un código que no existe es 400', async () => {
+    const { responsible } = org.staff;
+    const id = await register(responsible.cookie);
+    await grantHealthData(responsible.cookie, id);
+
+    expect((await saveAnamnesis(id, 0, { G03: 6 })).status).toBe(400);
+    expect((await saveAnamnesis(id, 0, { A01: 2.5 })).status).toBe(400);
+    expect((await saveAnamnesis(id, 0, { E01: 'MUCHA' })).status).toBe(400);
+    const withoutModality = await harness.put(
+      `/patients/${id}/clinical-history`,
+      { expectedRevision: 0, answers: {} },
+      responsible.cookie,
+    );
+    expect(withoutModality.status).toBe(400);
+  });
+
+  it('la historia v1 queda de solo lectura: se lee por su número y no se guarda otra; la V2 sigue su numeración', async () => {
+    const { responsible, team } = org.staff;
+    const id = await register(responsible.cookie);
+    await grantHealthData(responsible.cookie, id);
+    await join(id, team, 'READ');
+    await pool('owner').query(
+      `INSERT INTO clinical.clinical_history (id, organization_id, patient_id, revision, form_code, form_version,
+                                              answers, recorded_by)
+       VALUES ($1, $2, $3, 1, 'ANAMNESIS', '1', $4, $5)`,
+      [
+        uuid(),
+        org.organizationId,
+        id,
+        JSON.stringify({ sleep: 'Duerme 6 horas.' }),
+        responsible.userId,
+      ],
+    );
+
+    const before = (await harness.get(`/patients/${id}/clinical-history`, team.cookie))
+      .body as History;
+    expect(before.current).toMatchObject({
+      revision: 1,
+      formCode: 'ANAMNESIS',
+      formVersion: '1',
+      answers: { sleep: 'Duerme 6 horas.' },
+      profile: null,
+    });
+    const legacy = await harness.put(
+      `/patients/${id}/clinical-history`,
+      { expectedRevision: 1, answers: { sleep: 'Duerme 7 horas.' } },
+      responsible.cookie,
+    );
+    expect(legacy.status).toBe(400);
+
+    expect((await saveAnamnesis(id, 1, { R01: 7 })).body).toEqual({ revision: 2 });
+
+    const after = (await harness.get(`/patients/${id}/clinical-history`, team.cookie))
+      .body as History;
+    expect(after.current).toMatchObject({ revision: 2, formCode: 'JV_ANAMNESIS' });
+    expect(after.revisions.map((r) => r.formCode)).toEqual(['JV_ANAMNESIS', 'ANAMNESIS']);
+    const v1 = await harness.get(`/patients/${id}/clinical-history/revisions/1`, team.cookie);
+    expect(v1.status).toBe(200);
+    expect(v1.headers['cache-control']).toBe('no-store');
+    expect(v1.body).toMatchObject({ formCode: 'ANAMNESIS', answers: { sleep: 'Duerme 6 horas.' } });
+  });
+
+  it('RN-A05 · RN-B03: una revisión por su número deja su READ; fuera del equipo, o si no existe, 404', async () => {
+    const { responsible, team, outsider } = org.staff;
+    const id = await register(responsible.cookie);
+    await grantHealthData(responsible.cookie, id);
+    await join(id, team, 'READ');
+    await saveAnamnesis(id, 0, { R01: 7 });
+    const path = `/patients/${id}/clinical-history/revisions`;
+
+    expect((await harness.get(`${path}/1`, team.cookie)).status).toBe(200);
+    expect(await reads(id, team)).toEqual(['clinical.clinical_history']);
+    expect((await harness.get(`${path}/1`, outsider.cookie)).status).toBe(404);
+    expect(await reads(id, outsider)).toEqual([]);
+    expect((await harness.get(`${path}/9`, team.cookie)).status).toBe(404);
+    // Un número que no cabe en la columna tampoco es una revisión: no llega a la base.
+    for (const invalid of ['uno', '0', '1.5', '2147483648']) {
+      expect((await harness.get(`${path}/${invalid}`, team.cookie)).status, invalid).toBe(400);
+    }
+  });
+
+  it('RN-A01 · RN-A05 · RN-D08: como app_user solo lo ve el equipo, ni el paciente ni otra organización, y no cambia', async () => {
+    const { responsible, outsider } = org.staff;
+    const id = await register(responsible.cookie);
+    await grantHealthData(responsible.cookie, id);
+    await saveAnamnesis(id, 0, { R01: 7 });
+    const count = 'SELECT 1 FROM clinical.performance_profile WHERE patient_id = $1';
+
+    await withContext('user', contextOf(responsible), async (client) => {
+      expect((await client.query(count, [id])).rowCount).toBe(1);
+      expect(await errorCode(client, `UPDATE clinical.performance_profile SET pri = 1`)).toBe(
+        PG.insufficientPrivilege,
+      );
+      expect(await errorCode(client, `DELETE FROM clinical.performance_profile`)).toBe(
+        PG.insufficientPrivilege,
+      );
+    });
+    await withContext('user', contextOf(outsider), async (client) => {
+      expect((await client.query(count, [id])).rowCount).toBe(0);
+    });
+    await withContext(
+      'user',
+      { orgId: org.organizationId, userId: uuid(), role: 'PATIENT', patientId: id },
+      async (client) => {
+        expect((await client.query(count, [id])).rowCount).toBe(0);
+      },
+    );
+    await withContext(
+      'user',
+      { orgId: uuid(), userId: responsible.userId, role: 'OWNER' },
+      async (client) => {
+        expect((await client.query(count, [id])).rowCount).toBe(0);
+      },
+    );
+  });
+});
+
 describe('RF-09 · historia clínica versionada', () => {
   it('criterio P6 · sin consentimiento, guardar la historia clínica devuelve 422 con rule RN-B01', async () => {
     const id = await register(org.staff.responsible.cookie);
     const response = await harness.put(
       `/patients/${id}/clinical-history`,
-      { expectedRevision: 0, answers: { sleep: 'Duerme 6 horas.' } },
+      { expectedRevision: 0, answers: { modality: 'IN_PERSON', R07: 'Duerme 6 horas.' } },
       org.staff.responsible.cookie,
     );
     expect(response.status).toBe(422);
@@ -117,18 +365,16 @@ describe('RF-09 · historia clínica versionada', () => {
     const save = (expectedRevision: number, answers: object) =>
       harness.put(
         `/patients/${id}/clinical-history`,
-        { expectedRevision, answers },
+        { expectedRevision, answers: { modality: 'IN_PERSON', ...answers } },
         responsible.cookie,
       );
 
-    expect((await save(0, { sleep: 'Duerme 6 horas.' })).body).toEqual({ revision: 1 });
-    const stale = await save(0, { sleep: 'Duerme 8 horas.' });
+    expect((await save(0, { R01: 6 })).body).toEqual({ revision: 1 });
+    const stale = await save(0, { R01: 8 });
     expect(stale.status).toBe(409);
     expect((stale.body as Problem).code).toBe('NC-CLI-019');
-    expect(
-      (await save(1, { sleep: 'Duerme 7 horas.', surgeries: 'Apendicectomía en 2010.' })).body,
-    ).toEqual({ revision: 2 });
-    expect((await save(2, { diagnosis: 'no es un bloque del formulario' })).status).toBe(400);
+    expect((await save(1, { R01: 7, R07: 'Turnos de noche.' })).body).toEqual({ revision: 2 });
+    expect((await save(2, { diagnosis: 'no es una pregunta del formulario' })).status).toBe(400);
 
     const read = await harness.get(`/patients/${id}/clinical-history`, team.cookie);
     expect(read.status).toBe(200);
@@ -136,7 +382,7 @@ describe('RF-09 · historia clínica versionada', () => {
     const history = read.body as History;
     expect(history.current).toMatchObject({
       revision: 2,
-      answers: { sleep: 'Duerme 7 horas.', surgeries: 'Apendicectomía en 2010.' },
+      answers: { R01: 7, R07: 'Turnos de noche.' },
     });
     expect(history.revisions.map((r) => r.revision)).toEqual([2, 1]);
     expect(await reads(id, team)).toEqual(['clinical.clinical_history']);
@@ -147,7 +393,7 @@ describe('RF-09 · historia clínica versionada', () => {
     const id = await register(responsible.cookie);
     await grantHealthData(responsible.cookie, id);
     await join(id, team, 'READ');
-    const body = { expectedRevision: 0, answers: {} };
+    const body = { expectedRevision: 0, answers: { modality: 'IN_PERSON' } };
 
     expect((await harness.get(`/patients/${id}/clinical-history`, outsider.cookie)).status).toBe(
       404,
@@ -342,7 +588,7 @@ describe('RF-10 · línea de tiempo del expediente', () => {
     await join(id, team, 'READ');
     await harness.put(
       `/patients/${id}/clinical-history`,
-      { expectedRevision: 0, answers: { dietHabits: 'Tres comidas al día.' } },
+      { expectedRevision: 0, answers: { modality: 'IN_PERSON', N01: 'STRUCTURED' } },
       responsible.cookie,
     );
     await harness.post(

@@ -158,11 +158,17 @@ test.describe('Demo 1 · base y evaluación (P7)', () => {
 
       await recordTab(page, 'Historia clínica');
       const answers = luis.clinicalHistory.answers;
-      await page.getByLabel('Hábitos de alimentación').fill(answers['dietHabits'] ?? '');
-      await page.getByLabel('Actividad física').fill(answers['physicalActivity'] ?? '');
-      await page.getByLabel('Sueño').fill(answers['sleep'] ?? '');
-      await page.getByLabel('Objetivos que cuenta').fill(answers['goals'] ?? '');
-      await page.getByRole('button', { name: 'Guardar historia clínica' }).click();
+      await page
+        .getByLabel('Principal dificultad actual con la alimentación')
+        .fill(answers['dietHabits'] ?? '');
+      await page
+        .getByLabel('Otras actividades que afecten carga o recuperación')
+        .fill(answers['physicalActivity'] ?? '');
+      await page.getByLabel('Horas promedio de sueño por noche').fill('7');
+      await page
+        .getByLabel('Describe con precisión qué quieres conseguir')
+        .fill(answers['goals'] ?? '');
+      await page.getByRole('button', { name: 'Guardar anamnesis' }).click();
       await expect(page.getByText('Revisión 1 guardada')).toBeVisible();
     });
 

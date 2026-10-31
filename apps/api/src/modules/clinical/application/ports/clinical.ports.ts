@@ -1,3 +1,4 @@
+import type { PerformanceClasses, ProfileDomain } from '@nutricoach/engine';
 import type { OrganizationId, UserId } from '@nutricoach/shared-kernel';
 import type {
   CareTeamAccess,
@@ -14,6 +15,7 @@ import type {
   Population,
   Sex,
 } from '../../domain/clinical-rules.js';
+import type { ComputedProfile } from '../performance-profile.js';
 
 export interface PatientRecord {
   readonly id: string;
@@ -157,6 +159,17 @@ export interface ConsentStore {
   revoke(consentId: string, at: Date): Promise<boolean>;
 }
 
+/** El perfil de rendimiento de una revisión: nace con ella y no cambia (RN-F16, RN-D08). */
+export interface PerformanceProfileRecord {
+  readonly methodCode: string;
+  readonly methodVersion: string;
+  readonly engineVersion: string;
+  readonly pri: number | null;
+  readonly domainScores: Readonly<Record<ProfileDomain, number | null>>;
+  readonly classes: PerformanceClasses;
+  readonly computedAt: Date;
+}
+
 export interface HistoryRevisionRecord {
   readonly id: string;
   readonly revision: number;
@@ -165,6 +178,8 @@ export interface HistoryRevisionRecord {
   readonly answers: unknown;
   readonly recordedAt: Date;
   readonly recordedBy: UserId;
+  /** Solo la anamnesis V2 lo tiene. */
+  readonly profile: PerformanceProfileRecord | null;
 }
 
 export interface ConditionRecord {
@@ -233,9 +248,12 @@ export interface ClinicalRecordStore {
   /** Bloquea la ficha del paciente hasta el fin de la transacción: las revisiones de la historia van de a una. */
   lockPatient(patientId: string): Promise<void>;
   latestHistory(patientId: string): Promise<HistoryRevisionRecord | null>;
+  historyRevision(patientId: string, revision: number): Promise<HistoryRevisionRecord | null>;
   historyRevisions(
     patientId: string,
-  ): Promise<readonly Omit<HistoryRevisionRecord, 'answers' | 'id' | 'formCode' | 'formVersion'>[]>;
+  ): Promise<
+    readonly Pick<HistoryRevisionRecord, 'revision' | 'formCode' | 'recordedAt' | 'recordedBy'>[]
+  >;
   insertHistory(revision: {
     id: string;
     organizationId: OrganizationId;
@@ -247,6 +265,15 @@ export interface ClinicalRecordStore {
     recordedBy: UserId;
     recordedAt: Date;
   }): Promise<void>;
+  insertPerformanceProfile(
+    profile: ComputedProfile & {
+      id: string;
+      organizationId: OrganizationId;
+      patientId: string;
+      clinicalHistoryId: string;
+      computedAt: Date;
+    },
+  ): Promise<void>;
   conditions(patientId: string): Promise<readonly ConditionRecord[]>;
   insertCondition(
     condition: ConditionRecord & { organizationId: OrganizationId; createdBy: UserId },

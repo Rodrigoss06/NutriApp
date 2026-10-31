@@ -117,12 +117,14 @@ test.describe('P6 · criterios de aceptación', () => {
     await page.goto(`/panel/pacientes/${patient.id}/historia`);
     await expect(page.getByRole('heading', { level: 2, name: 'Historia clínica' })).toBeVisible();
     expect(await seriousViolations(page)).toEqual([]);
-    await page.getByLabel('Sueño').fill('Duerme 6 horas.');
+    const stress = 'Principales fuentes de estrés o factores que afectan tu recuperación';
+    const dislikes = 'Ejercicios que evitas, no toleras o no disfrutas';
+    await page.getByLabel(stress).fill('Turnos de noche.');
     const [refused] = await Promise.all([
       page.waitForResponse(
         (r) => r.url().endsWith('/clinical-history') && r.request().method() === 'PUT',
       ),
-      page.getByRole('button', { name: 'Guardar historia clínica' }).click(),
+      page.getByRole('button', { name: 'Guardar anamnesis' }).click(),
     ]);
     expect(refused.status()).toBe(422);
     expect(await refused.json()).toMatchObject({ code: 'NC-CLI-002', rule: 'RN-B01' });
@@ -173,19 +175,19 @@ test.describe('P6 · criterios de aceptación', () => {
     await loginInPage(other, organization.ownerEmail);
     await other.goto(`/panel/pacientes/${patient.id}/historia`);
 
-    await page.getByLabel('Sueño').fill('Duerme 7 horas.');
-    await page.getByRole('button', { name: 'Guardar historia clínica' }).click();
+    await page.getByLabel(stress).fill('Turnos rotativos.');
+    await page.getByRole('button', { name: 'Guardar anamnesis' }).click();
     await expect(page.getByText('Revisión 1 guardada')).toBeVisible();
 
-    await other.getByLabel('Alcohol').fill('No bebe.');
-    await other.getByRole('button', { name: 'Guardar historia clínica' }).click();
+    await other.getByLabel(dislikes).fill('Zancadas.');
+    await other.getByRole('button', { name: 'Guardar anamnesis' }).click();
     await expect(other.getByText('Alguien guardó la historia mientras la editabas')).toBeVisible();
-    await expect(other.getByLabel('Alcohol')).toHaveValue('No bebe.');
+    await expect(other.getByLabel(dislikes)).toHaveValue('Zancadas.');
     await other.getByRole('button', { name: 'Cargar la versión actual' }).click();
     await expect(other.getByText('Versión actual: revisión 1')).toBeVisible();
-    await expect(other.getByText('Duerme 7 horas.')).toBeVisible();
-    await expect(other.getByLabel('Alcohol')).toHaveValue('No bebe.');
-    await other.getByRole('button', { name: 'Guardar historia clínica' }).click();
+    await expect(other.getByText('Turnos rotativos.')).toBeVisible();
+    await expect(other.getByLabel(dislikes)).toHaveValue('Zancadas.');
+    await other.getByRole('button', { name: 'Guardar anamnesis' }).click();
     await expect(other.getByText('Revisión 2 guardada')).toBeVisible();
     await otherContext.close();
 

@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { emailSchema } from '../iam/access.js';
+import { ANAMNESIS_FORM, anamnesisAnswersV2Schema, performanceProfileSchema } from './anamnesis.js';
 
 const isoDate = z.iso.date();
 const block = z.string().trim().max(2000).optional();
@@ -13,11 +14,11 @@ const optionalText = (max: number) =>
     .optional();
 
 /**
- * Historia clínica v1 (RF-09): texto libre por bloque. ⚠️ Provisional hasta tener la ficha que usa el cliente: los
- * bloques no se interpretan. Condiciones, alergias, medicamentos, cirugías y lesiones también se registran como filas
- * consultables en clinical.condition; nunca se extraen de este texto.
+ * Historia clínica v1 (RF-09): texto libre por bloque. Desde la anamnesis V2 (RF-43) queda de solo lectura. Los bloques
+ * no se interpretan. Condiciones, alergias, medicamentos, cirugías y lesiones también se registran como filas consultables
+ * en clinical.condition; nunca se extraen de este texto.
  */
-export const CLINICAL_HISTORY_FORM = { code: 'ANAMNESIS', version: '1' } as const;
+export const LEGACY_HISTORY_FORM = { code: 'ANAMNESIS', version: '1' } as const;
 export const clinicalHistoryAnswersV1Schema = z
   .object({
     personalHistory: block,
@@ -38,26 +39,50 @@ export const clinicalHistoryAnswersV1Schema = z
   .strict();
 export type ClinicalHistoryAnswersV1 = z.infer<typeof clinicalHistoryAnswersV1Schema>;
 
-/** Cada guardado es una revisión nueva: se envía la revisión sobre la que se editó (bloqueo optimista). */
+/**
+ * Cada guardado es una revisión nueva de la anamnesis V2: se envía la revisión sobre la que se editó (bloqueo optimista).
+ */
 export const saveClinicalHistorySchema = z.object({
   expectedRevision: z.number().int().min(0),
-  answers: clinicalHistoryAnswersV1Schema,
+  answers: anamnesisAnswersV2Schema,
 });
 export type SaveClinicalHistory = z.infer<typeof saveClinicalHistorySchema>;
 
+const revisionMeta = {
+  revision: z.number().int(),
+  recordedAt: z.iso.datetime(),
+  recordedBy: z.uuid(),
+};
+
+/** Una revisión con sus respuestas: las de la v1 no tienen perfil de rendimiento. */
+export const clinicalHistoryRevisionSchema = z.discriminatedUnion('formCode', [
+  z.object({
+    ...revisionMeta,
+    formCode: z.literal(ANAMNESIS_FORM.code),
+    formVersion: z.literal(ANAMNESIS_FORM.version),
+    answers: anamnesisAnswersV2Schema,
+    profile: performanceProfileSchema.nullable(),
+  }),
+  z.object({
+    ...revisionMeta,
+    formCode: z.literal(LEGACY_HISTORY_FORM.code),
+    formVersion: z.literal(LEGACY_HISTORY_FORM.version),
+    answers: clinicalHistoryAnswersV1Schema,
+    profile: z.null(),
+  }),
+]);
+export type ClinicalHistoryRevision = z.infer<typeof clinicalHistoryRevisionSchema>;
+
+/** El número de una revisión en la ruta: lo que no cabe en la columna tampoco es una revisión. */
+export const historyRevisionNumberSchema = z.coerce.number().int().min(1).max(2_147_483_647);
+
 export const clinicalHistoryResponseSchema = z.object({
-  current: z
-    .object({
-      revision: z.number().int(),
-      formCode: z.string(),
-      formVersion: z.string(),
-      answers: clinicalHistoryAnswersV1Schema,
-      recordedAt: z.iso.datetime(),
-      recordedBy: z.uuid(),
-    })
-    .nullable(),
+  current: clinicalHistoryRevisionSchema.nullable(),
   revisions: z.array(
-    z.object({ revision: z.number().int(), recordedAt: z.iso.datetime(), recordedBy: z.uuid() }),
+    z.object({
+      ...revisionMeta,
+      formCode: z.enum([ANAMNESIS_FORM.code, LEGACY_HISTORY_FORM.code]),
+    }),
   ),
 });
 export type ClinicalHistoryResponse = z.infer<typeof clinicalHistoryResponseSchema>;

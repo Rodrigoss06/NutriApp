@@ -357,16 +357,17 @@ model CareTeamMember {
 
 /// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
 model ClinicalHistory {
-  id             String   @id @db.Uuid
-  organizationId String   @map("organization_id") @db.Uuid
-  patientId      String   @map("patient_id") @db.Uuid
-  revision       Int
-  formCode       String   @map("form_code")
-  formVersion    String   @map("form_version")
-  answers        Json
-  recordedBy     String   @map("recorded_by") @db.Uuid
-  recordedAt     DateTime @default(now()) @map("recorded_at") @db.Timestamptz(6)
-  patient        Patient  @relation(fields: [patientId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  id                  String               @id @db.Uuid
+  organizationId      String               @map("organization_id") @db.Uuid
+  patientId           String               @map("patient_id") @db.Uuid
+  revision            Int
+  formCode            String               @map("form_code")
+  formVersion         String               @map("form_version")
+  answers             Json
+  recordedBy          String               @map("recorded_by") @db.Uuid
+  recordedAt          DateTime             @default(now()) @map("recorded_at") @db.Timestamptz(6)
+  patient             Patient              @relation(fields: [patientId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  performanceProfiles PerformanceProfile[]
 
   @@unique([patientId, revision])
   @@map("clinical_history")
@@ -477,36 +478,37 @@ model Goal {
 /// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
 /// This model contains an expression index which requires additional setup for migrations. Visit https://pris.ly/d/expression-indexes for more info.
 model Patient {
-  id                  String            @id @db.Uuid
-  organizationId      String            @map("organization_id") @db.Uuid
-  userId              String?           @unique(map: "patient_user", where: raw("(user_id IS NOT NULL)")) @map("user_id") @db.Uuid
+  id                  String               @id @db.Uuid
+  organizationId      String               @map("organization_id") @db.Uuid
+  userId              String?              @unique(map: "patient_user", where: raw("(user_id IS NOT NULL)")) @map("user_id") @db.Uuid
   code                String
-  firstName           String            @map("first_name")
-  lastName            String            @map("last_name")
-  sex                 String            @db.Char(1)
-  genderIdentity      String?           @map("gender_identity")
-  birthDate           DateTime          @map("birth_date") @db.Date
-  documentType        String?           @map("document_type")
-  documentNumberEnc   Bytes?            @map("document_number_enc")
-  documentNumberBidx  Bytes?            @map("document_number_bidx")
-  email               String?           @db.Citext
-  phoneEnc            Bytes?            @map("phone_enc")
-  timezone            String            @default("America/Lima")
-  population          String            @default("ADULT")
-  status              String            @default("ACTIVE")
-  responsibleMemberId String            @map("responsible_member_id") @db.Uuid
-  tags                String[]          @default([])
-  archivedAt          DateTime?         @map("archived_at") @db.Timestamptz(6)
-  createdBy           String            @map("created_by") @db.Uuid
-  createdAt           DateTime          @default(now()) @map("created_at") @db.Timestamptz(6)
-  updatedAt           DateTime          @default(now()) @map("updated_at") @db.Timestamptz(6)
-  version             Int               @default(0)
+  firstName           String               @map("first_name")
+  lastName            String               @map("last_name")
+  sex                 String               @db.Char(1)
+  genderIdentity      String?              @map("gender_identity")
+  birthDate           DateTime             @map("birth_date") @db.Date
+  documentType        String?              @map("document_type")
+  documentNumberEnc   Bytes?               @map("document_number_enc")
+  documentNumberBidx  Bytes?               @map("document_number_bidx")
+  email               String?              @db.Citext
+  phoneEnc            Bytes?               @map("phone_enc")
+  timezone            String               @default("America/Lima")
+  population          String               @default("ADULT")
+  status              String               @default("ACTIVE")
+  responsibleMemberId String               @map("responsible_member_id") @db.Uuid
+  tags                String[]             @default([])
+  archivedAt          DateTime?            @map("archived_at") @db.Timestamptz(6)
+  createdBy           String               @map("created_by") @db.Uuid
+  createdAt           DateTime             @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt           DateTime             @default(now()) @map("updated_at") @db.Timestamptz(6)
+  version             Int                  @default(0)
   careTeamMembers     CareTeamMember[]
   clinicalHistorys    ClinicalHistory[]
   clinicalNotes       ClinicalNote[]
   conditions          Condition[]
   consents            Consent[]
   goals               Goal[]
+  performanceProfiles PerformanceProfile[]
 
   @@unique([organizationId, documentNumberBidx], map: "patient_document", where: raw("(document_number_bidx IS NOT NULL)"))
   @@unique([organizationId, code])
@@ -1943,4 +1945,27 @@ model PatternChoice {
   @@unique([organizationId, movementPattern, level])
   @@map("pattern_choice")
   @@schema("exercise")
+}
+
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model PerformanceProfile {
+  id                String          @id @db.Uuid
+  organizationId    String          @map("organization_id") @db.Uuid
+  patientId         String          @map("patient_id") @db.Uuid
+  clinicalHistoryId String          @map("clinical_history_id") @db.Uuid
+  methodCode        String          @map("method_code")
+  methodVersion     String          @map("method_version")
+  engineVersion     String          @map("engine_version")
+  inputs            Json
+  inputsHash        Bytes           @map("inputs_hash")
+  domainScores      Json            @map("domain_scores")
+  pri               Decimal?        @db.Decimal(7, 4)
+  classes           Json
+  computedAt        DateTime        @map("computed_at") @db.Timestamptz(6)
+  clinicalHistory   ClinicalHistory @relation(fields: [clinicalHistoryId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  patient           Patient         @relation(fields: [patientId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@unique([clinicalHistoryId, methodCode, methodVersion, inputsHash])
+  @@map("performance_profile")
+  @@schema("clinical")
 }
