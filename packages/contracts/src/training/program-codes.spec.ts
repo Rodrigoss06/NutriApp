@@ -17,6 +17,13 @@ import {
   TRAINING_INTENSITY_CODES,
   updateProgramSchema,
 } from './program.js';
+import {
+  LOAD_KIND_LABELS,
+  ONE_RM_FORMULA_LABELS,
+  PROGRAM_ORIGIN_LABELS,
+  SET_TYPE_LABELS,
+} from './labels.js';
+import { LOAD_KINDS, PROGRAM_ORIGINS, SET_TYPES } from './program.js';
 
 const EXERCISE = '0192f0a0-0000-7000-8000-0000000000e1';
 const setOf = (changes: object = {}) => ({ repsMin: 8, repsMax: 12, ...changes });
@@ -30,6 +37,15 @@ describe('RF-26 · los códigos del programa son los del motor', () => {
     expect(ROUTINE_SPLIT_CODES).toEqual(ROUTINE_SPLITS);
     expect(TRAINING_INTENSITY_CODES).toEqual(TRAINING_INTENSITIES);
     expect(REVIEW_KIND_CODES).toEqual(REVIEW_KINDS);
+  });
+});
+
+describe('RF-26 · cada código tiene su texto', () => {
+  it('orígenes, fórmulas, cargas y tipos de serie', () => {
+    expect(Object.keys(PROGRAM_ORIGIN_LABELS)).toEqual(PROGRAM_ORIGINS);
+    expect(Object.keys(ONE_RM_FORMULA_LABELS)).toEqual(ONE_RM_FORMULAS);
+    expect(Object.keys(LOAD_KIND_LABELS)).toEqual(LOAD_KINDS);
+    expect(Object.keys(SET_TYPE_LABELS)).toEqual(SET_TYPES);
   });
 });
 

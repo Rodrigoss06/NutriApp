@@ -1,6 +1,6 @@
 # STATUS — NutriCoach v1.0
 
-Actualizado: 2026-10-30 · Por: Rodrigo, con Claude Code
+Actualizado: 2026-10-31 · Por: Rodrigo, con Claude Code
 Inicio del proyecto: POR CONFIRMAR (día siguiente al Pago 1) · Semana actual: 0 de 9
 Próxima demo: Demo 1 · Base y evaluación · semana 2
 
@@ -19,7 +19,7 @@ Próxima demo: Demo 1 · Base y evaluación · semana 2
 | P9 Dieta por intercambios | ✅ | Rodrigo | #25, #26 y #27 | 3 criterios en verde (integración y E2E de Luis en escritorio y celular): borrador (ADR-057), publicación y tracking (ADR-058) y pantallas (ADR-059). /notion-sync aplicado (15 cambios en 02, 03 y 05.2) |
 | P10 Composición, menú y recetario | ✅ | Rodrigo | #28, #30 y #31 | 2 criterios en verde (integración y E2E en escritorio y celular): recetario (ADR-061), composición y menú en la API (ADR-062) y pantallas (ADR-063). Plantillas (RF-22, deseable) fuera. /notion-sync aplicado (17 cambios en 02, 03, 04, 05 y 05.2) |
 | P11 Fichas PDF, Demo 2 | ✅ | Rodrigo | #32 a #37 | 4 criterios en verde (integración y E2E en escritorio y celular): contexto documents y ficha de intercambios (ADR-064), fichas del menú y de resultados (ADR-065; 1.0.1 en ADR-069), marca mínima (ADR-066), descargas (ADR-067), semilla, guion y acta de la Demo 2 (ADR-068). Etiqueta v0.2.0 (e05f8de); staging, pendiente de P4. /notion-sync aplicado (17 cambios en 02, 03, 04, 05, 05.1, 05.3 y 06) |
-| P12 Ejercicios y rutinas | 🟨 | Rodrigo | #39, #40, #41 y #43 | PR 1 a 4 de 7: motor (ADR-070), biblioteca (ADR-071), anamnesis V2 (ADR-072) y seguridad (ADR-075). PR 5: programa por la API (ADR-077) |
+| P12 Ejercicios y rutinas | 🟨 | Rodrigo | #39, #40, #41, #44 y #45 | PR 1 a 5 de 7: motor (ADR-070), biblioteca (ADR-071), anamnesis V2 (ADR-072), seguridad (ADR-075) y programa por la API (ADR-077). PR 6: programa en la web (ADR-078) |
 | P13 App del paciente | ⬜ | Rodrigo | | |
 | P14 Analítica y evolución, Demo 3 | ⬜ | Rodrigo | | |
 | P15 Marca, calendario, admin y migración | ⬜ | Rodrigo | | |
@@ -28,6 +28,8 @@ Próxima demo: Demo 1 · Base y evaluación · semana 2
 Leyenda: ⬜ pendiente · 🟨 en curso · ✅ terminado · ⛔ bloqueado
 
 ## En curso
+- P12, PR 6 de 7 (ADR-078): programa en la web (RF-26). Lista, propuesta con aprobación por bloque, macrociclo, programa a mano con mesociclos,
+  editor por semana con fase, sesiones, ejercicios y series, duplicar, publicar y lectura de lo publicado. E2E e2e/programa.spec.ts. Falta: ficha de rutina.
 - P12, PR 5 de 7 (ADR-077): programa por la API (RF-26). A mano o como propuesta bloqueada por las llaves, de a una semana, duplicar,
   aprobar por bloque, publicar con snapshot y hash, versiones nuevas y la meta de entrenamiento del día en tracking. Faltan: web y ficha de rutina.
 - P12, PR 4 de 7 (ADR-075): seguridad antes de prescribir (RF-41, RN-F15). Pestaña Entrenamiento con las tres llaves, el
@@ -106,7 +108,7 @@ Leyenda: ⬜ pendiente · 🟨 en curso · ✅ terminado · ⛔ bloqueado
 ## Siguiente paso
 - Antes de la Demo 1: la matriz manual de navegadores (RNF-19: Chrome, Edge, Safari y Firefox; la E2E cubre Chromium
   y WebKit) y, el mismo día, base local limpia y semilla («Antes de empezar» del guion). La demo es en local
-- P12, PR 6: programa en la web (editor con la propuesta y el macrociclo, duplicar, aprobar, publicar y vista por semana)
+- P12, PR 7: ficha de rutina `TRAINING@1.0.0`, con su consumidor en documents. Después, /cierre y /notion-sync de P12
 - Demo 2: «Antes de empezar» de docs/demos/demo-2.md (base limpia, db:seed, catalog:load, pnpm dev y pnpm demo:2) y
   enviar el acta al terminar
 - Cada base nueva necesita los catálogos: `pnpm --filter api build && pnpm catalog:load plataforma@demo.example.com`
@@ -205,6 +207,8 @@ Leyenda: ⬜ pendiente · 🟨 en curso · ✅ terminado · ⛔ bloqueado
   reintentar (#29, 2026-10-24); esperar el título antes de axe
 
 ## Registro de sesiones (solo las 5 últimas)
+- 2026-10-31 · P12 (PR 6) · #44 lleva a main lo de #43 y #45 fusiona el programa por la API. Programa en la web (ADR-078): lista, propuesta con
+  aprobación por bloque, macrociclo, editor por semana, duplicar y publicar, con la E2E en escritorio y celular
 - 2026-10-31 · P12 (PR 5) · #42 y #43 fusionados, pero #43 quedó en la rama de alergias y no en main: la corrección va en un PR nuevo. Programa
   por la API (ADR-077): a mano o propuesta, semanas, duplicar, aprobar por bloque, publicar y metas del día. E2E de la Demo 1 más robusta (run #88)
 - 2026-10-31 · P12 (PR 4) · Seguridad antes de prescribir (ADR-075): perfil, cribado con revisión, postura y pruebas físicas,
@@ -215,7 +219,3 @@ Leyenda: ⬜ pendiente · 🟨 en curso · ✅ terminado · ⛔ bloqueado
 - 2026-10-30 · P12 (PR 3) · #40 fusionado. Anamnesis V2 con su perfil de rendimiento (ADR-072): 43 preguntas de la hoja,
   G-40 por HTTP y en pantalla, revisiones de solo lectura, la historia v1 sin edición y el formulario de solo lectura para
   quien no tiene escritura en el equipo de atención. Aviso de alergias al armar la dieta (ADR-073); P-17 para Jeremy
-- 2026-10-30 · P12 (PR 2) · #39 fusionado. Biblioteca de ejercicios (ADR-071): CSV de 169 ejercicios redactados y
-  comparados con la hoja de la V3, importadores, ejercicios propios, tabla patrón × nivel por organización y pantallas.
-  Revisión: `patient_no_delete` en 6 tablas, la tabla la cambian el dueño y el administrador, y una fila sin ejercicio
-  válido vuelve a la de la V3

@@ -63,6 +63,32 @@ export const TRAINING_INTENSITY_LABELS = {
   VERY_HIGH: 'Muy alta',
 } as const satisfies Record<string, string>;
 
+export const PROGRAM_ORIGIN_LABELS = {
+  MANUAL: 'A mano',
+  PROPOSAL: 'Propuesta',
+} as const satisfies Record<string, string>;
+
+export const ONE_RM_FORMULA_LABELS = {
+  ONERM_EPLEY1985: 'Epley',
+  ONERM_BRZYCKI1993: 'Brzycki',
+} as const satisfies Record<string, string>;
+
+export const LOAD_KIND_LABELS = {
+  KG: 'kg',
+  PCT_1RM: '% de 1RM',
+  RPE: 'RPE',
+  RIR: 'RIR',
+  BODYWEIGHT: 'Peso corporal',
+} as const satisfies Record<string, string>;
+
+export const SET_TYPE_LABELS = {
+  WARMUP: 'Calentamiento',
+  WORKING: 'Trabajo',
+  DROP: 'Descendente',
+  AMRAP: 'Al fallo técnico',
+  BACKOFF: 'Descarga',
+} as const satisfies Record<string, string>;
+
 export const REVIEW_KIND_LABELS = {
   DAILY: 'Seguimiento diario',
   CONTROL: 'Control y ajuste',
