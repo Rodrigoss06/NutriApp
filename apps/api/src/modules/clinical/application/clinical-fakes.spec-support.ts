@@ -311,7 +311,8 @@ export const staffContext = (
 
 /** Expediente en memoria. Sin RLS: AUTHOR_ONLY lo prueba la integración. */
 export class MemoryRecords implements ClinicalRecordStore {
-  readonly history: (HistoryRevisionRecord & { patientId: string })[] = [];
+  readonly history: (Omit<HistoryRevisionRecord, 'profile'> & { patientId: string })[] = [];
+  readonly profiles: Parameters<ClinicalRecordStore['insertPerformanceProfile']>[0][] = [];
   readonly conditionRows: Mutable<ConditionRecord>[] = [];
   readonly goalRows: Mutable<GoalRecord>[] = [];
   readonly noteRows: NoteRecord[] = [];
@@ -320,23 +321,40 @@ export class MemoryRecords implements ClinicalRecordStore {
     this.locks += 1;
     return Promise.resolve();
   }
+  #withProfile(row: (typeof this.history)[number]): HistoryRevisionRecord {
+    return { ...row, profile: this.profiles.find((p) => p.clinicalHistoryId === row.id) ?? null };
+  }
   latestHistory(patientId: string) {
-    return Promise.resolve(
-      this.history
-        .filter((h) => h.patientId === patientId)
-        .sort((a, b) => b.revision - a.revision)[0] ?? null,
-    );
+    const latest = this.history
+      .filter((h) => h.patientId === patientId)
+      .sort((a, b) => b.revision - a.revision)[0];
+    return Promise.resolve(latest ? this.#withProfile(latest) : null);
+  }
+  historyRevision(patientId: string, revision: number) {
+    const row = this.history.find((h) => h.patientId === patientId && h.revision === revision);
+    return Promise.resolve(row ? this.#withProfile(row) : null);
   }
   historyRevisions(patientId: string) {
     return Promise.resolve(
       this.history
         .filter((h) => h.patientId === patientId)
         .sort((a, b) => b.revision - a.revision)
-        .map(({ revision, recordedAt, recordedBy }) => ({ revision, recordedAt, recordedBy })),
+        .map(({ revision, formCode, recordedAt, recordedBy }) => ({
+          revision,
+          formCode,
+          recordedAt,
+          recordedBy,
+        })),
     );
   }
   insertHistory(revision: Parameters<ClinicalRecordStore['insertHistory']>[0]) {
     this.history.push({ ...revision });
+    return Promise.resolve();
+  }
+  insertPerformanceProfile(
+    profile: Parameters<ClinicalRecordStore['insertPerformanceProfile']>[0],
+  ) {
+    this.profiles.push(profile);
     return Promise.resolve();
   }
   conditions(patientId: string) {

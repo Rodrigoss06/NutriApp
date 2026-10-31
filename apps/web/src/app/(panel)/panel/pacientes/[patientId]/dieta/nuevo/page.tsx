@@ -3,6 +3,7 @@ import { Button, EmptyState, Notice } from '@nutricoach/ui';
 import { Salad } from 'lucide-react';
 import type { Metadata } from 'next';
 import Link from 'next/link';
+import { DietaryAlertsNotice } from '@/features/nutrition-plan/dietary-alerts-notice';
 import { NewPlanForm } from '@/features/nutrition-plan/new-plan-form';
 import { Section } from '@/features/patients/section';
 import { getPatient } from '@/features/patients/server';
@@ -46,6 +47,7 @@ export default async function NewPlanPage({ params }: { params: Promise<{ patien
       title="Nuevo plan"
       description="Elige la modalidad y la prescripción de la que salen las metas. Después armas el plan en el editor."
     >
+      <DietaryAlertsNotice patientId={patientId} />
       <NewPlanForm
         patientId={patientId}
         prescriptions={prescriptions.data.prescriptions}

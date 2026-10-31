@@ -41,6 +41,42 @@ const PERSON = {
 } as const;
 const HEALTH_DATA = DOCUMENTS.find((d) => d.purpose === 'HEALTH_DATA')?.id ?? '';
 const APP_ACCESS = DOCUMENTS.find((d) => d.purpose === 'APP_ACCESS')?.id ?? '';
+const ONLY_MODALITY = { modality: 'IN_PERSON' };
+const sleeping = (hours: number) => ({ modality: 'IN_PERSON', R01: hours });
+/** Respuestas que dan 80, 60, 70, 90, 50, 70 y 60, de objetivo a adherencia (G-40). */
+const G40_ANSWERS = {
+  modality: 'ONLINE',
+  G02: 'Texto que no puntúa.',
+  G03: 4,
+  G04: 4,
+  A01: 3,
+  A02: 45,
+  A03: 3,
+  A04: 3,
+  E01: 'Y1_3',
+  E02: 'INTERMITTENT',
+  E03: 4,
+  E04: 3,
+  R01: 8,
+  R02: 5,
+  R03: 4,
+  R04: 2,
+  R05: 2,
+  R06: 5,
+  L01: 8,
+  L02: 3000,
+  L03: 'WEEKLY',
+  L04: 'YES',
+  N01: 'VARIABLE',
+  N02: 'USUALLY',
+  N03: 'MODERATE',
+  N04: 1.5,
+  H01: 3,
+  H02: 3,
+  H03: 3,
+  H04: 3,
+  H05: 3,
+};
 
 let clock: FakeClock;
 let uow: FakeUow;
@@ -134,7 +170,7 @@ beforeEach(() => {
 describe('RF-09 · historia clínica versionada', () => {
   it('RN-B01 · sin HEALTH_DATA vigente no se guarda la historia', async () => {
     const id = await registered();
-    const saved = await commands().saveHistory(responsible, id, 0, { sleep: '6 h' });
+    const saved = await commands().saveHistory(responsible, id, 0, sleeping(6));
     expect(isErr(saved) && saved.error).toMatchObject({ code: 'NC-CLI-002', rule: 'RN-B01' });
     expect(records.history).toEqual([]);
   });
@@ -142,16 +178,16 @@ describe('RF-09 · historia clínica versionada', () => {
   it('cada guardado es una revisión nueva sobre la que se editó; la desfasada no pisa (409)', async () => {
     const id = await registered();
     await consented(id);
-    const first = await commands().saveHistory(responsible, id, 0, { sleep: '6 h' });
+    const first = await commands().saveHistory(responsible, id, 0, sleeping(6));
     expect(isOk(first) && first.value.revision).toBe(1);
-    const stale = await commands().saveHistory(responsible, id, 0, { sleep: '8 h' });
+    const stale = await commands().saveHistory(responsible, id, 0, sleeping(8));
     expect(isErr(stale) && stale.error.code).toBe('NC-CLI-019');
-    const second = await commands().saveHistory(responsible, id, 1, { sleep: '7 h' });
+    const second = await commands().saveHistory(responsible, id, 1, sleeping(7));
     expect(isOk(second) && second.value.revision).toBe(2);
     expect(records.locks).toBe(3);
     expect(records.history.map((h) => [h.revision, h.formCode, h.formVersion])).toEqual([
-      [1, 'ANAMNESIS', '1'],
-      [2, 'ANAMNESIS', '1'],
+      [1, 'JV_ANAMNESIS', 'V2'],
+      [2, 'JV_ANAMNESIS', 'V2'],
     ]);
     expect(outbox.events.at(-1)).toMatchObject({
       type: 'clinical.history.revised',
@@ -162,13 +198,13 @@ describe('RF-09 · historia clínica versionada', () => {
   it('RN-A05 · escribir exige WRITE en el equipo, un paciente activo y que exista', async () => {
     const id = await registered();
     await consented(id);
-    const byReader = await commands().saveHistory(reader, id, 0, {});
+    const byReader = await commands().saveHistory(reader, id, 0, ONLY_MODALITY);
     expect(isErr(byReader) && byReader.error.code).toBe('NC-CLI-013');
     const byOther = await commands().addNote(other, id, { body: 'x', visibility: 'CARE_TEAM' });
     expect(isErr(byOther) && byOther.error.code).toBe('NC-CLI-013');
     // OWNER ve a todos, pero lo clínico lo escribe el equipo que atiende.
     const owner = staffContext('OWNER', '0192f0a0-0000-7000-8000-0000000000a0');
-    const byOwner = await commands().saveHistory(owner, id, 0, {});
+    const byOwner = await commands().saveHistory(owner, id, 0, ONLY_MODALITY);
     expect(isErr(byOwner) && byOwner.error.code).toBe('NC-CLI-013');
     const missing = await commands().addCondition(responsible, 'no-existe', {
       kind: 'DISEASE',
@@ -271,12 +307,114 @@ describe('RF-09 · condiciones, objetivos y notas', () => {
   });
 });
 
+describe('RF-43 · RN-F16 · perfil de rendimiento de la anamnesis V2', () => {
+  it('G-40: cada revisión guarda su perfil, con método, versión e insumos (RN-D01)', async () => {
+    const id = await registered();
+    await consented(id);
+
+    const saved = await commands().saveHistory(responsible, id, 0, G40_ANSWERS);
+
+    expect(isOk(saved)).toBe(true);
+    const [revision] = records.history;
+    const [profile] = records.profiles;
+    expect(profile).toMatchObject({
+      patientId: id,
+      organizationId: ORG,
+      clinicalHistoryId: revision?.id,
+      methodCode: 'PRI_JV',
+      methodVersion: '2.0.0',
+      pri: 69.5,
+      domainScores: {
+        OBJECTIVE: 80,
+        AVAILABILITY: 60,
+        EXPERIENCE: 70,
+        RECOVERY: 90,
+        LIFESTYLE: 50,
+        NUTRITION: 70,
+        ADHERENCE: 60,
+      },
+      classes: {
+        recoveryCapacity: 'HIGH',
+        volumeTolerance: 'MODERATE',
+        supervision: 'MODERATE',
+        checkIn: 'WEEKLY_OR_BIWEEKLY',
+        topPriority: 'LIFESTYLE',
+      },
+    });
+    expect(profile?.inputsHash).toMatch(/^[0-9a-f]{64}$/);
+    expect(profile?.computedAt).toEqual(revision?.recordedAt);
+  });
+
+  it('RN-F16: a los insumos del perfil van solo las respuestas que puntúan, nunca el texto', async () => {
+    const id = await registered();
+    await consented(id);
+
+    await commands().saveHistory(responsible, id, 0, G40_ANSWERS);
+
+    const { answers } = records.profiles[0]?.inputs as { answers: Record<string, unknown> };
+    expect(Object.keys(answers)).toHaveLength(29);
+    expect(answers).not.toHaveProperty('G02');
+    expect(answers).not.toHaveProperty('modality');
+  });
+
+  it('RN-F16: sin respuestas que puntúen no hay PRI ni clases: un dato que falta no es cero', async () => {
+    const id = await registered();
+    await consented(id);
+
+    const saved = await commands().saveHistory(responsible, id, 0, {
+      modality: 'IN_PERSON',
+      G02: 'Solo texto.',
+    });
+
+    expect(isOk(saved)).toBe(true);
+    expect(records.profiles[0]).toMatchObject({
+      pri: null,
+      domainScores: { RECOVERY: null },
+      classes: { recoveryCapacity: null, topPriority: null },
+    });
+  });
+
+  it('una respuesta que el motor no acepta no guarda la revisión', async () => {
+    const id = await registered();
+    await consented(id);
+
+    const saved = await commands().saveHistory(responsible, id, 0, {
+      modality: 'IN_PERSON',
+      G03: 9,
+    });
+
+    expect(isErr(saved) && saved.error).toMatchObject({ code: 'NC-CLI-028', rule: 'RN-F16' });
+    expect(records.history).toEqual([]);
+    expect(records.profiles).toEqual([]);
+  });
+
+  it('una revisión anterior se lee por su número, con su perfil y su READ; una que no existe, null', async () => {
+    const id = await registered();
+    await consented(id);
+    await commands().saveHistory(responsible, id, 0, G40_ANSWERS);
+    await commands().saveHistory(responsible, id, 1, sleeping(7));
+
+    const first = await queries().historyRevision(reader, id, 1);
+    const current = await queries().history(reader, id);
+
+    expect(first).toMatchObject({ revision: 1, answers: { R01: 8 }, profile: { pri: 69.5 } });
+    // Solo respondió el sueño: 7 h son 4 puntos, recuperación 80, y el PRI pondera solo ese dominio (P-10).
+    expect(current?.current?.profile?.pri).toBe(80);
+    expect(current?.revisions.map((r) => r.formCode)).toEqual(['JV_ANAMNESIS', 'JV_ANAMNESIS']);
+    expect(await queries().historyRevision(reader, id, 9)).toBeNull();
+    expect(audit.entries.at(0)).toMatchObject({
+      action: 'READ',
+      resourceType: 'clinical.clinical_history',
+    });
+  });
+});
+
 describe('RF-10 · lecturas del expediente con READ en auditoría', () => {
   it('historia, condiciones, objetivos y notas dejan su READ; sin ver al paciente, nada', async () => {
     const id = await registered();
     await consented(id);
-    await commands().saveHistory(responsible, id, 0, { sleep: '6 h' });
-    await commands().saveHistory(responsible, id, 1, { sleep: '7 h' });
+    await commands().saveHistory(responsible, id, 0, sleeping(6));
+    await commands().saveHistory(responsible, id, 1, sleeping(7));
     await commands().addCondition(responsible, id, { kind: 'ALLERGY', label: 'Maní' });
     await commands().addGoal(responsible, id, { kind: 'HEALTH', notes: 'Cenar antes de las 9' });
     await commands().addNote(responsible, id, {
@@ -285,7 +423,7 @@ describe('RF-10 · lecturas del expediente con READ en auditoría', () => {
     });
 
     const history = await queries().history(reader, id);
-    expect(history?.current).toMatchObject({ revision: 2, answers: { sleep: '7 h' } });
+    expect(history?.current).toMatchObject({ revision: 2, answers: { R01: 7 } });
     expect(history?.revisions.map((r) => r.revision)).toEqual([2, 1]);
     expect(await queries().conditions(reader, id)).toHaveLength(1);
     expect(await queries().goals(reader, id)).toHaveLength(1);

@@ -1397,3 +1397,56 @@ Consecuencias:
   audit) y §3 (ExerciseApi); 03 RN-I02 (los ejercicios base provisionales) y RN-F14 (quién cambia la tabla, y que un
   ejercicio que ya no sirve no cuenta); los códigos NC-EXE-001 a NC-EXE-005.
 
+## ADR-072 · Anamnesis V2 y perfil de rendimiento: la historia v1 queda de solo lectura — aceptada (2026-10-30)
+Contexto: P12 (PR 3). RF-43 pide la anamnesis de JV Fitness, presencial u online, como versión 2 de la historia clínica, con
+su perfil de rendimiento (RN-F16). La v1 de P6 era texto libre «hasta tener la ficha del cliente» (RF-09). Rodrigo decidió
+que manda la hoja `01_Form_Anamnesis` y que se pregunte a Jeremy por `08_ANAMNESIS_V2` (P-15, ADR-070).
+Decisión:
+- Cada guardado es una revisión de clinical.clinical_history con form_code `JV_ANAMNESIS` y form_version `V2`, en la misma
+  numeración que la v1. PUT /clinical-history ya no acepta los bloques de la v1 (400): esas revisiones solo se leen.
+- Las 43 preguntas de la hoja, con sus códigos y su texto, salvo ID01 a ID04 (correo, nombre, teléfono y nacimiento), que ya
+  están en la ficha. Presencial u online es un campo de las respuestas (`modality`): las dos variantes del paquete solo
+  se diferencian en el enlace. Se guarda aunque falten respuestas, porque las vacías no cuentan. Lo que no se responde no
+  viaja; una elección ya marcada se puede quitar. El esquema y el formulario están en @nutricoach/contracts, con pruebas
+  contra el motor: las 29 preguntas con puntaje, sus opciones y que todo lo que acepta el contrato lo acepte PRI_JV.
+- clinical.performance_profile guarda el perfil de cada revisión en la misma transacción, con método, versión, insumos y
+  hash (RN-D01), y sin UPDATE (RN-D08). A los insumos van solo las 29 respuestas que puntúan: el texto se queda en la
+  historia. Sin respuestas que den puntaje, la fila existe con PRI y clases en null.
+- GET /clinical-history/revisions/:revision lee cualquier revisión, con su READ (RN-B03): es lo que deja consultar la v1 y
+  los perfiles anteriores. Si el motor rechazara una respuesta, NC-CLI-028 (RN-F16) y no se guarda nada.
+- Pantallas: la pestaña Historia clínica muestra el perfil con su método, el formulario, y las revisiones como enlaces a una
+  página de solo lectura. El PRI y los dominios van con 1 decimal, como los índices (RN-D09).
+- El formulario respeta el permiso de escritura (RN-A05): quien no está en el equipo de atención con WRITE ve «Solo lectura»
+  y no se le ofrece guardar. Es lo que el plan de P12 pidió para sus pantallas nuevas; Condiciones, Notas y Evaluaciones
+  siguen pendientes.
+- Diferencia con 05.2, para llevar a Notion: `pri` es numeric(7,4) y no numeric(5,2). Con 2 decimales, cerca de 1 de cada 20
+  PRI se vería con 0.1 de diferencia al redondear otra vez a 1 decimal (RN-D09).
+Consecuencias:
+- Las semillas de Luis y Ana conservan su historia v1: son el caso real de solo lectura. El guion de la Demo 1 sigue
+  hablando de la historia por temas, porque es el registro de esa demo.
+- N05 sigue siendo texto y nunca se interpreta. El formulario recuerda registrar las alergias e intolerancias también como
+  condiciones; lo que hace la dieta con ellas está en ADR-073.
+- La exportación y la supresión de P15 (RN-B04, RN-B05) tienen que incluir las respuestas V2, que traen texto libre, y los
+  insumos del perfil.
+- Para Notion (/notion-sync de P12): 04 RF-09 (la v1 quedó de solo lectura) y RF-43; 05.1 (form_code y form_version de
+  clinical_history); 05.2 (`pri`, y `method_version` semver, ya en ADR-070); 02 §3 (la ruta de una revisión); 07 §12 (ID01 a
+  ID04 no se piden; `modality`); el código NC-CLI-028.
+
+## ADR-073 · Alergias al armar la dieta: un aviso, mientras falta la regla de exclusión — aceptada (2026-10-30)
+Contexto: 07 §12 y la hoja de mapeo de Jeremy piden «exclusión obligatoria» de alergias e intolerancias en la dieta. Ninguna
+regla RN ni prompt la cubre, y la dieta no leía clinical.condition: se podía armar un plan con un alimento al que el
+paciente es alérgico, sin aviso. La revisión del PR 3 de P12 lo encontró y Rodrigo pidió resolverlo en ese mismo PR.
+Decisión:
+- Un aviso en Nuevo plan y en cada plan, borrador o publicado y en sus tres modalidades, con las alergias e intolerancias
+  activas y lo que dice de ellas la última revisión de la historia (N05, o los bloques de la v1), tal cual. Así se ve
+  también lo que se anotó en la anamnesis y no se registró como condición.
+- El aviso dice que la app no las cruza con los alimentos. No bloquea publicar y no lleva a la ficha PDF: excluir de verdad
+  exige enlazar cada alergia con alimentos, la TPCA no trae alérgenos y esa regla clínica no se inventa (regla 11).
+- Si las condiciones o la historia no se pudieron leer, el aviso lo dice: callar parecería que no hay ninguna. Sin nada
+  registrado no se muestra nada.
+- Solo pantalla: usa GET /conditions y GET /clinical-history, que ya dejan su READ (RN-B03). Abrir un plan suma esas dos
+  lecturas a la auditoría, y son ciertas: quien lo abre las ve.
+Consecuencias:
+- Pregunta nueva para Jeremy (P-17): cómo se enlaza una alergia con los alimentos para excluirlos de verdad.
+- Para Notion (/notion-sync de P12): 07 §12 (hoy es un aviso) y §15 (P-17).
+

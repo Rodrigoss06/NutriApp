@@ -14,16 +14,21 @@ import {
   Req,
 } from '@nestjs/common';
 import {
+  ANAMNESIS_FORM,
+  anamnesisAnswersV2Schema,
   clinicalHistoryAnswersV1Schema,
   createClinicalNoteSchema,
   createConditionSchema,
   createGoalSchema,
+  historyRevisionNumberSchema,
   invitePatientSchema,
+  LEGACY_HISTORY_FORM,
   saveClinicalHistorySchema,
   timelineQuerySchema,
   updateConditionSchema,
   updateGoalSchema,
   type ClinicalHistoryResponse,
+  type ClinicalHistoryRevision,
   type ClinicalNoteListResponse,
   type ConditionListResponse,
   type GoalListResponse,
@@ -40,6 +45,7 @@ import {
 import { ACCOUNT_EXISTS_FOR_PATIENT, EMAIL_HAS_PENDING_INVITATION } from '../../../../iam/index.js';
 import { ClinicalRecordCommands } from '../../../application/commands/clinical-record.commands.js';
 import { PatientInvitationCommands } from '../../../application/commands/patient-invitation.commands.js';
+import type { HistoryRevisionRecord } from '../../../application/ports/clinical.ports.js';
 import { ClinicalRecordQueries } from '../../../application/queries/clinical-record.queries.js';
 import {
   CONDITION_NOT_FOUND,
@@ -82,9 +88,40 @@ const contextOf = (request: ContextualRequest): SecurityContext => {
   return request.securityContext;
 };
 
+/** Las respuestas se guardaron validadas con el esquema de su formulario: la v1 solo se lee. */
+const revisionOf = (record: HistoryRevisionRecord): ClinicalHistoryRevision => {
+  const meta = {
+    revision: record.revision,
+    recordedAt: record.recordedAt.toISOString(),
+    recordedBy: record.recordedBy,
+  };
+  if (record.formCode !== ANAMNESIS_FORM.code) {
+    return {
+      ...meta,
+      formCode: LEGACY_HISTORY_FORM.code,
+      formVersion: LEGACY_HISTORY_FORM.version,
+      answers: clinicalHistoryAnswersV1Schema.parse(record.answers),
+      profile: null,
+    };
+  }
+  return {
+    ...meta,
+    formCode: ANAMNESIS_FORM.code,
+    formVersion: ANAMNESIS_FORM.version,
+    answers: anamnesisAnswersV2Schema.parse(record.answers),
+    profile: record.profile && {
+      ...record.profile,
+      domainScores: { ...record.profile.domainScores },
+      classes: { ...record.profile.classes },
+      computedAt: record.profile.computedAt.toISOString(),
+    },
+  };
+};
+
 /**
- * Expediente del paciente (RF-09, RF-10): historia clínica versionada, condiciones, objetivos, notas, línea de tiempo
- * e invitación a la app (RN-A06). Escribir datos de salud exige HEALTH_DATA (RN-B01); leer deja un READ (RN-B03).
+ * Expediente del paciente (RF-09, RF-10, RF-43): historia clínica versionada con su perfil de rendimiento, condiciones,
+ * objetivos, notas, línea de tiempo e invitación a la app (RN-A06). Escribir datos de salud exige HEALTH_DATA (RN-B01);
+ * leer deja un READ (RN-B03).
  */
 @Controller('patients/:patientId')
 export class ClinicalRecordController {
@@ -104,24 +141,36 @@ export class ClinicalRecordController {
     const view = await this.queries.history(contextOf(request), patientId);
     if (!view) throw notFound();
     return {
-      current: view.current && {
-        revision: view.current.revision,
-        formCode: view.current.formCode,
-        formVersion: view.current.formVersion,
-        // Las respuestas se guardaron validadas con este mismo esquema.
-        answers: clinicalHistoryAnswersV1Schema.parse(view.current.answers),
-        recordedAt: view.current.recordedAt.toISOString(),
-        recordedBy: view.current.recordedBy,
-      },
+      current: view.current && revisionOf(view.current),
       revisions: view.revisions.map((r) => ({
         revision: r.revision,
+        formCode:
+          r.formCode === ANAMNESIS_FORM.code ? ANAMNESIS_FORM.code : LEGACY_HISTORY_FORM.code,
         recordedAt: r.recordedAt.toISOString(),
         recordedBy: r.recordedBy,
       })),
     };
   }
 
-  /** Cada guardado es una revisión nueva sobre expectedRevision; si alguien guardó antes, 409. */
+  /** Una revisión anterior: la v1, que ya no se edita, y cada perfil de rendimiento anterior. */
+  @Get('clinical-history/revisions/:revision')
+  @RequirePermission('patients.read')
+  @Header('Cache-Control', 'no-store')
+  async historyRevision(
+    @Req() request: ContextualRequest,
+    @Param('patientId', ParseUUIDPipe) patientId: string,
+    @Param('revision') revision: string,
+  ): Promise<ClinicalHistoryRevision> {
+    const record = await this.queries.historyRevision(
+      contextOf(request),
+      patientId,
+      parseBody(historyRevisionNumberSchema, revision),
+    );
+    if (!record) throw notFound();
+    return revisionOf(record);
+  }
+
+  /** Cada guardado es una revisión nueva de la anamnesis V2 sobre expectedRevision; si alguien guardó antes, 409. */
   @Put('clinical-history')
   @RequirePermission('patients.write')
   async saveHistory(

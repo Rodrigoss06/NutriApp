@@ -147,6 +147,12 @@ export const OBESITY_NEEDS_CARE_TEAM = domainError({
   message:
     'La población «obesidad» es un dato de salud: la pone o la quita el equipo de atención con permiso de escritura.',
 });
+/** El contrato ya las valida: si el motor rechaza una respuesta, la revisión no se guarda sin su perfil. */
+export const INVALID_ANAMNESIS = domainError({
+  code: 'NC-CLI-028',
+  rule: 'RN-F16',
+  message: 'Revisa las respuestas de la anamnesis: alguna no se puede puntuar.',
+});
 
 /** DNI: 8 dígitos. Los demás: letras y dígitos sin espacios ni guiones, de 4 a 20. En mayúsculas. */
 export function normalizeDocument(type: DocumentType, number: string): string | null {
@@ -254,5 +260,5 @@ export function checkAppEnrollment(input: {
     : APP_CONSENTS_REQUIRED;
 }
 
-/** Formulario de la historia clínica vigente: v1 de texto libre por bloque (⚠️ provisional). */
-export const HISTORY_FORM = { code: 'ANAMNESIS', version: '1' } as const;
+/** Formulario vigente de la historia clínica: la anamnesis de JV Fitness (RF-43). La v1 de texto libre solo se lee. */
+export const HISTORY_FORM = { code: 'JV_ANAMNESIS', version: 'V2' } as const;

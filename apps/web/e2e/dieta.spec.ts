@@ -100,6 +100,57 @@ const saved = async (page: Page) => {
 };
 
 test.describe('P9 · Dieta por intercambios', () => {
+  test('07 §12: las alergias e intolerancias activas se ven al armar la dieta y al leerla, y avisa que no las cruza', async ({
+    page,
+  }) => {
+    const organization = await createOrganization();
+    const luisId = await luisWithPrescription(organization.ownerEmail);
+    const api = await apiAs(organization.ownerEmail);
+    const register = async (kind: string, label: string): Promise<string> => {
+      const created = await api.post(`/api/v1/patients/${luisId}/conditions`, {
+        data: { kind, label },
+      });
+      expect(created.status(), label).toBe(201);
+      return ((await created.json()) as { id: string }).id;
+    };
+    await register('ALLERGY', 'Maní');
+    await register('INTOLERANCE', 'Lactosa');
+    await register('DISEASE', 'Hipotiroidismo');
+    const resolved = await register('ALLERGY', 'Penicilina');
+    const resolving = await api.patch(`/api/v1/patients/${luisId}/conditions/${resolved}`, {
+      data: { status: 'RESOLVED' },
+    });
+    expect(resolving.ok(), 'resolver la condición').toBe(true);
+    const anamnesis = await api.put(`/api/v1/patients/${luisId}/clinical-history`, {
+      data: {
+        expectedRevision: 0,
+        answers: { modality: 'IN_PERSON', N05: 'No come mariscos.' },
+      },
+    });
+    expect(anamnesis.ok(), 'guardar la anamnesis').toBe(true);
+    await api.dispose();
+    await loginInPage(page, organization.ownerEmail);
+
+    const expectAlerts = async () => {
+      await expect(page.getByText('Alergias e intolerancias registradas')).toBeVisible();
+      await expect(page.getByText('Alergia: Maní')).toBeVisible();
+      await expect(page.getByText('Intolerancia: Lactosa')).toBeVisible();
+      await expect(page.getByText('En la anamnesis: No come mariscos.')).toBeVisible();
+      await expect(page.getByText('La app no las cruza con los alimentos del plan')).toBeVisible();
+      await expect(page.getByText('Penicilina')).toHaveCount(0);
+      await expect(page.getByText('Hipotiroidismo')).toHaveCount(0);
+    };
+
+    await page.goto(`/panel/pacientes/${luisId}/dieta/nuevo`);
+    await expectAlerts();
+    expect(await seriousViolations(page)).toEqual([]);
+
+    await page.getByRole('button', { name: 'Crear borrador' }).click();
+    await page.waitForURL(/\/dieta\/[0-9a-f-]{36}$/);
+    await expectAlerts();
+    expect(await seriousViolations(page)).toEqual([]);
+  });
+
   test('Luis arma su plan en tres pasos con G-17 a G-19, lo publica y crea la versión 2', async ({
     page,
   }) => {
@@ -114,6 +165,8 @@ test.describe('P9 · Dieta por intercambios', () => {
       await expect(page.getByText('Todavía no hay planes')).toBeVisible();
       await page.getByRole('link', { name: 'Nuevo plan' }).click();
       await expect(page.getByText('Lista provisional')).toBeVisible();
+      // Sin alergias registradas no hay aviso (07 §12).
+      await expect(page.getByText('Alergias e intolerancias registradas')).toHaveCount(0);
       expect(await seriousViolations(page)).toEqual([]);
       await page.getByRole('button', { name: 'Crear borrador' }).click();
       await page.waitForURL(/\/dieta\/[0-9a-f-]{36}$/);
