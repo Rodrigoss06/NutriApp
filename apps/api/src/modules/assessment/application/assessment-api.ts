@@ -8,10 +8,12 @@ import { ResultsAssembly, type ResultsView } from './results-assembly.js';
 import {
   CALCULATION_STORE,
   EVALUATION_STORE,
+  FUNCTIONAL_EVALUATION_STORE,
   SITE_CATALOG,
   type CalculationStore,
   type EvaluationRecord,
   type EvaluationStore,
+  type FunctionalEvaluationStore,
   type SiteCatalog,
 } from './ports/assessment.ports.js';
 
@@ -89,7 +91,18 @@ export class AssessmentApi {
     @Inject(CALCULATION_STORE) private readonly calculations: CalculationStore,
     @Inject(CalculationService) private readonly calculation: CalculationService,
     @Inject(ResultsAssembly) private readonly assembly: ResultsAssembly,
+    @Inject(FUNCTIONAL_EVALUATION_STORE) private readonly functional: FunctionalEvaluationStore,
   ) {}
+
+  /** La llave de la postura (RN-F15): si hay una evaluación cerrada, y los estados de la vigente y de los borradores. */
+  movementKeys(patientId: string): ReturnType<FunctionalEvaluationStore['movementKeys']> {
+    return this.functional.movementKeys(patientId);
+  }
+
+  /** Los códigos de las pruebas físicas, para validar sus objetivos (07 §4). */
+  async physicalTestCodes(): Promise<readonly string[]> {
+    return (await this.functional.catalog()).physicalTests.map((test) => test.code);
+  }
 
   /** La evaluación para su ficha PDF; null si no existe o el contexto no la ve (RN-A05). Sin auditar: audita la descarga. */
   async evaluationSheet(evaluationId: string): Promise<EvaluationSheet | null> {

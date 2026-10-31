@@ -116,92 +116,96 @@ export function ConditionsSection({
                     />
                   ) : null}
                 </div>
-                <Button
-                  variant="secondary"
-                  size="sm"
-                  disabled={!canWrite || change.isPending}
-                  onClick={() => {
-                    change.mutate({
-                      id: condition.id,
-                      status: condition.status === 'ACTIVE' ? 'RESOLVED' : 'ACTIVE',
-                    });
-                  }}
-                >
-                  {condition.status === 'ACTIVE' ? 'Marcar resuelta' : 'Marcar activa'}
-                </Button>
+                {writesRecord ? (
+                  <Button
+                    variant="secondary"
+                    size="sm"
+                    disabled={!canWrite || change.isPending}
+                    onClick={() => {
+                      change.mutate({
+                        id: condition.id,
+                        status: condition.status === 'ACTIVE' ? 'RESOLVED' : 'ACTIVE',
+                      });
+                    }}
+                  >
+                    {condition.status === 'ACTIVE' ? 'Marcar resuelta' : 'Marcar activa'}
+                  </Button>
+                ) : null}
               </li>
             );
           })}
         </ul>
       )}
-      <form
-        noValidate
-        aria-label="Registrar una condición"
-        className="flex flex-col gap-4 rounded-lg border border-border p-4 bg-card"
-        onSubmit={submitWith(
-          form.handleSubmit((values) => {
-            add.mutate({
-              kind: values.kind as CreateCondition['kind'],
-              label: values.label,
-              codeSystem: values.codeSystem || null,
-              code: values.code || null,
-              since: values.since || null,
-              notes: values.notes || null,
-            });
-          }),
-        )}
-      >
-        <h3 className="font-semibold">Registrar condición</h3>
-        <FormError error={add.error} title="No se registró la condición" />
-        <div className="grid gap-4 sm:grid-cols-2">
-          <Controller
-            control={form.control}
-            name="kind"
-            render={({ field }) => (
-              <Select
-                label="Tipo"
-                value={field.value}
-                disabled={!canWrite}
-                onValueChange={field.onChange}
-                options={CONDITION_KINDS.map((value) => ({
-                  value,
-                  label: CONDITION_KIND_LABELS[value],
-                }))}
-              />
-            )}
-          />
-          <TextField
-            label="Descripción"
+      {writesRecord ? (
+        <form
+          noValidate
+          aria-label="Registrar una condición"
+          className="flex flex-col gap-4 rounded-lg border border-border p-4 bg-card"
+          onSubmit={submitWith(
+            form.handleSubmit((values) => {
+              add.mutate({
+                kind: values.kind as CreateCondition['kind'],
+                label: values.label,
+                codeSystem: values.codeSystem || null,
+                code: values.code || null,
+                since: values.since || null,
+                notes: values.notes || null,
+              });
+            }),
+          )}
+        >
+          <h3 className="font-semibold">Registrar condición</h3>
+          <FormError error={add.error} title="No se registró la condición" />
+          <div className="grid gap-4 sm:grid-cols-2">
+            <Controller
+              control={form.control}
+              name="kind"
+              render={({ field }) => (
+                <Select
+                  label="Tipo"
+                  value={field.value}
+                  disabled={!canWrite}
+                  onValueChange={field.onChange}
+                  options={CONDITION_KINDS.map((value) => ({
+                    value,
+                    label: CONDITION_KIND_LABELS[value],
+                  }))}
+                />
+              )}
+            />
+            <TextField
+              label="Descripción"
+              disabled={!canWrite}
+              error={form.formState.errors.label?.message}
+              {...form.register('label', { required: 'Describe la condición.', maxLength: 200 })}
+            />
+            <TextField
+              label="Sistema de códigos"
+              placeholder="CIE-10"
+              disabled={!canWrite}
+              {...form.register('codeSystem')}
+            />
+            <TextField
+              label="Código"
+              placeholder="E03.9"
+              disabled={!canWrite}
+              {...form.register('code')}
+            />
+            <TextField label="Desde" type="date" disabled={!canWrite} {...form.register('since')} />
+          </div>
+          <TextAreaField
+            label="Notas"
+            maxLength={2000}
             disabled={!canWrite}
-            error={form.formState.errors.label?.message}
-            {...form.register('label', { required: 'Describe la condición.', maxLength: 200 })}
+            {...form.register('notes')}
           />
-          <TextField
-            label="Sistema de códigos"
-            placeholder="CIE-10"
-            disabled={!canWrite}
-            {...form.register('codeSystem')}
-          />
-          <TextField
-            label="Código"
-            placeholder="E03.9"
-            disabled={!canWrite}
-            {...form.register('code')}
-          />
-          <TextField label="Desde" type="date" disabled={!canWrite} {...form.register('since')} />
-        </div>
-        <TextAreaField
-          label="Notas"
-          maxLength={2000}
-          disabled={!canWrite}
-          {...form.register('notes')}
-        />
-        <div>
-          <Button type="submit" disabled={!canWrite || add.isPending}>
-            Registrar condición
-          </Button>
-        </div>
-      </form>
+          <div>
+            <Button type="submit" disabled={!canWrite || add.isPending}>
+              Registrar condición
+            </Button>
+          </div>
+        </form>
+      ) : null}
     </div>
   );
 }

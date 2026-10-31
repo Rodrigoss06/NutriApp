@@ -1,6 +1,12 @@
 'use client';
 
-import type { EvaluationResponse, Measurement, MeasurementSite } from '@nutricoach/contracts';
+import type {
+  CareTeamMember,
+  EvaluationResponse,
+  Measurement,
+  MeasurementSite,
+  MemberResponse,
+} from '@nutricoach/contracts';
 import {
   Button,
   ConfirmDialog,
@@ -18,6 +24,8 @@ import {
 import { useRouter } from 'next/navigation';
 import { useCallback, useId, useMemo, useRef, useState, type KeyboardEvent } from 'react';
 import { FormError } from '@/features/forms/form-error';
+import { CareTeamNotice } from '@/features/patients/record-write-gate';
+import { useWritesRecord } from '@/features/patients/use-writes-record';
 import { useCanWrite } from '@/features/session/panel-session';
 import { apiFetch, type ApiRequest } from '@/lib/api/client';
 import { ApiError, errorMessage } from '@/lib/api/problem';
@@ -41,12 +49,17 @@ type Write = (path: string, request: ApiRequest, ifMatch?: boolean) => Promise<E
 export function EvaluationCapture({
   initial,
   sites,
+  careTeam,
+  members,
 }: {
   initial: EvaluationResponse;
   sites: readonly MeasurementSite[];
+  careTeam: readonly CareTeamMember[];
+  members: readonly MemberResponse[];
 }) {
   const router = useRouter();
-  const canWrite = useCanWrite();
+  const writes = useWritesRecord(careTeam, members);
+  const canWrite = useCanWrite() && writes;
   const [evaluation, setEvaluation] = useState(initial);
   const [added, setAdded] = useState<string[]>([]);
   const [extra, setExtra] = useState<string | undefined>(undefined);
@@ -128,6 +141,9 @@ export function EvaluationCapture({
 
   return (
     <div className="flex flex-col gap-6">
+      {writes ? null : (
+        <CareTeamNotice patientId={initial.patientId} action="registrar esta evaluación" />
+      )}
       {conflict ? (
         <Notice tone="warning" title="Alguien cambió esta evaluación mientras la editabas">
           <span className="flex flex-col gap-2">
@@ -252,49 +268,54 @@ export function EvaluationCapture({
         <BiaSection evaluation={evaluation} disabled={!canWrite} write={write} />
       )}
 
-      <section aria-labelledby="cierre-titulo" className="flex flex-col gap-3">
-        <h2 id="cierre-titulo" className="text-lg font-semibold">
-          Cierre
-        </h2>
-        {progress.canClose ? (
-          <p className="text-sm text-muted-foreground">
-            Al cerrar, la evaluación ya no se edita: se enmienda con motivo (RN-C07). Los resultados
-            se calculan en unos segundos.
-          </p>
-        ) : (
-          <Notice tone="info" title="Todavía no se puede cerrar" rule="RN-C01">
-            <ul className="list-disc pl-5">
-              {progress.missingSites.length > 0 ? (
-                <li>
-                  Faltan{' '}
-                  {progress.missingSites.map((code) => siteName(code).toLowerCase()).join(', ')}.
-                </li>
-              ) : null}
-              {progress.needsThirdSites.length > 0 ? (
-                <li>
-                  Falta la 3.ª toma en{' '}
-                  {progress.needsThirdSites.map((code) => siteName(code).toLowerCase()).join(', ')}.
-                </li>
-              ) : null}
-              {needsBia ? <li>Falta la lectura de bioimpedancia.</li> : null}
-            </ul>
-          </Notice>
-        )}
-        <FormError error={closeError} title="No se cerró la evaluación" />
-        <div>
-          <ConfirmDialog
-            trigger={
-              <Button disabled={!canWrite || !progress.canClose || closing}>
-                {closing ? 'Cerrando…' : 'Cerrar evaluación'}
-              </Button>
-            }
-            title="Cerrar la evaluación"
-            description="Después no se edita: si algo está mal, se enmienda con motivo y lo anterior queda como histórico."
-            confirmLabel="Cerrar evaluación"
-            onConfirm={close}
-          />
-        </div>
-      </section>
+      {writes ? (
+        <section aria-labelledby="cierre-titulo" className="flex flex-col gap-3">
+          <h2 id="cierre-titulo" className="text-lg font-semibold">
+            Cierre
+          </h2>
+          {progress.canClose ? (
+            <p className="text-sm text-muted-foreground">
+              Al cerrar, la evaluación ya no se edita: se enmienda con motivo (RN-C07). Los
+              resultados se calculan en unos segundos.
+            </p>
+          ) : (
+            <Notice tone="info" title="Todavía no se puede cerrar" rule="RN-C01">
+              <ul className="list-disc pl-5">
+                {progress.missingSites.length > 0 ? (
+                  <li>
+                    Faltan{' '}
+                    {progress.missingSites.map((code) => siteName(code).toLowerCase()).join(', ')}.
+                  </li>
+                ) : null}
+                {progress.needsThirdSites.length > 0 ? (
+                  <li>
+                    Falta la 3.ª toma en{' '}
+                    {progress.needsThirdSites
+                      .map((code) => siteName(code).toLowerCase())
+                      .join(', ')}
+                    .
+                  </li>
+                ) : null}
+                {needsBia ? <li>Falta la lectura de bioimpedancia.</li> : null}
+              </ul>
+            </Notice>
+          )}
+          <FormError error={closeError} title="No se cerró la evaluación" />
+          <div>
+            <ConfirmDialog
+              trigger={
+                <Button disabled={!canWrite || !progress.canClose || closing}>
+                  {closing ? 'Cerrando…' : 'Cerrar evaluación'}
+                </Button>
+              }
+              title="Cerrar la evaluación"
+              description="Después no se edita: si algo está mal, se enmienda con motivo y lo anterior queda como histórico."
+              confirmLabel="Cerrar evaluación"
+              onConfirm={close}
+            />
+          </div>
+        </section>
+      ) : null}
     </div>
   );
 }

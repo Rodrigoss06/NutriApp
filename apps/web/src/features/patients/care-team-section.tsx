@@ -9,6 +9,7 @@ import { FormError } from '@/features/forms/form-error';
 import { useCanWrite } from '@/features/session/panel-session';
 import { apiFetch } from '@/lib/api/client';
 import { CARE_TEAM_ACCESS_LABELS, CARE_TEAM_ROLE_LABELS, optionsOf } from './labels';
+import { useManagesPatient } from './use-writes-record';
 
 const ROLES = ['NUTRITION', 'TRAINING', 'COLLABORATOR'] as const;
 
@@ -25,6 +26,7 @@ export function CareTeamSection({
 }) {
   const router = useRouter();
   const canWrite = useCanWrite() && patient.status === 'ACTIVE';
+  const manages = useManagesPatient(patient.responsibleMemberId, members);
   const byId = new Map(members.map((m) => [m.id, m]));
   const candidates = members.filter(
     (m) => m.status === 'ACTIVE' && !patient.careTeam.some((t) => t.memberId === m.id),
@@ -69,7 +71,7 @@ export function CareTeamSection({
                   {CARE_TEAM_ROLE_LABELS[member.role]} · {CARE_TEAM_ACCESS_LABELS[member.access]}
                 </span>
               </div>
-              {member.role === 'RESPONSIBLE' ? null : (
+              {member.role === 'RESPONSIBLE' || !manages ? null : (
                 <div className="flex flex-wrap items-end gap-2">
                   <Select
                     label={`Acceso de ${name}`}
@@ -105,7 +107,7 @@ export function CareTeamSection({
           );
         })}
       </ul>
-      {candidates.length > 0 ? (
+      {candidates.length > 0 && manages ? (
         <div className="flex flex-col gap-3 sm:flex-row sm:items-end">
           <Select
             label="Agregar a"

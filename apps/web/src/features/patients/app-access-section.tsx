@@ -1,6 +1,6 @@
 'use client';
 
-import type { PatientResponse } from '@nutricoach/contracts';
+import type { MemberResponse, PatientResponse } from '@nutricoach/contracts';
 import { Button, Notice } from '@nutricoach/ui';
 import { useMutation } from '@tanstack/react-query';
 import { useRouter } from 'next/navigation';
@@ -10,15 +10,23 @@ import { FormError } from '@/features/forms/form-error';
 import { useCanWrite, usePanelSession } from '@/features/session/panel-session';
 import { apiFetch } from '@/lib/api/client';
 import { formatInstant } from '@/lib/dates';
+import { useWritesClinical } from './use-writes-record';
 
 /**
  * Acceso a la app (RN-A06): una invitación de un solo uso al correo del paciente. Reenviar anula el enlace anterior.
  * Un menor de 14 años solo se invita con los consentimientos firmados en papel por su padre, madre o tutor (ADR-042).
  */
-export function AppAccessSection({ patient }: { patient: PatientResponse }) {
+export function AppAccessSection({
+  patient,
+  members,
+}: {
+  patient: PatientResponse;
+  members: readonly MemberResponse[];
+}) {
   const router = useRouter();
   const { timezone, patientLabel } = usePanelSession();
   const canWrite = useCanWrite() && patient.status === 'ACTIVE';
+  const writes = useWritesClinical(patient.careTeam, members);
   const [email, setEmail] = useState(patient.appAccess.invitation?.email ?? patient.email ?? '');
   const invite = useMutation({
     mutationFn: (to: string) =>
@@ -66,32 +74,34 @@ export function AppAccessSection({ patient }: { patient: PatientResponse }) {
           El enlace llega al correo del {patientLabel.toLowerCase()} y sirve una sola vez.
         </Notice>
       ) : null}
-      <form
-        noValidate
-        className="flex flex-col gap-3 sm:flex-row sm:items-end"
-        onSubmit={submitWith((event) => {
-          event?.preventDefault();
-          invite.mutate(email.trim());
-          return Promise.resolve();
-        })}
-      >
-        <div className="flex-1">
-          <TextField
-            label="Correo para la app"
-            type="email"
-            inputMode="email"
-            autoComplete="off"
-            value={email}
-            disabled={!canWrite}
-            onChange={(event) => {
-              setEmail(event.target.value);
-            }}
-          />
-        </div>
-        <Button type="submit" disabled={!canWrite || invite.isPending}>
-          {pending ? 'Reenviar invitación' : 'Invitar a la app'}
-        </Button>
-      </form>
+      {writes ? (
+        <form
+          noValidate
+          className="flex flex-col gap-3 sm:flex-row sm:items-end"
+          onSubmit={submitWith((event) => {
+            event?.preventDefault();
+            invite.mutate(email.trim());
+            return Promise.resolve();
+          })}
+        >
+          <div className="flex-1">
+            <TextField
+              label="Correo para la app"
+              type="email"
+              inputMode="email"
+              autoComplete="off"
+              value={email}
+              disabled={!canWrite}
+              onChange={(event) => {
+                setEmail(event.target.value);
+              }}
+            />
+          </div>
+          <Button type="submit" disabled={!canWrite || invite.isPending}>
+            {pending ? 'Reenviar invitación' : 'Invitar a la app'}
+          </Button>
+        </form>
+      ) : null}
     </div>
   );
 }

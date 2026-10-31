@@ -162,31 +162,34 @@ model CalculationResult {
 /// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
 /// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
 model Evaluation {
-  id                 String              @id @db.Uuid
-  organizationId     String              @map("organization_id") @db.Uuid
-  patientId          String              @map("patient_id") @db.Uuid
-  evaluatorMemberId  String              @map("evaluator_member_id") @db.Uuid
-  kind               String              @default("ANTHROPOMETRY")
-  level              String?
-  measuredAt         DateTime            @map("measured_at") @db.Timestamptz(6)
-  localDate          DateTime            @map("local_date") @db.Date
-  conditions         Json                @default("{}")
-  patientSnapshot    Json                @map("patient_snapshot")
-  status             String              @default("DRAFT")
-  revision           Int                 @default(1) @db.SmallInt
-  amendsEvaluationId String?             @unique(map: "evaluation_amended_once", where: raw("(amends_evaluation_id IS NOT NULL)")) @map("amends_evaluation_id") @db.Uuid
-  amendReason        String?             @map("amend_reason")
-  closedAt           DateTime?           @map("closed_at") @db.Timestamptz(6)
-  notes              String?
-  createdBy          String              @map("created_by") @db.Uuid
-  createdAt          DateTime            @default(now()) @map("created_at") @db.Timestamptz(6)
-  updatedAt          DateTime            @default(now()) @map("updated_at") @db.Timestamptz(6)
-  version            Int                 @default(0)
-  biaReadings        BiaReading[]
-  calculationResults CalculationResult[]
-  amendsEvaluation   Evaluation?         @relation("evaluationToevaluation", fields: [amendsEvaluationId], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  amendments         Evaluation?         @relation("evaluationToevaluation")
-  measurements       Measurement[]
+  id                  String               @id @db.Uuid
+  organizationId      String               @map("organization_id") @db.Uuid
+  patientId           String               @map("patient_id") @db.Uuid
+  evaluatorMemberId   String               @map("evaluator_member_id") @db.Uuid
+  kind                String               @default("ANTHROPOMETRY")
+  level               String?
+  measuredAt          DateTime             @map("measured_at") @db.Timestamptz(6)
+  localDate           DateTime             @map("local_date") @db.Date
+  conditions          Json                 @default("{}")
+  patientSnapshot     Json                 @map("patient_snapshot")
+  status              String               @default("DRAFT")
+  revision            Int                  @default(1) @db.SmallInt
+  amendsEvaluationId  String?              @unique(map: "evaluation_amended_once", where: raw("(amends_evaluation_id IS NOT NULL)")) @map("amends_evaluation_id") @db.Uuid
+  amendReason         String?              @map("amend_reason")
+  closedAt            DateTime?            @map("closed_at") @db.Timestamptz(6)
+  notes               String?
+  createdBy           String               @map("created_by") @db.Uuid
+  createdAt           DateTime             @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt           DateTime             @default(now()) @map("updated_at") @db.Timestamptz(6)
+  version             Int                  @default(0)
+  moment              String?
+  biaReadings         BiaReading[]
+  calculationResults  CalculationResult[]
+  amendsEvaluation    Evaluation?          @relation("evaluationToevaluation", fields: [amendsEvaluationId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  amendments          Evaluation?          @relation("evaluationToevaluation")
+  measurements        Measurement[]
+  movementScreens     MovementScreen[]
+  physicalTestResults PhysicalTestResult[]
 
   @@index([organizationId, patientId, measuredAt(sort: Desc)], map: "evaluation_by_patient")
   @@map("evaluation")
@@ -478,37 +481,38 @@ model Goal {
 /// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
 /// This model contains an expression index which requires additional setup for migrations. Visit https://pris.ly/d/expression-indexes for more info.
 model Patient {
-  id                  String               @id @db.Uuid
-  organizationId      String               @map("organization_id") @db.Uuid
-  userId              String?              @unique(map: "patient_user", where: raw("(user_id IS NOT NULL)")) @map("user_id") @db.Uuid
-  code                String
-  firstName           String               @map("first_name")
-  lastName            String               @map("last_name")
-  sex                 String               @db.Char(1)
-  genderIdentity      String?              @map("gender_identity")
-  birthDate           DateTime             @map("birth_date") @db.Date
-  documentType        String?              @map("document_type")
-  documentNumberEnc   Bytes?               @map("document_number_enc")
-  documentNumberBidx  Bytes?               @map("document_number_bidx")
-  email               String?              @db.Citext
-  phoneEnc            Bytes?               @map("phone_enc")
-  timezone            String               @default("America/Lima")
-  population          String               @default("ADULT")
-  status              String               @default("ACTIVE")
-  responsibleMemberId String               @map("responsible_member_id") @db.Uuid
-  tags                String[]             @default([])
-  archivedAt          DateTime?            @map("archived_at") @db.Timestamptz(6)
-  createdBy           String               @map("created_by") @db.Uuid
-  createdAt           DateTime             @default(now()) @map("created_at") @db.Timestamptz(6)
-  updatedAt           DateTime             @default(now()) @map("updated_at") @db.Timestamptz(6)
-  version             Int                  @default(0)
-  careTeamMembers     CareTeamMember[]
-  clinicalHistorys    ClinicalHistory[]
-  clinicalNotes       ClinicalNote[]
-  conditions          Condition[]
-  consents            Consent[]
-  goals               Goal[]
-  performanceProfiles PerformanceProfile[]
+  id                    String                 @id @db.Uuid
+  organizationId        String                 @map("organization_id") @db.Uuid
+  userId                String?                @unique(map: "patient_user", where: raw("(user_id IS NOT NULL)")) @map("user_id") @db.Uuid
+  code                  String
+  firstName             String                 @map("first_name")
+  lastName              String                 @map("last_name")
+  sex                   String                 @db.Char(1)
+  genderIdentity        String?                @map("gender_identity")
+  birthDate             DateTime               @map("birth_date") @db.Date
+  documentType          String?                @map("document_type")
+  documentNumberEnc     Bytes?                 @map("document_number_enc")
+  documentNumberBidx    Bytes?                 @map("document_number_bidx")
+  email                 String?                @db.Citext
+  phoneEnc              Bytes?                 @map("phone_enc")
+  timezone              String                 @default("America/Lima")
+  population            String                 @default("ADULT")
+  status                String                 @default("ACTIVE")
+  responsibleMemberId   String                 @map("responsible_member_id") @db.Uuid
+  tags                  String[]               @default([])
+  archivedAt            DateTime?              @map("archived_at") @db.Timestamptz(6)
+  createdBy             String                 @map("created_by") @db.Uuid
+  createdAt             DateTime               @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt             DateTime               @default(now()) @map("updated_at") @db.Timestamptz(6)
+  version               Int                    @default(0)
+  careTeamMembers       CareTeamMember[]
+  clinicalHistorys      ClinicalHistory[]
+  clinicalNotes         ClinicalNote[]
+  conditions            Condition[]
+  consents              Consent[]
+  goals                 Goal[]
+  performanceProfiles   PerformanceProfile[]
+  preExerciseScreenings PreExerciseScreening[]
 
   @@unique([organizationId, documentNumberBidx], map: "patient_document", where: raw("(document_number_bidx IS NOT NULL)"))
   @@unique([organizationId, code])
@@ -1983,4 +1987,136 @@ model FoodExclusion {
   @@index([organizationId, patientId], map: "food_exclusion_by_patient")
   @@map("food_exclusion")
   @@schema("nutrition")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model MovementScreen {
+  evaluationId    String       @map("evaluation_id") @db.Uuid
+  testCode        String       @map("test_code")
+  organizationId  String       @map("organization_id") @db.Uuid
+  patientId       String       @map("patient_id") @db.Uuid
+  rightScore      Int?         @map("right_score") @db.SmallInt
+  leftScore       Int?         @map("left_score") @db.SmallInt
+  pain            Boolean      @default(false)
+  asymmetry       Boolean      @default(false)
+  status          String
+  ruleVersion     String       @map("rule_version")
+  modality        String       @default("IN_PERSON")
+  observation     String?
+  actionNote      String?      @map("action_note")
+  reliabilityNote String?      @map("reliability_note")
+  evidenceFileId  String?      @map("evidence_file_id") @db.Uuid
+  evidenceUrl     String?      @map("evidence_url")
+  evaluation      Evaluation   @relation(fields: [evaluationId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  movementTest    MovementTest @relation(fields: [testCode], references: [code], onDelete: NoAction, onUpdate: NoAction)
+
+  @@id([evaluationId, testCode])
+  @@map("movement_screen")
+  @@schema("assessment")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model MovementTest {
+  code            String           @id
+  nameEs          String           @map("name_es")
+  kind            String
+  regionEs        String           @map("region_es")
+  displayOrder    Int              @map("display_order") @db.SmallInt
+  movementScreens MovementScreen[]
+
+  @@map("movement_test")
+  @@schema("assessment")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model PhysicalTest {
+  code                String               @id
+  domain              String
+  nameEs              String               @map("name_es")
+  protocolEs          String               @map("protocol_es")
+  unit                String
+  displayOrder        Int                  @map("display_order") @db.SmallInt
+  physicalTestResults PhysicalTestResult[]
+
+  @@map("physical_test")
+  @@schema("assessment")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model PhysicalTestResult {
+  evaluationId   String       @map("evaluation_id") @db.Uuid
+  testCode       String       @map("test_code")
+  organizationId String       @map("organization_id") @db.Uuid
+  patientId      String       @map("patient_id") @db.Uuid
+  value          Decimal      @db.Decimal(8, 2)
+  unit           String
+  modality       String       @default("IN_PERSON")
+  notes          String?
+  evidenceFileId String?      @map("evidence_file_id") @db.Uuid
+  evidenceUrl    String?      @map("evidence_url")
+  evaluation     Evaluation   @relation(fields: [evaluationId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  physicalTest   PhysicalTest @relation(fields: [testCode], references: [code], onDelete: NoAction, onUpdate: NoAction)
+
+  @@id([evaluationId, testCode])
+  @@map("physical_test_result")
+  @@schema("assessment")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model PreExerciseScreening {
+  id             String    @id @db.Uuid
+  organizationId String    @map("organization_id") @db.Uuid
+  patientId      String    @map("patient_id") @db.Uuid
+  formVersion    String    @map("form_version")
+  answers        Json
+  status         String
+  ruleVersion    String    @map("rule_version")
+  answeredBy     String    @map("answered_by") @db.Uuid
+  answeredAt     DateTime  @default(now()) @map("answered_at") @db.Timestamptz(6)
+  reviewDecision String?   @map("review_decision")
+  reviewNote     String?   @map("review_note")
+  reviewedBy     String?   @map("reviewed_by") @db.Uuid
+  reviewedAt     DateTime? @map("reviewed_at") @db.Timestamptz(6)
+  patient        Patient   @relation(fields: [patientId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@index([organizationId, patientId, answeredAt(sort: Desc)], map: "screening_by_patient")
+  @@map("pre_exercise_screening")
+  @@schema("clinical")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model AthleteProfile {
+  id                   String    @id @db.Uuid
+  organizationId       String    @map("organization_id") @db.Uuid
+  patientId            String    @map("patient_id") @db.Uuid
+  revision             Int
+  objective            String
+  level                String
+  daysPerWeek          Int       @map("days_per_week") @db.SmallInt
+  minutesPerSession    Int?      @map("minutes_per_session") @db.SmallInt
+  equipmentCodes       String[]  @default([]) @map("equipment_codes")
+  startDate            DateTime? @map("start_date") @db.Date
+  macrocycleWeeks      Int       @default(12) @map("macrocycle_weeks") @db.SmallInt
+  medicalClearance     String    @default("PENDING") @map("medical_clearance")
+  alarmSymptoms        Boolean   @default(false) @map("alarm_symptoms")
+  injuriesNote         String?   @map("injuries_note")
+  restrictionsNote     String?   @map("restrictions_note")
+  baselineWeightKg     Decimal?  @map("baseline_weight_kg") @db.Decimal(5, 2)
+  baselineRestingHrBpm Int?      @map("baseline_resting_hr_bpm") @db.SmallInt
+  baselineHrvMs        Decimal?  @map("baseline_hrv_ms") @db.Decimal(5, 1)
+  sleepTargetHours     Decimal   @default(8) @map("sleep_target_hours") @db.Decimal(3, 1)
+  testTargets          Json      @default("{}") @map("test_targets")
+  notes                String?
+  recordedBy           String    @map("recorded_by") @db.Uuid
+  recordedAt           DateTime  @default(now()) @map("recorded_at") @db.Timestamptz(6)
+
+  @@unique([patientId, revision])
+  @@map("athlete_profile")
+  @@schema("training")
 }

@@ -4,8 +4,9 @@ import { Flame } from 'lucide-react';
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { GOAL_LABELS } from '@/features/energy/labels';
+import { RecordWriteGate } from '@/features/patients/record-write-gate';
 import { Section } from '@/features/patients/section';
-import { getOrganization, getPatient } from '@/features/patients/server';
+import { getMembers, getOrganization, getPatient } from '@/features/patients/server';
 import { serverApi } from '@/lib/api/server';
 import { formatInstant } from '@/lib/dates';
 import { TableScroll } from '@/features/shell/table-scroll';
@@ -15,15 +16,16 @@ export const metadata: Metadata = { title: 'Energía' };
 /** Prescripciones energéticas del paciente, de la más reciente a la más antigua (RF-17). */
 export default async function EnergyPage({ params }: { params: Promise<{ patientId: string }> }) {
   const { patientId } = await params;
-  const [patient, prescriptions, organization] = await Promise.all([
+  const [patient, prescriptions, organization, members] = await Promise.all([
     getPatient(patientId),
     serverApi<EnergyPrescriptionListResponse>(
       `/patients/${encodeURIComponent(patientId)}/energy-prescriptions`,
     ),
     getOrganization(),
+    getMembers(),
   ]);
   if (!patient.ok) return null;
-  if (!prescriptions.ok || !organization.ok) {
+  if (!prescriptions.ok || !organization.ok || !members.ok) {
     return <Notice tone="danger" title="No pudimos cargar las prescripciones" />;
   }
   const base = `/panel/pacientes/${patientId}/energia`;
@@ -34,11 +36,18 @@ export default async function EnergyPage({ params }: { params: Promise<{ patient
       description="Tasa metabólica en reposo, gasto total, objetivo, peso objetivo y macronutrientes. Una prescripción no se edita: se crea otra."
     >
       {patient.data.status === 'ARCHIVED' ? null : (
-        <div>
-          <Button asChild>
-            <Link href={`${base}/nueva`}>Nueva prescripción</Link>
-          </Button>
-        </div>
+        <RecordWriteGate
+          patientId={patientId}
+          careTeam={patient.data.careTeam}
+          members={members.data.members}
+          action="prescribir energía"
+        >
+          <div>
+            <Button asChild>
+              <Link href={`${base}/nueva`}>Nueva prescripción</Link>
+            </Button>
+          </div>
+        </RecordWriteGate>
       )}
       {list.length === 0 ? (
         <EmptyState

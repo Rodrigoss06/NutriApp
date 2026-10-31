@@ -33,12 +33,13 @@ export async function apiUpload<T>(
   path: string,
   form: FormData,
   method: 'POST' | 'PUT' = 'POST',
+  headers: Readonly<Record<string, string>> = {},
 ): Promise<T> {
   const response = await fetch(`/api/v1${path}`, {
     method,
     credentials: 'same-origin',
     cache: 'no-store',
-    headers: { Accept: 'application/json' },
+    headers: { Accept: 'application/json', ...headers },
     body: form,
   });
   return parseResponse<T>(response);

@@ -9,10 +9,12 @@ import { TechnicalErrorCommands } from './application/commands/technical-error.c
 import {
   CALCULATION_STORE,
   EVALUATION_STORE,
+  FUNCTIONAL_EVALUATION_STORE,
   SITE_CATALOG,
   TECHNICAL_ERROR_STORE,
 } from './application/ports/assessment.ports.js';
 import { EvaluationQueries } from './application/queries/evaluation.queries.js';
+import { FunctionalEvaluationQueries } from './application/queries/functional-evaluation.queries.js';
 import { ResultsQueries } from './application/queries/results.queries.js';
 import { ResultsAssembly } from './application/results-assembly.js';
 import { CalculationConsumer } from './adapters/in/events/calculation.consumer.js';
@@ -26,6 +28,12 @@ import {
   PatientPreferencesController,
   ResultsController,
 } from './adapters/in/http/results.controller.js';
+import {
+  FunctionalEvaluationController,
+  PatientFunctionalEvaluationsController,
+} from './adapters/in/http/functional-evaluation.controller.js';
+import { PrismaFunctionalEvaluationStore } from './adapters/out/persistence/prisma-functional-evaluation.store.js';
+import { FunctionalEvaluationCommands } from './application/commands/functional-evaluation.commands.js';
 import { TechnicalErrorController } from './adapters/in/http/technical-error.controller.js';
 import { PrismaCalculationStore } from './adapters/out/persistence/prisma-calculation.store.js';
 import {
@@ -46,6 +54,8 @@ import {
     EvaluationController,
     TechnicalErrorController,
     ResultsController,
+    PatientFunctionalEvaluationsController,
+    FunctionalEvaluationController,
     OrganizationPreferencesController,
     PatientPreferencesController,
   ],
@@ -53,6 +63,8 @@ import {
     EvaluationCommands,
     TechnicalErrorCommands,
     EvaluationQueries,
+    FunctionalEvaluationCommands,
+    FunctionalEvaluationQueries,
     CalculationService,
     AssessmentApi,
     CalculationCommands,
@@ -61,6 +73,7 @@ import {
     CalculationConsumer,
     AssessmentTimelineSource,
     { provide: EVALUATION_STORE, useClass: PrismaEvaluationStore },
+    { provide: FUNCTIONAL_EVALUATION_STORE, useClass: PrismaFunctionalEvaluationStore },
     { provide: SITE_CATALOG, useClass: PrismaSiteCatalog },
     { provide: TECHNICAL_ERROR_STORE, useClass: PrismaTechnicalErrorStore },
     { provide: CALCULATION_STORE, useClass: PrismaCalculationStore },

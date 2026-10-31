@@ -1,7 +1,9 @@
 import { expect, test, type Page } from '@playwright/test';
 import { seriousViolations } from './support/axe';
+import { luisWithPrescription } from './support/luis';
 import {
   acceptByApi,
+  apiAs,
   createOrganization,
   inviteByApi,
   linkFromMail,
@@ -290,5 +292,146 @@ test.describe('RF-06 · etiqueta de la organización y auditoría del dueño', (
       professionalPage.getByText('Solo el dueño de la organización ve la auditoría'),
     ).toBeVisible();
     await professionalContext.close();
+  });
+});
+
+test.describe('RN-A05 · lo que el expediente ofrece según el equipo de atención', () => {
+  test('quien solo lee el expediente no ve lo que la API le negaría', async ({ page }) => {
+    test.setTimeout(3 * 60_000);
+    const organization = await createOrganization();
+    const patientId = await luisWithPrescription(organization.ownerEmail);
+    const owner = await apiAs(organization.ownerEmail);
+    const record = `/api/v1/patients/${patientId}`;
+    const created = async (path: string, data: object): Promise<string> => {
+      const response = await owner.post(path, { data });
+      expect(response.status(), path).toBe(201);
+      return ((await response.json()) as { id: string }).id;
+    };
+    await created(`${record}/conditions`, { kind: 'DISEASE', label: 'Condición de prueba' });
+    await created(`${record}/goals`, { kind: 'HEALTH', notes: 'Objetivo de prueba' });
+    await created(`${record}/notes`, { body: 'Nota de prueba', visibility: 'CARE_TEAM' });
+    const evaluations = (await (await owner.get(`${record}/evaluations`)).json()) as {
+      evaluations: { id: string; status: string }[];
+    };
+    const closedId = evaluations.evaluations.find((e) => e.status === 'CLOSED')?.id ?? '';
+    const draftId = await created(`${record}/evaluations`, {
+      level: 'BASIC',
+      measuredAt: '2026-10-20T14:00:00.000Z',
+      conditions: { schemaVersion: 1, fasting: true, intenseActivityLast24h: false },
+    });
+    const prescriptions = (await (await owner.get(`${record}/energy-prescriptions`)).json()) as {
+      prescriptions: { id: string }[];
+    };
+    const planId = await created(`${record}/nutrition-plans`, {
+      modality: 'COMPOSITION',
+      energyPrescriptionId: prescriptions.prescriptions[0]?.id,
+    });
+    const reader = uniqueEmail();
+    await acceptByApi(await inviteByApi(organization.ownerEmail, reader), 'Persona de lectura');
+    const listed = (await (await owner.get('/api/v1/organization/members')).json()) as {
+      members: { id: string; email: string }[];
+    };
+    const memberId = listed.members.find((member) => member.email === reader)?.id ?? '';
+    const joined = await owner.put(`${record}/care-team/${memberId}`, {
+      data: { role: 'COLLABORATOR', access: 'READ' },
+    });
+    expect(joined.status(), 'sumar al equipo').toBe(204);
+    await owner.dispose();
+
+    await loginInPage(page, reader);
+    const base = `/panel/pacientes/${patientId}`;
+    const notice = (action: string) =>
+      page.getByText(
+        `Para ${action}, necesitas estar en su equipo de atención con acceso de escritura`,
+      );
+    const gone = async (role: 'button' | 'link', names: readonly string[]) => {
+      for (const name of names) {
+        await expect(page.getByRole(role, { name, exact: true })).toHaveCount(0);
+      }
+    };
+
+    await test.step('la ficha: ni datos, ni archivo, ni equipo, ni invitación', async () => {
+      await page.goto(base);
+      await expect(
+        page.getByRole('heading', { level: 2, name: 'Equipo de atención' }),
+      ).toBeVisible();
+      await gone('button', ['Editar datos', 'Archivar', 'Agregar al equipo', 'Invitar a la app']);
+      await expect(page.getByRole('combobox', { name: /^Acceso de/ })).toHaveCount(0);
+      expect(await seriousViolations(page)).toEqual([]);
+    });
+
+    await test.step('consentimientos: se leen, no se registran ni se revocan', async () => {
+      await page.goto(`${base}/consentimientos`);
+      await expect(notice('registrar o revocar consentimientos')).toBeVisible();
+      await expect(page.getByRole('form', { name: 'Registrar un consentimiento' })).toHaveCount(0);
+      await gone('button', ['Revocar']);
+    });
+
+    await test.step('condiciones, objetivos y notas: se leen, sin formularios', async () => {
+      await page.goto(`${base}/registros`);
+      await expect(notice('escribir en este expediente')).toBeVisible();
+      await expect(page.getByText('Condición de prueba')).toBeVisible();
+      await expect(page.getByText('Objetivo de prueba')).toBeVisible();
+      await expect(page.getByText('Nota de prueba')).toBeVisible();
+      for (const name of [
+        'Registrar una condición',
+        'Registrar un objetivo',
+        'Escribir una nota',
+      ]) {
+        await expect(page.getByRole('form', { name })).toHaveCount(0);
+      }
+      await gone('button', ['Marcar resuelta', 'Enmendar']);
+      await expect(page.getByRole('combobox', { name: 'Estado' })).toHaveCount(0);
+      expect(await seriousViolations(page)).toEqual([]);
+    });
+
+    await test.step('evaluaciones: ni nueva, ni cierre, ni enmienda, ni métodos', async () => {
+      await page.goto(`${base}/evaluaciones`);
+      await expect(notice('evaluar')).toBeVisible();
+      await gone('link', ['Nueva evaluación']);
+      expect(await seriousViolations(page)).toEqual([]);
+
+      await page.goto(`${base}/evaluaciones/nueva`);
+      await expect(notice('evaluar')).toBeVisible();
+      await expect(page.getByRole('heading', { level: 2, name: 'Nueva evaluación' })).toHaveCount(
+        0,
+      );
+
+      await page.goto(`${base}/evaluaciones/${draftId}`);
+      await expect(notice('registrar esta evaluación')).toBeVisible();
+      await gone('button', ['Cerrar evaluación']);
+      expect(await seriousViolations(page)).toEqual([]);
+
+      await page.goto(`${base}/evaluaciones/${closedId}`);
+      await expect(page.getByRole('link', { name: 'Comparar con la anterior' })).toBeVisible();
+      await gone('link', ['Prescribir energía']);
+      await gone('button', ['Enmendar', 'Recalcular']);
+    });
+
+    await test.step('energía y dieta: se leen, no se crean ni se editan', async () => {
+      await page.goto(`${base}/energia`);
+      await expect(notice('prescribir energía')).toBeVisible();
+      await gone('link', ['Nueva prescripción']);
+
+      await page.goto(`${base}/energia/nueva`);
+      await expect(notice('prescribir energía')).toBeVisible();
+      await expect(page.getByRole('heading', { level: 2, name: 'Nueva prescripción' })).toHaveCount(
+        0,
+      );
+
+      await page.goto(`${base}/dieta`);
+      await expect(notice('crear un plan')).toBeVisible();
+      await gone('link', ['Nuevo plan']);
+
+      await page.goto(`${base}/dieta/nuevo`);
+      await expect(notice('crear un plan')).toBeVisible();
+      await gone('button', ['Crear borrador']);
+
+      await page.goto(`${base}/dieta/${planId}`);
+      await expect(notice('editar este borrador')).toBeVisible();
+      await expect(page.getByText('Metas y adecuación').first()).toBeVisible();
+      await gone('button', ['Guardar borrador', 'Publicar plan']);
+      expect(await seriousViolations(page)).toEqual([]);
+    });
   });
 });

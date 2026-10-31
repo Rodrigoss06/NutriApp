@@ -37,6 +37,7 @@ import type {
   GoalRecord,
   HistoryRevisionRecord,
   NoteRecord,
+  ScreeningRecord,
   TimelineRecord,
 } from './ports/clinical.ports.js';
 
@@ -314,6 +315,7 @@ export class MemoryRecords implements ClinicalRecordStore {
   readonly history: (Omit<HistoryRevisionRecord, 'profile'> & { patientId: string })[] = [];
   readonly profiles: Parameters<ClinicalRecordStore['insertPerformanceProfile']>[0][] = [];
   readonly conditionRows: Mutable<ConditionRecord>[] = [];
+  readonly screeningRows: Mutable<ScreeningRecord>[] = [];
   readonly goalRows: Mutable<GoalRecord>[] = [];
   readonly noteRows: NoteRecord[] = [];
   locks = 0;
@@ -356,6 +358,18 @@ export class MemoryRecords implements ClinicalRecordStore {
   ) {
     this.profiles.push(profile);
     return Promise.resolve();
+  }
+  screenings(patientId: string) {
+    return Promise.resolve(this.screeningRows.filter((s) => s.patientId === patientId));
+  }
+  insertScreening(screening: ScreeningRecord) {
+    this.screeningRows.unshift({ ...screening });
+    return Promise.resolve();
+  }
+  reviewScreening(id: string, review: NonNullable<ScreeningRecord['review']>) {
+    const screening = this.screeningRows.find((s) => s.id === id && s.review === null);
+    if (screening) screening.review = review;
+    return Promise.resolve(screening !== undefined);
   }
   conditions(patientId: string) {
     return Promise.resolve(this.conditionRows.filter((c) => c.patientId === patientId));

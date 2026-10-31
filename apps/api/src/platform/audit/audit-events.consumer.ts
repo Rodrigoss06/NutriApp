@@ -102,6 +102,15 @@ export const AUDITED_EVENTS: Readonly<Record<string, AuditMapping>> = {
     fields: (p) => namesOf(p.fields),
   },
   'clinical.note.written': { action: 'CREATE', resourceType: 'clinical.clinical_note' },
+  'clinical.screening.recorded': {
+    action: 'CREATE',
+    resourceType: 'clinical.pre_exercise_screening',
+  },
+  'clinical.screening.reviewed': {
+    action: 'UPDATE',
+    resourceType: 'clinical.pre_exercise_screening',
+    fields: () => ['review_decision', 'review_note'],
+  },
   'assessment.evaluation.created': { action: 'CREATE', resourceType: 'assessment.evaluation' },
   'assessment.evaluation.updated': {
     action: 'UPDATE',
@@ -117,6 +126,16 @@ export const AUDITED_EVENTS: Readonly<Record<string, AuditMapping>> = {
     action: 'UPDATE',
     resourceType: 'assessment.measurement',
     fields: (p) => (typeof p.siteCode === 'string' ? [p.siteCode] : []),
+  },
+  'assessment.functional.recorded': {
+    action: 'UPDATE',
+    resourceType: 'assessment.evaluation',
+    fields: (p) => (typeof p.testCode === 'string' ? [p.testCode] : []),
+  },
+  'assessment.functional.removed': {
+    action: 'UPDATE',
+    resourceType: 'assessment.evaluation',
+    fields: (p) => (typeof p.testCode === 'string' ? [p.testCode] : []),
   },
   'assessment.bia.recorded': { action: 'CREATE', resourceType: 'assessment.bia_reading' },
   'assessment.bia.removed': { action: 'UPDATE', resourceType: 'assessment.bia_reading' },
@@ -144,6 +163,7 @@ export const AUDITED_EVENTS: Readonly<Record<string, AuditMapping>> = {
     resourceType: 'assessment.method_preference',
     fields: (p) => (typeof p.purpose === 'string' ? [p.purpose] : []),
   },
+  'training.profile.revised': { action: 'CREATE', resourceType: 'training.athlete_profile' },
   'nutrition.prescription.created': {
     action: 'CREATE',
     resourceType: 'nutrition.energy_prescription',

@@ -19,6 +19,7 @@ import { useCanWrite, usePanelSession } from '@/features/session/panel-session';
 import { apiFetch } from '@/lib/api/client';
 import { formatDate, todayIn } from '@/lib/dates';
 import { DOCUMENT_TYPE_LABELS, maskedDocument, POPULATION_LABELS, SEX_LABELS } from './labels';
+import { useManagesPatient, useWritesClinical, useWritesRecord } from './use-writes-record';
 
 const KEEP = 'KEEP';
 
@@ -50,6 +51,8 @@ export function PatientDetails({
   const router = useRouter();
   const { patientLabel, role } = usePanelSession();
   const canWrite = useCanWrite();
+  const writes = useWritesClinical(patient.careTeam, members);
+  const manages = useManagesPatient(patient.responsibleMemberId, members);
   const [editing, setEditing] = useState(false);
   const responsible = members.find((m) => m.id === patient.responsibleMemberId);
   const archived = patient.status === 'ARCHIVED';
@@ -91,16 +94,18 @@ export function PatientDetails({
             <Detail term="Zona horaria">{patient.timezone}</Detail>
           </dl>
           <div className="flex flex-wrap gap-2">
-            <Button
-              variant="secondary"
-              disabled={!canWrite || archived}
-              onClick={() => {
-                setEditing(true);
-              }}
-            >
-              Editar datos
-            </Button>
-            {archived ? (
+            {writes ? (
+              <Button
+                variant="secondary"
+                disabled={!canWrite || archived}
+                onClick={() => {
+                  setEditing(true);
+                }}
+              >
+                Editar datos
+              </Button>
+            ) : null}
+            {!manages ? null : archived ? (
               <ConfirmDialog
                 trigger={
                   <Button variant="secondary" disabled={!canWrite || status.isPending}>
@@ -166,6 +171,12 @@ function DetailsForm({
   onCancel: () => void;
 }) {
   const { timezone } = usePanelSession();
+  const manages = useManagesPatient(patient.responsibleMemberId, members);
+  // «Obesidad» es un dato de salud: la pone o la quita solo el equipo con WRITE, también frente al dueño (ADR-041).
+  const writesObesity = useWritesRecord(patient.careTeam, members);
+  const lockedObesity = !writesObesity && patient.population === 'OBESITY';
+  const populations =
+    writesObesity || lockedObesity ? POPULATIONS : POPULATIONS.filter((p) => p !== 'OBESITY');
   const [nothing, setNothing] = useState(false);
   const form = useForm<DetailsValues>({
     defaultValues: {
@@ -264,22 +275,25 @@ function DetailsForm({
               value={field.value}
               onValueChange={field.onChange}
               hint="«Obesidad» es un dato de salud: necesita el consentimiento y la registra el equipo de atención."
-              options={POPULATIONS.map((value) => ({ value, label: POPULATION_LABELS[value] }))}
+              disabled={lockedObesity}
+              options={populations.map((value) => ({ value, label: POPULATION_LABELS[value] }))}
             />
           )}
         />
-        <Controller
-          control={form.control}
-          name="responsibleMemberId"
-          render={({ field }) => (
-            <Select
-              label="Responsable"
-              value={field.value}
-              onValueChange={field.onChange}
-              options={active.map((m) => ({ value: m.id, label: m.displayName }))}
-            />
-          )}
-        />
+        {manages ? (
+          <Controller
+            control={form.control}
+            name="responsibleMemberId"
+            render={({ field }) => (
+              <Select
+                label="Responsable"
+                value={field.value}
+                onValueChange={field.onChange}
+                options={active.map((m) => ({ value: m.id, label: m.displayName }))}
+              />
+            )}
+          />
+        ) : null}
         <Controller
           control={form.control}
           name="documentType"

@@ -1,3 +1,4 @@
+import type { MovementTestStatus } from '@nutricoach/engine';
 import type { OrganizationId, UserId } from '@nutricoach/shared-kernel';
 import type { TimelineCursor, TimelineEntry } from '../../../clinical/index.js';
 import type {
@@ -10,6 +11,12 @@ import type {
   SiteDefinition,
 } from '../../domain/assessment-rules.js';
 import type { MethodPurpose, PreferenceRow } from '../../domain/calculation-plan.js';
+import type {
+  ClosedPhysicalEvaluation,
+  EvaluationModality,
+  FunctionalKind,
+  PhysicalMoment,
+} from '../../domain/functional-evaluation.js';
 import type { ReferenceRange } from '../../domain/interpretation.js';
 
 /** Sexo, edad decimal y población al medir (patient_snapshot). */
@@ -88,8 +95,9 @@ export type EvaluationChanges = Partial<
 /** Evaluaciones, tomas y bioimpedancia, con la transacción de la UnitOfWork y su RLS (RN-A01, RN-A05). */
 export interface EvaluationStore {
   insert(evaluation: EvaluationRecord): Promise<void>;
+  /** Solo antropometría y bioimpedancia: la postura y las pruebas físicas van por FunctionalEvaluationStore. */
   find(id: string): Promise<EvaluationRecord | null>;
-  /** De la más reciente a la más antigua por measuredAt. */
+  /** De la más reciente a la más antigua por measuredAt; solo antropometría y bioimpedancia. */
   listByPatient(patientId: string): Promise<readonly EvaluationRecord[]>;
   /** La revisión que enmendó a cada una de estas evaluaciones, si la hay. */
   amendedBy(ids: readonly string[]): Promise<ReadonlyMap<string, string>>;
@@ -148,6 +156,102 @@ export interface TechnicalErrorStore {
   /** El vigente de cada sitio en una fecha: el de validFrom más reciente que no la pasa, y el último creado. */
   current(memberId: string, onDate: string): Promise<readonly TechnicalErrorRecord[]>;
 }
+
+/** Una evaluación de postura o de pruebas físicas (RF-41): comparte tabla, cierre y enmienda con las demás. */
+export interface FunctionalEvaluationRecord {
+  readonly id: string;
+  readonly organizationId: OrganizationId;
+  readonly patientId: string;
+  readonly evaluatorMemberId: string;
+  readonly kind: FunctionalKind;
+  readonly moment: PhysicalMoment | null;
+  readonly measuredAt: Date;
+  readonly localDate: string;
+  readonly patientSnapshot: PatientSnapshot;
+  readonly status: EvaluationStatus;
+  readonly revision: number;
+  readonly amendsEvaluationId: string | null;
+  readonly amendReason: string | null;
+  readonly closedAt: Date | null;
+  readonly notes: string | null;
+  readonly createdBy: UserId;
+  readonly createdAt: Date;
+  readonly version: number;
+}
+
+interface FunctionalEvidence {
+  readonly modality: EvaluationModality;
+  readonly evidenceFileId: string | null;
+  readonly evidenceUrl: string | null;
+}
+
+export interface MovementTestRow extends FunctionalEvidence {
+  readonly testCode: string;
+  readonly rightScore: number | null;
+  readonly leftScore: number | null;
+  readonly pain: boolean;
+  readonly asymmetry: boolean;
+  readonly status: MovementTestStatus;
+  readonly ruleVersion: string;
+  readonly observation: string | null;
+  readonly actionNote: string | null;
+  readonly reliabilityNote: string | null;
+}
+
+export interface PhysicalResultRow extends FunctionalEvidence {
+  readonly testCode: string;
+  readonly value: number;
+  readonly unit: string;
+  readonly notes: string | null;
+}
+
+export interface FunctionalCatalog {
+  readonly movementTests: readonly {
+    readonly code: string;
+    readonly name: string;
+    readonly kind: 'STATIC' | 'DYNAMIC';
+    readonly region: string;
+  }[];
+  readonly physicalTests: readonly {
+    readonly code: string;
+    readonly domain: string;
+    readonly name: string;
+    readonly protocol: string;
+    readonly unit: string;
+  }[];
+}
+
+/** Postura y pruebas físicas, con la transacción de quien llama: la RLS aplica RN-A01 y RN-A05. */
+export interface FunctionalEvaluationStore {
+  catalog(): Promise<FunctionalCatalog>;
+  insert(evaluation: FunctionalEvaluationRecord): Promise<void>;
+  find(id: string): Promise<FunctionalEvaluationRecord | null>;
+  /** De la más reciente a la más antigua. */
+  listByPatient(
+    patientId: string,
+    kind: FunctionalKind,
+  ): Promise<readonly FunctionalEvaluationRecord[]>;
+  movementTests(evaluationId: string): Promise<readonly MovementTestRow[]>;
+  physicalResults(evaluationId: string): Promise<readonly PhysicalResultRow[]>;
+  /** Reemplaza la fila de esa prueba: en borrador se borra y se inserta, nunca se actualiza. */
+  replaceMovementTest(evaluation: FunctionalEvaluationRecord, row: MovementTestRow): Promise<void>;
+  replacePhysicalResult(
+    evaluation: FunctionalEvaluationRecord,
+    row: PhysicalResultRow,
+  ): Promise<void>;
+  removeMovementTest(evaluationId: string, testCode: string): Promise<boolean>;
+  removePhysicalResult(evaluationId: string, testCode: string): Promise<boolean>;
+  /** Hay una evaluación postural cerrada, y los estados de la vigente y de los borradores: el dolor no espera al cierre. */
+  movementKeys(patientId: string): Promise<{
+    readonly evaluated: boolean;
+    readonly statuses: readonly MovementTestStatus[];
+  }>;
+  closedPhysical(patientId: string): Promise<readonly ClosedPhysicalEvaluation[]>;
+}
+
+export const FUNCTIONAL_EVALUATION_STORE = Symbol.for(
+  'nutricoach.assessment.FunctionalEvaluationStore',
+);
 
 export const EVALUATION_STORE = Symbol.for('nutricoach.assessment.EvaluationStore');
 export const SITE_CATALOG = Symbol.for('nutricoach.assessment.SiteCatalog');

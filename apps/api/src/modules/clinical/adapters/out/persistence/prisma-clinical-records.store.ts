@@ -8,6 +8,8 @@ import type {
   GoalKind,
   GoalStatus,
   NoteVisibility,
+  ScreeningDecision,
+  ScreeningStatus,
 } from '../../../domain/clinical-rules.js';
 import type {
   ClinicalRecordStore,
@@ -16,6 +18,7 @@ import type {
   HistoryRevisionRecord,
   NoteRecord,
   PerformanceProfileRecord,
+  ScreeningRecord,
   TimelineKind,
   TimelineRecord,
 } from '../../../application/ports/clinical.ports.js';
@@ -213,6 +216,68 @@ export class PrismaClinicalRecordStore implements ClinicalRecordStore {
         },
       ],
     });
+  }
+
+  async screenings(patientId: string): Promise<readonly ScreeningRecord[]> {
+    const rows = await this.db.tx.preExerciseScreening.findMany({
+      where: { patientId },
+      orderBy: { answeredAt: 'desc' },
+    });
+    return rows.map((row) => ({
+      id: row.id,
+      patientId: row.patientId,
+      formVersion: row.formVersion,
+      ruleVersion: row.ruleVersion,
+      answers: row.answers as ScreeningRecord['answers'],
+      status: row.status as ScreeningStatus,
+      answeredBy: row.answeredBy as UserId,
+      answeredAt: row.answeredAt,
+      review:
+        row.reviewDecision && row.reviewedBy && row.reviewedAt
+          ? {
+              decision: row.reviewDecision as ScreeningDecision,
+              note: row.reviewNote ?? '',
+              reviewedBy: row.reviewedBy,
+              reviewedAt: row.reviewedAt,
+            }
+          : null,
+    }));
+  }
+
+  async insertScreening(
+    screening: ScreeningRecord & { organizationId: OrganizationId },
+  ): Promise<void> {
+    await this.db.tx.preExerciseScreening.createMany({
+      data: [
+        {
+          id: screening.id,
+          organizationId: screening.organizationId,
+          patientId: screening.patientId,
+          formVersion: screening.formVersion,
+          ruleVersion: screening.ruleVersion,
+          answers: { ...screening.answers },
+          status: screening.status,
+          answeredBy: screening.answeredBy,
+          answeredAt: screening.answeredAt,
+        },
+      ],
+    });
+  }
+
+  async reviewScreening(
+    id: string,
+    review: NonNullable<ScreeningRecord['review']>,
+  ): Promise<boolean> {
+    const { count } = await this.db.tx.preExerciseScreening.updateMany({
+      where: { id, reviewDecision: null },
+      data: {
+        reviewDecision: review.decision,
+        reviewNote: review.note,
+        reviewedBy: review.reviewedBy,
+        reviewedAt: review.reviewedAt,
+      },
+    });
+    return count === 1;
   }
 
   async conditions(patientId: string): Promise<readonly ConditionRecord[]> {

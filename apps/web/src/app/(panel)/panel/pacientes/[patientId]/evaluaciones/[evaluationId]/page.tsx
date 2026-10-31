@@ -56,6 +56,8 @@ export default async function EvaluationPage({
           key={evaluation.data.id}
           initial={evaluation.data}
           sites={sites.data.sites}
+          careTeam={patient.data.careTeam}
+          members={members.data.members}
         />
       ) : (
         <EvaluationResults
@@ -63,6 +65,7 @@ export default async function EvaluationPage({
           evaluation={evaluation.data}
           sites={sites.data.sites}
           members={members.data.members}
+          careTeam={patient.data.careTeam}
           patientId={patientId}
         />
       )}

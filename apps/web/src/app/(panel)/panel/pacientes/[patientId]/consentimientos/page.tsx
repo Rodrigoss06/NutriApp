@@ -3,20 +3,21 @@ import { Notice } from '@nutricoach/ui';
 import type { Metadata } from 'next';
 import { ConsentsSection } from '@/features/patients/consents-section';
 import { Section } from '@/features/patients/section';
-import { getPatient } from '@/features/patients/server';
+import { getMembers, getPatient } from '@/features/patients/server';
 import { serverApi } from '@/lib/api/server';
 
 export const metadata: Metadata = { title: 'Consentimientos' };
 
 export default async function ConsentsPage({ params }: { params: Promise<{ patientId: string }> }) {
   const { patientId } = await params;
-  const [patient, consents, documents] = await Promise.all([
+  const [patient, consents, documents, members] = await Promise.all([
     getPatient(patientId),
     serverApi<ConsentListResponse>(`/patients/${encodeURIComponent(patientId)}/consents`),
     serverApi<ConsentDocumentListResponse>('/patients/consent-documents'),
+    getMembers(),
   ]);
   if (!patient.ok) return null;
-  if (!consents.ok || !documents.ok) {
+  if (!consents.ok || !documents.ok || !members.ok) {
     return <Notice tone="danger" title="No pudimos cargar los consentimientos" />;
   }
   return (
@@ -28,6 +29,7 @@ export default async function ConsentsPage({ params }: { params: Promise<{ patie
         patient={patient.data}
         consents={consents.data.consents}
         documents={documents.data.documents}
+        members={members.data.members}
       />
     </Section>
   );
