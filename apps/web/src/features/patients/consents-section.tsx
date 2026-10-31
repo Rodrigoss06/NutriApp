@@ -1,6 +1,11 @@
 'use client';
 
-import type { Consent, ConsentDocument, PatientResponse } from '@nutricoach/contracts';
+import type {
+  Consent,
+  ConsentDocument,
+  MemberResponse,
+  PatientResponse,
+} from '@nutricoach/contracts';
 import {
   Button,
   ConfirmDialog,
@@ -21,6 +26,8 @@ import { formatInstant } from '@/lib/dates';
 import { ConsentText } from './consent-text';
 import { checkEvidence, EVIDENCE_ACCEPT } from './evidence';
 import { CONSENT_CHANNEL_LABELS, CONSENT_PURPOSE_LABELS } from './labels';
+import { CareTeamNotice } from './record-write-gate';
+import { useWritesClinical } from './use-writes-record';
 
 type Channel = 'IN_PERSON_DIGITAL' | 'PAPER_SCANNED';
 
@@ -33,14 +40,17 @@ export function ConsentsSection({
   patient,
   consents,
   documents,
+  members,
 }: {
   patient: PatientResponse;
   consents: readonly Consent[];
   documents: readonly ConsentDocument[];
+  members: readonly MemberResponse[];
 }) {
   const router = useRouter();
   const { timezone } = usePanelSession();
   const canWrite = useCanWrite() && patient.status === 'ACTIVE';
+  const writes = useWritesClinical(patient.careTeam, members);
   const guardian = patient.ageYears < 14;
   const active = consents.filter((c) => c.revokedAt === null);
   const available = documents.filter((d) => !active.some((c) => c.purpose === d.purpose));
@@ -136,7 +146,7 @@ export function ConsentsSection({
                     Descargar evidencia
                   </a>
                 ) : null}
-                {consent.revokedAt ? null : (
+                {consent.revokedAt || !writes ? null : (
                   <ConfirmDialog
                     trigger={
                       <Button variant="ghost" size="sm" disabled={!canWrite || revoke.isPending}>
@@ -158,7 +168,10 @@ export function ConsentsSection({
         </ul>
       )}
 
-      {available.length > 0 ? (
+      {writes ? null : (
+        <CareTeamNotice patientId={patient.id} action="registrar o revocar consentimientos" />
+      )}
+      {available.length > 0 && writes ? (
         <form
           noValidate
           aria-label="Registrar un consentimiento"

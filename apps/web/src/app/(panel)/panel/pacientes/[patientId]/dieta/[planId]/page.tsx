@@ -16,8 +16,9 @@ import {
 import { PlanEditor } from '@/features/nutrition-plan/plan-editor';
 import { PlanView } from '@/features/nutrition-plan/plan-view';
 import { RevisePlanButton } from '@/features/nutrition-plan/revise-plan-button';
+import { RecordWriteGate } from '@/features/patients/record-write-gate';
 import { Section } from '@/features/patients/section';
-import { getOrganization, getPatient } from '@/features/patients/server';
+import { getMembers, getOrganization, getPatient } from '@/features/patients/server';
 import { serverApi } from '@/lib/api/server';
 import { formatDate, formatInstant } from '@/lib/dates';
 
@@ -68,10 +69,11 @@ export default async function NutritionPlanPage({
   params: Promise<{ patientId: string; planId: string }>;
 }) {
   const { patientId, planId } = await params;
-  const [patient, plan, organization] = await Promise.all([
+  const [patient, plan, organization, members] = await Promise.all([
     getPatient(patientId),
     serverApi<NutritionPlan>(`/nutrition-plans/${encodeURIComponent(planId)}`),
     getOrganization(),
+    getMembers(),
   ]);
   if (!patient.ok) return null;
   const back = (
@@ -90,8 +92,17 @@ export default async function NutritionPlanPage({
       </div>
     );
   }
+  if (!members.ok) return <Notice tone="danger" title="No pudimos cargar este plan" />;
   const current = plan.data;
   const timezone = organization.ok ? organization.data.timezone : 'America/Lima';
+  const view =
+    current.modality === 'EXCHANGES' ? (
+      <PlanView plan={current} />
+    ) : current.modality === 'COMPOSITION' ? (
+      <CompositionView plan={current} />
+    ) : (
+      <MenuView plan={current} />
+    );
   if (current.status === 'DRAFT') {
     const sex = patient.data.sex;
     return (
@@ -101,23 +112,31 @@ export default async function NutritionPlanPage({
       >
         {back}
         <DietaryAlertsNotice patientId={patientId} />
-        {current.modality === 'EXCHANGES' ? (
-          <PlanEditor initial={current} patientId={patientId} patientSex={sex} />
-        ) : current.modality === 'COMPOSITION' ? (
-          <CompositionEditor
-            initial={current}
-            patientId={patientId}
-            patientSex={sex}
-            measures={await measuresOf(current)}
-          />
-        ) : (
-          <MenuEditor
-            initial={current}
-            patientId={patientId}
-            patientSex={sex}
-            measures={await measuresOf(current)}
-          />
-        )}
+        <RecordWriteGate
+          patientId={patientId}
+          careTeam={patient.data.careTeam}
+          members={members.data.members}
+          action="editar este borrador"
+          fallback={view}
+        >
+          {current.modality === 'EXCHANGES' ? (
+            <PlanEditor initial={current} patientId={patientId} patientSex={sex} />
+          ) : current.modality === 'COMPOSITION' ? (
+            <CompositionEditor
+              initial={current}
+              patientId={patientId}
+              patientSex={sex}
+              measures={await measuresOf(current)}
+            />
+          ) : (
+            <MenuEditor
+              initial={current}
+              patientId={patientId}
+              patientSex={sex}
+              measures={await measuresOf(current)}
+            />
+          )}
+        </RecordWriteGate>
       </Section>
     );
   }
@@ -145,20 +164,20 @@ export default async function NutritionPlanPage({
       </p>
       <div className="flex flex-wrap items-start gap-3">
         {patient.data.status === 'ARCHIVED' ? null : (
-          <RevisePlanButton patientId={patientId} planId={current.id} />
+          <RecordWriteGate
+            patientId={patientId}
+            careTeam={patient.data.careTeam}
+            members={members.data.members}
+          >
+            <RevisePlanButton patientId={patientId} planId={current.id} />
+          </RecordWriteGate>
         )}
         <DownloadSheetButton
           patientId={patientId}
           source={{ sourceType: 'NUTRITION_PLAN', sourceId: current.id }}
         />
       </div>
-      {current.modality === 'EXCHANGES' ? (
-        <PlanView plan={current} />
-      ) : current.modality === 'COMPOSITION' ? (
-        <CompositionView plan={current} />
-      ) : (
-        <MenuView plan={current} />
-      )}
+      {view}
     </Section>
   );
 }

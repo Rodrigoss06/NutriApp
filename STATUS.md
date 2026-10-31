@@ -187,8 +187,12 @@ Leyenda: ⬜ pendiente · 🟨 en curso · ✅ terminado · ⛔ bloqueado
 - Plantillas de plan (RF-22, deseable) no se hicieron en P10 (ADR-063)
 - Los logos reemplazados quedan guardados sin uso: limpieza con la marca completa de P15 (ADR-066)
 - Los PDF de las fichas llevan datos del paciente: la supresión de P15 (RN-B05) tiene que borrarlos (ADR-064)
+- La exportación y la supresión de P15 (RN-B04, RN-B05) tienen que incluir el perfil de entrenamiento, los cribados con su
+  texto libre, las pruebas y su evidencia, también los archivos quitados de un borrador, que quedan sin ruta (ADR-075)
 - La exportación y la supresión de P15 (RN-B04, RN-B05) tienen que incluir las respuestas de la anamnesis V2 y los insumos
   de `clinical.performance_profile` (ADR-072)
+- E2E en el celular: `page.goto: WebKit encountered an internal error` una vez en seguridad.spec.ts, al navegar; repetida
+  5 veces pasó las 5 (2026-10-31). Es del navegador, no de una aserción
 - E2E de P6 inestable en el celular (patients.spec.ts): «Enfermedad: Hipotiroidismo» no apareció en 5 s y pasó al
   reintentar (#35, 2026-10-27)
 - E2E de la Demo 1 inestable en el CI: axe corrió antes de que la página tuviera su título (document-title) y pasó al
@@ -196,7 +200,8 @@ Leyenda: ⬜ pendiente · 🟨 en curso · ✅ terminado · ⛔ bloqueado
 
 ## Registro de sesiones (solo las 5 últimas)
 - 2026-10-31 · P12 (PR 4) · Seguridad antes de prescribir (ADR-075): perfil, cribado con revisión, postura y pruebas físicas,
-  con sus pantallas y la E2E en escritorio y celular. Se agrega el texto de consentimiento IMAGES, provisional, que no existía
+  con sus pantallas y la E2E en escritorio y celular. Se agrega el texto de consentimiento IMAGES, provisional, que no existía.
+  La interfaz oculta en todo el expediente lo que la API negaría, con un aviso y enlace a la Ficha (ADR-076)
 - 2026-10-30 · Exclusión de alimentos (ADR-074) · #41 fusionado. Jeremy dio el visto bueno: RN-E17, enlace de alergias e
   intolerancias con alimentos y bloqueo al guardar y publicar, también dentro de una receta; aviso si el plan vigente lleva uno
 - 2026-10-30 · P12 (PR 3) · #40 fusionado. Anamnesis V2 con su perfil de rendimiento (ADR-072): 43 preguntas de la hoja,

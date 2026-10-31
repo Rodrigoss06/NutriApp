@@ -14,6 +14,8 @@ import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { TextField } from '@/features/forms/fields';
 import { FormError } from '@/features/forms/form-error';
+import { CareTeamNotice } from '@/features/patients/record-write-gate';
+import { useWritesRecord } from '@/features/patients/use-writes-record';
 import { usePanelSession } from '@/features/session/panel-session';
 import { apiFetch } from '@/lib/api/client';
 import { instantIn, localDateTimeIn } from '@/lib/dates';
@@ -43,6 +45,7 @@ export function NewFunctionalEvaluation({
   const router = useRouter();
   const { timezone } = usePanelSession();
   const editable = useEditsRecord(careTeam, members, archived);
+  const writes = useWritesRecord(careTeam, members);
   const [measuredAt, setMeasuredAt] = useState(() => localDateTimeIn(timezone));
   const [moment, setMoment] = useState<(typeof PHYSICAL_MOMENTS)[number]>('BASELINE');
   const create = useMutation({
@@ -55,6 +58,9 @@ export function NewFunctionalEvaluation({
       router.push(`${base}/${id}`);
     },
   });
+  if (!writes) {
+    return <CareTeamNotice patientId={patientId} action={`registrar una ${LABELS[kind]}`} />;
+  }
   if (!editable) return null;
   return (
     <form

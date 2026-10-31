@@ -251,11 +251,16 @@ test.describe('P12 · Seguridad antes de prescribir', () => {
     await expect(page.getByText('BLOQUEADO · ALTA PENDIENTE')).toBeVisible();
 
     await page.goto(`${base}/perfil`);
-    await expect(page.getByText('Solo lectura')).toBeVisible();
+    await expect(
+      page.getByText(
+        'Para editar el perfil, necesitas estar en su equipo de atención con acceso de escritura',
+      ),
+    ).toBeVisible();
     await expect(page.getByRole('button', { name: 'Guardar perfil' })).toHaveCount(0);
 
     await page.goto(`${base}/cribado`);
     await expect(page.getByRole('form', { name: 'Registrar un cribado' })).toHaveCount(0);
+    await expect(page.getByText(/Para registrar un cribado, necesitas/)).toBeVisible();
 
     await page.goto(`${base}/postura`);
     await expect(

@@ -19,6 +19,8 @@ import { useId } from 'react';
 import { Controller, useForm, type UseFormRegisterReturn } from 'react-hook-form';
 import { submitWith, TextAreaField } from '@/features/forms/fields';
 import { FormError } from '@/features/forms/form-error';
+import { CareTeamNotice } from '@/features/patients/record-write-gate';
+import { useWritesRecord } from '@/features/patients/use-writes-record';
 import { usePanelSession } from '@/features/session/panel-session';
 import { apiFetch } from '@/lib/api/client';
 import { formatInstant } from '@/lib/dates';
@@ -233,6 +235,7 @@ export function ScreeningSection({
 }) {
   const router = useRouter();
   const editable = useEditsRecord(careTeam, members, archived);
+  const writes = useWritesRecord(careTeam, members);
   const form = useForm<AnswerValues>({ defaultValues: EMPTY_ANSWERS });
   const record = useMutation({
     mutationFn: (body: RecordScreening) =>
@@ -263,6 +266,7 @@ export function ScreeningSection({
       <Notice tone="info" title="Una respuesta afirmativa no equivale por sí sola a un diagnóstico">
         Solo detiene la propuesta hasta que el coach decide si inicia, limita o deriva.
       </Notice>
+      {writes ? null : <CareTeamNotice patientId={patientId} action="registrar un cribado" />}
       {screenings.length === 0 ? (
         <p className="text-sm text-muted-foreground">Todavía no hay cribados registrados.</p>
       ) : (

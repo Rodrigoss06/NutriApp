@@ -21,6 +21,8 @@ import { useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import { CheckboxField, submitWith, TextAreaField, TextField } from '@/features/forms/fields';
 import { FormError } from '@/features/forms/form-error';
+import { CareTeamNotice } from '@/features/patients/record-write-gate';
+import { useWritesRecord } from '@/features/patients/use-writes-record';
 import { usePanelSession } from '@/features/session/panel-session';
 import { apiFetch } from '@/lib/api/client';
 import { ApiError } from '@/lib/api/problem';
@@ -65,6 +67,7 @@ export function AthleteProfileForm({
   const router = useRouter();
   const { timezone } = usePanelSession();
   const editable = useEditsRecord(careTeam, members, archived);
+  const writes = useWritesRecord(careTeam, members);
   const [revision, setRevision] = useState(current?.revision ?? 0);
   const [problems, setProblems] = useState<ProfileProblems>({});
   const form = useForm<ProfileValues>({ defaultValues: valuesOf(current) });
@@ -109,11 +112,7 @@ export function AthleteProfileForm({
           Revisión {current.revision}, guardada el {formatInstant(current.recordedAt, timezone)}.
         </p>
       ) : null}
-      {editable ? null : (
-        <Notice tone="info" title="Solo lectura">
-          Edita quien forma parte del equipo de atención con acceso de escritura.
-        </Notice>
-      )}
+      {writes ? null : <CareTeamNotice patientId={patientId} action="editar el perfil" />}
       <fieldset
         disabled={disabled}
         className="flex flex-col gap-4 rounded-lg border border-border bg-card p-4"

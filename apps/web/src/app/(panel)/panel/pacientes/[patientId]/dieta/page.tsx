@@ -9,8 +9,9 @@ import {
   PLAN_STATUS_LABELS,
   PLAN_STATUS_TONES,
 } from '@/features/nutrition-plan/labels';
+import { RecordWriteGate } from '@/features/patients/record-write-gate';
 import { Section } from '@/features/patients/section';
-import { getOrganization, getPatient } from '@/features/patients/server';
+import { getMembers, getOrganization, getPatient } from '@/features/patients/server';
 import { TableScroll } from '@/features/shell/table-scroll';
 import { serverApi } from '@/lib/api/server';
 import { formatDate, formatInstant } from '@/lib/dates';
@@ -20,15 +21,16 @@ export const metadata: Metadata = { title: 'Dieta' };
 /** Los planes nutricionales del paciente con sus versiones, de lo más reciente a lo más antiguo (RF-23). */
 export default async function DietPage({ params }: { params: Promise<{ patientId: string }> }) {
   const { patientId } = await params;
-  const [patient, plans, organization] = await Promise.all([
+  const [patient, plans, organization, members] = await Promise.all([
     getPatient(patientId),
     serverApi<NutritionPlanListResponse>(
       `/patients/${encodeURIComponent(patientId)}/nutrition-plans`,
     ),
     getOrganization(),
+    getMembers(),
   ]);
   if (!patient.ok) return null;
-  if (!plans.ok || !organization.ok) {
+  if (!plans.ok || !organization.ok || !members.ok) {
     return <Notice tone="danger" title="No pudimos cargar los planes" />;
   }
   const base = `/panel/pacientes/${patientId}/dieta`;
@@ -40,11 +42,18 @@ export default async function DietPage({ params }: { params: Promise<{ patientId
     >
       <DietaryAlertsNotice patientId={patientId} />
       {patient.data.status === 'ARCHIVED' ? null : (
-        <div>
-          <Button asChild>
-            <Link href={`${base}/nuevo`}>Nuevo plan</Link>
-          </Button>
-        </div>
+        <RecordWriteGate
+          patientId={patientId}
+          careTeam={patient.data.careTeam}
+          members={members.data.members}
+          action="crear un plan"
+        >
+          <div>
+            <Button asChild>
+              <Link href={`${base}/nuevo`}>Nuevo plan</Link>
+            </Button>
+          </div>
+        </RecordWriteGate>
       )}
       {list.length === 0 ? (
         <EmptyState

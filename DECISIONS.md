@@ -1525,3 +1525,24 @@ Consecuencias:
   training y sus rutas, `/functional-evaluations`, `/screenings`, `ClinicalApi.latestScreening`, `ensureImagesConsent`,
   `lockPatient`, `AssessmentApi.movementKeys`, `physicalTestCodes`); 02 §8 (eventos `assessment.functional.recorded` y
   `.removed`, `clinical.screening.recorded` y `.reviewed`, `training.profile.revised`); los códigos de arriba.
+
+## ADR-076 · La interfaz oculta lo que la API negaría en el expediente — aceptada (2026-10-31)
+Contexto: quien no estaba en el equipo de atención veía «Nueva evaluación» y los formularios de Condiciones, Objetivos y Notas,
+y al usarlos recibía un 403 (NC-CLI-013). Rodrigo pidió recordarlo (2026-10-18) y aprobó hacerlo (2026-10-31). Las pantallas de
+P12 ya lo respetaban. apps/web/CLAUDE.md: «La interfaz oculta lo que el rol no puede; decide la API».
+Decisión:
+- La web aplica las mismas tres reglas que la API (`features/patients/record-access.ts`, espejo de `clinical-rules.ts`):
+  - `writesRecord` (canWriteRecord): datos de salud. Historia, condiciones, objetivos, notas, evaluaciones, métodos del paciente,
+    energía, dieta y entrenamiento. Solo el equipo con WRITE, también frente al dueño.
+  - `writesClinical` (canWriteClinical): datos de la ficha, consentimientos e invitación a la app. El dueño o el equipo con WRITE.
+  - `managesPatient` (canManagePatient): archivar, reactivar, cambiar de responsable y armar el equipo. El responsable, el dueño
+    o un administrador.
+- Lo que no se puede no se muestra, y un aviso dice por qué con un enlace a la Ficha (`CareTeamNotice`). Dice «necesitas estar en
+  su equipo de atención» y no «agrégate», como proponía el recordatorio, porque un colaborador no puede agregarse solo.
+- Se lee lo que se puede leer: una evaluación en borrador se ve con sus campos deshabilitados, un plan en borrador con su vista
+  de solo lectura, y entrar por la URL a una pantalla de creación muestra solo el aviso.
+- Un paciente archivado y una organización en solo lectura no cambian: esos controles siguen deshabilitados.
+Consecuencias:
+- La API sigue decidiendo y sus pruebas no cambian. Si cambia una regla en `clinical-rules.ts`, hay que cambiarla también en
+  `record-access.ts`.
+- La pestaña Historia ya lo hacía a su manera (ADR-072) y queda como estaba.

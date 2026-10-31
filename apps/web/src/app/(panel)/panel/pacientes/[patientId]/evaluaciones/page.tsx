@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { evaluationTitle, STATUS_LABELS, STATUS_TONES } from '@/features/assessment/labels';
 import { PatientMethodPreferences } from '@/features/assessment/method-preferences';
 import { getEvaluations } from '@/features/assessment/server';
+import { RecordWriteGate } from '@/features/patients/record-write-gate';
 import { Section } from '@/features/patients/section';
 import { getMembers, getOrganization, getPatient } from '@/features/patients/server';
 import { serverApi } from '@/lib/api/server';
@@ -47,11 +48,18 @@ export default async function EvaluationsPage({
         description="Antropometría por nivel (básico, ISAK 1 o ISAK 2) y bioimpedancia. Una evaluación cerrada no se edita: se enmienda."
       >
         {archived ? null : (
-          <div>
-            <Button asChild>
-              <Link href={`${base}/nueva`}>Nueva evaluación</Link>
-            </Button>
-          </div>
+          <RecordWriteGate
+            patientId={patientId}
+            careTeam={patient.data.careTeam}
+            members={members.data.members}
+            action="evaluar"
+          >
+            <div>
+              <Button asChild>
+                <Link href={`${base}/nueva`}>Nueva evaluación</Link>
+              </Button>
+            </div>
+          </RecordWriteGate>
         )}
         {list.length === 0 ? (
           <EmptyState
@@ -119,7 +127,12 @@ export default async function EvaluationsPage({
             </>
           }
         >
-          <PatientMethodPreferences patientId={patientId} initial={preferences.data} />
+          <PatientMethodPreferences
+            patientId={patientId}
+            initial={preferences.data}
+            careTeam={patient.data.careTeam}
+            members={members.data.members}
+          />
         </Section>
       ) : null}
     </div>
