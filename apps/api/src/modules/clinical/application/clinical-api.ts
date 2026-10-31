@@ -17,8 +17,10 @@ import {
   type Sex,
 } from '../domain/clinical-rules.js';
 import {
+  CLINICAL_RECORD_STORE,
   CONSENT_STORE,
   PATIENT_STORE,
+  type ClinicalRecordStore,
   type ConsentStore,
   type PatientRecord,
   type PatientStore,
@@ -47,6 +49,13 @@ export interface PatientCard extends PatientRef {
   readonly fullName: string;
 }
 
+/** Una alergia o intolerancia activa: lo único del expediente que la dieta necesita (RN-E17). */
+export interface DietaryCondition {
+  readonly id: string;
+  readonly kind: 'ALLERGY' | 'INTOLERANCE';
+  readonly label: string;
+}
+
 const refOf = (patient: PatientRecord): PatientRef => ({
   id: patient.id,
   sex: patient.sex,
@@ -66,6 +75,7 @@ export class ClinicalApi {
     @Inject(PATIENT_STORE) private readonly patients: PatientStore,
     @Inject(CONSENT_STORE) private readonly consents: ConsentStore,
     @Inject(TimelineSources) private readonly timeline: TimelineSources,
+    @Inject(CLINICAL_RECORD_STORE) private readonly records: ClinicalRecordStore,
   ) {}
 
   /** ClinicalQueryPort.getPatientRef (02 §3); null si el contexto no ve al paciente (RN-A05). */
@@ -103,6 +113,16 @@ export class ClinicalApi {
     }
     if (!(await this.consents.active(patientId, 'HEALTH_DATA'))) return err(HEALTH_DATA_REQUIRED);
     return ok(refOf(patient));
+  }
+
+  /** Las alergias e intolerancias activas del paciente que el contexto ve (RN-A05). */
+  async dietaryConditions(patientId: string): Promise<readonly DietaryCondition[]> {
+    const conditions = await this.records.conditions(patientId);
+    return conditions.flatMap(({ id, kind, label, status }) =>
+      status === 'ACTIVE' && (kind === 'ALLERGY' || kind === 'INTOLERANCE')
+        ? [{ id, kind, label }]
+        : [],
+    );
   }
 
   /** Un contexto suma sus hechos a la línea de tiempo del expediente (RF-10). */

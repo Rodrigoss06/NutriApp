@@ -3,6 +3,7 @@ import { Button, EmptyState, formatNumber, Notice, StatusBadge } from '@nutricoa
 import { Salad } from 'lucide-react';
 import type { Metadata } from 'next';
 import Link from 'next/link';
+import { DietaryAlertsNotice } from '@/features/nutrition-plan/dietary-alerts-notice';
 import {
   PLAN_MODALITY_LABELS,
   PLAN_STATUS_LABELS,
@@ -37,6 +38,7 @@ export default async function DietPage({ params }: { params: Promise<{ patientId
       title="Dieta"
       description="Planes por intercambios, por composición o menú semanal, con sus versiones. Un plan publicado no se edita: se crea una versión nueva."
     >
+      <DietaryAlertsNotice patientId={patientId} />
       {patient.data.status === 'ARCHIVED' ? null : (
         <div>
           <Button asChild>

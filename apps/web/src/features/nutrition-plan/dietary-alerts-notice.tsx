@@ -1,19 +1,20 @@
-import type { ClinicalHistoryResponse, ConditionListResponse } from '@nutricoach/contracts';
+import type { ClinicalHistoryResponse, FoodExclusionListResponse } from '@nutricoach/contracts';
 import { Notice } from '@nutricoach/ui';
 import Link from 'next/link';
 import { CONDITION_KIND_LABELS } from '@/features/patients/labels';
 import { serverApi } from '@/lib/api/server';
-import { dietaryAlertsOf } from './dietary-alerts';
+import { anamnesisNoteOf } from './dietary-alerts';
 
 /**
- * Las alergias e intolerancias a la vista mientras se arma o se lee una dieta (07 §12, ADR-073). Es un aviso: la exclusión
- * obligatoria necesita cruzarlas con los alimentos, y esa regla falta (P-17). Si no se pudieron leer, lo dice: callar
- * parecería que no hay ninguna. Leerlas deja sus READ en la auditoría (RN-B03).
+ * Las alergias e intolerancias a la vista mientras se arma o se lee una dieta (07 §12, ADR-074), con los alimentos que
+ * excluyen: la API no deja guardar ni publicar un plan con ellos (RN-E17). Lo no enlazado no se bloquea, y el aviso lo
+ * dice. Si el plan vigente lleva uno, no cambia (RN-E15): lo avisa para crear una versión nueva. Si no se pudieron leer,
+ * también lo dice: callar parecería que no hay ninguna. Leerlas deja sus READ en la auditoría (RN-B03).
  */
 export async function DietaryAlertsNotice({ patientId }: { patientId: string }) {
   const id = encodeURIComponent(patientId);
-  const [conditions, history] = await Promise.all([
-    serverApi<ConditionListResponse>(`/patients/${id}/conditions`),
+  const [exclusions, history] = await Promise.all([
+    serverApi<FoodExclusionListResponse>(`/patients/${id}/food-exclusions`),
     serverApi<ClinicalHistoryResponse>(`/patients/${id}/clinical-history`),
   ]);
   const records = (
@@ -21,33 +22,65 @@ export async function DietaryAlertsNotice({ patientId }: { patientId: string }) 
       Condiciones, objetivos y notas
     </Link>
   );
-  if (!conditions.ok || !history.ok) {
+  if (!exclusions.ok || !history.ok) {
     return (
       <Notice tone="warning" title="No pudimos cargar las alergias e intolerancias">
         Revísalas en {records} antes de armar la dieta.
       </Notice>
     );
   }
-  const alerts = dietaryAlertsOf(conditions.data.conditions, history.data.current);
-  if (alerts.conditions.length === 0 && alerts.anamnesisNote === null) return null;
+  const { conditions, publishedPlan } = exclusions.data;
+  const note = anamnesisNoteOf(history.data.current);
   return (
-    <Notice tone="warning" title="Alergias e intolerancias registradas">
-      <div className="flex flex-col gap-2">
-        <ul className="flex flex-col gap-1">
-          {alerts.conditions.map((condition) => (
-            <li key={condition.id}>
-              {CONDITION_KIND_LABELS[condition.kind]}: {condition.label}
-            </li>
-          ))}
-          {alerts.anamnesisNote === null ? null : (
-            <li className="whitespace-pre-wrap">En la anamnesis: {alerts.anamnesisNote}</li>
-          )}
-        </ul>
-        <p className="text-sm">
-          La app no las cruza con los alimentos del plan: revisa que no incluya ninguno que las
-          cause. Se registran en {records}.
-        </p>
-      </div>
-    </Notice>
+    <>
+      {publishedPlan ? (
+        <Notice
+          tone="danger"
+          rule="RN-E17"
+          title={`La versión ${String(publishedPlan.versionNo)} publicada lleva alimentos excluidos`}
+        >
+          <div className="flex flex-col gap-2">
+            <ul className="flex flex-col gap-1">
+              {publishedPlan.problems.map((problem) => (
+                <li key={problem}>{problem}</li>
+              ))}
+            </ul>
+            <p className="text-sm">
+              Lo publicado no cambia y sigue vigente: abre la{' '}
+              <Link
+                href={`/panel/pacientes/${patientId}/dieta/${publishedPlan.id}`}
+                className="underline"
+              >
+                versión {publishedPlan.versionNo}
+              </Link>{' '}
+              y crea una versión nueva sin ellos.
+            </p>
+          </div>
+        </Notice>
+      ) : null}
+      {conditions.length === 0 && note === null ? null : (
+        <Notice tone="warning" title="Alergias e intolerancias registradas">
+          <div className="flex flex-col gap-2">
+            <ul className="flex flex-col gap-1">
+              {conditions.map((condition) => (
+                <li key={condition.conditionId}>
+                  {CONDITION_KIND_LABELS[condition.kind]}: {condition.label}
+                  {condition.foods.length > 0
+                    ? ` · no se puede usar: ${condition.foods.map((food) => food.name).join(', ')}`
+                    : ' · sin alimentos enlazados: no se bloquea nada'}
+                </li>
+              ))}
+              {note === null ? null : (
+                <li className="whitespace-pre-wrap">En la anamnesis: {note}</li>
+              )}
+            </ul>
+            <p className="text-sm">
+              Un plan con un alimento enlazado no se guarda ni se publica, tampoco si va dentro de
+              una receta. Lo que no esté enlazado no se bloquea: se enlaza en {records}.
+            </p>
+          </div>
+        </Notice>
+      )}
+    </>
   );
 }

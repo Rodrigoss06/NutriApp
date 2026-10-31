@@ -19,6 +19,7 @@ export * from './assessment/technical-error.js';
 export * from './assessment/results.js';
 export * from './assessment/labels.js';
 export * from './nutrition/energy.js';
+export * from './nutrition/food-exclusion.js';
 export * from './nutrition/plan.js';
 export * from './food/catalog.js';
 export * from './food/exchange.js';

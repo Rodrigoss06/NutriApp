@@ -14,7 +14,9 @@ import {
 } from '@nestjs/common';
 import {
   createNutritionPlanSchema,
+  setFoodExclusionsSchema,
   updateNutritionPlanSchema,
+  type FoodExclusionListResponse,
   type NutritionPlan,
   type NutritionPlanListResponse,
   type NutritionPlanPreview,
@@ -32,7 +34,9 @@ import {
   PATIENT_NOT_FOUND,
   WRITE_ACCESS_REQUIRED,
 } from '../../../../clinical/index.js';
+import { FoodExclusionCommands } from '../../../application/commands/food-exclusion.commands.js';
 import { NutritionPlanCommands } from '../../../application/commands/nutrition-plan.commands.js';
+import { FoodExclusionQueries } from '../../../application/queries/food-exclusion.queries.js';
 import { NutritionPlanQueries } from '../../../application/queries/nutrition-plan.queries.js';
 import { PRESCRIPTION_NOT_FOUND } from '../../../domain/energy-rules.js';
 import {
@@ -86,7 +90,51 @@ export class PatientNutritionPlanController {
   constructor(
     private readonly commands: NutritionPlanCommands,
     private readonly queries: NutritionPlanQueries,
+    private readonly exclusionCommands: FoodExclusionCommands,
+    private readonly exclusionQueries: FoodExclusionQueries,
   ) {}
+
+  /** Las alergias e intolerancias activas con los alimentos que excluyen de la dieta (RN-E17). */
+  @Get('food-exclusions')
+  @RequirePermission('patients.read')
+  @Header('Cache-Control', 'no-store')
+  async foodExclusions(
+    @Req() request: ContextualRequest,
+    @Param('patientId', ParseUUIDPipe) patientId: string,
+  ): Promise<FoodExclusionListResponse> {
+    const view = await this.exclusionQueries.list(contextOf(request), patientId);
+    if (!view) throw notFound(PATIENT_NOT_FOUND.code);
+    return {
+      conditions: view.conditions.map((condition) => ({
+        ...condition,
+        foods: condition.foods.map((food) => ({ ...food })),
+      })),
+      publishedPlan: view.publishedPlan && {
+        ...view.publishedPlan,
+        problems: [...view.publishedPlan.problems],
+      },
+    };
+  }
+
+  /** Reemplaza los alimentos que excluye esa alergia o intolerancia. */
+  @Put('food-exclusions/:conditionId')
+  @RequirePermission('patients.write')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  async setFoodExclusions(
+    @Req() request: ContextualRequest,
+    @Param('patientId', ParseUUIDPipe) patientId: string,
+    @Param('conditionId', ParseUUIDPipe) conditionId: string,
+    @Body() body: unknown,
+  ): Promise<void> {
+    const { foodIds } = parseBody(setFoodExclusionsSchema, body);
+    const result = await this.exclusionCommands.set(
+      contextOf(request),
+      patientId,
+      conditionId,
+      foodIds,
+    );
+    if (isErr(result)) throw problem(result.error);
+  }
 
   @Post('nutrition-plans')
   @RequirePermission('patients.write')

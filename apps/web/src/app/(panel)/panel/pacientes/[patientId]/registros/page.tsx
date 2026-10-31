@@ -1,6 +1,7 @@
 import type {
   ClinicalNoteListResponse,
   ConditionListResponse,
+  FoodExclusionListResponse,
   GoalListResponse,
 } from '@nutricoach/contracts';
 import { Notice } from '@nutricoach/ui';
@@ -18,15 +19,16 @@ export const metadata: Metadata = { title: 'Condiciones, objetivos y notas' };
 export default async function RecordsPage({ params }: { params: Promise<{ patientId: string }> }) {
   const { patientId } = await params;
   const id = encodeURIComponent(patientId);
-  const [patient, conditions, goals, notes, members] = await Promise.all([
+  const [patient, conditions, exclusions, goals, notes, members] = await Promise.all([
     getPatient(patientId),
     serverApi<ConditionListResponse>(`/patients/${id}/conditions`),
+    serverApi<FoodExclusionListResponse>(`/patients/${id}/food-exclusions`),
     serverApi<GoalListResponse>(`/patients/${id}/goals`),
     serverApi<ClinicalNoteListResponse>(`/patients/${id}/notes`),
     getMembers(),
   ]);
   if (!patient.ok) return null;
-  if (!conditions.ok || !goals.ok || !notes.ok || !members.ok) {
+  if (!conditions.ok || !exclusions.ok || !goals.ok || !notes.ok || !members.ok) {
     return <Notice tone="danger" title="No pudimos cargar el expediente" />;
   }
   const archived = patient.data.status === 'ARCHIVED';
@@ -36,6 +38,9 @@ export default async function RecordsPage({ params }: { params: Promise<{ patien
         <ConditionsSection
           patientId={patientId}
           conditions={conditions.data.conditions}
+          exclusions={exclusions.data.conditions}
+          careTeam={patient.data.careTeam}
+          members={members.data.members}
           archived={archived}
         />
       </Section>

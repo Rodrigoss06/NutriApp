@@ -1432,7 +1432,7 @@ Consecuencias:
   clinical_history); 05.2 (`pri`, y `method_version` semver, ya en ADR-070); 02 §3 (la ruta de una revisión); 07 §12 (ID01 a
   ID04 no se piden; `modality`); el código NC-CLI-028.
 
-## ADR-073 · Alergias al armar la dieta: un aviso, mientras falta la regla de exclusión — aceptada (2026-10-30)
+## ADR-073 · Alergias al armar la dieta: un aviso, mientras falta la regla de exclusión — aceptada (2026-10-30), ampliada por ADR-074
 Contexto: 07 §12 y la hoja de mapeo de Jeremy piden «exclusión obligatoria» de alergias e intolerancias en la dieta. Ninguna
 regla RN ni prompt la cubre, y la dieta no leía clinical.condition: se podía armar un plan con un alimento al que el
 paciente es alérgico, sin aviso. La revisión del PR 3 de P12 lo encontró y Rodrigo pidió resolverlo en ese mismo PR.
@@ -1449,4 +1449,32 @@ Decisión:
 Consecuencias:
 - Pregunta nueva para Jeremy (P-17): cómo se enlaza una alergia con los alimentos para excluirlos de verdad.
 - Para Notion (/notion-sync de P12): 07 §12 (hoy es un aviso) y §15 (P-17).
+
+## ADR-074 · Exclusión obligatoria de alimentos por alergia o intolerancia — aceptada (2026-10-30)
+Contexto: ADR-073 dejó un aviso y la pregunta P-17 para Jeremy. Rodrigo pidió impedir que se use el alimento alérgico, con el
+visto bueno de Jeremy (2026-10-30). 07 §12 lo pide como «exclusión obligatoria».
+Decisión:
+- Regla nueva RN-E17: un plan no lleva un alimento enlazado a una alergia o intolerancia activa del paciente, tampoco dentro
+  de una receta del menú. No se guarda ni se publica (NC-NUT-015, con cuál, dónde y por qué), y el editor lo muestra en lo
+  que falta para publicar mientras se escribe. Una intolerancia excluye igual que una alergia (07 §12). Al resolver la
+  condición deja de excluir y sus enlaces se conservan: al reactivarla, vuelve.
+- El enlace lo hace quien atiende, condición por condición, en «Condiciones, objetivos y notas». El nombre de la condición
+  nunca se compara con el de los alimentos: «Lactosa» no se parece a «Leche», y comparar textos daría una falsa seguridad.
+  Sin enlaces no se bloquea nada, y la pantalla lo dice.
+- El recetario es de la organización y no tiene paciente: ahí no hay con qué comparar, así que crear una receta no cambia.
+  La receta se bloquea cuando entra al plan de ese paciente, con sus ingredientes actuales.
+- Lo publicado no cambia (RN-E15). Si se enlaza un alimento que lleva el plan vigente, GET /food-exclusions y el aviso de
+  Dieta lo dicen. La versión nueva se crea igual, porque es como se corrige, y no se publica hasta quitarlo.
+- nutrition.food_exclusion vive en nutrition, sin claves foráneas hacia clinical ni food, para que clinical no dependa de food.
+  ClinicalApi.dietaryConditions entrega solo las alergias e intolerancias activas.
+- Escribir exige lo mismo que el expediente (RN-A05, RN-B01) y queda auditado (nutrition.exclusion.changed, solo con el
+  nombre del campo). Leer deja su READ (RN-B03). El paciente no lo ve. Códigos NC-NUT-016 (no es una alergia o intolerancia
+  activa) y NC-NUT-017 (el alimento no existe para la organización).
+Consecuencias:
+- Mientras no se publique otra versión, un plan vigente con un alimento recién enlazado se sigue viendo en la app del
+  paciente. El aviso en rojo le dice al coach que lo corrija; la app no lo retira sola.
+- El registro diario del paciente no se bloquea: anota lo que comió, aunque sea un alimento excluido.
+- Se borró de git un temporal que entró por error en P10 (`composition-editor.tsx.tmp.*`) y .gitignore ya los ignora.
+- Para Notion (/notion-sync de P12): 03 RN-E17 (nueva); 07 §12 (exclusión) y §15 (P-17 resuelta); 05.2 (`food_exclusion`);
+  02 §3 (`ClinicalApi.dietaryConditions`, las rutas de food-exclusions); los códigos NC-NUT-015 a NC-NUT-017.
 

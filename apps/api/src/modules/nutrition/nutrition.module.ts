@@ -4,15 +4,19 @@ import { ClinicalApi } from '../clinical/index.js';
 import { ExerciseModule } from '../exercise/index.js';
 import { FoodModule } from '../food/index.js';
 import { EnergyPrescriptionCommands } from './application/commands/energy-prescription.commands.js';
+import { FoodExclusionCommands } from './application/commands/food-exclusion.commands.js';
 import { NutritionPlanCommands } from './application/commands/nutrition-plan.commands.js';
+import { FoodExclusions } from './application/food-exclusions.js';
 import { NutritionApi } from './application/nutrition-api.js';
 import { NutritionTimelineSource } from './application/nutrition-timeline.js';
 import { PlanCalculator } from './application/plan-calculator.js';
 import {
   ENERGY_PRESCRIPTION_STORE,
+  FOOD_EXCLUSION_STORE,
   NUTRITION_PLAN_STORE,
 } from './application/ports/nutrition.ports.js';
 import { EnergyPrescriptionQueries } from './application/queries/energy-prescription.queries.js';
+import { FoodExclusionQueries } from './application/queries/food-exclusion.queries.js';
 import { NutritionPlanQueries } from './application/queries/nutrition-plan.queries.js';
 import {
   EnergyPrescriptionController,
@@ -23,6 +27,7 @@ import {
   PatientNutritionPlanController,
 } from './adapters/in/http/nutrition-plan.controller.js';
 import { PrismaEnergyPrescriptionStore } from './adapters/out/persistence/prisma-energy-prescription.store.js';
+import { PrismaFoodExclusionStore } from './adapters/out/persistence/prisma-food-exclusion.store.js';
 import { PrismaNutritionPlanStore } from './adapters/out/persistence/prisma-nutrition-plan.store.js';
 
 /**
@@ -43,11 +48,15 @@ import { PrismaNutritionPlanStore } from './adapters/out/persistence/prisma-nutr
     EnergyPrescriptionQueries,
     NutritionPlanCommands,
     NutritionPlanQueries,
+    FoodExclusions,
+    FoodExclusionCommands,
+    FoodExclusionQueries,
     PlanCalculator,
     NutritionApi,
     NutritionTimelineSource,
     { provide: ENERGY_PRESCRIPTION_STORE, useClass: PrismaEnergyPrescriptionStore },
     { provide: NUTRITION_PLAN_STORE, useClass: PrismaNutritionPlanStore },
+    { provide: FOOD_EXCLUSION_STORE, useClass: PrismaFoodExclusionStore },
   ],
   exports: [NutritionApi],
 })
