@@ -31,6 +31,8 @@ export type GoalKind =
   'FAT_LOSS' | 'MUSCLE_GAIN' | 'MAINTENANCE' | 'RECOMPOSITION' | 'PERFORMANCE' | 'HEALTH' | 'OTHER';
 export type GoalStatus = 'ACTIVE' | 'ACHIEVED' | 'ABANDONED';
 export type NoteVisibility = 'CARE_TEAM' | 'AUTHOR_ONLY';
+export type ScreeningDecision = 'START' | 'LIMIT' | 'REFER';
+export type ScreeningStatus = 'GREEN' | 'AMBER' | 'RED';
 /** Las finalidades sin las que la app del paciente no funciona: obligatorias al aceptar la invitación. */
 export const APP_PURPOSES = [
   'APP_ACCESS',
@@ -152,6 +154,20 @@ export const INVALID_ANAMNESIS = domainError({
   code: 'NC-CLI-028',
   rule: 'RN-F16',
   message: 'Revisa las respuestas de la anamnesis: alguna no se puede puntuar.',
+});
+
+export const SCREENING_NOT_FOUND = domainError({ code: 'NC-CLI-029', message: 'No encontrado.' });
+/** Solo se revisa un cribado en rojo o ámbar, y una sola vez: el siguiente es otra respuesta (RN-F15). */
+export const SCREENING_NOT_REVIEWABLE = domainError({
+  code: 'NC-CLI-030',
+  rule: 'RN-F15',
+  message: 'Este cribado no necesita revisión o ya la tiene.',
+});
+/** Fotos, videos y enlaces de evidencia necesitan autorización previa (07 §4). */
+export const IMAGES_CONSENT_REQUIRED = domainError({
+  code: 'NC-CLI-031',
+  rule: 'RN-B01',
+  message: 'Sin el consentimiento de imágenes vigente no se guarda evidencia de este paciente.',
 });
 
 /** DNI: 8 dígitos. Los demás: letras y dígitos sin espacios ni guiones, de 4 a 20. En mayúsculas. */

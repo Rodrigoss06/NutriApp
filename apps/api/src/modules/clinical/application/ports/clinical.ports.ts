@@ -11,6 +11,8 @@ import type {
   GoalKind,
   GoalStatus,
   NoteVisibility,
+  ScreeningDecision,
+  ScreeningStatus,
   PatientStatus,
   Population,
   Sex,
@@ -182,6 +184,24 @@ export interface HistoryRevisionRecord {
   readonly profile: PerformanceProfileRecord | null;
 }
 
+/** Un cribado respondido (RN-F15, 07 §3.2): cada respuesta es una fila nueva y solo se escribe su revisión, una vez. */
+export interface ScreeningRecord {
+  readonly id: string;
+  readonly patientId: string;
+  readonly formVersion: string;
+  readonly ruleVersion: string;
+  readonly answers: Readonly<Record<string, boolean | string>>;
+  readonly status: ScreeningStatus;
+  readonly answeredBy: UserId;
+  readonly answeredAt: Date;
+  readonly review: {
+    readonly decision: ScreeningDecision;
+    readonly note: string;
+    readonly reviewedBy: string;
+    readonly reviewedAt: Date;
+  } | null;
+}
+
 export interface ConditionRecord {
   readonly id: string;
   readonly patientId: string;
@@ -274,6 +294,11 @@ export interface ClinicalRecordStore {
       computedAt: Date;
     },
   ): Promise<void>;
+  /** De la más reciente a la más antigua. */
+  screenings(patientId: string): Promise<readonly ScreeningRecord[]>;
+  insertScreening(screening: ScreeningRecord & { organizationId: OrganizationId }): Promise<void>;
+  /** Solo si sigue sin revisión; si no, false. */
+  reviewScreening(id: string, review: NonNullable<ScreeningRecord['review']>): Promise<boolean>;
   conditions(patientId: string): Promise<readonly ConditionRecord[]>;
   insertCondition(
     condition: ConditionRecord & { organizationId: OrganizationId; createdBy: UserId },

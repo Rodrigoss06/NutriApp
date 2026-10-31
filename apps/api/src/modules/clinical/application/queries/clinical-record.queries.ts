@@ -18,6 +18,7 @@ import {
   type HistoryRevisionRecord,
   type NoteRecord,
   type PatientStore,
+  type ScreeningRecord,
   type TimelineRecord,
 } from '../ports/clinical.ports.js';
 import { newestFirst, TimelineSources } from '../timeline-sources.js';
@@ -84,6 +85,16 @@ export class ClinicalRecordQueries {
   ): Promise<HistoryRevisionRecord | null> {
     return this.#read(context, patientId, 'clinical.clinical_history', () =>
       this.records.historyRevision(patientId, revision),
+    );
+  }
+
+  /** Los cribados, del más reciente al más antiguo: queda el historial (07 §3.2). */
+  screenings(
+    context: SecurityContext,
+    patientId: string,
+  ): Promise<readonly ScreeningRecord[] | null> {
+    return this.#read(context, patientId, 'clinical.pre_exercise_screening', () =>
+      this.records.screenings(patientId),
     );
   }
 

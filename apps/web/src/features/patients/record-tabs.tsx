@@ -12,6 +12,7 @@ const TABS = [
   { path: '/evaluaciones', label: 'Evaluaciones' },
   { path: '/energia', label: 'Energía' },
   { path: '/dieta', label: 'Dieta' },
+  { path: '/entrenamiento', label: 'Entrenamiento' },
   { path: '/linea-de-tiempo', label: 'Línea de tiempo' },
 ] as const;
 

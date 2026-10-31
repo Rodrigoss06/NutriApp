@@ -19,7 +19,7 @@ Próxima demo: Demo 1 · Base y evaluación · semana 2
 | P9 Dieta por intercambios | ✅ | Rodrigo | #25, #26 y #27 | 3 criterios en verde (integración y E2E de Luis en escritorio y celular): borrador (ADR-057), publicación y tracking (ADR-058) y pantallas (ADR-059). /notion-sync aplicado (15 cambios en 02, 03 y 05.2) |
 | P10 Composición, menú y recetario | ✅ | Rodrigo | #28, #30 y #31 | 2 criterios en verde (integración y E2E en escritorio y celular): recetario (ADR-061), composición y menú en la API (ADR-062) y pantallas (ADR-063). Plantillas (RF-22, deseable) fuera. /notion-sync aplicado (17 cambios en 02, 03, 04, 05 y 05.2) |
 | P11 Fichas PDF, Demo 2 | ✅ | Rodrigo | #32 a #37 | 4 criterios en verde (integración y E2E en escritorio y celular): contexto documents y ficha de intercambios (ADR-064), fichas del menú y de resultados (ADR-065; 1.0.1 en ADR-069), marca mínima (ADR-066), descargas (ADR-067), semilla, guion y acta de la Demo 2 (ADR-068). Etiqueta v0.2.0 (e05f8de); staging, pendiente de P4. /notion-sync aplicado (17 cambios en 02, 03, 04, 05, 05.1, 05.3 y 06) |
-| P12 Ejercicios y rutinas | 🟨 | Rodrigo | #39 y #40 | PR 1 y 2 de 7 fusionados: motor (ADR-070) y biblioteca (ADR-071). PR 3: anamnesis V2 (ADR-072) |
+| P12 Ejercicios y rutinas | 🟨 | Rodrigo | #39, #40 y #41 | PR 1 a 3 de 7 fusionados: motor (ADR-070), biblioteca (ADR-071) y anamnesis V2 (ADR-072). PR 4: seguridad (ADR-075) |
 | P13 App del paciente | ⬜ | Rodrigo | | |
 | P14 Analítica y evolución, Demo 3 | ⬜ | Rodrigo | | |
 | P15 Marca, calendario, admin y migración | ⬜ | Rodrigo | | |
@@ -28,6 +28,9 @@ Próxima demo: Demo 1 · Base y evaluación · semana 2
 Leyenda: ⬜ pendiente · 🟨 en curso · ✅ terminado · ⛔ bloqueado
 
 ## En curso
+- P12, PR 4 de 7 (ADR-075): seguridad antes de prescribir (RF-41, RN-F15). Pestaña Entrenamiento con las tres llaves, el
+  perfil de entrenamiento, el cribado con la revisión del coach, la evaluación postural (14 pruebas) y las pruebas físicas
+  (15, por momento), con evidencia por archivo o enlace y el consentimiento IMAGES. Faltan: programa (API y web) y ficha de rutina.
 - Exclusión de alimentos por alergia o intolerancia (ADR-074): RN-E17. Cada condición activa se enlaza con sus alimentos, y
   un plan con alguno no se guarda ni se publica, tampoco dentro de una receta. Lo publicado no cambia: se avisa.
 - P12, PR 3 de 7 (ADR-072): anamnesis `JV_ANAMNESIS` V2 como revisión de la historia clínica, presencial u online, con
@@ -101,8 +104,7 @@ Leyenda: ⬜ pendiente · 🟨 en curso · ✅ terminado · ⛔ bloqueado
 ## Siguiente paso
 - Antes de la Demo 1: la matriz manual de navegadores (RNF-19: Chrome, Edge, Safari y Firefox; la E2E cubre Chromium
   y WebKit) y, el mismo día, base local limpia y semilla («Antes de empezar» del guion). La demo es en local
-- P12, PR 4: seguridad antes de prescribir (RF-41, RN-F15): perfil de entrenamiento con alta médica, cribado con la
-  revisión del coach, evaluación postural y pruebas físicas, presenciales u online, con evidencia por archivo o enlace
+- P12, PR 5: programa por la API (propuesta, mesociclos, duplicar semana y publicar), con el bloqueo de `TrainingSafety`
 - Demo 2: «Antes de empezar» de docs/demos/demo-2.md (base limpia, db:seed, catalog:load, pnpm dev y pnpm demo:2) y
   enviar el acta al terminar
 - Cada base nueva necesita los catálogos: `pnpm --filter api build && pnpm catalog:load plataforma@demo.example.com`
@@ -193,6 +195,8 @@ Leyenda: ⬜ pendiente · 🟨 en curso · ✅ terminado · ⛔ bloqueado
   reintentar (#29, 2026-10-24); esperar el título antes de axe
 
 ## Registro de sesiones (solo las 5 últimas)
+- 2026-10-31 · P12 (PR 4) · Seguridad antes de prescribir (ADR-075): perfil, cribado con revisión, postura y pruebas físicas,
+  con sus pantallas y la E2E en escritorio y celular. Se agrega el texto de consentimiento IMAGES, provisional, que no existía
 - 2026-10-30 · Exclusión de alimentos (ADR-074) · #41 fusionado. Jeremy dio el visto bueno: RN-E17, enlace de alergias e
   intolerancias con alimentos y bloqueo al guardar y publicar, también dentro de una receta; aviso si el plan vigente lleva uno
 - 2026-10-30 · P12 (PR 3) · #40 fusionado. Anamnesis V2 con su perfil de rendimiento (ADR-072): 43 preguntas de la hoja,
@@ -204,8 +208,3 @@ Leyenda: ⬜ pendiente · 🟨 en curso · ✅ terminado · ⛔ bloqueado
   válido vuelve a la de la V3
 - 2026-10-30 · P12 (PR 1) · Plan aprobado con las 6 decisiones de Rodrigo (ADR-070). #38 fusionado. Motor 1.4.0:
   `PRI_JV`, llaves de seguridad, propuesta y macrociclo, con G-29 a G-35 y G-40 en verde. Tablas de la V3 en seeds/
-- 2026-10-28 · P11 (arreglo y cierre) · #36 y #37 fusionados con los cuatro checks en verde. #37: ficha de resultados
-  1.0.1 con «Masa ósea (Rocha)» (ADR-069), rebasada sobre el #36. Etiqueta v0.2.0 en e05f8de con el CI de main en
-  verde. P11 cumple sus cuatro criterios. /notion-sync aprobado y aplicado: RN-H01 a RN-H03 en 03 (versión 1.11),
-  documents y la marca en 02 (§3, §7 y §8), RF-36 en 04, contact de tenancy.branding en 05.1, los CHECK e índices de
-  documents en 05.3, la fila 1.9 de 05 y `demo:2` en 06

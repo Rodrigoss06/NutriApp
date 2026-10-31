@@ -1478,3 +1478,50 @@ Consecuencias:
 - Para Notion (/notion-sync de P12): 03 RN-E17 (nueva); 07 §12 (exclusión) y §15 (P-17 resuelta); 05.2 (`food_exclusion`);
   02 §3 (`ClinicalApi.dietaryConditions`, las rutas de food-exclusions); los códigos NC-NUT-015 a NC-NUT-017.
 
+
+## ADR-075 · Seguridad antes de prescribir: perfil, cribado, postura y pruebas físicas — aceptada (2026-10-31)
+Contexto: P12, PR 4 (RF-41, RN-F15; 07 §2 a §4). El motor ya decide las tres llaves (ADR-070); falta de dónde salen sus datos
+y las pantallas del coach.
+Decisión:
+- Cada dato vive en su contexto. Perfil de entrenamiento en `training` (módulo nuevo, `training.athlete_profile`, una revisión
+  por cambio). Cribado en `clinical` (`clinical.pre_exercise_screening`, una fila por respuesta). Postura y pruebas físicas en
+  `assessment`, como evaluaciones `MOVEMENT` y `FITNESS` que heredan evaluador, fecha, cierre y enmienda (RN-D08), con una fila
+  por prueba (`movement_screen`, `physical_test_result`) y los catálogos globales `movement_test` (14) y `physical_test` (15).
+  `TrainingSafety` en `training` junta los tres por sus API públicas y el motor decide.
+- La llave de la postura lee las pruebas de la última evaluación cerrada y las de todos los borradores: el dolor no espera al
+  cierre, y un borrador sin dolor (o una enmienda a medias) no abre la llave. Sin evaluación cerrada no se bloquea y la pantalla
+  avisa (ADR-070). De los cribados manda el más reciente: uno nuevo vuelve a pedir revisión aunque el anterior la tuviera.
+- La revisión del cribado se escribe una sola vez, solo en rojo o ámbar y nunca como paciente, con un disparador además de la
+  regla del caso de uso. Por eso app_user solo tiene UPDATE de las columnas de revisión.
+- Las evaluaciones funcionales no se mezclan con la antropometría: `find` y `listByPatient` del store antropométrico filtran
+  por tipo, así que `/evaluations`, cálculo, comparación, fichas y prescripción no las ven, y el consumidor del cálculo ignora
+  su cierre. Tienen sus rutas, `/functional-evaluations`. En la línea de tiempo salen con su nombre.
+- Evidencia de una prueba: archivo PDF, PNG o JPEG de hasta 5 MB (ADR-038) o enlace https a una carpeta restringida, con la
+  columna `evidence_url`, que no está en 05.2. Las dos exigen el consentimiento IMAGES vigente (07 §4, RN-B01, NC-CLI-031).
+- No existía ningún texto de consentimiento IMAGES, así que la regla habría impedido toda evidencia. Se agrega como
+  `0.1-provisional`, igual que los otros dos (migración `202610310100_images_consent_text`): lo ve Rodrigo y pasa por el abogado
+  del cliente con los demás textos legales antes de la entrega. No entra al alta del paciente: se otorga en Consentimientos.
+- Por ahora el cribado lo registra el equipo en consulta. Responderlo desde la app, MENSTRUAL_TRACKING y por lo tanto
+  `hormonal_contraception` llegan en P13: la columna no se crea hasta entonces.
+- El resumen de pruebas físicas da un valor por prueba y momento: de dos evaluaciones del mismo momento vale la más reciente
+  que la midió.
+- El perfil rechaza los decimales que sus columnas no guardan, como las pruebas físicas: 7,75 horas de sueño se responde con un
+  error y no se guarda como 7,8 (RN-D09).
+- Códigos: NC-CLI-029 (cribado no encontrado), NC-CLI-030 (no se puede revisar), NC-CLI-031 (falta IMAGES), NC-ASM-022 a
+  NC-ASM-026 (evaluación o prueba no encontrada, evaluación vacía, evidencia no admitida, falta el archivo), NC-TRA-001
+  (conflicto de revisión) y NC-TRA-002 (equipo o prueba que no existe).
+Consecuencias:
+- Un borrador con dolor sigue bloqueando hasta que se corrija la prueba o se quite. No hay cómo descartar un borrador entero.
+- Quitar un archivo de un borrador no borra sus bytes, porque una revisión puede compartirlo con la evaluación original. Queda
+  guardado sin ruta de acceso.
+- La exportación y la supresión de P15 (RN-B04, RN-B05) tienen que incluir el perfil, los cribados con su texto libre, las
+  pruebas y su evidencia, también esos archivos que ya no tienen ruta.
+- Revocar IMAGES impide evidencia nueva, y también volver a guardar una prueba que lleva un enlace hasta quitarlo. Lo ya
+  registrado se conserva en solo lectura.
+- La propuesta (PR 5) todavía no consume `TrainingSafety`: esta entrega muestra el estado, y el bloqueo real de generar y
+  publicar llega con ella.
+- Para Notion (/notion-sync de P12): 05.2 (`evidence_url` en las dos tablas, sin `hormonal_contraception` hasta P13,
+  `evaluation_moment_only_fitness`, `guard_screening_review`, `screening_by_patient`); 05.1 (texto IMAGES); 02 §3 (módulo
+  training y sus rutas, `/functional-evaluations`, `/screenings`, `ClinicalApi.latestScreening`, `ensureImagesConsent`,
+  `lockPatient`, `AssessmentApi.movementKeys`, `physicalTestCodes`); 02 §8 (eventos `assessment.functional.recorded` y
+  `.removed`, `clinical.screening.recorded` y `.reviewed`, `training.profile.revised`); los códigos de arriba.

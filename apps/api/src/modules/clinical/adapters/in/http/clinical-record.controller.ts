@@ -23,7 +23,10 @@ import {
   historyRevisionNumberSchema,
   invitePatientSchema,
   LEGACY_HISTORY_FORM,
+  recordScreeningSchema,
+  reviewScreeningSchema,
   saveClinicalHistorySchema,
+  screeningAnswersSchema,
   timelineQuerySchema,
   updateConditionSchema,
   updateGoalSchema,
@@ -32,6 +35,7 @@ import {
   type ClinicalNoteListResponse,
   type ConditionListResponse,
   type GoalListResponse,
+  type ScreeningListResponse,
   type TimelineResponse,
 } from '@nutricoach/contracts';
 import { isErr, type DomainError, type SecurityContext } from '@nutricoach/shared-kernel';
@@ -56,6 +60,8 @@ import {
   PATIENT_ARCHIVED,
   PATIENT_EMAIL_REQUIRED,
   PATIENT_NOT_FOUND,
+  SCREENING_NOT_FOUND,
+  SCREENING_NOT_REVIEWABLE,
   WRITE_ACCESS_REQUIRED,
 } from '../../../domain/clinical-rules.js';
 
@@ -64,6 +70,8 @@ const STATUS_BY_CODE: Readonly<Record<string, number>> = {
   [CONDITION_NOT_FOUND.code]: 404,
   [GOAL_NOT_FOUND.code]: 404,
   [NOTE_NOT_FOUND.code]: 404,
+  [SCREENING_NOT_FOUND.code]: 404,
+  [SCREENING_NOT_REVIEWABLE.code]: 409,
   [HISTORY_REVISION_CONFLICT.code]: 409,
   [PATIENT_ARCHIVED.code]: 409,
   [PATIENT_ALREADY_LINKED.code]: 409,
@@ -187,6 +195,66 @@ export class ClinicalRecordController {
     );
     if (isErr(result)) throw problem(result.error);
     return result.value;
+  }
+
+  /** El cribado previo al ejercicio, con su historial (RN-F15, 07 §3.2). */
+  @Get('screenings')
+  @RequirePermission('patients.read')
+  @Header('Cache-Control', 'no-store')
+  async screenings(
+    @Req() request: ContextualRequest,
+    @Param('patientId', ParseUUIDPipe) patientId: string,
+  ): Promise<ScreeningListResponse> {
+    const screenings = await this.queries.screenings(contextOf(request), patientId);
+    if (!screenings) throw notFound();
+    return {
+      screenings: screenings.map((s) => ({
+        id: s.id,
+        formVersion: s.formVersion,
+        ruleVersion: s.ruleVersion,
+        answers: screeningAnswersSchema.parse(s.answers),
+        status: s.status,
+        answeredBy: s.answeredBy,
+        answeredAt: s.answeredAt.toISOString(),
+        review: s.review && {
+          decision: s.review.decision,
+          note: s.review.note,
+          reviewedBy: s.review.reviewedBy,
+          reviewedAt: s.review.reviewedAt.toISOString(),
+        },
+      })),
+    };
+  }
+
+  @Post('screenings')
+  @RequirePermission('patients.write')
+  async recordScreening(
+    @Req() request: ContextualRequest,
+    @Param('patientId', ParseUUIDPipe) patientId: string,
+    @Body() body: unknown,
+  ): Promise<{ id: string }> {
+    const { answers } = parseBody(recordScreeningSchema, body);
+    const result = await this.commands.recordScreening(contextOf(request), patientId, answers);
+    if (isErr(result)) throw problem(result.error);
+    return result.value;
+  }
+
+  @Post('screenings/:screeningId/review')
+  @RequirePermission('patients.write')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  async reviewScreening(
+    @Req() request: ContextualRequest,
+    @Param('patientId', ParseUUIDPipe) patientId: string,
+    @Param('screeningId', ParseUUIDPipe) screeningId: string,
+    @Body() body: unknown,
+  ): Promise<void> {
+    const result = await this.commands.reviewScreening(
+      contextOf(request),
+      patientId,
+      screeningId,
+      parseBody(reviewScreeningSchema, body),
+    );
+    if (isErr(result)) throw problem(result.error);
   }
 
   @Get('conditions')

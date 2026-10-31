@@ -12,7 +12,7 @@ const SIGNATURES: readonly (readonly number[])[] = [
 export function evidenceProblem(file: { size: number; head: Uint8Array }): string | null {
   if (file.size === 0) return 'El archivo está vacío.';
   if (file.size > EVIDENCE_MAX_BYTES)
-    return 'El escaneo pesa más de 5 MB. Redúcelo y vuelve a subirlo.';
+    return 'El archivo pesa más de 5 MB. Redúcelo y vuelve a subirlo.';
   const known = SIGNATURES.some((signature) => signature.every((byte, i) => file.head[i] === byte));
   return known ? null : 'La evidencia debe ser un PDF, JPG o PNG.';
 }

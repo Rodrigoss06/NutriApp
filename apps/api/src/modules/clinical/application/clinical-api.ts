@@ -9,6 +9,7 @@ import {
 import {
   canWriteRecord,
   HEALTH_DATA_REQUIRED,
+  IMAGES_CONSENT_REQUIRED,
   PATIENT_ARCHIVED,
   PATIENT_NOT_FOUND,
   WRITE_ACCESS_REQUIRED,
@@ -54,6 +55,14 @@ export interface DietaryCondition {
   readonly id: string;
   readonly kind: 'ALLERGY' | 'INTOLERANCE';
   readonly label: string;
+}
+
+/** Lo que la seguridad necesita del cribado más reciente (RN-F15). */
+export interface LatestScreening {
+  readonly id: string;
+  readonly status: 'GREEN' | 'AMBER' | 'RED';
+  readonly reviewDecision: 'START' | 'LIMIT' | 'REFER' | null;
+  readonly answeredAt: Date;
 }
 
 const refOf = (patient: PatientRecord): PatientRef => ({
@@ -113,6 +122,31 @@ export class ClinicalApi {
     }
     if (!(await this.consents.active(patientId, 'HEALTH_DATA'))) return err(HEALTH_DATA_REQUIRED);
     return ok(refOf(patient));
+  }
+
+  /** La evidencia necesita el consentimiento de imágenes vigente (RN-B01, 07 §4). */
+  async ensureImagesConsent(patientId: string): Promise<Result<void, DomainError>> {
+    return (await this.consents.active(patientId, 'IMAGES'))
+      ? ok(undefined)
+      : err(IMAGES_CONSENT_REQUIRED);
+  }
+
+  /** El cribado más reciente, para la llave de seguridad (RN-F15); null si no hay. Sin sus respuestas. */
+  async latestScreening(patientId: string): Promise<LatestScreening | null> {
+    const [latest] = await this.records.screenings(patientId);
+    return latest
+      ? {
+          id: latest.id,
+          status: latest.status,
+          reviewDecision: latest.review?.decision ?? null,
+          answeredAt: latest.answeredAt,
+        }
+      : null;
+  }
+
+  /** Bloquea la ficha hasta el fin de la transacción: las revisiones de un paciente van de a una. */
+  lockPatient(patientId: string): Promise<void> {
+    return this.records.lockPatient(patientId);
   }
 
   /** Las alergias e intolerancias activas del paciente que el contexto ve (RN-A05). */

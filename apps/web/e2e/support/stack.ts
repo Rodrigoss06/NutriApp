@@ -195,7 +195,7 @@ export async function registerPatientByApi(
 export async function grantInPersonByApi(
   staffEmail: string,
   patientId: string,
-  purpose: 'HEALTH_DATA' | 'APP_ACCESS',
+  purpose: 'HEALTH_DATA' | 'APP_ACCESS' | 'IMAGES',
 ): Promise<void> {
   const api = await apiAs(staffEmail);
   const listed = await api.get('/api/v1/patients/consent-documents');

@@ -26,6 +26,7 @@ import { PatientEnrollmentService } from './patient-enrollment.js';
 import { ClinicalRecordQueries } from './queries/clinical-record.queries.js';
 import { TimelineSources } from './timeline-sources.js';
 import { PatientQueries } from './queries/patient.queries.js';
+import { WRITE_ACCESS_REQUIRED } from '../domain/clinical-rules.js';
 
 const RESPONSIBLE = '0192f0a0-0000-7000-8000-0000000000a1';
 const READER = '0192f0a0-0000-7000-8000-0000000000a2';
@@ -680,5 +681,182 @@ describe('RF-06 · códigos de paciente para la auditoría', () => {
       'no-existe',
     ]);
     expect([...codes.entries()]).toEqual([[id, 'P-000001']]);
+  });
+});
+
+describe('RN-F15 · 07 §3.2 · el cribado previo al ejercicio', () => {
+  const NO = {
+    S01: false,
+    S02: false,
+    S03: false,
+    S04: false,
+    S05: false,
+    S06: false,
+    S07: false,
+    S08: false,
+  };
+  const review = { decision: 'START', note: 'Con aval de su médico.' } as const;
+  const api = () => new ClinicalApi(patients, consents, new TimelineSources(), records);
+
+  it('el motor decide el estado con sus versiones, y cada respuesta es una fila nueva', async () => {
+    const id = await registered();
+    await consented(id);
+
+    const red = await commands().recordScreening(responsible, id, {
+      ...NO,
+      S01: true,
+      S09: 'Detalle',
+    });
+    await commands().recordScreening(responsible, id, { ...NO, S05: true });
+    await commands().recordScreening(responsible, id, NO);
+
+    expect(isOk(red)).toBe(true);
+    expect(records.screeningRows.map((row) => row.status)).toEqual(['GREEN', 'AMBER', 'RED']);
+    expect(records.screeningRows[2]).toMatchObject({
+      formVersion: 'JV_SCREENING_V2',
+      ruleVersion: '1.0.0',
+      answers: { S01: true, S09: 'Detalle' },
+      answeredBy: responsible.userId,
+      review: null,
+    });
+  });
+
+  it('el evento no lleva respuestas ni estado: son datos de salud', async () => {
+    const id = await registered();
+    await consented(id);
+    outbox.events.length = 0;
+
+    const recorded = await commands().recordScreening(responsible, id, { ...NO, S01: true });
+    if (!recorded.ok) throw new Error(recorded.error.code);
+    await commands().reviewScreening(responsible, id, recorded.value.id, review);
+
+    expect(outbox.events.map((event) => event.type)).toEqual([
+      'clinical.screening.recorded',
+      'clinical.screening.reviewed',
+    ]);
+    expect(outbox.events.map((event) => event.payload)).toEqual([
+      { patientId: id },
+      { patientId: id },
+    ]);
+  });
+
+  it('RN-B01 · RN-A05: sin HEALTH_DATA o sin escritura no se registra ni se revisa', async () => {
+    const id = await registered();
+
+    const unconsented = await commands().recordScreening(responsible, id, NO);
+    expect(isErr(unconsented) && unconsented.error.rule).toBe('RN-B01');
+
+    await consented(id);
+    const denied = await commands().recordScreening(reader, id, NO);
+    expect(isErr(denied) && denied.error.code).toBe(WRITE_ACCESS_REQUIRED.code);
+
+    const recorded = await commands().recordScreening(responsible, id, { ...NO, S01: true });
+    if (!recorded.ok) throw new Error(recorded.error.code);
+    const notReviewer = await commands().reviewScreening(reader, id, recorded.value.id, review);
+    expect(isErr(notReviewer) && notReviewer.error.code).toBe(WRITE_ACCESS_REQUIRED.code);
+    expect(records.screeningRows[0]?.review).toBeNull();
+  });
+
+  it('la revisión queda con quién y cuándo, una sola vez, y solo en rojo o ámbar', async () => {
+    const id = await registered();
+    await consented(id);
+    const red = await commands().recordScreening(responsible, id, { ...NO, S01: true });
+    const green = await commands().recordScreening(responsible, id, NO);
+    if (!red.ok || !green.ok) throw new Error('cribado');
+
+    const reviewed = await commands().reviewScreening(responsible, id, red.value.id, review);
+    expect(isOk(reviewed)).toBe(true);
+    expect(records.screeningRows.find((row) => row.id === red.value.id)?.review).toMatchObject({
+      ...review,
+      reviewedBy: RESPONSIBLE,
+    });
+
+    const again = await commands().reviewScreening(responsible, id, red.value.id, review);
+    expect(isErr(again) && again.error).toMatchObject({ code: 'NC-CLI-030', rule: 'RN-F15' });
+    const noNeed = await commands().reviewScreening(responsible, id, green.value.id, review);
+    expect(isErr(noNeed) && noNeed.error.code).toBe('NC-CLI-030');
+    const missing = await commands().reviewScreening(responsible, id, 'no-existe', review);
+    expect(isErr(missing) && missing.error.code).toBe('NC-CLI-029');
+  });
+
+  it('sin miembro no hay quién revise, y si otro revisó antes gana el primero', async () => {
+    const id = await registered();
+    await consented(id);
+    const red = await commands().recordScreening(responsible, id, { ...NO, S01: true });
+    if (!red.ok) throw new Error(red.error.code);
+
+    const noMember = await commands().reviewScreening(
+      { ...responsible, memberId: null },
+      id,
+      red.value.id,
+      review,
+    );
+    expect(isErr(noMember) && noMember.error.code).toBe(WRITE_ACCESS_REQUIRED.code);
+
+    records.reviewScreening = () => Promise.resolve(false);
+    const lost = await commands().reviewScreening(responsible, id, red.value.id, review);
+    expect(isErr(lost) && lost.error.code).toBe('NC-CLI-030');
+  });
+
+  it('se lee del más reciente al más antiguo, con su READ; sin ver al paciente, nada', async () => {
+    const id = await registered();
+    await consented(id);
+    await commands().recordScreening(responsible, id, { ...NO, S01: true });
+    await commands().recordScreening(responsible, id, NO);
+    audit.entries.length = 0;
+
+    const listed = await queries().screenings(responsible, id);
+
+    expect(listed?.map((row) => row.status)).toEqual(['GREEN', 'RED']);
+    expect(audit.entries).toMatchObject([
+      { action: 'READ', resourceType: 'clinical.pre_exercise_screening', patientId: id },
+    ]);
+    expect(await queries().screenings(responsible, 'no-existe')).toBeNull();
+    expect(audit.entries).toHaveLength(1);
+  });
+
+  it('ClinicalApi entrega el más reciente sin sus respuestas', async () => {
+    const id = await registered();
+    await consented(id);
+    expect(await api().latestScreening(id)).toBeNull();
+
+    const red = await commands().recordScreening(responsible, id, { ...NO, S01: true });
+    if (!red.ok) throw new Error(red.error.code);
+    await commands().reviewScreening(responsible, id, red.value.id, review);
+
+    const latest = await api().latestScreening(id);
+    expect(latest).toMatchObject({ id: red.value.id, status: 'RED', reviewDecision: 'START' });
+    expect(latest).not.toHaveProperty('answers');
+
+    await commands().recordScreening(responsible, id, NO);
+    expect(await api().latestScreening(id)).toMatchObject({
+      status: 'GREEN',
+      reviewDecision: null,
+    });
+  });
+
+  it('07 §4: la evidencia exige el consentimiento de imágenes vigente', async () => {
+    const id = await registered();
+    await consented(id);
+
+    const without = await api().ensureImagesConsent(id);
+    expect(isErr(without) && without.error).toMatchObject({ code: 'NC-CLI-031', rule: 'RN-B01' });
+
+    await consents.insert({
+      id: 'consentimiento-de-imagenes',
+      organizationId: ORG,
+      patientId: id,
+      purpose: 'IMAGES',
+      consentDocumentId: HEALTH_DATA,
+      grantedAt: clock.now(),
+      channel: 'IN_PERSON_DIGITAL',
+      evidenceFileId: null,
+      grantedBy: null,
+      ip: null,
+      userAgent: null,
+    } as unknown as Parameters<MemoryConsents['insert']>[0]);
+
+    expect(isOk(await api().ensureImagesConsent(id))).toBe(true);
+    await expect(api().lockPatient(id)).resolves.toBeUndefined();
   });
 });

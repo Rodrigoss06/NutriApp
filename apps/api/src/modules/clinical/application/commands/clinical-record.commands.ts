@@ -1,4 +1,5 @@
 import { Inject, Injectable } from '@nestjs/common';
+import { SAFETY_RULE_VERSION, SCREENING_FORM_VERSION, screeningStatus } from '@nutricoach/engine';
 import {
   CLOCK,
   err,
@@ -25,12 +26,15 @@ import {
   NOTE_NOT_FOUND,
   PATIENT_ARCHIVED,
   PATIENT_NOT_FOUND,
+  SCREENING_NOT_FOUND,
+  SCREENING_NOT_REVIEWABLE,
   WRITE_ACCESS_REQUIRED,
   type ConditionKind,
   type ConditionStatus,
   type GoalKind,
   type GoalStatus,
   type NoteVisibility,
+  type ScreeningDecision,
 } from '../../domain/clinical-rules.js';
 import { clinicalEvent, type ClinicalEventType } from '../clinical-events.js';
 import { computePerformanceProfile } from '../performance-profile.js';
@@ -254,6 +258,68 @@ export class ClinicalRecordCommands {
         amends: input.amendsNoteId ?? null,
       });
       return ok({ id });
+    });
+  }
+
+  /**
+   * Un cribado respondido (RN-F15, 07 §3.2): el estado lo decide el motor, con su versión, y queda el historial. No es un
+   * diagnóstico. Por ahora lo registra el equipo; responderlo desde la app llega en P13.
+   */
+  recordScreening(
+    context: SecurityContext,
+    patientId: string,
+    answers: Readonly<
+      Record<'S01' | 'S02' | 'S03' | 'S04' | 'S05' | 'S06' | 'S07' | 'S08', boolean>
+    > &
+      Readonly<{ S09?: string | undefined }>,
+  ): Promise<Result<{ id: string }, DomainError>> {
+    const actor = actorOf(context);
+    return this.uow.run(context, async () => {
+      const patient = await this.#writable(context, patientId);
+      if (!patient.ok) return patient;
+      const id = this.ids.newId<'ScreeningId'>();
+      await this.records.insertScreening({
+        id,
+        organizationId: actor.organizationId,
+        patientId,
+        formVersion: SCREENING_FORM_VERSION,
+        ruleVersion: SAFETY_RULE_VERSION,
+        answers: { ...answers },
+        status: screeningStatus(answers),
+        answeredBy: actor.userId,
+        answeredAt: this.clock.now(),
+        review: null,
+      });
+      await this.#emit(context, 'clinical.screening.recorded', patientId, id, {});
+      return ok({ id });
+    });
+  }
+
+  /** La decisión del coach sobre un cribado en rojo o ámbar: iniciar, limitar o derivar, con autor, fecha y nota (RN-F15). */
+  reviewScreening(
+    context: SecurityContext,
+    patientId: string,
+    screeningId: string,
+    input: { readonly decision: ScreeningDecision; readonly note: string },
+  ): Promise<Result<void, DomainError>> {
+    const actor = actorOf(context);
+    return this.uow.run(context, async () => {
+      const patient = await this.#writable(context, patientId);
+      if (!patient.ok) return patient;
+      if (!actor.memberId) return err(WRITE_ACCESS_REQUIRED);
+      const screening = (await this.records.screenings(patientId)).find(
+        (s) => s.id === screeningId,
+      );
+      if (!screening) return err(SCREENING_NOT_FOUND);
+      if (screening.status === 'GREEN' || screening.review) return err(SCREENING_NOT_REVIEWABLE);
+      const reviewed = await this.records.reviewScreening(screeningId, {
+        ...input,
+        reviewedBy: actor.memberId,
+        reviewedAt: this.clock.now(),
+      });
+      if (!reviewed) return err(SCREENING_NOT_REVIEWABLE);
+      await this.#emit(context, 'clinical.screening.reviewed', patientId, screeningId, {});
+      return ok(undefined);
     });
   }
 
