@@ -164,6 +164,18 @@ export const AUDITED_EVENTS: Readonly<Record<string, AuditMapping>> = {
     fields: (p) => (typeof p.purpose === 'string' ? [p.purpose] : []),
   },
   'training.profile.revised': { action: 'CREATE', resourceType: 'training.athlete_profile' },
+  'training.program.created': { action: 'CREATE', resourceType: 'training.program' },
+  'training.program.updated': {
+    action: 'UPDATE',
+    resourceType: 'training.program',
+    fields: (p) => namesOf(p.fields),
+  },
+  'training.program.published': { action: 'PUBLISH', resourceType: 'training.program' },
+  'training.program.superseded': {
+    action: 'UPDATE',
+    resourceType: 'training.program',
+    fields: () => ['status'],
+  },
   'nutrition.prescription.created': {
     action: 'CREATE',
     resourceType: 'nutrition.energy_prescription',

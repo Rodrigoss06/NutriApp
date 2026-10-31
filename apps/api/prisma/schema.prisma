@@ -1785,22 +1785,30 @@ model Mesocycle {
   trainingProgram TrainingProgram @relation(fields: [programId], references: [id], onDelete: Cascade, onUpdate: NoAction)
   programWeeks    ProgramWeek[]
 
+  @@index([programId, position], map: "mesocycle_of_program")
   @@map("mesocycle")
   @@schema("training")
 }
 
 /// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
 model PrescribedExercise {
-  id              String          @id @db.Uuid
-  sessionId       String          @map("session_id") @db.Uuid
-  organizationId  String          @map("organization_id") @db.Uuid
-  exerciseId      String          @map("exercise_id") @db.Uuid
-  position        Int             @db.SmallInt
-  supersetGroup   String?         @map("superset_group")
-  notes           String?
-  trainingSession TrainingSession @relation(fields: [sessionId], references: [id], onDelete: Cascade, onUpdate: NoAction)
-  prescribedSets  PrescribedSet[]
+  id                                                                String           @id @db.Uuid
+  sessionId                                                         String           @map("session_id") @db.Uuid
+  organizationId                                                    String           @map("organization_id") @db.Uuid
+  exerciseId                                                        String           @map("exercise_id") @db.Uuid
+  position                                                          Int              @db.SmallInt
+  supersetGroup                                                     String?          @map("superset_group")
+  notes                                                             String?
+  movementPattern                                                   String?          @map("movement_pattern")
+  suggestedExerciseId                                               String?          @map("suggested_exercise_id") @db.Uuid
+  substitutionNote                                                  String?          @map("substitution_note")
+  approvedBy                                                        String?          @map("approved_by") @db.Uuid
+  approvedAt                                                        DateTime?        @map("approved_at") @db.Timestamptz(6)
+  movementPatternPrescribedExerciseMovementPatternTomovementPattern MovementPattern? @relation("prescribed_exercise_movement_patternTomovement_pattern", fields: [movementPattern], references: [code], onDelete: NoAction, onUpdate: NoAction)
+  trainingSession                                                   TrainingSession  @relation(fields: [sessionId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  prescribedSets                                                    PrescribedSet[]
 
+  @@index([sessionId, position], map: "prescribed_exercise_of_session")
   @@map("prescribed_exercise")
   @@schema("training")
 }
@@ -1832,29 +1840,40 @@ model PrescribedSet {
 /// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
 /// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
 model TrainingProgram {
-  id                    String      @id @db.Uuid
-  organizationId        String      @map("organization_id") @db.Uuid
-  patientId             String      @unique(map: "program_one_published", where: raw("(status = 'PUBLISHED'::text)")) @map("patient_id") @db.Uuid
-  lineageId             String      @map("lineage_id") @db.Uuid
-  versionNo             Int         @map("version_no")
-  name                  String
-  goal                  String?
-  status                String      @default("DRAFT")
-  startDate             DateTime?   @map("start_date") @db.Date
-  endDate               DateTime?   @map("end_date") @db.Date
-  oneRmFormula          String      @default("ONERM_EPLEY1985") @map("one_rm_formula")
-  publishedAt           DateTime?   @map("published_at") @db.Timestamptz(6)
-  publishedBy           String?     @map("published_by") @db.Uuid
-  snapshot              Json?
-  snapshotSchemaVersion Int?        @map("snapshot_schema_version") @db.SmallInt
-  snapshotHash          Bytes?      @map("snapshot_hash")
-  createdBy             String      @map("created_by") @db.Uuid
-  createdAt             DateTime    @default(now()) @map("created_at") @db.Timestamptz(6)
-  updatedAt             DateTime    @default(now()) @map("updated_at") @db.Timestamptz(6)
-  version               Int         @default(0)
-  mesocycles            Mesocycle[]
+  id                     String          @id @db.Uuid
+  organizationId         String          @map("organization_id") @db.Uuid
+  patientId              String          @unique(map: "program_one_published", where: raw("(status = 'PUBLISHED'::text)")) @map("patient_id") @db.Uuid
+  lineageId              String          @unique(map: "program_one_draft", where: raw("(status = 'DRAFT'::text)")) @map("lineage_id") @db.Uuid
+  versionNo              Int             @map("version_no")
+  name                   String
+  goal                   String?
+  status                 String          @default("DRAFT")
+  startDate              DateTime?       @map("start_date") @db.Date
+  endDate                DateTime?       @map("end_date") @db.Date
+  oneRmFormula           String          @default("ONERM_EPLEY1985") @map("one_rm_formula")
+  publishedAt            DateTime?       @map("published_at") @db.Timestamptz(6)
+  publishedBy            String?         @map("published_by") @db.Uuid
+  snapshot               Json?
+  snapshotSchemaVersion  Int?            @map("snapshot_schema_version") @db.SmallInt
+  snapshotHash           Bytes?          @map("snapshot_hash")
+  createdBy              String          @map("created_by") @db.Uuid
+  createdAt              DateTime        @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt              DateTime        @default(now()) @map("updated_at") @db.Timestamptz(6)
+  version                Int             @default(0)
+  objective              String?
+  level                  String?
+  daysPerWeek            Int?            @map("days_per_week") @db.SmallInt
+  split                  String?
+  macrocycleWeeks        Int?            @map("macrocycle_weeks") @db.SmallInt
+  periodizationValidFrom DateTime?       @map("periodization_valid_from") @db.Date
+  templateVersion        String?         @map("template_version")
+  athleteProfileId       String?         @map("athlete_profile_id") @db.Uuid
+  origin                 String          @default("MANUAL")
+  mesocycles             Mesocycle[]
+  athleteProfile         AthleteProfile? @relation(fields: [athleteProfileId], references: [id], onDelete: NoAction, onUpdate: NoAction)
 
   @@unique([lineageId, versionNo])
+  @@index([organizationId, patientId, createdAt(sort: Desc)], map: "program_by_patient")
   @@map("program")
   @@schema("training")
 }
@@ -1866,6 +1885,12 @@ model ProgramWeek {
   organizationId   String            @map("organization_id") @db.Uuid
   weekNo           Int               @map("week_no") @db.SmallInt
   isDeload         Boolean           @default(false) @map("is_deload")
+  phaseEs          String?           @map("phase_es")
+  phaseGoalEs      String?           @map("phase_goal_es")
+  volumeFactor     Decimal?          @map("volume_factor") @db.Decimal(4, 2)
+  intensity        String?
+  targetRir        Int?              @map("target_rir") @db.SmallInt
+  reviewKind       String?           @map("review_kind")
   mesocycle        Mesocycle         @relation(fields: [mesocycleId], references: [id], onDelete: Cascade, onUpdate: NoAction)
   trainingSessions TrainingSession[]
 
@@ -1887,6 +1912,7 @@ model TrainingSession {
   prescribedExercises PrescribedExercise[]
   programWeek         ProgramWeek          @relation(fields: [weekId], references: [id], onDelete: Cascade, onUpdate: NoAction)
 
+  @@index([weekId, position], map: "session_of_week")
   @@map("session")
   @@schema("training")
 }
@@ -1925,11 +1951,12 @@ model CookingFactor {
 
 /// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
 model MovementPattern {
-  code           String          @id
-  nameEs         String          @map("name_es")
-  displayOrder   Int             @map("display_order") @db.SmallInt
-  exercises      Exercise[]      @relation("exercise_movement_patternTomovement_pattern")
-  patternChoices PatternChoice[] @relation("pattern_choice_movement_patternTomovement_pattern")
+  code                                                                 String               @id
+  nameEs                                                               String               @map("name_es")
+  displayOrder                                                         Int                  @map("display_order") @db.SmallInt
+  exercises                                                            Exercise[]           @relation("exercise_movement_patternTomovement_pattern")
+  patternChoices                                                       PatternChoice[]      @relation("pattern_choice_movement_patternTomovement_pattern")
+  prescribedExercisePrescribedExerciseMovementPatternTomovementPattern PrescribedExercise[] @relation("prescribed_exercise_movement_patternTomovement_pattern")
 
   @@map("movement_pattern")
   @@schema("exercise")
@@ -2092,31 +2119,53 @@ model PreExerciseScreening {
 /// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
 /// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
 model AthleteProfile {
-  id                   String    @id @db.Uuid
-  organizationId       String    @map("organization_id") @db.Uuid
-  patientId            String    @map("patient_id") @db.Uuid
+  id                   String            @id @db.Uuid
+  organizationId       String            @map("organization_id") @db.Uuid
+  patientId            String            @map("patient_id") @db.Uuid
   revision             Int
   objective            String
   level                String
-  daysPerWeek          Int       @map("days_per_week") @db.SmallInt
-  minutesPerSession    Int?      @map("minutes_per_session") @db.SmallInt
-  equipmentCodes       String[]  @default([]) @map("equipment_codes")
-  startDate            DateTime? @map("start_date") @db.Date
-  macrocycleWeeks      Int       @default(12) @map("macrocycle_weeks") @db.SmallInt
-  medicalClearance     String    @default("PENDING") @map("medical_clearance")
-  alarmSymptoms        Boolean   @default(false) @map("alarm_symptoms")
-  injuriesNote         String?   @map("injuries_note")
-  restrictionsNote     String?   @map("restrictions_note")
-  baselineWeightKg     Decimal?  @map("baseline_weight_kg") @db.Decimal(5, 2)
-  baselineRestingHrBpm Int?      @map("baseline_resting_hr_bpm") @db.SmallInt
-  baselineHrvMs        Decimal?  @map("baseline_hrv_ms") @db.Decimal(5, 1)
-  sleepTargetHours     Decimal   @default(8) @map("sleep_target_hours") @db.Decimal(3, 1)
-  testTargets          Json      @default("{}") @map("test_targets")
+  daysPerWeek          Int               @map("days_per_week") @db.SmallInt
+  minutesPerSession    Int?              @map("minutes_per_session") @db.SmallInt
+  equipmentCodes       String[]          @default([]) @map("equipment_codes")
+  startDate            DateTime?         @map("start_date") @db.Date
+  macrocycleWeeks      Int               @default(12) @map("macrocycle_weeks") @db.SmallInt
+  medicalClearance     String            @default("PENDING") @map("medical_clearance")
+  alarmSymptoms        Boolean           @default(false) @map("alarm_symptoms")
+  injuriesNote         String?           @map("injuries_note")
+  restrictionsNote     String?           @map("restrictions_note")
+  baselineWeightKg     Decimal?          @map("baseline_weight_kg") @db.Decimal(5, 2)
+  baselineRestingHrBpm Int?              @map("baseline_resting_hr_bpm") @db.SmallInt
+  baselineHrvMs        Decimal?          @map("baseline_hrv_ms") @db.Decimal(5, 1)
+  sleepTargetHours     Decimal           @default(8) @map("sleep_target_hours") @db.Decimal(3, 1)
+  testTargets          Json              @default("{}") @map("test_targets")
   notes                String?
-  recordedBy           String    @map("recorded_by") @db.Uuid
-  recordedAt           DateTime  @default(now()) @map("recorded_at") @db.Timestamptz(6)
+  recordedBy           String            @map("recorded_by") @db.Uuid
+  recordedAt           DateTime          @default(now()) @map("recorded_at") @db.Timestamptz(6)
+  trainingPrograms     TrainingProgram[]
 
   @@unique([patientId, revision])
   @@map("athlete_profile")
+  @@schema("training")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model PeriodizationPhase {
+  id             String   @id @db.Uuid
+  organizationId String?  @map("organization_id") @db.Uuid
+  objective      String
+  validFrom      DateTime @map("valid_from") @db.Date
+  weekNo         Int      @map("week_no") @db.SmallInt
+  phaseEs        String   @map("phase_es")
+  phaseGoalEs    String   @map("phase_goal_es")
+  volumeFactor   Decimal  @map("volume_factor") @db.Decimal(4, 2)
+  intensity      String
+  targetRir      Int      @map("target_rir") @db.SmallInt
+  isDeload       Boolean  @default(false) @map("is_deload")
+  reviewKind     String   @map("review_kind")
+
+  @@unique([organizationId, objective, validFrom, weekNo])
+  @@map("periodization_phase")
   @@schema("training")
 }

@@ -11,14 +11,14 @@ veces deja el segundo lote como DUPLICATE sin tocar nada. Corre en todo entorno,
 no corre; antes hay que compilar la API (`pnpm --filter api build`). Un archivo suelto se importa con
 `pnpm catalog:import <TIPO> <archivo> <correo>`.
 
-| Archivo | Tipo | Filas | SHA-256 del CSV |
-|---|---|---|---|
-| food/tpca-2017.csv | TPCA_FOODS | 928 | 2c70ad57f15091b944adb7b1ea8ccf10bdc2adecbde3fdf52177b3a663d384b6 |
-| food/tafera-2016-medidas.csv | TAFERA_MEASURES | 933 | cfe7781b411c68e8510f85a53b25a64b7d3a12b0ad26db8aa9df7e0572bdeb35 |
-| food/tafera-2016-factores.csv | TAFERA_COOKING_FACTORS | 213 | a8b0967c7892e737a588fedd6e10934812eeb34f8cdac7f9a9d3fa526ff16e71 |
-| exercise/compendium-2024.csv | COMPENDIUM_ACTIVITIES | 560 | bc7fdf041739c180b1934e0d6c39f414889246b3da57fea44ee47486c5fca6b5 |
-| exercise/ejercicios-base.csv | EXERCISE_LIBRARY | 169 | 8b98317a527e0e2a3cd5b4abce53e1d16c7e40150bc445ab09c4253a0de00f11 |
-| exercise/pattern-choice-v3.csv | EXERCISE_PATTERN_CHOICES | 45 | d2d6dfdbce753cd04c15b1debdf0ae95b28540ad054077b5ce194e8def262d80 |
+| Archivo                        | Tipo                     | Filas | SHA-256 del CSV                                                  |
+| ------------------------------ | ------------------------ | ----- | ---------------------------------------------------------------- |
+| food/tpca-2017.csv             | TPCA_FOODS               | 928   | 2c70ad57f15091b944adb7b1ea8ccf10bdc2adecbde3fdf52177b3a663d384b6 |
+| food/tafera-2016-medidas.csv   | TAFERA_MEASURES          | 933   | cfe7781b411c68e8510f85a53b25a64b7d3a12b0ad26db8aa9df7e0572bdeb35 |
+| food/tafera-2016-factores.csv  | TAFERA_COOKING_FACTORS   | 213   | a8b0967c7892e737a588fedd6e10934812eeb34f8cdac7f9a9d3fa526ff16e71 |
+| exercise/compendium-2024.csv   | COMPENDIUM_ACTIVITIES    | 560   | bc7fdf041739c180b1934e0d6c39f414889246b3da57fea44ee47486c5fca6b5 |
+| exercise/ejercicios-base.csv   | EXERCISE_LIBRARY         | 169   | 8b98317a527e0e2a3cd5b4abce53e1d16c7e40150bc445ab09c4253a0de00f11 |
+| exercise/pattern-choice-v3.csv | EXERCISE_PATTERN_CHOICES | 45    | d2d6dfdbce753cd04c15b1debdf0ae95b28540ad054077b5ce194e8def262d80 |
 
 Un CSV nuevo cambia su hash: se carga como un lote nuevo y actualiza por código lo que cambió (ADR-052).
 
@@ -116,7 +116,7 @@ con MET distintos.
   la descripción en español es una traducción propia, guiada por la traducción oficial de la edición 2011
   (SHA-256 270d82273462fba3669a48c73c39bdd050e2573d6552ca2d696e78d757ac01a5), que no sirve tal cual: el 2024 cambió
   descripciones, MET y algunos códigos.
-- Convenciones de la traducción: *vigorous* es «vigoroso»; las mph llevan sus km/h entre paréntesis
+- Convenciones de la traducción: _vigorous_ es «vigoroso»; las mph llevan sus km/h entre paréntesis
   (× 1.609344, a un decimal), los min/milla sus min/km, las lb sus kg, las pulgadas sus cm y las yardas por minuto sus
   m/min; punto decimal, como el resto de la aplicación, y raya en los rangos. Los códigos Taylor se conservan.
 - El MET de 18290 viene con dos decimales («8.00»): queda 8.0, el mismo valor.
@@ -166,7 +166,8 @@ Plantilla de periodización V3 de JV Fitness, paquete operativo del 2026-10-15 (
   queda como alias. Se carga con catalog:load después de los ejercicios; cada organización puede reemplazar una fila.
 - **Fases** (RN-F13, 07 §7): 12 semanas por cada uno de los 4 objetivos, 48 filas. `validFrom` es la fecha de corte del
   paquete y es la versión de la tabla que guarda cada programa. `isDeload` son las semanas «Descarga» y `reviewKind` es
-  CONTROL en las semanas 4, 8 y 12, como la hoja MACROCICLO.
+  CONTROL en las semanas 4, 8 y 12, como la hoja MACROCICLO. Entran con la migración `202610310200_training_program`, no con
+  catalog:load, y una prueba de integración comprueba que coinciden con este archivo.
 
 Los leen los casos dorados G-29, G-30 y G-32, y la comparación de la propuesta con la hoja PRESCRIPCION.
 

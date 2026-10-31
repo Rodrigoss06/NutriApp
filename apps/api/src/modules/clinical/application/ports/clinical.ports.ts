@@ -250,7 +250,8 @@ export type TimelineKind =
   /** Prescripción energética; la aporta nutrition. */
   | 'ENERGY_PRESCRIBED'
   /** Plan nutricional publicado; lo aporta nutrition. */
-  | 'NUTRITION_PLAN_PUBLISHED';
+  | 'NUTRITION_PLAN_PUBLISHED'
+  | 'TRAINING_PROGRAM_PUBLISHED';
 
 export interface TimelineRecord {
   readonly kind: TimelineKind;
