@@ -258,7 +258,10 @@ export class PrismaExerciseStore implements ExerciseStore {
     return count === 1;
   }
 
-  /** Por cada patrón y nivel, la fila de la organización si puso una; la RLS ya deja fuera las de otras. */
+  /**
+   * Por cada patrón y nivel, la fila de la organización si puso una; la RLS ya deja fuera las de otras. Una fila cuyo
+   * ejercicio se archivó o cambió de patrón no cuenta: queda la de la V3 hasta que vuelva a servir (RN-F14).
+   */
   async patternChoices(): Promise<readonly PatternChoiceRecord[]> {
     const rows = await this.db.tx.$queryRaw<
       {
@@ -275,7 +278,7 @@ export class PrismaExerciseStore implements ExerciseStore {
              c.organization_id IS NOT NULL AS own, e.provisional
       FROM exercise.pattern_choice c
       JOIN exercise.exercise e ON e.id = c.exercise_id
-      JOIN exercise.movement_pattern p ON p.code = c.movement_pattern
+      WHERE e.status = 'ACTIVE' AND e.movement_pattern = c.movement_pattern
       ORDER BY c.movement_pattern, c.level, c.organization_id NULLS LAST`;
     return rows.map((row) => ({
       pattern: row.movement_pattern,

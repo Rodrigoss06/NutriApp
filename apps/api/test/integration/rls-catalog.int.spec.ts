@@ -125,6 +125,31 @@ describe('RNF-12 · RN-A01 · el catálogo de PostgreSQL prueba el aislamiento',
     expect(missing).toEqual([]);
   });
 
+  it('05 §3 · el paciente no borra lo que puede leer: DELETE no pasa por el WITH CHECK de patient_scope', async () => {
+    const exposed = await rows<{ name: string }>(
+      `SELECT format('%I.%I', n.nspname, c.relname) AS name
+       FROM pg_class c
+       JOIN pg_namespace n ON n.oid = c.relnamespace
+       LEFT JOIN pg_policies s ON s.schemaname = n.nspname AND s.tablename = c.relname
+                              AND s.policyname = 'patient_scope'
+       WHERE c.relkind IN ('r', 'p') AND NOT c.relispartition AND n.nspname = ANY ($1)
+         AND has_table_privilege('app_user', c.oid, 'DELETE')
+         AND s.qual IS DISTINCT FROM $2
+         AND NOT EXISTS (SELECT 1 FROM pg_policies d
+                         WHERE d.schemaname = n.nspname AND d.tablename = c.relname
+                           AND d.policyname = 'patient_no_delete'
+                           AND d.permissive = 'RESTRICTIVE' AND d.cmd = 'DELETE')
+       ORDER BY 1`,
+      [BUSINESS_SCHEMAS, `((app.role() IS DISTINCT FROM 'PATIENT'::text) OR false)`],
+    );
+
+    // Estas dos no llevan patient_scope, y solo SYSTEM tiene política de borrado.
+    expect(exposed.map((t) => t.name)).toEqual([
+      'platform.idempotency_key',
+      'platform.processed_event',
+    ]);
+  });
+
   it('toda función SECURITY DEFINER fija su search_path', async () => {
     const unsafe = await rows<{ name: string }>(
       `SELECT p.oid::regprocedure::text AS name

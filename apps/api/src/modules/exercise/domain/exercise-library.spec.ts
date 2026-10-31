@@ -122,6 +122,9 @@ describe('RF-38 · una fila del CSV de ejercicios base', () => {
     [{ reps_min: 'diez' }, 'reps_min'],
     [{ reps_min: '12', reps_max: '10' }, 'reps_min'],
     [{ descanso_s: '601' }, 'descanso_s'],
+    // Un dato que falta no es cero, aunque 0 s de descanso sea un valor válido.
+    [{ descanso_s: '' }, 'descanso_s'],
+    [{ descanso_s: ' ' }, 'descanso_s'],
   ])('rechaza %j nombrando la columna', (record, column) => {
     expect(messagesOf(record).join(' ')).toContain(`${column}:`);
   });

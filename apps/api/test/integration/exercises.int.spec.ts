@@ -222,6 +222,11 @@ describe('RF-25 · búsqueda', () => {
   it('valida los filtros: 400 con un patrón que no existe', async () => {
     expect((await harness.get('/exercises?pattern=PUSH', cookie)).status).toBe(400);
   });
+
+  it('06 §5 · devuelve 100 como máximo', async () => {
+    expect((await harness.get('/exercises?limit=100', cookie)).status).toBe(200);
+    expect((await harness.get('/exercises?limit=101', cookie)).status).toBe(400);
+  });
 });
 
 describe('RN-I01 · ejercicios propios de la organización', () => {
@@ -384,6 +389,9 @@ describe('RN-I01 · ejercicios propios de la organización', () => {
 });
 
 describe('RN-F14 · 07 §5 · la tabla patrón × nivel', () => {
+  /** La tabla es de toda la organización: la cambian el dueño y el administrador. */
+  const manager = () => org.staff.owner.cookie;
+
   it('G-32: la de la V3, con 45 filas, en cada organización', async () => {
     const rows = await choices();
 
@@ -400,7 +408,7 @@ describe('RN-F14 · 07 §5 · la tabla patrón × nivel', () => {
     const set = await harness.put(
       '/exercise-pattern-choices/SQUAT/BEGINNER',
       { exerciseId: box },
-      cookie,
+      manager(),
     );
     expect(set.status).toBe(200);
     expect(choice(await choices(), 'SQUAT', 'BEGINNER')).toMatchObject({
@@ -411,7 +419,7 @@ describe('RN-F14 · 07 §5 · la tabla patrón × nivel', () => {
       choice(await choices(other.staff.responsible.cookie), 'SQUAT', 'BEGINNER'),
     ).toMatchObject({ own: false, exercise: { name: 'Sentadilla goblet' } });
 
-    const cleared = await harness.delete('/exercise-pattern-choices/SQUAT/BEGINNER', cookie);
+    const cleared = await harness.delete('/exercise-pattern-choices/SQUAT/BEGINNER', manager());
     expect(cleared.status).toBe(200);
     expect(choice(await choices(), 'SQUAT', 'BEGINNER')).toMatchObject({
       own: false,
@@ -419,15 +427,28 @@ describe('RN-F14 · 07 §5 · la tabla patrón × nivel', () => {
     });
   });
 
+  it('la cambian el dueño y el administrador; un profesional la lee y recibe 403', async () => {
+    const path = '/exercise-pattern-choices/SQUAT/ADVANCED';
+    const body = { exerciseId: await byCode('SQ01') };
+    const professional = org.staff.responsible.cookie;
+
+    expect((await harness.get('/exercise-pattern-choices', professional)).status).toBe(200);
+    expect((await harness.put(path, body, professional)).status).toBe(403);
+    expect((await harness.delete(path, professional)).status).toBe(403);
+
+    expect((await harness.put(path, body, org.staff.admin.cookie)).status).toBe(200);
+    expect((await harness.delete(path, org.staff.admin.cookie)).status).toBe(200);
+  });
+
   it('solo admite un ejercicio de ese patrón: 422 con RN-F14', async () => {
     const response = await harness.put(
       '/exercise-pattern-choices/SQUAT/BEGINNER',
       { exerciseId: await byCode('HG01') },
-      cookie,
+      manager(),
     );
 
     expect(response.status).toBe(422);
-    expect(response.body).toMatchObject({ code: 'NC-EXE-006', rule: 'RN-F14' });
+    expect(response.body).toMatchObject({ code: 'NC-EXE-005', rule: 'RN-F14' });
   });
 
   it('un ejercicio propio puede ser la sugerencia de su organización', async () => {
@@ -448,17 +469,70 @@ describe('RN-F14 · 07 §5 · la tabla patrón × nivel', () => {
     await harness.put(
       '/exercise-pattern-choices/HORIZONTAL_PULL/ADVANCED',
       { exerciseId: own.id },
-      cookie,
+      manager(),
     );
 
     expect(choice(await choices(), 'HORIZONTAL_PULL', 'ADVANCED')?.exercise.id).toBe(own.id);
+  });
+
+  it('si su ejercicio propio se archiva o cambia de patrón, la fila vuelve sola a la de la V3', async () => {
+    const OWN = {
+      name: 'Jalón en anillas (prueba)',
+      pattern: 'VERTICAL_PULL',
+      level: 'ADVANCED',
+      modality: 'STRENGTH',
+      primaryMuscles: ['LATS'],
+    };
+    const own = (await harness.post('/exercises', OWN, cookie)).body as Detail;
+    const current = async () => choice(await choices(), 'VERTICAL_PULL', 'ADVANCED');
+    const v3 = await current();
+    expect(v3?.own).toBe(false);
+    await harness.put(
+      '/exercise-pattern-choices/VERTICAL_PULL/ADVANCED',
+      { exerciseId: own.id },
+      manager(),
+    );
+    expect((await current())?.exercise.id).toBe(own.id);
+
+    await harness.post(`/exercises/${own.id}/archive`, undefined, cookie).set('If-Match', '"0"');
+    expect(await current()).toEqual(v3);
+
+    // Su fila sigue guardada: al restaurar el ejercicio, vuelve a ser la sugerencia.
+    await harness.post(`/exercises/${own.id}/restore`, undefined, cookie).set('If-Match', '"1"');
+    expect((await current())?.exercise.id).toBe(own.id);
+
+    await harness
+      .put(`/exercises/${own.id}`, { ...OWN, pattern: 'HORIZONTAL_PULL' }, cookie)
+      .set('If-Match', '"2"');
+    expect(await current()).toEqual(v3);
+  });
+
+  it('cambiarla queda en la auditoría con el nombre del campo, nunca el valor (RN-B03)', async () => {
+    const fresh = await harness.createStaffOrganization();
+    const path = '/exercise-pattern-choices/SQUAT/BEGINNER';
+    await harness.put(path, { exerciseId: await byCode('SQ05') }, fresh.staff.owner.cookie);
+    await harness.delete(path, fresh.staff.owner.cookie);
+    // Ya no hay fila que quitar: nada cambió y no se audita.
+    await harness.delete(path, fresh.staff.owner.cookie);
+    await harness.deliver('audit.events');
+
+    const rows = await owner<{ action: string; fields: string[] | null }>(
+      `SELECT action, changed_fields AS fields FROM audit.audit_log
+       WHERE organization_id = $1 AND resource_type = 'exercise.pattern_choice'`,
+      [fresh.organizationId],
+    );
+
+    expect(rows).toEqual([
+      { action: 'UPDATE', fields: ['exercise_id'] },
+      { action: 'UPDATE', fields: ['exercise_id'] },
+    ]);
   });
 
   it('una ruta con un patrón o un nivel que no existe responde 400', async () => {
     const response = await harness.put(
       '/exercise-pattern-choices/PUSH/BEGINNER',
       { exerciseId: await byCode('SQ01') },
-      cookie,
+      manager(),
     );
 
     expect(response.status).toBe(400);

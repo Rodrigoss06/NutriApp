@@ -240,9 +240,9 @@ export class PatternChoiceController {
     };
   }
 
-  /** La organización reemplaza esa fila: solo cuenta para las propuestas siguientes. */
+  /** Vale para toda la organización, así que no basta con catalog.write. Solo cuenta para las propuestas siguientes. */
   @Put(':pattern/:level')
-  @RequirePermission('catalog.write')
+  @RequirePermission('organization.update')
   async set(
     @Req() request: ContextualRequest,
     @Param() params: unknown,
@@ -257,7 +257,7 @@ export class PatternChoiceController {
 
   /** Vuelve a la fila de la V3. */
   @Delete(':pattern/:level')
-  @RequirePermission('catalog.write')
+  @RequirePermission('organization.update')
   async clear(
     @Req() request: ContextualRequest,
     @Param() params: unknown,

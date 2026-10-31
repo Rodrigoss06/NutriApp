@@ -7,9 +7,8 @@ import { CliModule } from './cli.module.js';
 
 /**
  * Los catálogos globales de seeds/, en orden: la TAFERA enlaza alimentos de la TPCA y la tabla patrón × nivel, ejercicios
- * de la biblioteca (RF-38). Corren en todo entorno,
- * también en producción, donde db:seed no corre nunca: sin ellos no hay alimentos ni actividades. Cada archivo ya
- * aplicado queda como lote repetido.
+ * de la biblioteca (RF-38). Corren en todo entorno, también en producción, donde db:seed no corre nunca: sin ellos no hay
+ * alimentos, actividades ni ejercicios. Cada archivo ya aplicado queda como lote repetido.
  */
 const CATALOGS = [
   { kind: 'TPCA_FOODS', file: 'food/tpca-2017.csv' },

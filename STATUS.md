@@ -29,8 +29,9 @@ Leyenda: ⬜ pendiente · 🟨 en curso · ✅ terminado · ⛔ bloqueado
 
 ## En curso
 - P12, PR 2 de 7 (ADR-071): biblioteca de ejercicios. CSV de 169 ejercicios (23 de la V3 y 146 provisionales), tabla
-  patrón × nivel, ejercicios propios, búsqueda sin tildes y por alias, pantallas Ejercicios y Patrón y nivel. Faltan:
-  anamnesis, seguridad, programa (API y web) y ficha de rutina.
+  patrón × nivel, ejercicios propios, búsqueda sin tildes y por alias, pantallas Ejercicios y Patrón y nivel. La revisión
+  cerró un hueco de RLS: el paciente podía borrar en 6 tablas que puede leer (`patient_no_delete`). Faltan: anamnesis,
+  seguridad, programa (API y web) y ficha de rutina.
 - P12, PR 1 fusionado (#39, 7724d37) (ADR-070): en el motor, `PRI_JV`, las llaves de seguridad, la propuesta y el
   macrociclo, con G-29 a G-35 y G-40 en verde. Motor 1.4.0.
 - P11 terminado (#32 a #37), con la etiqueta v0.2.0 en e05f8de:
@@ -185,7 +186,9 @@ Leyenda: ⬜ pendiente · 🟨 en curso · ✅ terminado · ⛔ bloqueado
 
 ## Registro de sesiones (solo las 5 últimas)
 - 2026-10-30 · P12 (PR 2) · #39 fusionado. Biblioteca de ejercicios (ADR-071): CSV de 169 ejercicios redactados y
-  comparados con la hoja de la V3, importadores, ejercicios propios, tabla patrón × nivel por organización y pantallas
+  comparados con la hoja de la V3, importadores, ejercicios propios, tabla patrón × nivel por organización y pantallas.
+  Revisión: `patient_no_delete` en 6 tablas, la tabla la cambian el dueño y el administrador, y una fila sin ejercicio
+  válido vuelve a la de la V3
 - 2026-10-30 · P12 (PR 1) · Plan aprobado con las 6 decisiones de Rodrigo (ADR-070). #38 fusionado. Motor 1.4.0:
   `PRI_JV`, llaves de seguridad, propuesta y macrociclo, con G-29 a G-35 y G-40 en verde. Tablas de la V3 en seeds/
 - 2026-10-28 · P11 (arreglo y cierre) · #36 y #37 fusionados con los cuatro checks en verde. #37: ficha de resultados

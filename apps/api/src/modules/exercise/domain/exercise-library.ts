@@ -134,9 +134,10 @@ export function parseLibraryRow(
   const secondary = list(record.secundarios);
   if (secondary.includes(primary)) errors.push(`secundarios: ${primary} ya es el principal`);
   const whole = (column: string, min: number, max: number): number => {
-    const value = Number(record[column]);
-    if (!Number.isInteger(value) || value < min || value > max) {
-      errors.push(`${column}: «${record[column] ?? ''}» no es un entero de ${min} a ${max}`);
+    const text = (record[column] ?? '').trim();
+    const value = Number(text);
+    if (text === '' || !Number.isInteger(value) || value < min || value > max) {
+      errors.push(`${column}: «${text}» no es un entero de ${min} a ${max}`);
     }
     return value;
   };

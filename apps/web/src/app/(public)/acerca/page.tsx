@@ -38,6 +38,11 @@ export default function AboutPage() {
           Physical Activities (Herrmann SD, Willis EA, Ainsworth BE y otros, Journal of Sport and
           Health Science, 2024;13(1):6-12), con sus descripciones traducidas al español.
         </p>
+        <p className="text-pretty">
+          La biblioteca de ejercicios parte de la plantilla de entrenamiento V3 de JV Fitness, con
+          su tabla de ejercicios por patrón y nivel. Los demás ejercicios los redactó el equipo de
+          NutriCoach y aparecen como provisionales hasta que JV Fitness los revise.
+        </p>
         <p className="text-pretty text-muted-foreground">
           NutriCoach es un desarrollo independiente: ninguna entidad del Estado lo avala ni lo
           patrocina.

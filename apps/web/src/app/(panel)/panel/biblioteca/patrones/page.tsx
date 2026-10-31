@@ -14,7 +14,7 @@ export default async function PatternChoicesPage() {
   return (
     <Section
       title="Ejercicio sugerido por patrón y nivel"
-      description="La propuesta de rutina elige de aquí el ejercicio de cada bloque. Cambiar una fila solo cuenta para las propuestas siguientes."
+      description="La propuesta de rutina elige de aquí el ejercicio de cada bloque. La tabla vale para toda la organización: la cambian el dueño y los administradores, y cada cambio solo cuenta para las propuestas siguientes."
     >
       <PatternChoiceTable initial={response.data.choices} />
     </Section>

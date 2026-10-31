@@ -1,6 +1,12 @@
 import { expect, test, type Page } from '@playwright/test';
 import { seriousViolations } from './support/axe';
-import { createOrganization, loginInPage } from './support/stack';
+import {
+  acceptByApi,
+  createOrganization,
+  inviteByApi,
+  loginInPage,
+  uniqueEmail,
+} from './support/stack';
 
 /**
  * P12 (PR 2) de punta a punta (RF-25, RF-38, RN-I01, RN-F11, RN-F14) en escritorio y en el celular (WebKit): la biblioteca
@@ -151,5 +157,20 @@ test.describe('P12 · Biblioteca de ejercicios', () => {
       .click();
     await expect(squat).toContainText('Sentadilla goblet');
     await expect(squat).not.toContainText('De tu organización');
+  });
+
+  test('RN-F14: un profesional lee la tabla patrón × nivel, pero no se le ofrece cambiarla', async ({
+    page,
+  }) => {
+    const organization = await createOrganization();
+    const email = uniqueEmail();
+    await acceptByApi(await inviteByApi(organization.ownerEmail, email), 'Profesional E2E');
+    await loginInPage(page, email);
+
+    await page.goto('/panel/biblioteca/patrones');
+    await expect(page.getByRole('row', { name: /^Sentadilla / })).toContainText(
+      'Sentadilla goblet',
+    );
+    await expect(page.getByRole('button', { name: /^Cambiar / })).toHaveCount(0);
   });
 });

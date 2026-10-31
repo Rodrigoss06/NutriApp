@@ -15,7 +15,7 @@ import { Button, Select, StatusBadge } from '@nutricoach/ui';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { useState } from 'react';
 import { FormError } from '@/features/forms/form-error';
-import { useCanWrite } from '@/features/session/panel-session';
+import { useCan, useCanWrite } from '@/features/session/panel-session';
 import { TableScroll } from '@/features/shell/table-scroll';
 import { apiFetch } from '@/lib/api/client';
 
@@ -26,10 +26,12 @@ interface Cell {
 
 /**
  * El ejercicio que sugiere la propuesta por patrón y nivel (RN-F14, 07 §5). Parte de la tabla de la V3 y cada
- * organización reemplaza las filas que quiera: solo cuenta para las propuestas siguientes.
+ * organización reemplaza las filas que quiera: solo cuenta para las propuestas siguientes. Vale para toda la organización:
+ * la cambian el dueño y el administrador.
  */
 export function PatternChoiceTable({ initial }: { initial: readonly PatternChoice[] }) {
   const canWrite = useCanWrite();
+  const { manage } = useCan();
   const [choices, setChoices] = useState(initial);
   const [editing, setEditing] = useState<Cell | null>(null);
   const update = useMutation({
@@ -46,7 +48,7 @@ export function PatternChoiceTable({ initial }: { initial: readonly PatternChoic
   const options = useQuery({
     queryKey: ['exercises', 'pattern', editing?.pattern],
     queryFn: () =>
-      apiFetch<ExerciseListResponse>(`/exercises?pattern=${editing?.pattern ?? ''}&limit=200`),
+      apiFetch<ExerciseListResponse>(`/exercises?pattern=${editing?.pattern ?? ''}&limit=100`),
     enabled: editing !== null,
   });
   const choiceOf = (pattern: MovementPatternCode, level: TrainingLevelCode) =>
@@ -114,7 +116,7 @@ export function PatternChoiceTable({ initial }: { initial: readonly PatternChoic
                               Cancelar
                             </Button>
                           </div>
-                        ) : canWrite ? (
+                        ) : manage && canWrite ? (
                           <div className="flex flex-wrap gap-1">
                             <Button
                               size="sm"

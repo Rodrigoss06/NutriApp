@@ -21,7 +21,7 @@ export const EXERCISE_VERSION_CONFLICT = domainError({
 
 /** La tabla patrón × nivel solo admite un ejercicio activo de ese patrón (RN-F14, 07 §5). */
 export const CHOICE_EXERCISE_INVALID = domainError({
-  code: 'NC-EXE-006',
+  code: 'NC-EXE-005',
   rule: 'RN-F14',
   message: 'Elige un ejercicio activo de ese patrón de movimiento.',
 });

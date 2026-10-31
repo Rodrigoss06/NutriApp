@@ -56,7 +56,7 @@ export const exerciseSearchQuerySchema = z.object({
   equipment: z.string().trim().max(40).optional(),
   muscle: z.string().trim().max(40).optional(),
   status: z.enum(EXERCISE_STATUSES).default('ACTIVE'),
-  limit: z.coerce.number().int().min(1).max(200).default(50),
+  limit: z.coerce.number().int().min(1).max(100).default(50),
 });
 export type ExerciseSearchQuery = z.infer<typeof exerciseSearchQuerySchema>;
 

@@ -1378,13 +1378,22 @@ Decisión:
 - Búsqueda sin tildes también por los alias, con filtros por patrón, nivel, equipo y músculo. El catálogo es de unos cientos
   de filas, así que los alias no llevan índice.
 - Tabla patrón × nivel configurable por organización (07 §5): PUT y DELETE en /exercise-pattern-choices/:pattern/:level.
-  Solo admite un ejercicio activo de ese patrón (NC-EXE-006, RN-F14) y solo cuenta para las propuestas siguientes. Evento
-  exercise.choice.changed, auditado.
+  Vale para toda la organización, así que la cambian el dueño y el administrador (`organization.update`, como la marca);
+  un profesional la lee. Solo admite un ejercicio activo de ese patrón (NC-EXE-005, RN-F14) y solo cuenta para las
+  propuestas siguientes. Si después ese ejercicio propio se archiva o cambia de patrón, la fila no cuenta y queda la de la
+  V3; no se borra, y vuelve a contar si el ejercicio vuelve a servir. Evento exercise.choice.changed, auditado.
 - Pantallas: Biblioteca > Ejercicios (lista con filtros en la dirección, ficha, ejercicio propio) y Biblioteca > Patrón y
   nivel. ExercisePicker queda para las sustituciones del editor de programas.
+- El paciente no borra lo que puede leer (05 §3). `patient_scope` deja leer con USING y le prohíbe escribir con WITH CHECK,
+  pero DELETE solo evalúa USING. La revisión lo encontró en exercise_muscle (este PR) y en cinco tablas anteriores:
+  food.household_measure, food.recipe_ingredient y tres de analytics. Ninguna ruta del paciente borraba. Una migración
+  aparte agrega la política restrictiva `patient_no_delete` a las seis, y una prueba del catálogo falla si aparece otra.
 Consecuencias:
 - ExerciseApi entrega la biblioteca y la tabla: la usa training en el PR 5.
 - Las series de cardio cuentan «Cardiorrespiratorio» como grupo: P14 lo deja fuera del volumen por grupo muscular (RN-F06).
-- Para Notion (/notion-sync de P12): lo de arriba en 05.2; 02 §8 (eventos de exercise hacia audit) y §3 (ExerciseApi); 03
-  RN-I02 (los ejercicios base provisionales); los códigos NC-EXE-001 a NC-EXE-006.
+- «Acerca de» nombra a JV Fitness como fuente de la biblioteca (RN-I02) y dice que hay ejercicios provisionales: esa línea
+  también se revisa en P16.
+- Para Notion (/notion-sync de P12): lo de arriba en 05.2; 05 §3 (`patient_no_delete`); 02 §8 (eventos de exercise hacia
+  audit) y §3 (ExerciseApi); 03 RN-I02 (los ejercicios base provisionales) y RN-F14 (quién cambia la tabla, y que un
+  ejercicio que ya no sirve no cuenta); los códigos NC-EXE-001 a NC-EXE-005.
 
