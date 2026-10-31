@@ -8,6 +8,7 @@ import { Notice } from '@nutricoach/ui';
 import type { Metadata } from 'next';
 import { ConditionsSection } from '@/features/patients/conditions-section';
 import { GoalsSection } from '@/features/patients/goals-section';
+import { RecordWriteGate } from '@/features/patients/record-write-gate';
 import { NotesSection } from '@/features/patients/notes-section';
 import { Section } from '@/features/patients/section';
 import { getMembers, getPatient } from '@/features/patients/server';
@@ -34,6 +35,12 @@ export default async function RecordsPage({ params }: { params: Promise<{ patien
   const archived = patient.data.status === 'ARCHIVED';
   return (
     <div className="flex flex-col gap-8">
+      <RecordWriteGate
+        patientId={patientId}
+        careTeam={patient.data.careTeam}
+        members={members.data.members}
+        action="escribir en este expediente"
+      />
       <Section title="Condiciones">
         <ConditionsSection
           patientId={patientId}
@@ -45,12 +52,19 @@ export default async function RecordsPage({ params }: { params: Promise<{ patien
         />
       </Section>
       <Section title="Objetivos">
-        <GoalsSection patientId={patientId} goals={goals.data.goals} archived={archived} />
+        <GoalsSection
+          patientId={patientId}
+          goals={goals.data.goals}
+          careTeam={patient.data.careTeam}
+          members={members.data.members}
+          archived={archived}
+        />
       </Section>
       <Section title="Notas">
         <NotesSection
           patientId={patientId}
           notes={notes.data.notes}
+          careTeam={patient.data.careTeam}
           members={members.data.members}
           archived={archived}
         />

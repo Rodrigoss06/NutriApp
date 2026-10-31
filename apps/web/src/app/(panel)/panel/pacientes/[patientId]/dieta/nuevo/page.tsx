@@ -3,10 +3,12 @@ import { Button, EmptyState, Notice } from '@nutricoach/ui';
 import { Salad } from 'lucide-react';
 import type { Metadata } from 'next';
 import Link from 'next/link';
+import type { ReactNode } from 'react';
 import { DietaryAlertsNotice } from '@/features/nutrition-plan/dietary-alerts-notice';
 import { NewPlanForm } from '@/features/nutrition-plan/new-plan-form';
+import { RecordWriteGate } from '@/features/patients/record-write-gate';
 import { Section } from '@/features/patients/section';
-import { getPatient } from '@/features/patients/server';
+import { getMembers, getPatient } from '@/features/patients/server';
 import { serverApi } from '@/lib/api/server';
 
 export const metadata: Metadata = { title: 'Nuevo plan' };
@@ -14,22 +16,35 @@ export const metadata: Metadata = { title: 'Nuevo plan' };
 /** Un plan nuevo de cualquier modalidad, desde una prescripción energética (RF-19 a RF-21). */
 export default async function NewPlanPage({ params }: { params: Promise<{ patientId: string }> }) {
   const { patientId } = await params;
-  const [patient, prescriptions, lists] = await Promise.all([
+  const [patient, prescriptions, lists, members] = await Promise.all([
     getPatient(patientId),
     serverApi<EnergyPrescriptionListResponse>(
       `/patients/${encodeURIComponent(patientId)}/energy-prescriptions`,
     ),
     serverApi<ExchangeListResponse>('/exchange-lists'),
+    getMembers(),
   ]);
   if (!patient.ok) return null;
   if (patient.data.status === 'ARCHIVED') {
     return <Notice tone="warning" title="Está archivado: no se crean planes nuevos" />;
   }
-  if (!prescriptions.ok || !lists.ok) {
+  if (!prescriptions.ok || !lists.ok || !members.ok) {
     return <Notice tone="danger" title="No pudimos cargar lo necesario para el plan" />;
   }
+  const careTeam = patient.data.careTeam;
+  const staff = members.data.members;
+  const gated = (content: ReactNode) => (
+    <RecordWriteGate
+      patientId={patientId}
+      careTeam={careTeam}
+      members={staff}
+      action="crear un plan"
+    >
+      {content}
+    </RecordWriteGate>
+  );
   if (prescriptions.data.prescriptions.length === 0) {
-    return (
+    return gated(
       <EmptyState
         icon={Salad}
         title="Primero, una prescripción energética"
@@ -39,10 +54,10 @@ export default async function NewPlanPage({ params }: { params: Promise<{ patien
             <Link href={`/panel/pacientes/${patientId}/energia/nueva`}>Nueva prescripción</Link>
           </Button>
         }
-      />
+      />,
     );
   }
-  return (
+  return gated(
     <Section
       title="Nuevo plan"
       description="Elige la modalidad y la prescripción de la que salen las metas. Después armas el plan en el editor."
@@ -53,6 +68,6 @@ export default async function NewPlanPage({ params }: { params: Promise<{ patien
         prescriptions={prescriptions.data.prescriptions}
         lists={lists.data.lists}
       />
-    </Section>
+    </Section>,
   );
 }

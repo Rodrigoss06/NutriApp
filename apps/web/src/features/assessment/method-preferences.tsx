@@ -4,6 +4,8 @@ import {
   methodLabel,
   METHOD_PURPOSES,
   METHODS_BY_PURPOSE,
+  type CareTeamMember,
+  type MemberResponse,
   type MethodPurpose,
   type OrganizationMethodPreferencesResponse,
   type PatientMethodPreferencesResponse,
@@ -13,6 +15,7 @@ import { useMutation } from '@tanstack/react-query';
 import { useState } from 'react';
 import { FormError } from '@/features/forms/form-error';
 import { POPULATION_LABELS } from '@/features/patients/labels';
+import { useWritesRecord } from '@/features/patients/use-writes-record';
 import { useCanWrite } from '@/features/session/panel-session';
 import { apiFetch } from '@/lib/api/client';
 import { PREFERENCE_SOURCE_LABELS, PURPOSE_LABELS } from './labels';
@@ -80,11 +83,16 @@ const NO_SILENT_RECALCULATION =
 export function PatientMethodPreferences({
   patientId,
   initial,
+  careTeam,
+  members,
 }: {
   patientId: string;
   initial: PatientMethodPreferencesResponse;
+  careTeam: readonly CareTeamMember[];
+  members: readonly MemberResponse[];
 }) {
-  const canWrite = useCanWrite();
+  const writes = useWritesRecord(careTeam, members);
+  const canWrite = useCanWrite() && writes;
   const [view, setView] = useState(initial);
   const change = useMutation({
     mutationFn: ({ purpose, methodCode }: { purpose: MethodPurpose; methodCode: string | null }) =>

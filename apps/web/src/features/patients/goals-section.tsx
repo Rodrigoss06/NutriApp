@@ -1,6 +1,12 @@
 'use client';
 
-import { GOAL_KINDS, type CreateGoal, type Goal } from '@nutricoach/contracts';
+import {
+  GOAL_KINDS,
+  type CareTeamMember,
+  type CreateGoal,
+  type Goal,
+  type MemberResponse,
+} from '@nutricoach/contracts';
 import { Button, formatNumber, parseDecimal, Select, StatusBadge } from '@nutricoach/ui';
 import { useMutation } from '@tanstack/react-query';
 import { useRouter } from 'next/navigation';
@@ -11,6 +17,7 @@ import { useCanWrite } from '@/features/session/panel-session';
 import { apiFetch } from '@/lib/api/client';
 import { formatDate } from '@/lib/dates';
 import { GOAL_KIND_LABELS, GOAL_STATUS_LABELS, optionsOf } from './labels';
+import { useWritesRecord } from './use-writes-record';
 
 interface GoalValues {
   readonly kind: string;
@@ -24,14 +31,19 @@ interface GoalValues {
 export function GoalsSection({
   patientId,
   goals,
+  careTeam,
+  members,
   archived,
 }: {
   patientId: string;
   goals: readonly Goal[];
+  careTeam: readonly CareTeamMember[];
+  members: readonly MemberResponse[];
   archived: boolean;
 }) {
   const router = useRouter();
   const canWrite = useCanWrite() && !archived;
+  const writes = useWritesRecord(careTeam, members);
   const form = useForm<GoalValues>({
     defaultValues: { kind: 'HEALTH', metricCode: '', targetValue: '', targetDate: '', notes: '' },
   });
@@ -82,87 +94,91 @@ export function GoalsSection({
                 </span>
                 {goal.notes ? <p className="text-sm whitespace-pre-wrap">{goal.notes}</p> : null}
               </div>
-              <Select
-                label="Estado"
-                value={goal.status}
-                disabled={!canWrite || change.isPending}
-                onValueChange={(value) => {
-                  change.mutate({ id: goal.id, status: value as Goal['status'] });
-                }}
-                options={optionsOf(GOAL_STATUS_LABELS)}
-                className="sm:w-44"
-              />
+              {writes ? (
+                <Select
+                  label="Estado"
+                  value={goal.status}
+                  disabled={!canWrite || change.isPending}
+                  onValueChange={(value) => {
+                    change.mutate({ id: goal.id, status: value as Goal['status'] });
+                  }}
+                  options={optionsOf(GOAL_STATUS_LABELS)}
+                  className="sm:w-44"
+                />
+              ) : null}
             </li>
           ))}
         </ul>
       )}
-      <form
-        noValidate
-        aria-label="Registrar un objetivo"
-        className="flex flex-col gap-4 rounded-lg border border-border p-4 bg-card"
-        onSubmit={submitWith(
-          form.handleSubmit((values) => {
-            add.mutate({
-              kind: values.kind as CreateGoal['kind'],
-              metricCode: values.metricCode.trim().toUpperCase() || null,
-              targetValue: values.targetValue ? parseDecimal(values.targetValue) : null,
-              targetDate: values.targetDate || null,
-              notes: values.notes || null,
-            });
-          }),
-        )}
-      >
-        <h3 className="font-semibold">Registrar objetivo</h3>
-        <FormError error={add.error} title="No se registró el objetivo" />
-        <div className="grid gap-4 sm:grid-cols-2">
-          <Controller
-            control={form.control}
-            name="kind"
-            render={({ field }) => (
-              <Select
-                label="Tipo"
-                value={field.value}
-                disabled={!canWrite}
-                onValueChange={field.onChange}
-                options={GOAL_KINDS.map((value) => ({ value, label: GOAL_KIND_LABELS[value] }))}
-              />
-            )}
-          />
-          <TextField
-            label="Indicador"
-            placeholder="WEIGHT_KG"
-            hint="Opcional. Letras, números y guion bajo."
+      {writes ? (
+        <form
+          noValidate
+          aria-label="Registrar un objetivo"
+          className="flex flex-col gap-4 rounded-lg border border-border p-4 bg-card"
+          onSubmit={submitWith(
+            form.handleSubmit((values) => {
+              add.mutate({
+                kind: values.kind as CreateGoal['kind'],
+                metricCode: values.metricCode.trim().toUpperCase() || null,
+                targetValue: values.targetValue ? parseDecimal(values.targetValue) : null,
+                targetDate: values.targetDate || null,
+                notes: values.notes || null,
+              });
+            }),
+          )}
+        >
+          <h3 className="font-semibold">Registrar objetivo</h3>
+          <FormError error={add.error} title="No se registró el objetivo" />
+          <div className="grid gap-4 sm:grid-cols-2">
+            <Controller
+              control={form.control}
+              name="kind"
+              render={({ field }) => (
+                <Select
+                  label="Tipo"
+                  value={field.value}
+                  disabled={!canWrite}
+                  onValueChange={field.onChange}
+                  options={GOAL_KINDS.map((value) => ({ value, label: GOAL_KIND_LABELS[value] }))}
+                />
+              )}
+            />
+            <TextField
+              label="Indicador"
+              placeholder="WEIGHT_KG"
+              hint="Opcional. Letras, números y guion bajo."
+              disabled={!canWrite}
+              {...form.register('metricCode')}
+            />
+            <TextField
+              label="Meta"
+              inputMode="decimal"
+              disabled={!canWrite}
+              error={form.formState.errors.targetValue?.message}
+              {...form.register('targetValue', {
+                validate: (value) => !value || parseDecimal(value) !== null || 'Escribe un número.',
+              })}
+            />
+            <TextField
+              label="Para el"
+              type="date"
+              disabled={!canWrite}
+              {...form.register('targetDate')}
+            />
+          </div>
+          <TextAreaField
+            label="Notas"
+            maxLength={2000}
             disabled={!canWrite}
-            {...form.register('metricCode')}
+            {...form.register('notes')}
           />
-          <TextField
-            label="Meta"
-            inputMode="decimal"
-            disabled={!canWrite}
-            error={form.formState.errors.targetValue?.message}
-            {...form.register('targetValue', {
-              validate: (value) => !value || parseDecimal(value) !== null || 'Escribe un número.',
-            })}
-          />
-          <TextField
-            label="Para el"
-            type="date"
-            disabled={!canWrite}
-            {...form.register('targetDate')}
-          />
-        </div>
-        <TextAreaField
-          label="Notas"
-          maxLength={2000}
-          disabled={!canWrite}
-          {...form.register('notes')}
-        />
-        <div>
-          <Button type="submit" disabled={!canWrite || add.isPending}>
-            Registrar objetivo
-          </Button>
-        </div>
-      </form>
+          <div>
+            <Button type="submit" disabled={!canWrite || add.isPending}>
+              Registrar objetivo
+            </Button>
+          </div>
+        </form>
+      ) : null}
     </div>
   );
 }

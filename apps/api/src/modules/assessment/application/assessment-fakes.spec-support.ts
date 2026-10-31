@@ -22,6 +22,7 @@ import type {
   TimelineCursor,
   TimelineEntry,
 } from '../../clinical/index.js';
+import type { FileRegistry } from '../../../platform/index.js';
 import type { TenancyApi } from '../../tenancy/index.js';
 import type { Population } from '@nutricoach/engine';
 import type { SiteDefinition } from '../domain/assessment-rules.js';
@@ -35,7 +36,12 @@ import type {
   EvaluationChanges,
   EvaluationRecord,
   EvaluationStore,
+  FunctionalCatalog,
+  FunctionalEvaluationRecord,
+  FunctionalEvaluationStore,
   MeasurementRow,
+  MovementTestRow,
+  PhysicalResultRow,
   SiteCatalog,
   TechnicalErrorRecord,
   TechnicalErrorStore,
@@ -121,6 +127,11 @@ const NO_CONSENT = domainError({
   rule: 'RN-B01',
   message: 'Sin consentimiento HEALTH_DATA.',
 });
+const NO_IMAGES = domainError({
+  code: 'NC-CLI-031',
+  rule: 'RN-B01',
+  message: 'Sin consentimiento IMAGES.',
+});
 
 /** clinical visto desde assessment: el paciente que se ve y quién escribe en su expediente. */
 export class FakeClinical {
@@ -128,6 +139,7 @@ export class FakeClinical {
   /** memberId con escritura en el equipo de cada paciente. */
   readonly writers = new Map<string, Set<string>>();
   readonly consented = new Set<string>();
+  readonly images = new Set<string>();
   readonly sources: {
     entries(p: string, b: TimelineCursor | null, l: number): Promise<readonly TimelineEntry[]>;
   }[] = [];
@@ -154,6 +166,8 @@ export class FakeClinical {
         if (!this.consented.has(id)) return Promise.resolve(err(NO_CONSENT));
         return Promise.resolve(ok(patient));
       },
+      ensureImagesConsent: (id: string): Promise<Result<void, DomainError>> =>
+        Promise.resolve(this.images.has(id) ? ok(undefined) : err(NO_IMAGES)),
       registerTimelineSource: (source: FakeClinical['sources'][number]) => {
         this.sources.push(source);
       },
@@ -302,6 +316,147 @@ export class MemoryEvaluations implements EvaluationStore {
           detail: r.amendReason,
         })),
     );
+  }
+}
+
+export const FUNCTIONAL_CATALOG: FunctionalCatalog = {
+  movementTests: [
+    { code: 'PLANK', name: 'Plancha', kind: 'DYNAMIC', region: 'Tronco' },
+    { code: 'PELVIS', name: 'Pelvis', kind: 'STATIC', region: 'Lumbopélvica' },
+  ],
+  physicalTests: [
+    {
+      code: 'PUSH_UPS',
+      domain: 'MUSCULAR_ENDURANCE',
+      name: 'Flexiones',
+      protocol: 'Técnica',
+      unit: 'repeticiones',
+    },
+    { code: 'WALK_6MIN', domain: 'AEROBIC', name: 'Caminata', protocol: 'Superficie', unit: 'm' },
+  ],
+};
+
+/** La postura y las pruebas físicas viven en la misma tabla que las demás evaluaciones: las filas se comparten. */
+export class MemoryFunctionalEvaluations implements FunctionalEvaluationStore {
+  movementRows = new Map<string, MovementTestRow[]>();
+  physicalRows = new Map<string, PhysicalResultRow[]>();
+
+  constructor(private readonly evaluations: MemoryEvaluations) {}
+
+  snapshot(): () => void {
+    const saved = clone({ movement: this.movementRows, physical: this.physicalRows });
+    return () => {
+      this.movementRows = saved.movement;
+      this.physicalRows = saved.physical;
+    };
+  }
+
+  #all(): FunctionalEvaluationRecord[] {
+    return [...this.evaluations.rows.values()] as unknown as FunctionalEvaluationRecord[];
+  }
+
+  catalog() {
+    return Promise.resolve(FUNCTIONAL_CATALOG);
+  }
+  insert(evaluation: FunctionalEvaluationRecord) {
+    return this.evaluations.insert(evaluation as unknown as EvaluationRecord);
+  }
+  find(id: string) {
+    const row = this.#all().find((r) => r.id === id);
+    return Promise.resolve(row && ['MOVEMENT', 'FITNESS'].includes(row.kind) ? clone(row) : null);
+  }
+  listByPatient(patientId: string, kind: 'MOVEMENT' | 'FITNESS') {
+    return Promise.resolve(this.#all().filter((r) => r.patientId === patientId && r.kind === kind));
+  }
+  movementTests(evaluationId: string) {
+    return Promise.resolve(clone(this.movementRows.get(evaluationId) ?? []));
+  }
+  physicalResults(evaluationId: string) {
+    return Promise.resolve(clone(this.physicalRows.get(evaluationId) ?? []));
+  }
+  replaceMovementTest(evaluation: FunctionalEvaluationRecord, row: MovementTestRow) {
+    const others = (this.movementRows.get(evaluation.id) ?? []).filter(
+      (r) => r.testCode !== row.testCode,
+    );
+    this.movementRows.set(evaluation.id, [...others, clone(row)]);
+    return Promise.resolve();
+  }
+  replacePhysicalResult(evaluation: FunctionalEvaluationRecord, row: PhysicalResultRow) {
+    const others = (this.physicalRows.get(evaluation.id) ?? []).filter(
+      (r) => r.testCode !== row.testCode,
+    );
+    this.physicalRows.set(evaluation.id, [...others, clone(row)]);
+    return Promise.resolve();
+  }
+  removeMovementTest(evaluationId: string, testCode: string) {
+    const rows = this.movementRows.get(evaluationId) ?? [];
+    const others = rows.filter((r) => r.testCode !== testCode);
+    this.movementRows.set(evaluationId, others);
+    return Promise.resolve(others.length < rows.length);
+  }
+  removePhysicalResult(evaluationId: string, testCode: string) {
+    const rows = this.physicalRows.get(evaluationId) ?? [];
+    const others = rows.filter((r) => r.testCode !== testCode);
+    this.physicalRows.set(evaluationId, others);
+    return Promise.resolve(others.length < rows.length);
+  }
+  movementKeys(patientId: string) {
+    const own = this.#all().filter((r) => r.patientId === patientId && r.kind === 'MOVEMENT');
+    return Promise.resolve({
+      evaluated: own.some((r) => r.status === 'CLOSED'),
+      statuses: own.flatMap((r) => (this.movementRows.get(r.id) ?? []).map((row) => row.status)),
+    });
+  }
+  closedPhysical(patientId: string) {
+    return Promise.resolve(
+      this.#all()
+        .filter((r) => r.patientId === patientId && r.kind === 'FITNESS' && r.status === 'CLOSED')
+        .map((r) => ({
+          moment: r.moment ?? 'BASELINE',
+          localDate: r.localDate,
+          results: (this.physicalRows.get(r.id) ?? []).map(({ testCode, value }) => ({
+            testCode,
+            value,
+          })),
+        })),
+    );
+  }
+}
+
+/** FileRegistry falsa: lee el tipo del primer byte, guarda en memoria y anota lo descartado. */
+export class FakeFiles {
+  readonly stored = new Map<string, { content: Uint8Array; purpose: string | null }>();
+  readonly discarded: string[] = [];
+  failOnRegister = false;
+  write(_org: OrganizationId, content: Uint8Array) {
+    if (content[0] !== 0x89) return Promise.resolve(null);
+    const id = uuidv7();
+    this.stored.set(id, { content, purpose: null });
+    return Promise.resolve({
+      id,
+      key: `org/${id}`,
+      mimeType: 'image/png' as const,
+      sha256: new Uint8Array(32),
+    });
+  }
+  register(file: { id: string; purpose: string }) {
+    if (this.failOnRegister) return Promise.reject(new Error('sin espacio'));
+    const row = this.stored.get(file.id);
+    if (row) row.purpose = file.purpose;
+    return Promise.resolve();
+  }
+  discard(key: string) {
+    this.discarded.push(key);
+    return Promise.resolve();
+  }
+  read(id: string) {
+    const row = this.stored.get(id);
+    return Promise.resolve(
+      row ? { content: Buffer.from(row.content), mimeType: 'image/png' } : null,
+    );
+  }
+  asRegistry(): FileRegistry {
+    return this as unknown as FileRegistry;
   }
 }
 

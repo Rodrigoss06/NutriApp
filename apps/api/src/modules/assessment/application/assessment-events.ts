@@ -18,6 +18,8 @@ export type AssessmentEventType =
   | 'assessment.bia.removed'
   | 'assessment.evaluation.closed'
   | 'assessment.evaluation.amended'
+  | 'assessment.functional.recorded'
+  | 'assessment.functional.removed'
   | 'assessment.technicalerror.recorded'
   | 'assessment.result.computed'
   | 'assessment.preference.changed';

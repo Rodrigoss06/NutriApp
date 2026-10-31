@@ -2,6 +2,7 @@
 export {
   ClinicalApi,
   type DietaryCondition,
+  type LatestScreening,
   type PatientCard,
   type PatientRef,
 } from './application/clinical-api.js';

@@ -26,7 +26,7 @@ export default async function PatientPage({ params }: { params: Promise<{ patien
         <CareTeamSection patient={patient.data} members={members.data.members} />
       </Section>
       <Section title="Acceso a la app">
-        <AppAccessSection patient={patient.data} />
+        <AppAccessSection patient={patient.data} members={members.data.members} />
       </Section>
     </div>
   );

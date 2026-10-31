@@ -5,6 +5,7 @@ import {
   methodLabel,
   METRIC_LABELS,
   type CalculationResultResponse,
+  type CareTeamMember,
   type EvaluationResponse,
   type EvaluationResultsResponse,
   type MeasurementSite,
@@ -34,6 +35,7 @@ import { useState } from 'react';
 import { TextAreaField, TextField } from '@/features/forms/fields';
 import { DownloadSheetButton } from '@/features/documents/download-sheet-button';
 import { FormError } from '@/features/forms/form-error';
+import { useWritesRecord } from '@/features/patients/use-writes-record';
 import { useCanWrite } from '@/features/session/panel-session';
 import { apiFetch } from '@/lib/api/client';
 import {
@@ -83,14 +85,17 @@ export function EvaluationResults({
   evaluation,
   sites,
   members,
+  careTeam,
   patientId,
 }: {
   evaluation: EvaluationResponse;
   sites: readonly MeasurementSite[];
   members: readonly MemberResponse[];
+  careTeam: readonly CareTeamMember[];
   patientId: string;
 }) {
-  const canWrite = useCanWrite();
+  const writes = useWritesRecord(careTeam, members);
+  const canWrite = useCanWrite() && writes;
   const siteName = (code: string) => sites.find((site) => site.code === code)?.nameEs ?? code;
   const results = useQuery({
     queryKey: ['evaluation-results', evaluation.id],
@@ -113,13 +118,15 @@ export function EvaluationResults({
                   <Link href={`${base}/comparacion`}>Comparar con la anterior</Link>
                 </Button>
               )}
-              <Button asChild variant="secondary">
-                <Link
-                  href={`/panel/pacientes/${patientId}/energia/nueva?evaluacion=${evaluation.id}`}
-                >
-                  Prescribir energía
-                </Link>
-              </Button>
+              {writes ? (
+                <Button asChild variant="secondary">
+                  <Link
+                    href={`/panel/pacientes/${patientId}/energia/nueva?evaluacion=${evaluation.id}`}
+                  >
+                    Prescribir energía
+                  </Link>
+                </Button>
+              ) : null}
             </>
           ) : null}
           {sheetReady ? (

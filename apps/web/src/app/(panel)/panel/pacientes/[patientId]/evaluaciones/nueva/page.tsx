@@ -2,6 +2,7 @@ import { Notice } from '@nutricoach/ui';
 import type { Metadata } from 'next';
 import { NewEvaluationForm } from '@/features/assessment/new-evaluation-form';
 import { getSites } from '@/features/assessment/server';
+import { RecordWriteGate } from '@/features/patients/record-write-gate';
 import { Section } from '@/features/patients/section';
 import { getMembers, getPatient } from '@/features/patients/server';
 
@@ -26,12 +27,19 @@ export default async function NewEvaluationPage({
     return <Notice tone="warning" title="Está archivado: no se registran evaluaciones nuevas" />;
   }
   return (
-    <Section title="Nueva evaluación">
-      <NewEvaluationForm
-        patientId={patientId}
-        sites={sites.data.sites}
-        members={members.data.members}
-      />
-    </Section>
+    <RecordWriteGate
+      patientId={patientId}
+      careTeam={patient.data.careTeam}
+      members={members.data.members}
+      action="evaluar"
+    >
+      <Section title="Nueva evaluación">
+        <NewEvaluationForm
+          patientId={patientId}
+          sites={sites.data.sites}
+          members={members.data.members}
+        />
+      </Section>
+    </RecordWriteGate>
   );
 }

@@ -71,6 +71,8 @@ describe('RNF-12 · RN-A01 · el catálogo de PostgreSQL prueba el aislamiento',
     expect(global.map((t) => t.name)).toEqual([
       'analytics.projection_checkpoint',
       'assessment.measurement_site',
+      'assessment.movement_test',
+      'assessment.physical_test',
       'exercise.equipment',
       'exercise.movement_pattern',
       'exercise.muscle_group',

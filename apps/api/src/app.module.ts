@@ -10,6 +10,7 @@ import { DocumentsModule } from './modules/documents/index.js';
 import { IamModule } from './modules/iam/index.js';
 import { TenancyModule } from './modules/tenancy/index.js';
 import { TrackingModule } from './modules/tracking/index.js';
+import { TrainingModule } from './modules/training/index.js';
 import { AuthModule, HealthModule, IdempotencyModule, PlatformModule } from './platform/index.js';
 
 /** Raíz del proceso HTTP. Cada contexto de src/modules se agrega aquí por su index.ts. */
@@ -24,6 +25,7 @@ import { AuthModule, HealthModule, IdempotencyModule, PlatformModule } from './p
     ClinicalModule,
     AssessmentModule,
     ExerciseModule,
+    TrainingModule,
     FoodModule,
     NutritionModule,
     TrackingModule,

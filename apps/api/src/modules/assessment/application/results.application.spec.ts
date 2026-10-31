@@ -19,6 +19,7 @@ import {
 import { AssessmentApi } from './assessment-api.js';
 import { CalculationService } from './calculation.service.js';
 import { CalculationCommands } from './commands/calculation.commands.js';
+import type { FunctionalEvaluationStore } from './ports/assessment.ports.js';
 import { EvaluationCommands } from './commands/evaluation.commands.js';
 import { TechnicalErrorCommands } from './commands/technical-error.commands.js';
 import { ResultsQueries } from './queries/results.queries.js';
@@ -126,6 +127,7 @@ const assessmentApi = () =>
     calculations,
     service(),
     new ResultsAssembly(evaluations, memoryCatalog, calculations, service()),
+    {} as FunctionalEvaluationStore,
   );
 
 function value<T>(result: Result<T, DomainError>): T {

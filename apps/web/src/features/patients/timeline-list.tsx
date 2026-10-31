@@ -55,12 +55,14 @@ const ENERGY_GOAL_LABELS = {
   PERFORMANCE: 'Rendimiento',
 } as const;
 
-/** Nivel de la evaluación cerrada, o bioimpedancia si no tiene nivel. */
+/** Nivel de la evaluación cerrada; sin nivel, su tipo: bioimpedancia, postura o pruebas físicas. */
 const EVALUATION_TIMELINE_LABELS = {
   BASIC: 'Nivel básico',
   ISAK1: 'ISAK 1',
   ISAK2: 'ISAK 2',
   BIA: 'Bioimpedancia',
+  MOVEMENT: 'Evaluación postural',
+  FITNESS: 'Pruebas físicas',
 } as const;
 
 /** Línea de tiempo del expediente (RF-10), de lo más reciente a lo más antiguo, por páginas. */

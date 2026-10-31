@@ -26,6 +26,7 @@ import type {
   SiteFamily,
   SiteUnit,
 } from '../../../domain/assessment-rules.js';
+import { ANTHROPOMETRIC_KINDS } from '../../../domain/functional-evaluation.js';
 
 const isoDate = (value: Date): string => value.toISOString().slice(0, 10);
 const asDate = (value: string): Date => new Date(`${value}T00:00:00Z`);
@@ -135,8 +136,8 @@ export class PrismaEvaluationStore implements EvaluationStore {
   }
 
   async find(id: string): Promise<EvaluationRecord | null> {
-    const row = await this.db.tx.evaluation.findUnique({
-      where: { id },
+    const row = await this.db.tx.evaluation.findFirst({
+      where: { id, kind: { in: [...ANTHROPOMETRIC_KINDS] } },
       select: EVALUATION_FIELDS,
     });
     return row ? toEvaluation(row) : null;
@@ -144,7 +145,7 @@ export class PrismaEvaluationStore implements EvaluationStore {
 
   async listByPatient(patientId: string): Promise<readonly EvaluationRecord[]> {
     const rows = await this.db.tx.evaluation.findMany({
-      where: { patientId },
+      where: { patientId, kind: { in: [...ANTHROPOMETRIC_KINDS] } },
       select: EVALUATION_FIELDS,
       orderBy: [{ measuredAt: 'desc' }, { revision: 'desc' }],
     });
@@ -295,9 +296,15 @@ export class PrismaEvaluationStore implements EvaluationStore {
     limit: number,
   ): Promise<readonly TimelineEntry[]> {
     const rows = await this.db.tx.$queryRaw<
-      { id: string; closed_at: Date; level: string | null; amend_reason: string | null }[]
+      {
+        id: string;
+        closed_at: Date;
+        kind: string;
+        level: string | null;
+        amend_reason: string | null;
+      }[]
     >`
-      SELECT id, closed_at, level, amend_reason FROM assessment.evaluation
+      SELECT id, closed_at, kind, level, amend_reason FROM assessment.evaluation
       WHERE patient_id = ${patientId}::uuid AND status IN ('CLOSED', 'AMENDED')
         AND (${before?.occurredAt ?? null}::timestamptz IS NULL
              OR (closed_at, id) < (${before?.occurredAt ?? null}::timestamptz, ${before?.refId ?? null}::uuid))
@@ -307,7 +314,8 @@ export class PrismaEvaluationStore implements EvaluationStore {
       kind: 'EVALUATION_CLOSED',
       occurredAt: row.closed_at,
       refId: row.id,
-      label: row.level ?? 'BIA',
+      // El nivel de una antropometría; sin nivel, su tipo: BIA, MOVEMENT o FITNESS.
+      label: row.level ?? row.kind,
       detail: row.amend_reason,
     }));
   }

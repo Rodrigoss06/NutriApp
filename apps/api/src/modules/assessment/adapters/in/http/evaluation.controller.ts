@@ -85,7 +85,7 @@ export const contextOf = (request: ContextualRequest): SecurityContext => {
 };
 
 /** La versión del If-Match (06 §5); sin ella, 428. */
-function versionOf(ifMatch: string | undefined): number {
+export function versionOf(ifMatch: string | undefined): number {
   const version = Number(ifMatch?.replaceAll('"', ''));
   if (!ifMatch || !Number.isInteger(version)) {
     throw new ProblemException(428, { title: 'Falta la versión en If-Match.', code: 'NC-PLT-428' });
