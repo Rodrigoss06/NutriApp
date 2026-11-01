@@ -1,8 +1,8 @@
 # STATUS — NutriCoach v1.0
 
-Actualizado: 2026-10-31 · Por: Rodrigo, con Claude Code
-Inicio del proyecto: POR CONFIRMAR (día siguiente al Pago 1) · Semana actual: 0 de 9
-Próxima demo: Demo 1 · Base y evaluación · semana 2
+Actualizado: 2026-11-01 · Por: Rodrigo, con Claude Code
+Inicio del proyecto: POR CONFIRMAR (día siguiente al Pago 1) · Semana actual: por confirmar
+Próxima demo: Demo 3 · Entrenamiento y app del paciente · semana 6
 
 ## Prompts
 | Prompt | Estado | Responsable | PR | Notas |
@@ -100,12 +100,12 @@ Leyenda: ⬜ pendiente · 🟨 en curso · ✅ terminado · ⛔ bloqueado
   de Rodrigo (2026-10-16)
 
 ## Siguiente paso
-- Antes de la Demo 1: la matriz manual de navegadores (RNF-19: Chrome, Edge, Safari y Firefox; la E2E cubre Chromium
-  y WebKit) y, el mismo día, base local limpia y semilla («Antes de empezar» del guion). La demo es en local
+- Antes de la Demo 3: la matriz manual de navegadores (RNF-19: Chrome, Edge, Safari y Firefox; la E2E cubre Chromium
+  y WebKit), que no quedó registrada en las demos 1 y 2
 - P13 App del paciente: /prompt P13. Trae el cribado respondido por el paciente, MENSTRUAL_TRACKING y la anticoncepción hormonal
   (ADR-070, ADR-075)
-- Demo 2: «Antes de empezar» de docs/demos/demo-2.md (base limpia, db:seed, catalog:load, pnpm dev y pnpm demo:2) y
-  enviar el acta al terminar
+- Demo 2: presentada, a la espera de su feedback. Falta enviar el acta (docs/actas/demo-2.md) con los nombres de las partes
+  confirmados contra el contrato (ADR-068): la aceptación por escrito deja el cobro de la semana 7 sin otra revisión
 - Cada base nueva necesita los catálogos: `pnpm --filter api build && pnpm catalog:load plataforma@demo.example.com`
   en local; en staging y producción, con el correo de su PLATFORM_ADMIN
 - db:seed carga el caso Luis: sus resultados aparecen cuando corre el worker
@@ -123,8 +123,8 @@ Leyenda: ⬜ pendiente · 🟨 en curso · ✅ terminado · ⛔ bloqueado
 - [ ] ⚠️ Noveno diámetro de ISAK 2: confirmarlo con la guía de acreditación ISAK (2023); hoy el catálogo tiene 42 sitios
 - [ ] ⚠️ Rangos de rechazo de perímetros, diámetros y longitudes, y condiciones de la evaluación con umbral de 2 h:
   validarlos con quien revisa los cálculos clínicos
-- [ ] P7: «etiqueta v0.1.0 desplegada en staging» queda pendiente de P4; la Demo 1 se hace en local con la semilla
-- [ ] P11: la v0.2.0 tampoco está en staging (P4); la Demo 2 se hace en local con `pnpm demo:2`
+- [ ] P7: «etiqueta v0.1.0 desplegada en staging» queda pendiente de P4; la Demo 1 se hizo en local con la semilla
+- [ ] P11: la v0.2.0 tampoco está en staging (P4); la Demo 2 se hizo en local con `pnpm demo:2`
 - [ ] Acta de la Demo 2: confirmar los nombres de las partes contra el contrato antes de enviarla (ADR-068)
 - [x] N13: alternativa, regresión y progresión en la biblioteca (RF-25); Jeremy lo confirma en P-13
 - [x] N7: lo resuelve el registro diario de la plantilla V3 (RN-G11)
@@ -152,8 +152,13 @@ Leyenda: ⬜ pendiente · 🟨 en curso · ✅ terminado · ⛔ bloqueado
 ## Deuda técnica
 - P16, antes de la entrega: revisar y quitar los mensajes de «Provisional» (ejercicios base, lista DEMO, textos legales) o
   dejar marcado lo que siga sin confirmar (pedido de Rodrigo, 2026-10-30)
-- P14: medir care_team_scope con seed:load. Si el costo por fila pesa en tracking, pasar a
-  patient_id = ANY((SELECT app.visible_patient_ids())), que se evalúa una vez por consulta (ADR-037)
+- Al terminar la Demo 3 (recordatorio que pidió Rodrigo, 2026-11-01):
+  - activar en GitHub el borrado automático de la rama al fusionar y borrar las ramas ya fusionadas, remotas (47 el
+    2026-11-01) y locales: con la rama vieja viva, un PR apilado se fusiona contra ella, como pasó con #43;
+  - decidir si el generador de `pnpm seed:load` se adelanta para medir care_team_scope o si esa medición pasa a P16
+- Medir care_team_scope con seed:load: estaba en P14, pero el generador llega en P16 (se decide al terminar la Demo 3).
+  Si el costo por fila pesa en tracking, pasar a patient_id = ANY((SELECT app.visible_patient_ids())), que se evalúa
+  una vez por consulta (ADR-037)
 - P5 sin desplegar a staging (06 §9): queda pendiente de P4. Al desplegar: APP_URL con https,
   SESSION_COOKIE_NAME=__Host-nc_session, API_INTERNAL_URL al compilar, SEED_DEMO_PASSWORD y la CLI
   create-platform-admin para el primer PLATFORM_ADMIN
@@ -163,8 +168,10 @@ Leyenda: ⬜ pendiente · 🟨 en curso · ✅ terminado · ⛔ bloqueado
   la copia del plan vigente quedaron resueltas en ADR-058)
 - Lighthouse móvil en CI sobre staging (RNF-03) cuando exista staging; hoy se mide en local
 - CSP del despliegue: style-src con 'unsafe-inline' por BrandStyle (ADR-027)
-- La marca es provisional hasta la personalización (P19); la organización activa ya sale de la sesión (P5)
-- seed:load llama un script que llega en P7 y P8 (db:seed existe desde P5)
+- La marca es provisional hasta la personalización (módulo 19, RF-36), que se hace en P15; la organización activa ya
+  sale de la sesión (P5)
+- `pnpm seed:load` todavía falla: el generador de 500 y 3 000 pacientes con dos años de historia llega en P16 (carga,
+  RNF-01 y RNF-02)
 - Planes TRAMO_5 y TRAMO_50 con límites y precio provisionales (N9): corregir con migración de datos al cerrarse
 - La imagen de la API debe copiar apps/api/prisma/migrations: /api/health/ready las compara (ADR-026)
 - TypeScript fijado en 6.0 hasta que typescript-eslint soporte TypeScript 7 (ADR-018)
@@ -172,7 +179,8 @@ Leyenda: ⬜ pendiente · 🟨 en curso · ✅ terminado · ⛔ bloqueado
 - RF-06: LOGIN y LOGIN_FAILED (sin organización) solo los ve la plataforma; su vista llega con el panel interno (P15)
 - La app del paciente (/mi) ya exige la sesión PATIENT, pero sus pantallas son de muestra hasta P13
 - P14: las series de evolución leen result_metric unido a calculation_result vigente (ADR-046)
-- Tres copias de atomically (dos en iam, una en backoffice): usar la de apps/api/src/platform (ADR-045)
+- Dos copias de atomically en iam, en las invitaciones de staff y de paciente: usar la de apps/api/src/platform
+  (ADR-045). backoffice ya la usa
 - La pila del E2E se levanta a mano en local (compose, build, API y worker con env.local.example y
   RATE_LIMIT_FACTOR=100; WebKit en la imagen de Playwright): conviene un script
 - Registrar el ETM de otro miembro (dueño o administrador) no tiene pantalla: la API lo permite (ADR-050)
@@ -201,10 +209,11 @@ Leyenda: ⬜ pendiente · 🟨 en curso · ✅ terminado · ⛔ bloqueado
   5 veces pasó las 5 (2026-10-31). Es del navegador, no de una aserción
 - E2E de P6 inestable en el celular (patients.spec.ts): «Enfermedad: Hipotiroidismo» no apareció en 5 s y pasó al
   reintentar (#35, 2026-10-27)
-- E2E de la Demo 1 inestable en el CI: axe corrió antes de que la página tuviera su título (document-title) y pasó al
-  reintentar (#29, 2026-10-24); esperar el título antes de axe
 
 ## Registro de sesiones (solo las 5 últimas)
+- 2026-11-01 · Pendientes de P12 · #48 fusionado, con el CI de main en verde. STATUS al día (demos 1 y 2 presentadas, la
+  próxima es la Demo 3; P19 era el módulo 19, que se hace en P15; seed:load llega en P16); backoffice usa atomically de
+  platform y axe espera el título de la página. Recordatorio para después de la Demo 3: borrado de ramas y seed:load
 - 2026-10-31 · P12 (PR 7 y cierre) · #46 fusionado. Ficha de la rutina (ADR-079): generada al publicar y a pedido, con las semanas
   iguales juntas (12 semanas en 8 páginas y 1 s). P12 terminado: los 5 criterios en verde y el /notion-sync aplicado (35 cambios)
 - 2026-10-31 · P12 (PR 6) · #44 lleva a main lo de #43 y #45 fusiona el programa por la API. Programa en la web (ADR-078): lista, propuesta con
@@ -214,5 +223,3 @@ Leyenda: ⬜ pendiente · 🟨 en curso · ✅ terminado · ⛔ bloqueado
 - 2026-10-31 · P12 (PR 4) · Seguridad antes de prescribir (ADR-075): perfil, cribado con revisión, postura y pruebas físicas,
   con sus pantallas y la E2E en escritorio y celular. Se agrega el texto de consentimiento IMAGES, provisional, que no existía.
   La interfaz oculta en todo el expediente lo que la API negaría, con un aviso y enlace a la Ficha (ADR-076)
-- 2026-10-30 · Exclusión de alimentos (ADR-074) · #41 fusionado. Jeremy dio el visto bueno: RN-E17, enlace de alergias e
-  intolerancias con alimentos y bloqueo al guardar y publicar, también dentro de una receta; aviso si el plan vigente lleva uno

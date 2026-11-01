@@ -20,8 +20,19 @@ async function settled(page: Page): Promise<void> {
   );
 }
 
+/**
+ * Espera el título: con la metadata en streaming, Next agrega el <title> al <body> cuando termina generateMetadata, después de la
+ * primera pintura, y axe corrido antes marca document-title (#29). Si en 5 s no llega, no se espera más: axe lo reporta.
+ */
+async function titled(page: Page): Promise<void> {
+  await page
+    .waitForFunction(() => document.title.trim() !== '', undefined, { timeout: 5_000 })
+    .catch(() => undefined);
+}
+
 /** Violaciones graves (RNF-18, WCAG 2.2 AA): las que bloquean. */
 export async function seriousViolations(page: Page) {
+  await titled(page);
   await settled(page);
   const results = await new AxeBuilder({ page })
     .withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa', 'wcag22aa'])
