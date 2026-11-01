@@ -26,6 +26,7 @@ import type {
   PublishedPlan,
 } from '../../nutrition/index.js';
 import type { BrandingRecord, SheetBranding, TenancyApi } from '../../tenancy/index.js';
+import type { ProgramSnapshot, TrainingApi } from '../../training/index.js';
 import type { FileRegistry } from '../../../platform/index.js';
 import { DocumentGeneration } from './document-generation.js';
 import { DocumentRequests } from './document-requests.js';
@@ -37,6 +38,7 @@ import type {
   SheetRender,
 } from './ports/documents.ports.js';
 import { menuSheet } from './sheets/menu-sheet.js';
+import { TRAINING_SNAPSHOT } from './sheets/sheet-fixtures.spec-support.js';
 import { exchangeDietSheet, uniqueMethods } from './sheets/sheet-content.js';
 import { documentKey, SheetSources } from './sheet-sources.js';
 
@@ -52,6 +54,7 @@ const EVALUATOR = uuidv7();
 const RICE = uuidv7();
 const CHICKEN = uuidv7();
 const RECIPE = uuidv7();
+const PROGRAM = TRAINING_SNAPSHOT.programId;
 
 const context: SecurityContext = {
   organizationId: ORG,
@@ -390,6 +393,8 @@ class World {
   };
   brandingAuthor: unknown = null;
   evaluation: EvaluationSheet | null = EVALUATION_SHEET;
+  program: ProgramSnapshot | null = { ...TRAINING_SNAPSHOT, patientId: PATIENT };
+  programStatus: 'DRAFT' | 'PUBLISHED' | null = 'PUBLISHED';
 
   readonly assessment = {
     evaluationSheet: (id: string) => Promise.resolve(id === EVALUATION ? this.evaluation : null),
@@ -400,6 +405,11 @@ class World {
     planStatus: (id: string) => Promise.resolve(id === PLAN ? this.status : null),
     energySummary: (id: string) => Promise.resolve(id === PRESCRIPTION ? ENERGY : null),
   } as unknown as NutritionApi;
+
+  readonly training = {
+    publishedProgram: (id: string) => Promise.resolve(id === PROGRAM ? this.program : null),
+    programStatus: (id: string) => Promise.resolve(id === PROGRAM ? this.programStatus : null),
+  } as unknown as TrainingApi;
 
   readonly clinical = {
     patientCard: () => Promise.resolve(this.card),
@@ -413,7 +423,13 @@ class World {
   } as unknown as TenancyApi;
 
   sources(): SheetSources {
-    return new SheetSources(this.assessment, this.nutrition, this.clinical, this.tenancy);
+    return new SheetSources(
+      this.assessment,
+      this.nutrition,
+      this.training,
+      this.clinical,
+      this.tenancy,
+    );
   }
 }
 
@@ -909,11 +925,89 @@ describe('RN-H01 · RN-D02 · RN-D10 · la ficha de resultados de una evaluació
       reason: 'NOT_FOUND',
     });
   });
+});
 
-  it('una rutina todavía no tiene ficha (P12)', async () => {
-    expect(await world.sources().prepare(ORG, { type: 'TRAINING_PROGRAM', id: uuidv7() })).toEqual({
-      ok: false,
-      reason: 'NOT_SUPPORTED',
+describe('RN-H01 · RN-H03 · la ficha de la rutina publicada', () => {
+  const PROGRAM_SOURCE = { type: 'TRAINING_PROGRAM', id: PROGRAM } as const;
+
+  it('la firma quien la publicó, con la edad del primer día y la fecha del PDF de la publicación', async () => {
+    const prepared = await world.sources().prepare(ORG, PROGRAM_SOURCE);
+
+    expect(prepared.ok).toBe(true);
+    if (!prepared.ok) return;
+    const { sheet } = prepared;
+    expect(sheet).toMatchObject({
+      organizationId: ORG,
+      patientId: PATIENT,
+      kind: 'TRAINING',
+      source: PROGRAM_SOURCE,
+      issuedAt: new Date('2026-10-31T15:00:00.000Z'),
+      authorUserId: TRAINING_SNAPSHOT.publishedBy,
     });
+    expect(world.brandingAuthor).toEqual({ userId: TRAINING_SNAPSHOT.publishedBy });
+    expect(sheet.content.kind === 'TRAINING' && sheet.content.program.name).toBe(
+      'Macrociclo de hipertrofia',
+    );
+    expect(sheet.content.patient.code).toBe(CARD.code);
+  });
+
+  it('la edad es la del primer día del programa, no la de la publicación ni la de hoy', async () => {
+    // Nació el 25 de octubre de 1998: al publicar (31 de octubre de 2026) tenía 28; el 1 de noviembre de 2027, 29.
+    world.program = { ...TRAINING_SNAPSHOT, patientId: PATIENT, startDate: '2027-11-01' };
+
+    const prepared = await world.sources().prepare(ORG, PROGRAM_SOURCE);
+
+    expect(prepared.ok && prepared.sheet.content.patient.ageYears).toBe(29);
+  });
+
+  it('RN-H02: un borrador no está publicado; un programa que no se ve no existe', async () => {
+    world.program = null;
+    world.programStatus = 'DRAFT';
+    expect(await world.sources().prepare(ORG, PROGRAM_SOURCE)).toEqual({
+      ok: false,
+      reason: 'NOT_PUBLISHED',
+    });
+    world.programStatus = null;
+    expect(await world.sources().prepare(ORG, PROGRAM_SOURCE)).toEqual({
+      ok: false,
+      reason: 'NOT_FOUND',
+    });
+  });
+
+  it('sin paciente visible o sin la organización de la marca no hay ficha', async () => {
+    world.card = null;
+    expect(await world.sources().prepare(ORG, PROGRAM_SOURCE)).toEqual({
+      ok: false,
+      reason: 'NOT_FOUND',
+    });
+    world.card = CARD;
+    world.branding = null;
+    expect(await world.sources().prepare(ORG, PROGRAM_SOURCE)).toEqual({
+      ok: false,
+      reason: 'NOT_FOUND',
+    });
+  });
+
+  it('RF-24: el worker la dibuja con la plantilla activa y la firma quien la publicó', async () => {
+    const record = await generation.generate(ORG, PROGRAM_SOURCE, null);
+
+    expect(record).toMatchObject({
+      kind: 'TRAINING',
+      sourceType: 'TRAINING_PROGRAM',
+      sourceId: PROGRAM,
+      templateVersion: '1.0.0',
+      generatedBy: TRAINING_SNAPSHOT.publishedBy,
+    });
+    expect(renderer.calls[0]?.content.kind).toBe('TRAINING');
+    expect(renderer.calls[0]?.issuedAt).toEqual(new Date('2026-10-31T15:00:00.000Z'));
+  });
+
+  it('pedida desde el panel: si es un borrador, NC-DOC-002 con RN-H02', async () => {
+    world.program = null;
+    world.programStatus = 'DRAFT';
+
+    const result = await requests.request(context, PATIENT, PROGRAM_SOURCE);
+
+    expect(isErr(result) && result.error).toMatchObject({ code: 'NC-DOC-002', rule: 'RN-H02' });
   });
 });

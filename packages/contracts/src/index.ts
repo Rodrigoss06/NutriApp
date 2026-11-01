@@ -32,4 +32,5 @@ export * from './presentation/brand-tokens.js';
 export * from './training/athlete-profile.js';
 export * from './training/labels.js';
 export * from './training/program.js';
+export * from './training/week-plan.js';
 export * from './exercise/library.js';

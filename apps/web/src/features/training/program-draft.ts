@@ -3,6 +3,7 @@ import {
   REVIEW_KIND_LABELS,
   saveProgramWeekSchema,
   TRAINING_INTENSITY_LABELS,
+  WEEKDAY_LABELS,
   type LoadKind,
   type ProgramDocument,
   type SaveProgramWeek,
@@ -357,52 +358,10 @@ export function proposalBlocks(document: ProgramDocument): readonly ProposalBloc
   return [...blocks.values()].sort((a, b) => a.day - b.day || a.order - b.order);
 }
 
-const WEEKDAYS = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo'];
-export const WEEKDAY_OPTIONS = WEEKDAYS.map((label, index) => ({
+export const WEEKDAY_OPTIONS = WEEKDAY_LABELS.map((label, index) => ({
   value: String(index + 1),
   label,
 }));
-
-/**
- * El día de una sesión (07 §8): cada semana tiene 7 días; los días 1 a N son las sesiones 1 a N y los demás, descanso. Una sesión con su
- * día de la semana va ese día.
- */
-export const sessionDay = (session: Pick<ProgramSession, 'position' | 'dayOfWeek'>): string =>
-  session.dayOfWeek === null
-    ? `Día ${String(session.position)}`
-    : (WEEKDAYS[session.dayOfWeek - 1] ?? '');
-
-export interface PlanDay {
-  readonly label: string;
-  /** Sin sesiones, es de descanso. */
-  readonly sessions: readonly string[];
-}
-
-/**
- * El plan de la semana (07 §8), con la misma regla que la meta de cada día en tracking. Sin días fijos: los días 1 a 7, con la sesión de su orden.
- * Con todos fijos: de lunes a domingo. Si se mezclan, qué día toca depende de la fecha de inicio: cada sesión con el suyo.
- */
-export function weekPlan(week: ProgramWeek): readonly PlanDay[] {
-  const { sessions } = week;
-  const namesOn = (matches: (session: ProgramSession) => boolean): readonly string[] =>
-    sessions.filter(matches).map(({ name }) => name);
-  if (sessions.every(({ dayOfWeek, position }) => dayOfWeek === null && position <= 7)) {
-    return Array.from({ length: 7 }, (_, index) => ({
-      label: `Día ${String(index + 1)}`,
-      sessions: namesOn(({ position }) => position === index + 1),
-    }));
-  }
-  if (sessions.every(({ dayOfWeek }) => dayOfWeek !== null)) {
-    return WEEKDAYS.map((label, index) => ({
-      label,
-      sessions: namesOn(({ dayOfWeek }) => dayOfWeek === index + 1),
-    }));
-  }
-  return [
-    ...sessions.map((session) => ({ label: sessionDay(session), sessions: [session.name] })),
-    { label: 'Los demás días', sessions: [] },
-  ];
-}
 
 /** La fase de una semana en pocas palabras (RN-F13). */
 export const phaseSummary = (week: ProgramWeek): readonly string[] =>

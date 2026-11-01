@@ -10,8 +10,8 @@ export const SHEET_KINDS = [
 ] as const;
 export type SheetKind = (typeof SHEET_KINDS)[number];
 
-/** De dónde sale una ficha que se pide desde el panel (RN-H02): un plan publicado o una evaluación cerrada. */
-export const DOCUMENT_SOURCE_TYPES = ['NUTRITION_PLAN', 'EVALUATION'] as const;
+/** De dónde sale una ficha (RN-H02): un plan o un programa publicado, o una evaluación cerrada. */
+export const DOCUMENT_SOURCE_TYPES = ['NUTRITION_PLAN', 'EVALUATION', 'TRAINING_PROGRAM'] as const;
 export type DocumentSourceType = (typeof DOCUMENT_SOURCE_TYPES)[number];
 
 /** POST /patients/:patientId/documents y GET …/documents/status: el origen de la ficha. */
@@ -24,8 +24,7 @@ export type DocumentSource = z.infer<typeof documentSourceSchema>;
 export const generatedDocumentSchema = z.object({
   id: z.uuid(),
   kind: z.enum(SHEET_KINDS),
-  /** La rutina publicada se suma en P12. */
-  sourceType: z.enum([...DOCUMENT_SOURCE_TYPES, 'TRAINING_PROGRAM']),
+  sourceType: z.enum(DOCUMENT_SOURCE_TYPES),
   sourceId: z.uuid(),
   templateVersion: z.string(),
   /** SHA-256 del PDF en hexadecimal: regenerar la misma ficha da el mismo (RN-H02). */

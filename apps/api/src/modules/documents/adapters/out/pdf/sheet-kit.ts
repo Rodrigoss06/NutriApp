@@ -100,6 +100,8 @@ export const styles = StyleSheet.create({
   muted: { color: MUTED },
   strong: { fontWeight: 600 },
   card: { backgroundColor: SURFACE, borderRadius: 4, padding: 8 },
+  /** Un bloque que puede cortarse entre páginas: una línea arriba en vez de un fondo, que quedaría a medias. */
+  ruled: { borderTopWidth: 0.75, borderTopColor: RULE, paddingTop: 6 },
   row: { flexDirection: 'row' },
   table: { borderTopWidth: 0.75, borderTopColor: RULE },
   tableRow: {

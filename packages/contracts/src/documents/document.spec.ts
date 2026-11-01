@@ -2,12 +2,14 @@ import { describe, expect, it } from 'vitest';
 import { documentSourceSchema, documentStatusSchema } from './document.js';
 
 describe('RN-H02 · fichas desde un origen publicado', () => {
-  it('pide la ficha de un plan o de una evaluación por su id', () => {
+  it('pide la ficha de un plan, de una evaluación o de un programa por su id', () => {
     const source = {
       sourceType: 'NUTRITION_PLAN',
       sourceId: '019a1c00-0000-7000-8000-000000000001',
     };
     expect(documentSourceSchema.parse(source)).toEqual(source);
+    const program = { ...source, sourceType: 'TRAINING_PROGRAM' };
+    expect(documentSourceSchema.parse(program)).toEqual(program);
     expect(documentSourceSchema.safeParse({ ...source, sourceType: 'DRAFT' }).success).toBe(false);
     expect(documentSourceSchema.safeParse({ ...source, sourceId: 'plan-1' }).success).toBe(false);
   });

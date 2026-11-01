@@ -1610,3 +1610,29 @@ Consecuencias:
   todos modos, su semana reemplaza a la otra.
 - El criterio 1 de P12 (armar y publicar en menos de 5 minutos) lo recorre la E2E con un robot; el tiempo de una persona se mide en la demo.
 - Sin cambios de datos ni reglas: no hay nada nuevo para Notion, salvo los textos de la lista de ADR-077.
+
+## ADR-079 · Ficha de la rutina: lo publicado, con las semanas iguales juntas — aceptada (2026-10-31)
+Contexto: P12, PR 7 (RF-24, RN-H01 a RN-H04). documents ya tenía el tipo `TRAINING` y el origen `TRAINING_PROGRAM` desde P11 (ADR-064), sin
+plantilla; 02 §8 pide generar la ficha al publicarse el programa. 07 no describe la ficha impresa.
+Decisión:
+- La ficha sale del snapshot del programa publicado (RN-F12), como las del plan: el worker la genera al recibir `training.program.published` y se
+  pide desde el panel. La firma quien publicó (RN-H03) y su fecha es la de la publicación (RN-H02). La edad es la del primer día del programa.
+- Plantilla `TRAINING@1.0.0`: el programa con su fórmula de 1RM rotulada como estimada (RN-F04); el macrociclo con la versión de su tabla de fases
+  (RN-F13); cada semana con su plan de 7 días (07 §8), sus sesiones y las series por grupo muscular con su método (RN-F06, RN-H04); y cada
+  ejercicio una vez, con sus músculos, su precaución, su alternativa y sus variantes (RN-F11).
+- Las semanas que se imprimen igual van juntas («Semanas 2 y 6»): una propuesta de 12 semanas pasa de 380 filas de ejercicios y casi todas se
+  repiten con las mismas series y el mismo RIR. Así sale en 8 páginas. Solo se juntan si además cuentan los mismos músculos.
+- Las series iguales de un ejercicio van en una línea; si cambian (un calentamiento), en una tabla. El título de la semana, su plan y sus series por
+  músculo no se cortan entre páginas; una sesión sí, entre ejercicios.
+- Van las notas de la sesión y del ejercicio, que el coach escribe para el paciente, como las indicaciones de un plan. No van la nota de la
+  sustitución ni quién aprobó: son de la aprobación (ADR-077).
+- El plan semanal pasa a `@nutricoach/contracts` (`weekPlan`, `sessionDay`): la pantalla del programa y la ficha dicen lo mismo.
+- `TrainingApi.programStatus` distingue un borrador (422, NC-DOC-002) de lo que no existe o no se ve (404), como en los planes.
+- La plantilla global entra por la migración `202610310400_documents_training_template`. El botón «Descargar ficha (PDF)» va en el programa
+  publicado o reemplazado, también para quien solo lee (RN-A02).
+Consecuencias:
+- Una nota del ejercicio que mencione una lesión sale en la ficha: es lo que el coach escribió para el paciente. La app del paciente (P13) puede
+  seguir el mismo criterio.
+- Un cambio visual sube la versión de la plantilla y la 1.0.0 se sigue dibujando igual (RN-H02).
+- Para Notion (/notion-sync de P12): 04 RF-24 (la ficha de rutina queda hecha en P12, antes de la Demo 3); 02 §3 (`TrainingApi.programStatus` y
+  `TRAINING_PROGRAM` como origen de `POST /patients/:id/documents`); el texto de NC-DOC-002.

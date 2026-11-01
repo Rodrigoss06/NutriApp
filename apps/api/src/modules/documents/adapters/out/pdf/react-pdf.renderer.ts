@@ -5,9 +5,11 @@ import type { PdfRenderer, SheetRender } from '../../../application/ports/docume
 import type { AnthropometrySheet } from '../../../application/sheets/anthropometry-sheet.js';
 import type { MenuSheet } from '../../../application/sheets/menu-sheet.js';
 import type { ExchangeDietSheet, SheetContent } from '../../../application/sheets/sheet-content.js';
+import type { TrainingSheet } from '../../../application/sheets/training-sheet.js';
 import { anthropometryTitles, anthropometryV1, anthropometryV101 } from './anthropometry.v1.js';
 import { exchangeDietTitles, exchangeDietV1 } from './exchange-diet.v1.js';
 import { sheetColors, type SheetFrame } from './sheet-kit.js';
+import { trainingTitles, trainingV1 } from './training.v1.js';
 import { weeklyMenuTitles, weeklyMenuV1 } from './weekly-menu.v1.js';
 
 type Template = (content: SheetContent, input: SheetRender) => ReactElement<DocumentProps>;
@@ -57,6 +59,7 @@ const TEMPLATES: Readonly<Record<string, Template>> = {
     anthropometryV101,
     anthropometryTitles,
   ),
+  'TRAINING@1.0.0': template<TrainingSheet>('TRAINING', trainingV1, trainingTitles),
 };
 
 /**
