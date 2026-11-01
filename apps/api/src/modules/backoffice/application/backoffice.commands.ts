@@ -1,6 +1,5 @@
 import { Inject, Injectable } from '@nestjs/common';
 import {
-  err,
   ID_GENERATOR,
   ok,
   UNIT_OF_WORK,
@@ -12,15 +11,9 @@ import {
   type UnitOfWork,
   type UserId,
 } from '@nutricoach/shared-kernel';
+import { atomically } from '../../../platform/index.js';
 import { IamApi } from '../../iam/index.js';
 import { PlatformTenancy } from '../../tenancy/index.js';
-
-/** Error que revierte la transacción y vuelve como Result. */
-class Rollback extends Error {
-  constructor(readonly error: DomainError) {
-    super(error.code);
-  }
-}
 
 /** Contexto PLATFORM_ADMIN de una organización: la RLS de tenancy e iam.invitation lo admiten. */
 const platformContext = (
@@ -35,7 +28,7 @@ const platformContext = (
 
 /**
  * Panel interno (02 §2, RF-39): orquesta las API públicas de tenancy e iam. Solo PLATFORM_ADMIN. Cada operación es
- * una transacción con el contexto de la organización afectada.
+ * una transacción con el contexto de la organización afectada, que se revierte entera si algo falla (atomically, ADR-045).
  */
 @Injectable()
 export class BackofficeCommands {
@@ -68,7 +61,7 @@ export class BackofficeCommands {
   ): Promise<Result<{ id: OrganizationId }, DomainError>> {
     const id = this.ids.newId<'OrganizationId'>() as OrganizationId;
     const context = platformContext(id, actor);
-    return this.#atomically(context, async () => {
+    return atomically(this.uow, context, async () => {
       const created = await this.tenancy.createOrganization(
         { ...input, id, actor },
         this.#metadata(actor),
@@ -86,7 +79,7 @@ export class BackofficeCommands {
     organizationId: OrganizationId,
     input: { planCode: string; startsOn: string; reason?: string | null | undefined },
   ): Promise<Result<void, DomainError>> {
-    return this.#atomically(platformContext(organizationId, actor), () =>
+    return atomically(this.uow, platformContext(organizationId, actor), () =>
       this.tenancy.changeSubscription(
         {
           organizationId,
@@ -105,7 +98,7 @@ export class BackofficeCommands {
     organizationId: OrganizationId,
     value: number,
   ): Promise<Result<void, DomainError>> {
-    return this.#atomically(platformContext(organizationId, actor), () =>
+    return atomically(this.uow, platformContext(organizationId, actor), () =>
       this.tenancy.setGraceDays(organizationId, value, actor, this.#metadata(actor)),
     );
   }
@@ -114,22 +107,6 @@ export class BackofficeCommands {
   async exists(actor: UserId, organizationId: OrganizationId): Promise<boolean> {
     const organizations = await this.listOrganizations(actor);
     return organizations.some((o) => o.id === organizationId);
-  }
-
-  async #atomically<T>(
-    context: SecurityContext,
-    work: () => Promise<Result<T, DomainError>>,
-  ): Promise<Result<T, DomainError>> {
-    try {
-      return await this.uow.run(context, async () => {
-        const result = await work();
-        if (!result.ok) throw new Rollback(result.error);
-        return result;
-      });
-    } catch (error) {
-      if (error instanceof Rollback) return err(error.error);
-      throw error;
-    }
   }
 
   #metadata(actor: UserId) {

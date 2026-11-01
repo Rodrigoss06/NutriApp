@@ -11,8 +11,8 @@ export interface OrganizationBrand {
 }
 
 /**
- * Marca de la organización activa. Hasta que existan la sesión (P5) y la personalización de marca (P19),
- * devuelve la paleta provisional.
+ * Marca de la organización activa. Hasta la personalización de marca (módulo 19, RF-36), que se hace en P15, devuelve la
+ * paleta provisional.
  */
 export function organizationBrand(): OrganizationBrand {
   return {
