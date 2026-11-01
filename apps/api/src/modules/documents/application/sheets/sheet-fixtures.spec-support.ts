@@ -1,7 +1,9 @@
+import type { ProgramSnapshot } from '../../../training/index.js';
 import type { SheetBrand } from '../../domain/sheet.js';
 import type { AnthropometrySheet } from './anthropometry-sheet.js';
 import type { MenuSheet, SheetTotals } from './menu-sheet.js';
 import type { ExchangeDietSheet } from './sheet-content.js';
+import { trainingSheet, type TrainingSheet } from './training-sheet.js';
 
 /**
  * Ficha sintética de Luis con G-17 a G-19 (03, casos dorados): 1835 kcal, 2 g/kg de proteína, 25 % de grasa y la lista
@@ -323,3 +325,247 @@ export const LUIS_RESULTS_SHEET: AnthropometrySheet = {
   ],
   populationNote: null,
 };
+
+type ProgramWeek = ProgramSnapshot['mesocycles'][number]['weeks'][number];
+type ProgramExercise = ProgramWeek['sessions'][number]['exercises'][number];
+type ProgramSet = ProgramExercise['sets'][number];
+
+/** Ids fijos: los de la biblioteca y los de cada fila de la semana. */
+const LIBRARY = (n: number) => `019a2000-0000-7000-8000-1000000000${String(n).padStart(2, '0')}`;
+const ROW = (week: number, n: number) =>
+  `019a2000-0000-7000-8000-2000000${String(week).padStart(2, '0')}${String(n).padStart(3, '0')}`;
+
+const muscle = (code: string, name: string) => ({ code, name });
+const ref = (n: number, name: string) => ({ id: LIBRARY(n), name });
+
+/** Las semanas 1 a 8 de hipertrofia de la V3 (07 §7): fase, objetivo, factor de volumen, intensidad, RIR y revisión. */
+const HYPERTROPHY = [
+  ['Adaptación', 'Técnica y base', 0.75, 'MODERATE', 3, 'DAILY'],
+  ['Acumulación', 'Volumen tolerable', 0.9, 'MODERATE', 3, 'DAILY'],
+  ['Hipertrofia', 'Progresar volumen', 1, 'MODERATE', 2, 'DAILY'],
+  ['Hipertrofia', 'Sobrecarga', 1.1, 'MODERATE_HIGH', 1, 'CONTROL'],
+  ['Descarga', 'Disipar fatiga', 0.65, 'LOW_MODERATE', 4, 'DAILY'],
+  ['Hipertrofia II', 'Retomar volumen', 0.95, 'MODERATE', 3, 'DAILY'],
+  ['Hipertrofia II', 'Progresar', 1.05, 'MODERATE_HIGH', 2, 'DAILY'],
+  ['Intensificación', 'Más carga', 1, 'HIGH', 1, 'CONTROL'],
+] as const;
+
+/** Las series de un bloque en su semana: las de la plantilla por el factor, con el RIR de la semana (07 §6, ADR-070). */
+const working = (count: number, rir: number, from = 1): ProgramSet[] =>
+  Array.from({ length: count }, (_, index) => ({
+    setNo: from + index,
+    setType: 'WORKING',
+    repsMin: 8,
+    repsMax: 12,
+    loadKind: 'RIR',
+    loadValue: rir,
+    restSeconds: 90,
+    tempo: '2-1-2',
+    durationSeconds: null,
+    distanceM: null,
+    met: null,
+  }));
+
+function exercise(
+  fields: Pick<ProgramExercise, 'id' | 'exerciseId' | 'name' | 'pattern' | 'position' | 'sets'> &
+    Partial<ProgramExercise>,
+): ProgramExercise {
+  return {
+    supersetGroup: null,
+    notes: null,
+    movementPattern: fields.pattern,
+    suggestedExerciseId: fields.exerciseId,
+    substitutionNote: null,
+    approvedBy: LIBRARY(90),
+    approvedAt: '2026-10-31T14:00:00.000Z',
+    primaryMuscles: [],
+    secondaryMuscles: [],
+    caution: null,
+    alternative: null,
+    easierVariant: null,
+    harderVariant: null,
+    mediaUrl: null,
+    instructions: null,
+    ...fields,
+  };
+}
+
+/** Una semana de la propuesta de 2 días, con lo que el coach cambió: la sustitución del empuje y el cardio en minutos. */
+function trainingWeek(weekNo: number): ProgramWeek {
+  const phase = HYPERTROPHY[weekNo - 1];
+  if (!phase) throw new Error(`La semana ${String(weekNo)} no está en la tabla.`);
+  const [phaseEs, phaseGoalEs, volumeFactor, intensity, targetRir, reviewKind] = phase;
+  const sets = Math.max(1, Math.round(3 * volumeFactor));
+  return {
+    id: ROW(weekNo, 0),
+    weekNo,
+    isDeload: phaseEs === 'Descarga',
+    phaseEs,
+    phaseGoalEs,
+    volumeFactor,
+    intensity,
+    targetRir,
+    reviewKind,
+    sessions: [
+      {
+        id: ROW(weekNo, 1),
+        position: 1,
+        name: 'Cuerpo completo A',
+        dayOfWeek: null,
+        notes: 'Calienta 10 minutos antes de empezar.',
+        setsByMuscle: { QUADRICEPS: sets, GLUTES: sets / 2, CHEST: sets, TRICEPS: sets / 2 },
+        exercises: [
+          exercise({
+            id: ROW(weekNo, 11),
+            exerciseId: LIBRARY(1),
+            name: 'Sentadilla goblet',
+            pattern: 'SQUAT',
+            position: 1,
+            notes: 'Baja controlado y sin rebotar.',
+            primaryMuscles: [muscle('QUADRICEPS', 'Cuádriceps')],
+            secondaryMuscles: [muscle('GLUTES', 'Glúteo')],
+            caution: 'Dolor de rodilla o lumbar',
+            alternative: ref(11, 'Sentarse y levantarse'),
+            easierVariant: ref(12, 'Sentadilla a caja'),
+            harderVariant: ref(13, 'Prensa de piernas'),
+            sets: working(sets, targetRir),
+          }),
+          exercise({
+            id: ROW(weekNo, 12),
+            exerciseId: LIBRARY(2),
+            name: 'Flexión de brazos inclinada',
+            pattern: 'HORIZONTAL_PUSH',
+            position: 2,
+            suggestedExerciseId: LIBRARY(5),
+            substitutionNote: 'Le molesta el hombro en la máquina.',
+            primaryMuscles: [muscle('CHEST', 'Pectoral')],
+            secondaryMuscles: [muscle('TRICEPS', 'Tríceps')],
+            caution: 'Dolor de hombro',
+            easierVariant: ref(14, 'Flexión de brazos en pared'),
+            harderVariant: ref(15, 'Flexión de brazos'),
+            sets: [
+              {
+                setNo: 1,
+                setType: 'WARMUP',
+                repsMin: 12,
+                repsMax: 12,
+                loadKind: 'BODYWEIGHT',
+                loadValue: null,
+                restSeconds: 60,
+                tempo: null,
+                durationSeconds: null,
+                distanceM: null,
+                met: null,
+              },
+              ...working(sets, targetRir, 2),
+            ],
+          }),
+        ],
+      },
+      {
+        id: ROW(weekNo, 2),
+        position: 2,
+        name: 'Cuerpo completo B',
+        dayOfWeek: null,
+        notes: null,
+        setsByMuscle: { HAMSTRINGS: sets, GLUTES: sets / 2, CARDIO: 1 },
+        exercises: [
+          exercise({
+            id: ROW(weekNo, 21),
+            exerciseId: LIBRARY(3),
+            name: 'Peso muerto rumano con mancuernas',
+            pattern: 'HINGE',
+            position: 1,
+            primaryMuscles: [muscle('HAMSTRINGS', 'Isquiosurales')],
+            secondaryMuscles: [muscle('GLUTES', 'Glúteo')],
+            caution: 'Dolor lumbar',
+            sets: working(sets, targetRir),
+          }),
+          exercise({
+            id: ROW(weekNo, 22),
+            exerciseId: LIBRARY(4),
+            name: 'Caminata inclinada',
+            pattern: 'CONDITIONING',
+            position: 2,
+            primaryMuscles: [muscle('CARDIO', 'Cardiorrespiratorio')],
+            caution: 'Síntomas cardiovasculares',
+            sets: [
+              {
+                setNo: 1,
+                setType: 'WORKING',
+                repsMin: null,
+                repsMax: null,
+                loadKind: null,
+                loadValue: null,
+                restSeconds: null,
+                tempo: null,
+                durationSeconds: 1_200,
+                distanceM: null,
+                met: 4.3,
+              },
+            ],
+          }),
+        ],
+      },
+    ],
+  };
+}
+
+const WEEKS = Array.from({ length: 8 }, (_, index) => trainingWeek(index + 1));
+
+/**
+ * Snapshot sintético de una propuesta de hipertrofia de 2 días y 8 semanas, publicada y aprobada (RN-F12, RN-F14): las series de
+ * cada semana salen del factor de volumen y el RIR, de la semana (07 §6 y §7). Datos de prueba sintéticos (RN-B08).
+ */
+export const TRAINING_SNAPSHOT: ProgramSnapshot = {
+  schemaVersion: 1,
+  engineVersion: '1.4.0',
+  programId: LIBRARY(80),
+  lineageId: LIBRARY(81),
+  versionNo: 1,
+  patientId: LIBRARY(82),
+  name: 'Macrociclo de hipertrofia',
+  goal: 'Ganar masa muscular con buena técnica.',
+  origin: 'PROPOSAL',
+  oneRmFormula: 'ONERM_EPLEY1985',
+  objective: 'HYPERTROPHY',
+  level: 'BEGINNER',
+  daysPerWeek: 2,
+  split: 'FULL_BODY',
+  macrocycleWeeks: 8,
+  periodizationValidFrom: '2026-10-15',
+  templateVersion: '1.0.0',
+  athleteProfileId: LIBRARY(83),
+  startDate: '2026-11-02',
+  endDate: '2026-12-27',
+  publishedAt: '2026-10-31T15:00:00.000Z',
+  publishedBy: LIBRARY(84),
+  totalWeeks: 8,
+  setsMethod: { code: 'FRACTIONAL_SETS', version: '1.0.0' },
+  mesocycles: [
+    { id: LIBRARY(85), position: 1, name: 'Mesociclo 1', focus: null, weeks: WEEKS.slice(0, 5) },
+    { id: LIBRARY(86), position: 2, name: 'Mesociclo 2', focus: null, weeks: WEEKS.slice(5) },
+  ],
+  schedule: {
+    weeks: WEEKS.map((week) => ({
+      weekNo: week.weekNo,
+      sessions: week.sessions.map(({ position, dayOfWeek, setsByMuscle }) => ({
+        position,
+        dayOfWeek,
+        setsByMuscle,
+      })),
+    })),
+  },
+};
+
+export const TRAINING_PATIENT = {
+  code: 'P-000002',
+  fullName: 'Ana Sintética',
+  sex: 'F',
+  ageYears: 31,
+} as const;
+
+export const DEMO_TRAINING_SHEET: TrainingSheet = trainingSheet(
+  TRAINING_SNAPSHOT,
+  TRAINING_PATIENT,
+);

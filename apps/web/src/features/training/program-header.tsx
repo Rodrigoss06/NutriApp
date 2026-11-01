@@ -15,6 +15,7 @@ import { Button, Select, StatusBadge } from '@nutricoach/ui';
 import { useMutation } from '@tanstack/react-query';
 import { useRouter } from 'next/navigation';
 import { Controller, useForm } from 'react-hook-form';
+import { DownloadSheetButton } from '@/features/documents/download-sheet-button';
 import { submitWith, TextAreaField, TextField } from '@/features/forms/fields';
 import { FormError } from '@/features/forms/form-error';
 import { PLAN_STATUS_LABELS, PLAN_STATUS_TONES } from '@/features/nutrition-plan/labels';
@@ -187,7 +188,10 @@ function Fact({ label, value }: { label: string; value: string }) {
   );
 }
 
-/** El programa en una mirada: de dónde salió, cuándo vale y qué fórmula de 1RM usa (RF-26, RN-F04). */
+/**
+ * El programa en una mirada: de dónde salió, cuándo vale y qué fórmula de 1RM usa (RF-26, RN-F04). Publicado, su ficha en PDF (RN-H01):
+ * descargarla vale también en solo lectura (RN-A02).
+ */
 export function ProgramHeader({
   program,
   editable,
@@ -242,9 +246,15 @@ export function ProgramHeader({
         <Fact label="Fórmula de 1RM" value={ONE_RM_FORMULA_LABELS[program.oneRmFormula]} />
       </dl>
       {editable ? <HeaderForm program={program} formulaFixed={formulaFixed} write={write} /> : null}
-      {canRevise && program.status !== 'DRAFT' ? (
-        <ReviseProgramButton program={program} base={base} />
-      ) : null}
+      {program.status === 'DRAFT' ? null : (
+        <div className="flex flex-wrap items-start gap-3">
+          {canRevise ? <ReviseProgramButton program={program} base={base} /> : null}
+          <DownloadSheetButton
+            patientId={program.patientId}
+            source={{ sourceType: 'TRAINING_PROGRAM', sourceId: program.id }}
+          />
+        </div>
+      )}
     </section>
   );
 }

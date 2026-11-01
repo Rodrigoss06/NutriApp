@@ -1,4 +1,10 @@
-import { methodLabel, SET_TYPE_LABELS, type ProgramDocument } from '@nutricoach/contracts';
+import {
+  methodLabel,
+  sessionDay,
+  SET_TYPE_LABELS,
+  weekPlan,
+  type ProgramDocument,
+} from '@nutricoach/contracts';
 import { MethodBadge } from '@nutricoach/ui';
 import { TableScroll } from '@/features/shell/table-scroll';
 import { formatTestValue } from './labels';
@@ -6,8 +12,6 @@ import {
   loadText,
   muscleNames,
   phaseSummary,
-  sessionDay,
-  weekPlan,
   weekSetsByMuscle,
   type ProgramWeek,
 } from './program-draft';
@@ -33,7 +37,7 @@ export function WeekPlan({ week }: { week: ProgramWeek }) {
       aria-label="Plan de la semana"
       className="grid grid-cols-2 gap-2 text-sm sm:grid-cols-4 lg:grid-cols-7"
     >
-      {weekPlan(week).map(({ label, sessions }) => (
+      {weekPlan(week.sessions).map(({ label, sessions }) => (
         <li key={label} className="rounded-md border border-border bg-card px-3 py-2">
           <span className="block font-medium">{label}</span>
           <span className={sessions.length === 0 ? 'text-muted-foreground' : undefined}>

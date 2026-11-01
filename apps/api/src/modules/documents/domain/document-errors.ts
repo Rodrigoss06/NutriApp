@@ -10,7 +10,7 @@ export const DOCUMENT_NOT_FOUND = domainError({
 export const SOURCE_NOT_PUBLISHED = domainError({
   code: 'NC-DOC-002',
   rule: 'RN-H02',
-  message: 'Esa ficha sale de un plan publicado o de una evaluación cerrada.',
+  message: 'Esa ficha sale de un plan o un programa publicado, o de una evaluación cerrada.',
 });
 
 /** La evaluación está cerrada pero el worker todavía calcula sus resultados: la ficha sale cuando terminen (RN-D01). */

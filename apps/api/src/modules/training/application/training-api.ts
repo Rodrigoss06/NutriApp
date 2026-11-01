@@ -1,4 +1,5 @@
 import { Inject, Injectable } from '@nestjs/common';
+import type { ProgramStatus } from '../domain/program.js';
 import { PROGRAM_STORE, type ProgramStore } from './ports/program.ports.js';
 import type { ProgramSnapshot } from './program-document.js';
 
@@ -13,5 +14,10 @@ export class TrainingApi {
   /** null si no existe, sigue en borrador o no se ve. */
   publishedProgram(id: string): Promise<ProgramSnapshot | null> {
     return this.programs.snapshot(id);
+  }
+
+  /** Su estado: así quien lo pide sabe si es un borrador o algo que no existe. null si no existe o no se ve. */
+  programStatus(id: string): Promise<ProgramStatus | null> {
+    return this.programs.status(id);
   }
 }

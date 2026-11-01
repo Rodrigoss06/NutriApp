@@ -375,6 +375,14 @@ export class PrismaProgramStore implements ProgramStore {
     return row?.snapshot ?? null;
   }
 
+  async status(id: string): Promise<ProgramStatus | null> {
+    const row = await this.db.tx.trainingProgram.findUnique({
+      where: { id },
+      select: { status: true },
+    });
+    return row ? (row.status as ProgramStatus) : null;
+  }
+
   async timeline(
     patientId: string,
     before: TimelineCursor | null,

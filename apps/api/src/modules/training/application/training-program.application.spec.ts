@@ -187,6 +187,9 @@ class MemoryPrograms implements ProgramStore {
   snapshot(id: string) {
     return Promise.resolve(this.snapshots.get(id) ?? null);
   }
+  status(id: string) {
+    return Promise.resolve(this.rows.get(id)?.status ?? null);
+  }
   timeline(): Promise<readonly TimelineEntry[]> {
     return Promise.resolve([]);
   }

@@ -38,7 +38,6 @@ const PREPARATION_ERRORS = {
   NOT_FOUND: DOCUMENT_NOT_FOUND,
   NOT_PUBLISHED: SOURCE_NOT_PUBLISHED,
   NOT_READY: SOURCE_NOT_READY,
-  NOT_SUPPORTED: DOCUMENT_NOT_FOUND,
 } as const;
 
 /** La ficha de un origen: lista para descargar, o en la cola del worker. */

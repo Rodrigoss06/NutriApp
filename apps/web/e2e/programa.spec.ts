@@ -1,3 +1,4 @@
+import { readFile } from 'node:fs/promises';
 import { expect, test, type Locator, type Page } from '@playwright/test';
 import { seriousViolations } from './support/axe';
 import {
@@ -213,6 +214,15 @@ test.describe('P12 · Programa de entrenamiento', () => {
     await expect(page.getByTitle(/FRACTIONAL_SETS/)).toBeVisible();
     await expect(page.getByRole('button', { name: 'Crear versión nueva' })).toBeVisible();
     expect(await seriousViolations(page)).toEqual([]);
+
+    // La ficha de la rutina (RN-H01): la genera el worker al publicar; el nombre no lleva datos del paciente.
+    const [download] = await Promise.all([
+      page.waitForEvent('download'),
+      page.getByRole('button', { name: 'Descargar ficha (PDF)' }).click(),
+    ]);
+    expect(download.suggestedFilename()).toBe('ficha-rutina.pdf');
+    const pdf = await readFile(await download.path());
+    expect(pdf.subarray(0, 5).toString('latin1')).toBe('%PDF-');
 
     // La línea de tiempo y la lista lo muestran; una versión nueva es un borrador aparte (RN-F12).
     await page.getByRole('button', { name: 'Crear versión nueva' }).click();
