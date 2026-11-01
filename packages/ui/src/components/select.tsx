@@ -13,6 +13,8 @@ export interface SelectOption {
 
 export interface SelectProps {
   readonly label: ReactNode;
+  /** Dentro de una tabla, la cabecera nombra la columna a la vista: la etiqueta queda para el lector de pantalla. */
+  readonly hideLabel?: boolean;
   readonly options: readonly SelectOption[];
   readonly value?: string;
   readonly onValueChange: (value: string) => void;
@@ -26,6 +28,7 @@ export interface SelectProps {
 /** Lista desplegable accesible (Radix): teclado, lector de pantalla y portal con la marca de :root. */
 export function Select({
   label,
+  hideLabel = false,
   options,
   value,
   onValueChange,
@@ -38,7 +41,9 @@ export function Select({
   const id = useId();
   return (
     <div className={cn('flex flex-col gap-1.5', className)}>
-      <Label htmlFor={id}>{label}</Label>
+      <Label htmlFor={id} className={hideLabel ? 'sr-only' : undefined}>
+        {label}
+      </Label>
       <SelectPrimitive.Root value={value} onValueChange={onValueChange} disabled={disabled}>
         <SelectPrimitive.Trigger
           id={id}

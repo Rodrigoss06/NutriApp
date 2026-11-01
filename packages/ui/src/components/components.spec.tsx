@@ -12,9 +12,29 @@ import { IndicatorCard } from './indicator-card';
 import { MethodBadge } from './method-badge';
 import { Notice, StatusBadge } from './notice';
 import { NumberField } from './number-field';
+import { Select } from './select';
 import { Steps } from './steps';
 
 afterEach(cleanup);
+
+describe('Select · dentro de una tabla', () => {
+  const options = [{ value: 'WORKING', label: 'Trabajo' }];
+
+  it('sin etiqueta a la vista, sigue teniendo su nombre para el lector de pantalla', () => {
+    render(
+      <Select hideLabel label="Tipo" options={options} value="WORKING" onValueChange={vi.fn()} />,
+    );
+
+    expect(screen.getByRole('combobox', { name: 'Tipo' })).toBeTruthy();
+    expect(screen.getByText('Tipo').className).toContain('sr-only');
+  });
+
+  it('por defecto, la etiqueta se ve', () => {
+    render(<Select label="Tipo" options={options} value="WORKING" onValueChange={vi.fn()} />);
+
+    expect(screen.getByText('Tipo').className).not.toContain('sr-only');
+  });
+});
 
 describe('NumberField · teclado numérico con unidad (RF-11)', () => {
   it('abre el teclado decimal, muestra la unidad y entrega el número con coma o punto', () => {

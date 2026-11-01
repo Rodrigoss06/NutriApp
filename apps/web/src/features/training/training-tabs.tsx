@@ -10,6 +10,7 @@ const TABS = [
   { path: '/cribado', label: 'Cribado' },
   { path: '/postura', label: 'Postura' },
   { path: '/pruebas', label: 'Pruebas físicas' },
+  { path: '/programas', label: 'Programas' },
 ] as const;
 
 /** Las partes de la seguridad antes de prescribir (RF-41), con aria-current en la activa, también en sus páginas internas. */

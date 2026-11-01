@@ -1585,3 +1585,28 @@ Consecuencias:
 - Para Notion (/notion-sync de P12): 05.2 (`template_version`, `program_published_has_snapshot`, `program_one_draft`,
   `prescribed_exercise_approved_together`, `guard_program_children`, `program_by_patient`, índices de los hijos); 02 §3 (rutas de `training-programs`, `TrainingApi`) y §8
   (`training.program.created` y `.updated`); los códigos de arriba.
+
+## ADR-078 · Programa en la web: una semana a la vez, guardar a la vista y aprobar por bloque — aceptada (2026-10-31)
+Contexto: P12, PR 6 (RF-26, RN-F12 a RN-F15). La API del programa está en ADR-077; faltaban sus pantallas.
+Decisión:
+- Dos rutas dentro de Entrenamiento: `programas` (la lista, generar la propuesta y crear a mano) y `programas/:programId` (el editor o la lectura).
+  Un solo editor para los dos orígenes: a mano suma los mesociclos; la propuesta suma la aprobación por bloque.
+- La semana se escribe como texto en el navegador y se valida con el mismo contrato de la API (`saveProgramWeekSchema`), diciendo dónde está lo
+  que falla; lo que solo sabe la API vuelve en su lista de problemas. Lo que la pantalla no edita (`distanceM`, `supersetGroup`) se conserva al guardar.
+- Con cambios sin guardar no se cambia de semana, no se aprueba, no se quita un mesociclo, no se duplica y no se publica: al guardar después, esos
+  cambios pisarían lo que pasó en medio, como una sustitución recién aprobada.
+- Sin panel lateral: la tabla de series necesita todo el ancho. Guardar es una barra fija que aparece solo con cambios; publicar va junto al
+  encabezado. En el celular, guardar quedaba al final de una página muy larga.
+- Una sesión con 4 ejercicios o más empieza cerrada: una semana de propuesta son 32 filas, y así se ve entera.
+- La aprobación muestra las series de la primera semana en la que aparece el bloque, rotuladas con su semana, porque cambian con el factor de volumen.
+  Si en alguna semana el bloque tiene otro ejercicio, lo dice: la API aprueba por día y orden, así que aprobarlo también aprueba ese.
+- Sustituir solo ofrece ejercicios del patrón del bloque (RN-F14).
+- No hay «aprobar todos»: RN-F14 pide aprobar o sustituir cada ejercicio. Aprobado uno, el foco pasa al siguiente, y con el teclado se recorre rápido.
+- Duplicar marca por defecto las semanas vacías; reemplazar una semana con sesiones pide confirmación.
+- Las series de la semana por grupo muscular son la suma, en la web, de lo que da la API por sesión (RN-F06), con su método.
+- `Select` de `@nutricoach/ui` gana `hideLabel`: dentro de una tabla, la cabecera nombra la columna y la etiqueta queda para el lector de pantalla.
+Consecuencias:
+- Dos personas en el mismo borrador: quien guarda después recibe el 409, se trae lo vigente y lo que escribió sigue en su formulario. Si guarda de
+  todos modos, su semana reemplaza a la otra.
+- El criterio 1 de P12 (armar y publicar en menos de 5 minutos) lo recorre la E2E con un robot; el tiempo de una persona se mide en la demo.
+- Sin cambios de datos ni reglas: no hay nada nuevo para Notion, salvo los textos de la lista de ADR-077.

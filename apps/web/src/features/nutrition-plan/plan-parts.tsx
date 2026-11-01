@@ -121,6 +121,32 @@ export function HydrationCard({
   );
 }
 
+/** Lo que falta para publicar un plan o un programa, con los primeros a la vista. */
+export function PublishProblems({ problems }: { problems: readonly string[] }) {
+  return (
+    <div className="flex flex-col gap-1 text-sm">
+      <p>Para publicar falta:</p>
+      <ul aria-label="Lo que falta para publicar" className="list-disc pl-5">
+        {problems.slice(0, SHOWN_PROBLEMS).map((problem) => (
+          <li key={problem}>{problem}</li>
+        ))}
+      </ul>
+      {problems.length > SHOWN_PROBLEMS ? (
+        <details>
+          <summary className="cursor-pointer text-brand-text">
+            Ver {problems.length - SHOWN_PROBLEMS} más
+          </summary>
+          <ul className="list-disc pl-5">
+            {problems.slice(SHOWN_PROBLEMS).map((problem) => (
+              <li key={problem}>{problem}</li>
+            ))}
+          </ul>
+        </details>
+      ) : null}
+    </div>
+  );
+}
+
 /**
  * Guardar el borrador y publicarlo (RN-E14, RN-E15): lo que falta para publicar, los cambios sin guardar y la
  * confirmación. Un plan publicado no se edita.
@@ -173,26 +199,7 @@ export function DraftPanel({
 
       <h4 className="pt-2 font-semibold">Publicar</h4>
       {problems.length > 0 ? (
-        <div className="flex flex-col gap-1 text-sm">
-          <p>Para publicar falta:</p>
-          <ul aria-label="Lo que falta para publicar" className="list-disc pl-5">
-            {problems.slice(0, SHOWN_PROBLEMS).map((problem) => (
-              <li key={problem}>{problem}</li>
-            ))}
-          </ul>
-          {problems.length > SHOWN_PROBLEMS ? (
-            <details>
-              <summary className="cursor-pointer text-brand-text">
-                Ver {problems.length - SHOWN_PROBLEMS} más
-              </summary>
-              <ul className="list-disc pl-5">
-                {problems.slice(SHOWN_PROBLEMS).map((problem) => (
-                  <li key={problem}>{problem}</li>
-                ))}
-              </ul>
-            </details>
-          ) : null}
-        </div>
+        <PublishProblems problems={problems} />
       ) : (
         <p className="text-sm text-muted-foreground">
           Al publicar, el plan vale desde hoy y no se edita más; el que estaba vigente queda
