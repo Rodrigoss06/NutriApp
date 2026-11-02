@@ -44,6 +44,7 @@ export const METHOD_LABELS = {
   SFR: 'Relación estímulo/fatiga',
   COMPLIANCE: '% de cumplimiento',
   PRI_JV: 'Perfil de rendimiento (PRI de JV Fitness)',
+  READINESS_JV: 'Recuperación e indicación del día (JV Fitness)',
 } as const satisfies Record<string, string>;
 
 export type LabeledMethodCode = keyof typeof METHOD_LABELS;

@@ -20,7 +20,7 @@ Próxima demo: Demo 3 · Entrenamiento y app del paciente · semana 6
 | P10 Composición, menú y recetario | ✅ | Rodrigo | #28, #30 y #31 | 2 criterios en verde (integración y E2E en escritorio y celular): recetario (ADR-061), composición y menú en la API (ADR-062) y pantallas (ADR-063). Plantillas (RF-22, deseable) fuera. /notion-sync aplicado (17 cambios en 02, 03, 04, 05 y 05.2) |
 | P11 Fichas PDF, Demo 2 | ✅ | Rodrigo | #32 a #37 | 4 criterios en verde (integración y E2E en escritorio y celular): contexto documents y ficha de intercambios (ADR-064), fichas del menú y de resultados (ADR-065; 1.0.1 en ADR-069), marca mínima (ADR-066), descargas (ADR-067), semilla, guion y acta de la Demo 2 (ADR-068). Etiqueta v0.2.0 (e05f8de); staging, pendiente de P4. /notion-sync aplicado (17 cambios en 02, 03, 04, 05, 05.1, 05.3 y 06) |
 | P12 Ejercicios y rutinas | ✅ | Rodrigo | #39 a #42 y #44 a #47 | 5 criterios en verde (integración y E2E en escritorio y celular): motor (ADR-070), biblioteca (ADR-071), anamnesis V2 (ADR-072), alergias (ADR-074), seguridad (ADR-075), programa por la API y en la web (ADR-077, ADR-078) y ficha de rutina (ADR-079) |
-| P13 App del paciente | ⬜ | Rodrigo | | |
+| P13 App del paciente | 🟨 | Rodrigo | | Plan aprobado (2026-11-01, ADR-080): 5 PR. PR 1, motor |
 | P14 Analítica y evolución, Demo 3 | ⬜ | Rodrigo | | |
 | P15 Marca, calendario, admin y migración | ⬜ | Rodrigo | | |
 | P16 Producción y entrega, Demo 4 | ⬜ | Rodrigo | | |
@@ -28,6 +28,15 @@ Próxima demo: Demo 3 · Entrenamiento y app del paciente · semana 6
 Leyenda: ⬜ pendiente · 🟨 en curso · ✅ terminado · ⛔ bloqueado
 
 ## En curso
+- P13 en curso (plan aprobado el 2026-11-01, ADR-080), en 5 PR contra main:
+  - PR 1, motor: `READINESS_JV` 3.0.0 con la carga sRPE, el rendimiento, la recuperación y la indicación del día (RN-G14, RN-G15);
+    G-36 a G-38 en verde. Motor 1.5.0;
+  - PR 2, registros por la API: comida, agua, notas y peso por /me, con la ventana de 3 días, el clientId y los eventos; content (ajustes de la
+    app y mensajes motivacionales);
+  - PR 3, app: Hoy y el plan con registro en tres toques, y en el panel los ajustes de la app y los mensajes;
+  - PR 4, registro diario y entreno: la indicación en Hoy, MENSTRUAL_TRACKING, la sesión del día con sus series y el cribado desde la app;
+  - PR 5, profesional y cierre: registros en solo lectura, ajustes con motivo, notas leídas y la anticoncepción hormonal; la cola sin conexión
+    (RF-31) si alcanza.
 - P12 terminado (#39 a #42 y #44 a #47; #43 se fusionó en la rama de alergias y #44 lo llevó a main):
   - #39 (ADR-070): en el motor, `PRI_JV`, las llaves de seguridad, la propuesta y el macrociclo; G-29 a G-35 y G-40 en verde. Motor 1.4.0;
   - #40 (ADR-071): biblioteca de 169 ejercicios (146 provisionales), tabla patrón × nivel y ejercicios propios; `patient_no_delete`;
@@ -102,8 +111,7 @@ Leyenda: ⬜ pendiente · 🟨 en curso · ✅ terminado · ⛔ bloqueado
 ## Siguiente paso
 - Antes de la Demo 3: la matriz manual de navegadores (RNF-19: Chrome, Edge, Safari y Firefox; la E2E cubre Chromium
   y WebKit), que no quedó registrada en las demos 1 y 2
-- P13 App del paciente: /prompt P13. Trae el cribado respondido por el paciente, MENSTRUAL_TRACKING y la anticoncepción hormonal
-  (ADR-070, ADR-075)
+- P13 App del paciente, PR 2: registros por la API (ADR-080)
 - Demo 2: presentada, a la espera de su feedback. Falta enviar el acta (docs/actas/demo-2.md) con los nombres de las partes
   confirmados contra el contrato (ADR-068): la aceptación por escrito deja el cobro de la semana 7 sin otra revisión
 - Cada base nueva necesita los catálogos: `pnpm --filter api build && pnpm catalog:load plataforma@demo.example.com`
@@ -128,8 +136,10 @@ Leyenda: ⬜ pendiente · 🟨 en curso · ✅ terminado · ⛔ bloqueado
 - [ ] Acta de la Demo 2: confirmar los nombres de las partes contra el contrato antes de enviarla (ADR-068)
 - [x] N13: alternativa, regresión y progresión en la biblioteca (RF-25); Jeremy lo confirma en P-13
 - [x] N7: lo resuelve el registro diario de la plantilla V3 (RN-G11)
-- [ ] Método de entrenamiento de Jeremy: preguntas P-01 a P-18 (Notion 07 §15; P-17 ya resuelta). Mientras no respondan, P12 a P14 se
+- [ ] Método de entrenamiento de Jeremy: preguntas P-01 a P-19 (Notion 07 §15; P-17 ya resuelta). Mientras no respondan, P12 a P14 se
   construyen con la propuesta de cada una
+- [ ] P-19, pregunta nueva para Jeremy (ADR-080): con la FC en reposo bajo la basal, la parte de FC de la recuperación pasa de 100, aunque la
+  recuperación se declara de 0 a 100. Se construye con tope de 100
 - [ ] Jeremy revisa los 146 ejercicios base provisionales, y la regresión y progresión de los 23 de la V3 (ADR-071)
 - [ ] Preguntas nuevas para Jeremy (ADR-070): P-15, cuál formulario manda (`01` y `02` con puntaje, o `08_ANAMNESIS_V2` y
   `09_CRIBADO_V2`, sin puntaje y con otros códigos); P-16, si «Caminata inclinada» va de verdad con 3 × 8-12 y RIR 2; y

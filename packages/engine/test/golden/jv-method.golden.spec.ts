@@ -2,20 +2,24 @@ import { describe, expect, it } from 'vitest';
 import periodizationSeed from '../../../../seeds/training/periodization-v3.json' with { type: 'json' };
 import { runMethod } from '../../src/registry/run-method.js';
 import {
+  dailyIndication,
   macrocycleWeeks,
   movementTestStatus,
   prescriptionStatus,
   PRI_JV,
   proposeRoutine,
+  READINESS_JV,
   routineSplit,
   screeningStatus,
   suggestedExercise,
   type PeriodizationPhase,
+  type ReadinessDay,
+  type ReadinessThresholds,
   type SafetyKeys,
 } from '../../src/training/index.js';
 import { expectOk, patternChoiceSeed } from '../support.js';
 
-/** G-29 a G-35 y G-40 reproducen la plantilla V3 de JV Fitness (Notion 03 y 07 §14): puntajes y factores exactos. */
+/** G-29 a G-40 reproducen la plantilla V3 de JV Fitness (Notion 03 y 07 §14): puntajes y factores exactos. */
 const PHASES = periodizationSeed.phases as readonly PeriodizationPhase[];
 const CHOICES = patternChoiceSeed();
 
@@ -186,6 +190,105 @@ describe('G-40 · RN-F16 · perfil de rendimiento', () => {
       checkIn: 'WEEKLY_OR_BIWEEKLY',
       topPriority: 'LIFESTYLE',
     });
+  });
+});
+
+/** Los umbrales base de la V3 (07 §11), como la fila global de training.readiness_threshold. */
+const V3_THRESHOLDS: ReadinessThresholds = {
+  neutralScore: 75,
+  readinessGreenMin: 75,
+  readinessRedBelow: 60,
+  performanceMinPct: 90,
+};
+
+/** Un día sin ningún dato: cada caso llena lo suyo. */
+const EMPTY_DAY: ReadinessDay = {
+  sessionMinutes: null,
+  sessionRpe: null,
+  sleepHours: null,
+  fatigue: null,
+  soreness: null,
+  stress: null,
+  motivation: null,
+  menstrualSymptoms: null,
+  performancePlanned: null,
+  performanceActual: null,
+  restingHrBpm: null,
+  hrvMs: null,
+};
+
+describe('G-36 · RN-G14 · RN-G15 · recuperación del día', () => {
+  it('sueño 7 h (objetivo 8), FC 62 (basal 58), sin HRV, fatiga 2, dolor 3, estrés 2, motivación 4 y rendimiento 95 %: partes 87.5, 76, 75 y 75; recuperación 78.375; VERDE', () => {
+    const { outputs } = expectOk(
+      runMethod(READINESS_JV, {
+        day: {
+          ...EMPTY_DAY,
+          sleepHours: 7,
+          restingHrBpm: 62,
+          fatigue: 2,
+          soreness: 3,
+          stress: 2,
+          motivation: 4,
+          performancePlanned: 100,
+          performanceActual: 95,
+        },
+        baseline: { sleepTargetHours: 8, restingHrBpm: 58, hrvMs: 50 },
+        thresholds: V3_THRESHOLDS,
+      }),
+    );
+
+    expect(outputs.components).toEqual({ sleep: 87.5, heartRate: 76, hrv: 75, subjective: 75 });
+    expect(outputs.neutralComponents).toEqual(['hrv']);
+    expect(outputs.readinessScore).toBe(78.375);
+    expect(outputs.performancePct).toBe(95);
+    expect(outputs.indication).toBe('GREEN');
+  });
+});
+
+describe('G-37 · RN-G15 · indicación del día', () => {
+  it.each([
+    [
+      'recuperación 70',
+      { readinessScore: 70, menstrualSymptoms: null, performancePct: null },
+      'YELLOW',
+    ],
+    [
+      'recuperación 58',
+      { readinessScore: 58, menstrualSymptoms: null, performancePct: null },
+      'RED',
+    ],
+    [
+      '80 con síntomas del ciclo 3',
+      { readinessScore: 80, menstrualSymptoms: 3, performancePct: null },
+      'RED',
+    ],
+    [
+      '80 con rendimiento 85 %',
+      { readinessScore: 80, menstrualSymptoms: null, performancePct: 85 },
+      'YELLOW',
+    ],
+  ] as const)('%s: %s', (_, day, indication) => {
+    expect(dailyIndication(day, V3_THRESHOLDS)).toBe(indication);
+  });
+});
+
+describe('G-38 · RN-G14 · carga sRPE y rendimiento', () => {
+  const run = (day: Partial<ReadinessDay>) =>
+    expectOk(
+      runMethod(READINESS_JV, {
+        day: { ...EMPTY_DAY, ...day },
+        baseline: { sleepTargetHours: 8, restingHrBpm: null, hrvMs: null },
+        thresholds: V3_THRESHOLDS,
+      }),
+    ).outputs;
+
+  it('60 min con RPE 7: carga 420', () => {
+    expect(run({ sessionMinutes: 60, sessionRpe: 7 }).srpeLoad).toBe(420);
+  });
+
+  it('real 95 con plan 100: 95 %; real 130 con plan 100: 120 %, el tope', () => {
+    expect(run({ performancePlanned: 100, performanceActual: 95 }).performancePct).toBe(95);
+    expect(run({ performancePlanned: 100, performanceActual: 130 }).performancePct).toBe(120);
   });
 });
 

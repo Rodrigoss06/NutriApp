@@ -41,6 +41,7 @@ export const METHOD_CODES = [
   'SFR',
   'COMPLIANCE',
   'PRI_JV',
+  'READINESS_JV',
 ] as const;
 
 export type MethodCode = (typeof METHOD_CODES)[number];

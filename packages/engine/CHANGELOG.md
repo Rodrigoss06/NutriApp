@@ -3,6 +3,16 @@
 Cambiar una fórmula o una constante sube la versión del método afectado y la del motor (02 §9).
 Los resultados guardados conservan la versión con que se calcularon (RN-D01, RN-D08).
 
+## 1.5.0 — 2026-11-01
+
+- Nuevo método `READINESS_JV` 3.0.0: recuperación e indicación del día de JV Fitness (RN-G14, RN-G15, 07 §9). Da la carga
+  sRPE (minutos × RPE), el rendimiento (real ÷ planificado, con tope de 120 %), las cuatro partes de la recuperación con el
+  neutral de la organización donde falta un dato, su promedio y la indicación con los umbrales vigentes, que recibe como
+  insumo. La parte subjetiva promedia solo lo respondido (P-02) y la de FC no pasa de 100 (P-19). Sin ningún dato de
+  recuperación no hay recuperación ni indicación. Funciones puras `srpeLoad`, `performancePct` y `dailyIndication`.
+  Insumos fuera de rango: NC-ENG-406 (registro diario), NC-ENG-407 (línea base) y NC-ENG-408 (umbrales).
+- Ningún método existente cambia: G-01 a G-35 y G-40 siguen igual.
+
 ## 1.4.0 — 2026-10-30
 
 - Nuevo método `PRI_JV` 2.0.0: perfil de rendimiento de la anamnesis de JV Fitness (RN-F16, 07 §12). Cada dominio vale de

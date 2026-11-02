@@ -1636,3 +1636,35 @@ Consecuencias:
 - Un cambio visual sube la versión de la plantilla y la 1.0.0 se sigue dibujando igual (RN-H02).
 - Para Notion (/notion-sync de P12): 04 RF-24 (la ficha de rutina queda hecha en P12, antes de la Demo 3); 02 §3 (`TrainingApi.programStatus` y
   `TRAINING_PROGRAM` como origen de `POST /patients/:id/documents`); el texto de NC-DOC-002.
+
+## ADR-080 · App del paciente: decisiones de P13 y recuperación del día en el motor — aceptada (2026-11-01)
+Contexto: P13 (RF-27 a RF-29, RN-G01 a RN-G17). Rodrigo aprobó el plan el 2026-11-01, con cinco decisiones que Notion no fija. El PR 1 trae el
+cálculo del día de la plantilla V3 (07 §9), que es la base de la indicación que ve el paciente en Hoy.
+Decisión:
+- `READINESS_JV` 3.0.0 en el registro de métodos, con su sobre (RN-D01): carga sRPE (minutos × RPE), rendimiento (real ÷ planificado × 100, con
+  tope de 120 %), las cuatro partes de la recuperación (sueño, FC en reposo, HRV y subjetiva), su promedio y la indicación (RN-G14, RN-G15). Semver
+  y no «V3» como dice el comentario de 05.2, igual que `PRI_JV` (ADR-070).
+- Los umbrales de la organización son un insumo: el método los recibe de `training.readiness_threshold` y quedan en el hash. Las constantes de las
+  fórmulas (6 puntos por latido, piso de 20, tope de 120 %, síntomas en 3) son del método y cambian con su versión (05.2).
+- Un dato que falta no es cero: una parte sin su dato del día o sin su línea base vale el neutral de la organización y queda marcada. La parte
+  subjetiva promedia solo lo respondido (P-02). La recuperación se calcula si el día tiene al menos un dato de recuperación (sueño, FC, HRV o una
+  respuesta subjetiva); con solo la sesión o los síntomas no hay recuperación ni indicación: «Completa tu registro diario».
+- P-19, pregunta nueva para Jeremy: la fórmula de la FC no tiene tope y con la FC bajo la basal pasa de 100, aunque la recuperación se declara de
+  0 a 100. Se construye con tope de 100, como el sueño y la HRV.
+- Funciones puras `srpeLoad`, `performancePct` y `dailyIndication` para la API y la web. Insumos fuera de rango: NC-ENG-406 (registro diario,
+  RN-G11), NC-ENG-407 (línea base) y NC-ENG-408 (umbrales). El motor pasa a 1.5.0.
+- Decisiones aprobadas para los PR siguientes:
+  - un alimento sin carbohidratos, proteína o grasa (58 de los 928 de la TPCA) se registra igual: esas columnas de `tracking.food_log` aceptan
+    vacío y el total del día muestra «al menos» (RN-I03), en vez del NOT NULL de 05.2;
+  - rendimiento del día (P-09): el real es el tonelaje registrado de la sesión (RN-F03) y el planificado, el tonelaje prescrito solo si la sesión
+    tiene kg y repeticiones fijas; con RIR o rangos queda vacío y el paciente puede escribirlo, y sin ambos la indicación usa solo la recuperación;
+  - la anticoncepción hormonal es un sí o no opcional del perfil de entrenamiento, lo registra el coach y solo con MENSTRUAL_TRACKING vigente;
+  - la ventana para crear, corregir o anular registros es de 3 días (RN-G10), ajustable por la organización de 0 a 7;
+  - las fichas en la app del paciente pasan a P14, junto con la evolución (reemplaza la consecuencia de ADR-067).
+- Lo que se toma de Notion sin preguntar: una comida de un plan por intercambios suma los valores del grupo por porción (guía de dominio §7.1),
+  con la porción que el plan da a ese tiempo por defecto; la app muestra las notas del coach de la sesión y del ejercicio, no la de sustitución
+  (07, P-18); en P13 los umbrales solo se leen y editarlos es de P14.
+Consecuencias:
+- G-36 a G-38 en verde, con G-01 a G-35 y G-40 iguales.
+- Para Notion (/notion-sync de P13): 02 §9 (`READINESS_JV` en la familia de entrenamiento); 05.2 (`method_version` 3.0.0 de `daily_readiness`);
+  07 §9 (qué es «al menos un dato») y §15 (P-19); los códigos de arriba.
