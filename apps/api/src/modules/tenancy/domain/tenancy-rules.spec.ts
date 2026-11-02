@@ -119,4 +119,15 @@ describe('ajustes de la organización', () => {
       expect(checkSetting(key, value, 'ORGANIZATION')?.code).toBe('NC-TEN-030');
     }
   });
+
+  it('RN-G10 · la ventana de registros es de 3 días por defecto y la organización la cambia de 0 a 7', () => {
+    expect(settingValue('tracking.edit_window_days', undefined)).toBe(3);
+    expect(checkSetting('tracking.edit_window_days', 0, 'ORGANIZATION')).toBeNull();
+    expect(checkSetting('tracking.edit_window_days', 7, 'ORGANIZATION')).toBeNull();
+    for (const value of [-1, 8, 2.5]) {
+      expect(checkSetting('tracking.edit_window_days', value, 'ORGANIZATION')?.code).toBe(
+        'NC-TEN-030',
+      );
+    }
+  });
 });

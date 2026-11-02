@@ -18,6 +18,7 @@ export {
   AllowedWhenReadOnly,
   Authenticated,
   PERMISSIONS,
+  PatientOnly,
   PlatformOnly,
   Public,
   RequirePermission,

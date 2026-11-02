@@ -124,6 +124,24 @@ export class ClinicalApi {
     return ok(refOf(patient));
   }
 
+  /**
+   * Lo que exige cambiar algo del paciente que no es un dato de salud (la app del paciente, sus mensajes): verlo (RN-A05), que
+   * esté activo y acceso de escritura en su equipo de atención, también frente al dueño. Sin exigir HEALTH_DATA.
+   */
+  async ensurePatientWritable(
+    context: SecurityContext,
+    patientId: string,
+  ): Promise<Result<PatientRef, DomainError>> {
+    const patient = await this.patients.find(patientId);
+    if (!patient) return err(PATIENT_NOT_FOUND);
+    if (patient.status === 'ARCHIVED') return err(PATIENT_ARCHIVED);
+    const actor = { memberId: context.memberId ?? null };
+    if (!canWriteRecord(actor, await this.patients.careTeam(patientId))) {
+      return err(WRITE_ACCESS_REQUIRED);
+    }
+    return ok(refOf(patient));
+  }
+
   /** La evidencia necesita el consentimiento de imágenes vigente (RN-B01, 07 §4). */
   async ensureImagesConsent(patientId: string): Promise<Result<void, DomainError>> {
     return (await this.consents.active(patientId, 'IMAGES'))

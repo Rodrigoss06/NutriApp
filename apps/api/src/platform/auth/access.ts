@@ -34,6 +34,7 @@ export type AccessRule =
   | { readonly kind: 'public' }
   | { readonly kind: 'account' }
   | { readonly kind: 'platform' }
+  | { readonly kind: 'patient' }
   | { readonly kind: 'tenant'; readonly permission: Permission };
 
 export const ACCESS_RULE = 'nutricoach:access-rule';
@@ -49,6 +50,12 @@ export const Authenticated = () =>
 /** Solo sesiones PLATFORM (panel interno). Las de STAFF se rechazan. */
 export const PlatformOnly = () =>
   SetMetadata(ACCESS_RULE, { kind: 'platform' } satisfies AccessRule);
+
+/**
+ * Solo sesiones PATIENT, en las rutas /api/v1/me (02 §10): el paciente y su organización salen de la sesión, nunca del
+ * cuerpo. La organización en solo lectura (RN-A02) no acepta registros nuevos.
+ */
+export const PatientOnly = () => SetMetadata(ACCESS_RULE, { kind: 'patient' } satisfies AccessRule);
 
 /** Sesión STAFF con organización activa, membresía vigente y el permiso. */
 export const RequirePermission = (permission: Permission) =>

@@ -1,0 +1,37 @@
+import {
+  createDomainEvent,
+  type DomainEvent,
+  type DomainEventContext,
+  type OrganizationId,
+} from '@nutricoach/shared-kernel';
+
+/**
+ * Eventos de los registros (02 §8): tracking.*.logged para la analítica (P14), y .voided para que un resumen no cuente lo anulado
+ * (RN-G12). Solo identificadores, el día y si fue del plan: nunca lo que comió ni lo que escribió.
+ */
+export type TrackingEventType =
+  | 'tracking.food.logged'
+  | 'tracking.food.voided'
+  | 'tracking.hydration.logged'
+  | 'tracking.hydration.voided'
+  | 'tracking.note.logged'
+  | 'tracking.metric.logged'
+  | 'tracking.metric.voided';
+
+export interface TrackingEventPayload {
+  readonly patientId: string;
+  readonly localDate: string;
+  readonly inPlan?: boolean;
+  /** El registro que reemplaza al anulado, si se corrigió (RN-G12). */
+  readonly replacedById?: string | null;
+}
+
+export function trackingEvent(
+  type: TrackingEventType,
+  organizationId: OrganizationId,
+  aggregateId: string,
+  payload: TrackingEventPayload,
+  context: DomainEventContext,
+): DomainEvent<TrackingEventType, TrackingEventPayload> {
+  return createDomainEvent({ type, version: 1, organizationId, aggregateId, payload }, context);
+}

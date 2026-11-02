@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { trainingTargetOf, type ProgramCalendar } from './active-program.js';
+import { sessionsOn, trainingTargetOf, type ProgramCalendar } from './active-program.js';
 
 const SESSION_1 = { position: 1, dayOfWeek: null, setsByMuscle: { QUADRICEPS: 3, GLUTES: 1.5 } };
 const SESSION_2 = { position: 2, dayOfWeek: null, setsByMuscle: { QUADRICEPS: 1, CHEST: 3 } };
@@ -83,5 +83,40 @@ describe('RN-G03 · 07 §8 · la meta de entrenamiento de cada día', () => {
         '2026-11-08',
       )?.plannedSessions,
     ).toBe(1);
+  });
+});
+
+describe('07 §8 · las sesiones de un día, con lo que cada una lleva', () => {
+  interface Session {
+    position: number;
+    dayOfWeek: number | null;
+    name: string;
+  }
+  const weeks: { weekNo: number; sessions: Session[] }[] = [
+    {
+      weekNo: 1,
+      sessions: [
+        { position: 1, dayOfWeek: null, name: 'Superior' },
+        { position: 2, dayOfWeek: null, name: 'Inferior' },
+      ],
+    },
+    { weekNo: 2, sessions: [{ position: 1, dayOfWeek: 3, name: 'Cuerpo completo' }] },
+  ];
+
+  it('la semana del programa y sus sesiones de ese día, enteras', () => {
+    expect(sessionsOn({ startDate: '2026-11-02', weeks }, '2026-11-03')).toEqual({
+      weekNo: 1,
+      sessions: [{ position: 2, dayOfWeek: null, name: 'Inferior' }],
+    });
+    expect(sessionsOn({ startDate: '2026-11-02', weeks }, '2026-11-11')).toEqual({
+      weekNo: 2,
+      sessions: [{ position: 1, dayOfWeek: 3, name: 'Cuerpo completo' }],
+    });
+  });
+
+  it('un día de descanso no tiene sesiones; fuera del programa, null', () => {
+    expect(sessionsOn({ startDate: '2026-11-02', weeks }, '2026-11-05')?.sessions).toEqual([]);
+    expect(sessionsOn({ startDate: '2026-11-02', weeks }, '2026-11-01')).toBeNull();
+    expect(sessionsOn({ startDate: '2026-11-02', weeks }, '2026-11-16')).toBeNull();
   });
 });

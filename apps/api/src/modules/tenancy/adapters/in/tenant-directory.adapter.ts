@@ -1,6 +1,10 @@
 import { Injectable } from '@nestjs/common';
-import type { OrganizationId, UserId } from '@nutricoach/shared-kernel';
-import type { MembershipView, TenantDirectory } from '../../../../platform/index.js';
+import type { OrganizationId, PatientId, UserId } from '@nutricoach/shared-kernel';
+import type {
+  MembershipView,
+  OrganizationStatus,
+  TenantDirectory,
+} from '../../../../platform/index.js';
 import { DirectoryQueries } from '../../application/queries/organization.queries.js';
 
 /** tenancy implementa el puerto TENANT_DIRECTORY de las guardias y de la cuenta. */
@@ -14,5 +18,12 @@ export class TenancyTenantDirectory implements TenantDirectory {
 
   membershipsOf(userId: UserId): Promise<readonly MembershipView[]> {
     return this.queries.membershipsOf(userId);
+  }
+
+  patientOrganizationStatus(
+    organizationId: OrganizationId,
+    patient: { readonly userId: UserId; readonly patientId: PatientId },
+  ): Promise<OrganizationStatus | null> {
+    return this.queries.patientOrganizationStatus(organizationId, patient);
   }
 }
