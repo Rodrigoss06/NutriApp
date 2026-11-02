@@ -23,6 +23,8 @@ export interface AthleteProfileInput {
   readonly sleepTargetHours: number;
   readonly testTargets: Readonly<Record<string, number>>;
   readonly notes: string | null;
+  /** Sí, no o sin dato; solo con MENSTRUAL_TRACKING vigente (RN-G17). */
+  readonly hormonalContraception: boolean | null;
 }
 
 export const PROFILE_REVISION_CONFLICT = domainError({

@@ -56,6 +56,7 @@ export const CONSENT_PURPOSE_LABELS = {
   IMAGES: 'Imágenes',
   ANONYMIZED_RESEARCH: 'Investigación anonimizada',
   MARKETING: 'Comunicaciones',
+  MENSTRUAL_TRACKING: 'Seguimiento del ciclo menstrual',
 } as const satisfies Record<Consent['purpose'], string>;
 
 export const CONSENT_CHANNEL_LABELS = {

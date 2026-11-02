@@ -20,7 +20,7 @@ Próxima demo: Demo 3 · Entrenamiento y app del paciente · semana 6
 | P10 Composición, menú y recetario | ✅ | Rodrigo | #28, #30 y #31 | 2 criterios en verde (integración y E2E en escritorio y celular): recetario (ADR-061), composición y menú en la API (ADR-062) y pantallas (ADR-063). Plantillas (RF-22, deseable) fuera. /notion-sync aplicado (17 cambios en 02, 03, 04, 05 y 05.2) |
 | P11 Fichas PDF, Demo 2 | ✅ | Rodrigo | #32 a #37 | 4 criterios en verde (integración y E2E en escritorio y celular): contexto documents y ficha de intercambios (ADR-064), fichas del menú y de resultados (ADR-065; 1.0.1 en ADR-069), marca mínima (ADR-066), descargas (ADR-067), semilla, guion y acta de la Demo 2 (ADR-068). Etiqueta v0.2.0 (e05f8de); staging, pendiente de P4. /notion-sync aplicado (17 cambios en 02, 03, 04, 05, 05.1, 05.3 y 06) |
 | P12 Ejercicios y rutinas | ✅ | Rodrigo | #39 a #42 y #44 a #47 | 5 criterios en verde (integración y E2E en escritorio y celular): motor (ADR-070), biblioteca (ADR-071), anamnesis V2 (ADR-072), alergias (ADR-074), seguridad (ADR-075), programa por la API y en la web (ADR-077, ADR-078) y ficha de rutina (ADR-079) |
-| P13 App del paciente | 🟨 | Rodrigo | | Plan aprobado (2026-11-01, ADR-080): 5 PR. PR 1 (motor), PR 2 (registros por la API) y PR 3 (Hoy y el plan) hechos |
+| P13 App del paciente | 🟨 | Rodrigo | #50, #51 y #52 | Plan aprobado (2026-11-01, ADR-080): 6 PR. PR 1 (motor), PR 2 (registros por la API), PR 3 (Hoy y el plan) y PR 4a (registro diario y entreno por la API) hechos |
 | P14 Analítica y evolución, Demo 3 | ⬜ | Rodrigo | | |
 | P15 Marca, calendario, admin y migración | ⬜ | Rodrigo | | |
 | P16 Producción y entrega, Demo 4 | ⬜ | Rodrigo | | |
@@ -28,7 +28,7 @@ Próxima demo: Demo 3 · Entrenamiento y app del paciente · semana 6
 Leyenda: ⬜ pendiente · 🟨 en curso · ✅ terminado · ⛔ bloqueado
 
 ## En curso
-- P13 en curso (plan aprobado el 2026-11-01, ADR-080), en 5 PR contra main:
+- P13 en curso (plan aprobado el 2026-11-01, ADR-080), en 6 PR contra main:
   - PR 1, motor: `READINESS_JV` 3.0.0 con la carga sRPE, el rendimiento, la recuperación y la indicación del día (RN-G14, RN-G15);
     G-36 a G-38 en verde. Motor 1.5.0;
   - PR 2, registros por la API (ADR-081): comida del plan o del catálogo, agua, notas y peso por /me, con `@PatientOnly`, la ventana de 3
@@ -36,8 +36,12 @@ Leyenda: ⬜ pendiente · 🟨 en curso · ✅ terminado · ⛔ bloqueado
   - PR 3, app (ADR-082): Hoy con las comidas del plan para registrar en tres toques, el agua y la sesión del día; el plan con lo de
     fuera del plan; notas, peso e instalar la app en Más; y en el panel, la app del paciente y el plazo de los registros. E2E en
     escritorio y celular; Lighthouse móvil 96 en Hoy;
-  - PR 4, registro diario y entreno: la indicación en Hoy, MENSTRUAL_TRACKING, la sesión del día con sus series y el cribado desde la app;
-  - PR 5, profesional y cierre: registros en solo lectura, ajustes con motivo, notas leídas y la anticoncepción hormonal; la cola sin conexión
+  - PR 4a, registro diario y entreno por la API (ADR-083): el registro diario con la indicación del día, el entreno con sus series y su
+    tonelaje, MENSTRUAL_TRACKING y el cribado del paciente por /me, y la anticoncepción hormonal en el perfil;
+  - PR 4b, pantallas: el registro diario en menos de 2 minutos, la indicación en Hoy, Entreno con las series, MENSTRUAL_TRACKING y el
+    cribado en Más, y la anticoncepción hormonal en el panel. Debe resolver lo anotado en ADR-083: el formulario del perfil no borra el
+    valor, cómo se vacía tras retirar el permiso y cómo se actualiza el registro diario después de registrar la sesión;
+  - PR 5, profesional y cierre: registros en solo lectura, ajustes con motivo y notas leídas; la cola sin conexión
     (RF-31) si alcanza.
 - P12 terminado (#39 a #42 y #44 a #47; #43 se fusionó en la rama de alergias y #44 lo llevó a main):
   - #39 (ADR-070): en el motor, `PRI_JV`, las llaves de seguridad, la propuesta y el macrociclo; G-29 a G-35 y G-40 en verde. Motor 1.4.0;
@@ -113,7 +117,7 @@ Leyenda: ⬜ pendiente · 🟨 en curso · ✅ terminado · ⛔ bloqueado
 ## Siguiente paso
 - Antes de la Demo 3: la matriz manual de navegadores (RNF-19: Chrome, Edge, Safari y Firefox; la E2E cubre Chromium
   y WebKit), que no quedó registrada en las demos 1 y 2
-- P13 App del paciente, PR 4: registro diario, recuperación e indicación del día, y el entreno (ADR-080)
+- P13 App del paciente, PR 4b: las pantallas del registro diario, la indicación en Hoy, Entreno, MENSTRUAL_TRACKING y el cribado (ADR-083)
 - Demo 2: presentada, a la espera de su feedback. Falta enviar el acta (docs/actas/demo-2.md) con los nombres de las partes
   confirmados contra el contrato (ADR-068): la aceptación por escrito deja el cobro de la semana 7 sin otra revisión
 - Cada base nueva necesita los catálogos: `pnpm --filter api build && pnpm catalog:load plataforma@demo.example.com`
@@ -157,11 +161,13 @@ Leyenda: ⬜ pendiente · 🟨 en curso · ✅ terminado · ⛔ bloqueado
   «oficiales» y la atribución de fuentes una sola vez, en «Acerca de» (ADR-056). Sin logos ni aval del Estado
 - [ ] Captura de un plato por foto: la visión espera un acuerdo con Jeremy (un modelo propio también es IA, regla 10)
 - [ ] Textos legales revisados por el abogado del cliente, en lenguaje claro: desde los 14 años los acepta el propio
-  paciente (ADR-042)
+  paciente (ADR-042). Incluye el de MENSTRUAL_TRACKING, 0.1-provisional desde P13 (ADR-083)
 - [ ] ⚠️ Menores: desde los 14 consienten como un adulto; antes, solo en papel firmado por su padre, madre o tutor, sin
   registrar quién es el tutor (ADR-042). Pendiente de confirmar con el abogado
 
 ## Deuda técnica
+- Consultas en paralelo dentro de una transacción (`Promise.all` en `me.queries.ts` y `patient-self-service.ts`): `pg` avisa que `pg@9` lo quitará.
+  Antes de subir a esa versión, pasarlas a secuencia (ADR-083)
 - P16, antes de la entrega: revisar y quitar los mensajes de «Provisional» (ejercicios base, lista DEMO, textos legales) o
   dejar marcado lo que siga sin confirmar (pedido de Rodrigo, 2026-10-30)
 - Al terminar la Demo 3 (recordatorio que pidió Rodrigo, 2026-11-01):

@@ -60,6 +60,10 @@ export class AthleteProfileCommands {
         physicalTestCodes: new Set(await this.assessment.physicalTestCodes()),
       });
       if (!checked.ok) return checked;
+      if (input.hormonalContraception !== null) {
+        const consent = await this.clinical.ensureMenstrualTrackingConsent(patientId);
+        if (!consent.ok) return consent;
+      }
       await this.clinical.lockPatient(patientId);
       const current = (await this.profiles.latest(patientId))?.revision ?? 0;
       if (current !== expectedRevision) return err(PROFILE_REVISION_CONFLICT);

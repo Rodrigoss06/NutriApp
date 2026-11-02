@@ -20,6 +20,7 @@ const INPUT: AthleteProfileInput = {
   sleepTargetHours: 8,
   testTargets: { WALK_6MIN: 500 },
   notes: null,
+  hormonalContraception: null,
 };
 const REFERENCES = {
   equipmentCodes: new Set(['FULL_GYM']),

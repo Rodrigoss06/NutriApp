@@ -531,6 +531,54 @@ describe('02 §8 · cada registro deja su evento para la analítica', () => {
   });
 });
 
+describe('06 §5 · RN-G08 · los POST de la app llevan Idempotency-Key', () => {
+  const NOTE = () => ({ clientId: id(), localDate: day(), body: 'Con la clave.' });
+
+  it('sin la cabecera, 400 y no se registra nada', async () => {
+    const note = NOTE();
+
+    const response = await harness.postWithoutIdempotencyKey('/me/notes', note, patientCookie);
+
+    expect(response.status).toBe(400);
+    expect((response.body as { code: string }).code).toBe('NC-PLT-004');
+    expect(
+      await owner(`SELECT 1 FROM tracking.note_log WHERE client_id = $1`, [note.clientId]),
+    ).toEqual([]);
+  });
+
+  it('también al anular; leer no la necesita', async () => {
+    const response = await harness.postWithoutIdempotencyKey(
+      `/me/hydration-logs/${id()}/void`,
+      undefined,
+      patientCookie,
+    );
+    expect(response.status).toBe(400);
+    expect((await harness.get('/me/today', patientCookie)).status).toBe(200);
+  });
+
+  it('con la misma clave y el mismo cuerpo, repite la respuesta sin ejecutar otra vez', async () => {
+    const note = NOTE();
+    const key = `test:${id()}`;
+    const send = () =>
+      harness
+        .postWithoutIdempotencyKey('/me/notes', note, patientCookie)
+        .set('Idempotency-Key', key);
+
+    const first = await send();
+    const again = await send();
+
+    expect(first.status).toBe(201);
+    expect(again.status).toBe(201);
+    expect(again.headers['idempotent-replayed']).toBeDefined();
+    expect((again.body as { id: string }).id).toBe((first.body as { id: string }).id);
+  });
+
+  it('el profesional sigue recibiendo 403 antes de que se mire la clave', async () => {
+    const response = await harness.postWithoutIdempotencyKey('/me/notes', NOTE(), cookie);
+    expect(response.status).toBe(403);
+  });
+});
+
 describe('RN-A02 · con la organización en solo lectura no se registra', () => {
   it('registrar responde 422 con RN-A02; leer sigue', async () => {
     await owner(`UPDATE tenancy.organization SET status = 'READ_ONLY' WHERE id = $1`, [

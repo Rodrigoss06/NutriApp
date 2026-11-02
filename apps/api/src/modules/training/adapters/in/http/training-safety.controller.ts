@@ -80,6 +80,7 @@ export class TrainingSafetyController {
         sleepTargetHours: profile.sleepTargetHours,
         testTargets: { ...profile.testTargets },
         notes: profile.notes,
+        hormonalContraception: profile.hormonalContraception,
         recordedBy: profile.recordedBy,
         recordedAt: profile.recordedAt.toISOString(),
       },

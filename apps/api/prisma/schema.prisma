@@ -1511,17 +1511,34 @@ model ActivePlanView {
 /// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
 /// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
 model DailyCheckin {
-  id             String   @db.Uuid
-  localDate      DateTime @map("local_date") @db.Date
-  organizationId String   @map("organization_id") @db.Uuid
-  patientId      String   @map("patient_id") @db.Uuid
-  stress         Int?     @db.SmallInt
-  sleepHours     Decimal? @map("sleep_hours") @db.Decimal(3, 1)
-  energy         Int?     @db.SmallInt
-  source         String   @default("APP")
-  status         String   @default("ACTIVE")
-  clientId       String   @map("client_id") @db.Uuid
-  createdAt      DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  id                     String   @db.Uuid
+  localDate              DateTime @map("local_date") @db.Date
+  organizationId         String   @map("organization_id") @db.Uuid
+  patientId              String   @map("patient_id") @db.Uuid
+  stress                 Int?     @db.SmallInt
+  sleepHours             Decimal? @map("sleep_hours") @db.Decimal(3, 1)
+  energy                 Int?     @db.SmallInt
+  source                 String   @default("APP")
+  status                 String   @default("ACTIVE")
+  clientId               String   @map("client_id") @db.Uuid
+  createdAt              DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  programId              String?  @map("program_id") @db.Uuid
+  weekNo                 Int?     @map("week_no") @db.SmallInt
+  sessionId              String?  @map("session_id") @db.Uuid
+  sessionMinutes         Int?     @map("session_minutes") @db.SmallInt
+  sessionRpe             Decimal? @map("session_rpe") @db.Decimal(3, 1)
+  fatigue                Int?     @db.SmallInt
+  soreness               Int?     @db.SmallInt
+  motivation             Int?     @db.SmallInt
+  menstrualSymptoms      Int?     @map("menstrual_symptoms") @db.SmallInt
+  nutritionCompliancePct Int?     @map("nutrition_compliance_pct") @db.SmallInt
+  carbsAroundTrainingG   Decimal? @map("carbs_around_training_g") @db.Decimal(5, 1)
+  performancePlanned     Decimal? @map("performance_planned") @db.Decimal(10, 2)
+  performanceActual      Decimal? @map("performance_actual") @db.Decimal(10, 2)
+  restingHrBpm           Int?     @map("resting_hr_bpm") @db.SmallInt
+  hrvMs                  Decimal? @map("hrv_ms") @db.Decimal(5, 1)
+  steps                  Int?
+  activeKcal             Decimal? @map("active_kcal") @db.Decimal(6, 1)
 
   @@id([id, localDate])
   @@unique([patientId, localDate], map: "checkin_one_per_day", where: raw("(status = 'ACTIVE'::text)"))
@@ -1746,6 +1763,7 @@ model SetLog {
   @@id([id, localDate])
   @@unique([patientId, clientId, localDate], map: "set_log_idem")
   @@index([organizationId, patientId, exerciseId, localDate], map: "set_log_exercise")
+  @@index([workoutLogId, localDate], map: "set_log_by_workout")
   @@map("set_log")
   @@schema("tracking")
 }
@@ -2129,30 +2147,31 @@ model PreExerciseScreening {
 /// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
 /// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
 model AthleteProfile {
-  id                   String            @id @db.Uuid
-  organizationId       String            @map("organization_id") @db.Uuid
-  patientId            String            @map("patient_id") @db.Uuid
-  revision             Int
-  objective            String
-  level                String
-  daysPerWeek          Int               @map("days_per_week") @db.SmallInt
-  minutesPerSession    Int?              @map("minutes_per_session") @db.SmallInt
-  equipmentCodes       String[]          @default([]) @map("equipment_codes")
-  startDate            DateTime?         @map("start_date") @db.Date
-  macrocycleWeeks      Int               @default(12) @map("macrocycle_weeks") @db.SmallInt
-  medicalClearance     String            @default("PENDING") @map("medical_clearance")
-  alarmSymptoms        Boolean           @default(false) @map("alarm_symptoms")
-  injuriesNote         String?           @map("injuries_note")
-  restrictionsNote     String?           @map("restrictions_note")
-  baselineWeightKg     Decimal?          @map("baseline_weight_kg") @db.Decimal(5, 2)
-  baselineRestingHrBpm Int?              @map("baseline_resting_hr_bpm") @db.SmallInt
-  baselineHrvMs        Decimal?          @map("baseline_hrv_ms") @db.Decimal(5, 1)
-  sleepTargetHours     Decimal           @default(8) @map("sleep_target_hours") @db.Decimal(3, 1)
-  testTargets          Json              @default("{}") @map("test_targets")
-  notes                String?
-  recordedBy           String            @map("recorded_by") @db.Uuid
-  recordedAt           DateTime          @default(now()) @map("recorded_at") @db.Timestamptz(6)
-  trainingPrograms     TrainingProgram[]
+  id                    String            @id @db.Uuid
+  organizationId        String            @map("organization_id") @db.Uuid
+  patientId             String            @map("patient_id") @db.Uuid
+  revision              Int
+  objective             String
+  level                 String
+  daysPerWeek           Int               @map("days_per_week") @db.SmallInt
+  minutesPerSession     Int?              @map("minutes_per_session") @db.SmallInt
+  equipmentCodes        String[]          @default([]) @map("equipment_codes")
+  startDate             DateTime?         @map("start_date") @db.Date
+  macrocycleWeeks       Int               @default(12) @map("macrocycle_weeks") @db.SmallInt
+  medicalClearance      String            @default("PENDING") @map("medical_clearance")
+  alarmSymptoms         Boolean           @default(false) @map("alarm_symptoms")
+  injuriesNote          String?           @map("injuries_note")
+  restrictionsNote      String?           @map("restrictions_note")
+  baselineWeightKg      Decimal?          @map("baseline_weight_kg") @db.Decimal(5, 2)
+  baselineRestingHrBpm  Int?              @map("baseline_resting_hr_bpm") @db.SmallInt
+  baselineHrvMs         Decimal?          @map("baseline_hrv_ms") @db.Decimal(5, 1)
+  sleepTargetHours      Decimal           @default(8) @map("sleep_target_hours") @db.Decimal(3, 1)
+  testTargets           Json              @default("{}") @map("test_targets")
+  notes                 String?
+  recordedBy            String            @map("recorded_by") @db.Uuid
+  recordedAt            DateTime          @default(now()) @map("recorded_at") @db.Timestamptz(6)
+  hormonalContraception Boolean?          @map("hormonal_contraception")
+  trainingPrograms      TrainingProgram[]
 
   @@unique([patientId, revision])
   @@map("athlete_profile")
@@ -2177,5 +2196,54 @@ model PeriodizationPhase {
 
   @@unique([organizationId, objective, validFrom, weekNo])
   @@map("periodization_phase")
+  @@schema("training")
+}
+
+/// This table is a partition table and requires additional setup for migrations. Visit https://pris.ly/d/partition-tables for more info.
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model DailyReadiness {
+  id             String   @db.Uuid
+  localDate      DateTime @map("local_date") @db.Date
+  organizationId String   @map("organization_id") @db.Uuid
+  patientId      String   @map("patient_id") @db.Uuid
+  checkinId      String   @map("checkin_id") @db.Uuid
+  methodCode     String   @map("method_code")
+  methodVersion  String   @map("method_version")
+  engineVersion  String   @map("engine_version")
+  thresholdId    String   @map("threshold_id") @db.Uuid
+  inputs         Json
+  inputsHash     Bytes    @map("inputs_hash")
+  srpeLoad       Decimal? @map("srpe_load") @db.Decimal(7, 1)
+  performancePct Decimal? @map("performance_pct") @db.Decimal(5, 1)
+  readinessScore Decimal? @map("readiness_score") @db.Decimal(5, 2)
+  components     Json
+  indication     String
+  status         String   @default("CURRENT")
+  computedAt     DateTime @map("computed_at") @db.Timestamptz(6)
+
+  @@id([id, localDate])
+  @@unique([patientId, localDate], map: "readiness_one_per_day", where: raw("(status = 'CURRENT'::text)"))
+  @@index([checkinId, localDate], map: "readiness_by_checkin")
+  @@map("daily_readiness")
+  @@schema("tracking")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model ReadinessThreshold {
+  id                        String   @id @db.Uuid
+  organizationId            String?  @map("organization_id") @db.Uuid
+  validFrom                 DateTime @map("valid_from") @db.Date
+  neutralScore              Decimal  @default(75) @map("neutral_score") @db.Decimal(5, 2)
+  readinessGreenMin         Decimal  @default(75) @map("readiness_green_min") @db.Decimal(5, 2)
+  readinessRedBelow         Decimal  @default(60) @map("readiness_red_below") @db.Decimal(5, 2)
+  performanceMinPct         Decimal  @default(90) @map("performance_min_pct") @db.Decimal(5, 2)
+  weeklySleepMinHours       Decimal  @default(6.5) @map("weekly_sleep_min_hours") @db.Decimal(3, 1)
+  fatigueSorenessAmberAbove Decimal  @default(4) @map("fatigue_soreness_amber_above") @db.Decimal(3, 1)
+  nutritionMinPct           Decimal  @default(80) @map("nutrition_min_pct") @db.Decimal(5, 2)
+
+  @@unique([organizationId, validFrom])
+  @@map("readiness_threshold")
   @@schema("training")
 }

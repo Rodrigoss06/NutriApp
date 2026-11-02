@@ -167,6 +167,231 @@ export const metricLogSchema = z.object({
 });
 export type MetricLog = z.infer<typeof metricLogSchema>;
 
+const score = z.number().int().min(1).max(5).nullable().default(null);
+
+/**
+ * POST /api/v1/me/checkins: el registro diario de entrenamiento y recuperación (RN-G11, 07 §9), uno por día; registrarlo otra vez
+ * corrige el del día (RN-G12). Los datos del reloj se cargan a mano y son opcionales. Los síntomas del ciclo, solo con
+ * MENSTRUAL_TRACKING (RN-G17).
+ */
+export const logCheckinSchema = z.strictObject({
+  ...recordBase,
+  sessionMinutes: z.number().int().min(0).max(600).nullable().default(null),
+  sessionRpe: z
+    .number()
+    .min(0)
+    .max(10)
+    .refine(...decimals(1))
+    .nullable()
+    .default(null),
+  sleepHours: z
+    .number()
+    .min(0)
+    .max(24)
+    .refine((value) => Number.isInteger(value * 2), 'En medias horas.')
+    .nullable()
+    .default(null),
+  fatigue: score,
+  soreness: score,
+  stress: score,
+  motivation: score,
+  menstrualSymptoms: z.number().int().min(0).max(3).nullable().default(null),
+  nutritionCompliancePct: z.number().int().min(0).max(100).nullable().default(null),
+  carbsAroundTrainingG: z
+    .number()
+    .min(0)
+    .max(2_000)
+    .refine(...decimals(1))
+    .nullable()
+    .default(null),
+  performancePlanned: z
+    .number()
+    .min(0)
+    .max(99_999_999)
+    .refine(...decimals(2))
+    .nullable()
+    .default(null),
+  performanceActual: z
+    .number()
+    .min(0)
+    .max(99_999_999)
+    .refine(...decimals(2))
+    .nullable()
+    .default(null),
+  restingHrBpm: z.number().int().min(25).max(220).nullable().default(null),
+  hrvMs: z
+    .number()
+    .positive()
+    .max(9_999)
+    .refine(...decimals(1))
+    .nullable()
+    .default(null),
+  steps: z.number().int().min(0).max(200_000).nullable().default(null),
+  activeKcal: z
+    .number()
+    .min(0)
+    .max(99_999)
+    .refine(...decimals(1))
+    .nullable()
+    .default(null),
+});
+export type LogCheckin = z.input<typeof logCheckinSchema>;
+
+export const READINESS_INDICATIONS = ['GREEN', 'YELLOW', 'RED', 'NO_DATA'] as const;
+export type ReadinessIndication = (typeof READINESS_INDICATIONS)[number];
+export const READINESS_COMPONENT_CODES = ['sleep', 'heartRate', 'hrv', 'subjective'] as const;
+
+/** Lo que el paciente ve en Hoy de cada indicación (07 §9): un consejo para el día, que no cambia el plan. */
+export const INDICATION_TEXTS: Readonly<
+  Record<ReadinessIndication, { readonly label: string; readonly text: string }>
+> = {
+  GREEN: {
+    label: 'Verde · mantener',
+    text: 'Entrena según lo planificado. Cumple la sesión planificada.',
+  },
+  YELLOW: {
+    label: 'Amarillo · ajustar 5–15 %',
+    text: 'Reduce entre 5 % y 15 % la carga o el volumen, y cuida la recuperación.',
+  },
+  RED: {
+    label: 'Rojo · recuperar / revisar',
+    text: 'Prioriza la recuperación, evita forzar y avisa a tu coach si hay dolor o malestar.',
+  },
+  NO_DATA: {
+    label: 'Sin datos suficientes',
+    text: 'Completa tu registro diario para recibir una indicación.',
+  },
+};
+
+/** La nota visible junto al registro diario (07 §9). */
+export const READINESS_NOTE =
+  'Tus datos de sueño, fatiga, rendimiento y alimentación se usan para ajustar tu semana. El ciclo menstrual solo se registra si tú lo autorizas.';
+
+/** La recuperación e indicación del día, resultado del motor con su método (RN-G14, RN-G15, RN-D01). */
+export const readinessSchema = z.object({
+  indication: z.enum(READINESS_INDICATIONS),
+  readinessScore: z.number().nullable(),
+  components: z.object({
+    sleep: z.number(),
+    heartRate: z.number(),
+    hrv: z.number(),
+    subjective: z.number(),
+  }),
+  neutralComponents: z.array(z.enum(READINESS_COMPONENT_CODES)),
+  srpeLoad: z.number().nullable(),
+  performancePct: z.number().nullable(),
+  methodCode: z.string(),
+  methodVersion: z.string(),
+});
+export type Readiness = z.infer<typeof readinessSchema>;
+
+export const checkinSchema = z.object({
+  id: z.uuid(),
+  clientId: z.uuid(),
+  localDate: isoDate,
+  sessionMinutes: z.number().nullable(),
+  sessionRpe: z.number().nullable(),
+  sleepHours: z.number().nullable(),
+  fatigue: z.number().nullable(),
+  soreness: z.number().nullable(),
+  stress: z.number().nullable(),
+  motivation: z.number().nullable(),
+  menstrualSymptoms: z.number().nullable(),
+  nutritionCompliancePct: z.number().nullable(),
+  carbsAroundTrainingG: z.number().nullable(),
+  performancePlanned: z.number().nullable(),
+  performanceActual: z.number().nullable(),
+  restingHrBpm: z.number().nullable(),
+  hrvMs: z.number().nullable(),
+  steps: z.number().nullable(),
+  activeKcal: z.number().nullable(),
+  status: z.enum(RECORD_STATUSES),
+  readiness: readinessSchema.nullable(),
+});
+export type Checkin = z.infer<typeof checkinSchema>;
+
+export const WORKOUT_OUTCOMES = ['COMPLETED', 'PARTIAL', 'SKIPPED'] as const;
+
+/** Una serie hecha (RF-29): repeticiones, peso, RIR o RPE, estímulo y fatiga; el cardio, en segundos y con MET (RN-F10). */
+export const loggedSetSchema = z.strictObject({
+  exerciseId: z.uuid(),
+  setNo: z.number().int().min(1).max(50),
+  isWarmup: z.boolean().default(false),
+  reps: z.number().int().min(0).max(600).nullable().default(null),
+  loadKg: z
+    .number()
+    .min(0)
+    .max(9_999)
+    .refine(...decimals(2))
+    .nullable()
+    .default(null),
+  rir: z.number().int().min(0).max(10).nullable().default(null),
+  rpe: z
+    .number()
+    .min(0)
+    .max(10)
+    .refine(...decimals(1))
+    .nullable()
+    .default(null),
+  durationSeconds: z.number().int().min(1).max(86_400).nullable().default(null),
+  distanceM: z
+    .number()
+    .positive()
+    .max(999_999)
+    .refine(...decimals(1))
+    .nullable()
+    .default(null),
+  met: z
+    .number()
+    .positive()
+    .max(99)
+    .refine(...decimals(1))
+    .nullable()
+    .default(null),
+  stimulus: score,
+  fatigue: score,
+});
+
+/** POST /api/v1/me/workouts: una sesión del programa vigente con sus series, su duración y su RPE (RF-29). */
+export const logWorkoutSchema = z
+  .strictObject({
+    ...recordBase,
+    sessionId: z.uuid().nullable().default(null),
+    outcome: z.enum(WORKOUT_OUTCOMES),
+    durationMinutes: z.number().int().min(0).max(600).nullable().default(null),
+    sessionRpe: z
+      .number()
+      .min(0)
+      .max(10)
+      .refine(...decimals(1))
+      .nullable()
+      .default(null),
+    stimulus: score,
+    fatigue: score,
+    notes: z.string().trim().max(2_000).nullable().default(null),
+    sets: z.array(loggedSetSchema).max(200),
+  })
+  .refine(({ outcome, sets }) => outcome !== 'SKIPPED' || sets.length === 0, {
+    path: ['sets'],
+    message: 'Una sesión omitida no lleva series.',
+  });
+export type LogWorkout = z.input<typeof logWorkoutSchema>;
+
+export const workoutLogSchema = z.object({
+  id: z.uuid(),
+  clientId: z.uuid(),
+  localDate: isoDate,
+  sessionId: z.uuid().nullable(),
+  outcome: z.enum(WORKOUT_OUTCOMES),
+  durationMinutes: z.number().nullable(),
+  sessionRpe: z.number().nullable(),
+  /** Peso × repeticiones de las series efectivas (RN-F03). */
+  tonnageKg: z.number(),
+  setCount: z.number().int(),
+  status: z.enum(RECORD_STATUSES),
+});
+export type WorkoutLog = z.infer<typeof workoutLogSchema>;
+
 /** GET /api/v1/me/days/:date: los registros vigentes del día y su total (RN-G09). */
 export const meDaySchema = z.object({
   localDate: isoDate,
@@ -178,6 +403,9 @@ export const meDaySchema = z.object({
   metrics: z.array(metricLogSchema),
   totals: dayTotalsSchema,
   waterMl: z.number().int(),
+  /** El registro diario vigente del día, con su recuperación (RN-G11). */
+  checkin: checkinSchema.nullable(),
+  workouts: z.array(workoutLogSchema),
 });
 export type MeDay = z.infer<typeof meDaySchema>;
 
@@ -208,6 +436,8 @@ export const meTodaySchema = z.object({
   plan: z.object({ planId: z.uuid(), modality: z.enum(PLAN_MODALITIES) }).nullable(),
   /** Con programa vigente: sus sesiones de hoy, o ninguna en un día de descanso. Sin programa, null. */
   sessions: z.array(daySessionSchema).nullable(),
+  /** La recuperación e indicación de hoy si ya completó su registro diario (RN-G15). */
+  readiness: readinessSchema.nullable(),
 });
 export type MeToday = z.infer<typeof meTodaySchema>;
 
@@ -275,3 +505,63 @@ export const mePlanSchema = z.object({
     .nullable(),
 });
 export type MePlan = z.infer<typeof mePlanSchema>;
+
+const prescribedSetViewSchema = z.object({
+  setNo: z.number().int(),
+  setType: z.string(),
+  repsMin: z.number().nullable(),
+  repsMax: z.number().nullable(),
+  loadKind: z.string().nullable(),
+  loadValue: z.number().nullable(),
+  restSeconds: z.number().nullable(),
+  tempo: z.string().nullable(),
+  durationSeconds: z.number().nullable(),
+  distanceM: z.number().nullable(),
+  met: z.number().nullable(),
+});
+
+/** GET /api/v1/me/training: las sesiones de hoy del programa vigente y lo ya registrado (RF-29). */
+export const meTrainingSchema = z.object({
+  localDate: isoDate,
+  program: z
+    .object({
+      programId: z.uuid(),
+      name: z.string(),
+      weekNo: z.number().int(),
+      isDeload: z.boolean(),
+      phase: z.string().nullable(),
+      targetRir: z.number().nullable(),
+    })
+    .nullable(),
+  sessions: z.array(
+    z.object({
+      id: z.uuid(),
+      position: z.number().int(),
+      name: z.string(),
+      dayOfWeek: z.number().int().nullable(),
+      notes: z.string().nullable(),
+      plannedTonnageKg: z.number().nullable(),
+      exercises: z.array(
+        z.object({
+          id: z.uuid(),
+          exerciseId: z.uuid(),
+          name: z.string(),
+          supersetGroup: z.string().nullable(),
+          notes: z.string().nullable(),
+          caution: z.string().nullable(),
+          alternative: z.string().nullable(),
+          easierVariant: z.string().nullable(),
+          harderVariant: z.string().nullable(),
+          mediaUrl: z.string().nullable(),
+          instructions: z.string().nullable(),
+          primaryMuscles: z.array(z.string()),
+          secondaryMuscles: z.array(z.string()),
+          sets: z.array(prescribedSetViewSchema),
+        }),
+      ),
+    }),
+  ),
+  workouts: z.array(workoutLogSchema),
+  checkin: checkinSchema.nullable(),
+});
+export type MeTraining = z.infer<typeof meTrainingSchema>;

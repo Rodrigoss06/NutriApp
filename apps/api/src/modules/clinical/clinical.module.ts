@@ -1,4 +1,6 @@
 import { Global, Module } from '@nestjs/common';
+import { MeClinicalController } from './adapters/in/http/me-clinical.controller.js';
+import { PatientSelfService } from './application/patient-self-service.js';
 import { PATIENT_ENROLLMENT } from '../iam/index.js';
 import { ACTIVE_PATIENT_COUNTER } from '../tenancy/index.js';
 import { ClinicalApi } from './application/clinical-api.js';
@@ -30,7 +32,7 @@ import {
  */
 @Global()
 @Module({
-  controllers: [PatientController, ClinicalRecordController],
+  controllers: [PatientController, ClinicalRecordController, MeClinicalController],
   providers: [
     PatientCommands,
     ConsentCommands,
@@ -39,6 +41,7 @@ import {
     PatientQueries,
     ClinicalRecordQueries,
     ClinicalApi,
+    PatientSelfService,
     TimelineSources,
     PatientEnrollmentService,
     { provide: PATIENT_ENROLLMENT, useExisting: PatientEnrollmentService },

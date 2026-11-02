@@ -46,6 +46,7 @@ const INPUT = {
   sleepTargetHours: 8,
   testTargets: {},
   notes: null,
+  hormonalContraception: null,
 } as const;
 const GREEN: LatestScreening = {
   id: '0192f0a0-0000-7000-8000-0000000000d1',

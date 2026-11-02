@@ -1,10 +1,13 @@
 import { Body, Controller, Get, Param, ParseUUIDPipe, Post, Query, Req, Res } from '@nestjs/common';
 import {
   correctFoodLogSchema,
+  logCheckinSchema,
   logFoodSchema,
   logHydrationSchema,
   logMetricSchema,
   logNoteSchema,
+  logWorkoutSchema,
+  type Checkin,
   type FoodListResponse,
   type FoodLog,
   type FoodLogsResponse,
@@ -13,7 +16,10 @@ import {
   type MePlan,
   type MeToday,
   type MetricLog,
+  type MeTraining,
   type NoteLog,
+  type Readiness,
+  type WorkoutLog,
 } from '@nutricoach/contracts';
 import { isErr, type DomainError, type SecurityContext } from '@nutricoach/shared-kernel';
 import type { Response } from 'express';
@@ -26,11 +32,15 @@ import {
   type ContextualRequest,
 } from '../../../../../platform/index.js';
 import { RecordCommands, type Logged } from '../../../application/commands/record.commands.js';
+import { TrainingLogCommands } from '../../../application/commands/training-log.commands.js';
 import type {
+  StoredCheckin,
   StoredFoodLog,
   StoredHydrationLog,
   StoredMetric,
   StoredNote,
+  StoredReadiness,
+  StoredWorkout,
 } from '../../../application/ports/records.ports.js';
 import { MeQueries } from '../../../application/queries/me.queries.js';
 import { FOOD_NOT_FOUND, RECORD_NOT_FOUND } from '../../../domain/tracking-errors.js';
@@ -86,6 +96,22 @@ const metricOf = (metric: StoredMetric): MetricLog => ({
   metricCode: metric.metricCode as MetricLog['metricCode'],
 });
 
+const readinessOf = (readiness: StoredReadiness): Readiness => ({
+  indication: readiness.indication,
+  readinessScore: readiness.readinessScore,
+  components: { ...readiness.components },
+  neutralComponents: [...readiness.neutralComponents],
+  srpeLoad: readiness.srpeLoad,
+  performancePct: readiness.performancePct,
+  methodCode: readiness.methodCode,
+  methodVersion: readiness.methodVersion,
+});
+const checkinOf = (checkin: StoredCheckin): Checkin => ({
+  ...checkin,
+  readiness: checkin.readiness && readinessOf(checkin.readiness),
+});
+const workoutOf = (workout: StoredWorkout): WorkoutLog => ({ ...workout });
+
 /** 201 si quedó registrado ahora; 200 si es un reintento con el mismo clientId y vuelve lo de la primera vez (RN-G08). */
 function respond<T, R>(response: Response, logged: Logged<T>, map: (value: T) => R): R {
   response.status(logged.replayed ? 200 : 201);
@@ -93,13 +119,14 @@ function respond<T, R>(response: Response, logged: Logged<T>, map: (value: T) =>
 }
 
 /**
- * Lo que el paciente ve y registra desde su app (RF-27, RF-28, 02 §10): su día, su plan y sus registros de comida, agua, notas y
- * peso. Rutas /me: nunca envía su id. Cada registro lleva su clientId (RN-G08) y la Idempotency-Key de la petición.
+ * Lo que el paciente ve y registra desde su app (RF-27 a RF-29, 02 §10): su día, su plan, su entreno y sus registros de comida, agua,
+ * notas, peso, registro diario y sesiones. Rutas /me: nunca envía su id. Cada registro lleva su clientId (RN-G08) y la Idempotency-Key de la petición.
  */
 @Controller('me')
 export class MeTrackingController {
   constructor(
     private readonly commands: RecordCommands,
+    private readonly training: TrainingLogCommands,
     private readonly queries: MeQueries,
   ) {}
 
@@ -107,7 +134,32 @@ export class MeTrackingController {
   @PatientOnly()
   async today(@Req() request: ContextualRequest): Promise<MeToday> {
     const view = await this.queries.today(contextOf(request));
-    return { ...view, sessions: view.sessions ? [...view.sessions] : null };
+    return {
+      ...view,
+      sessions: view.sessions ? [...view.sessions] : null,
+      readiness: view.readiness && readinessOf(view.readiness),
+    };
+  }
+
+  /** El entreno de hoy (RF-29): las sesiones del programa vigente, lo registrado y su registro diario. */
+  @Get('training')
+  @PatientOnly()
+  async trainingToday(@Req() request: ContextualRequest): Promise<MeTraining> {
+    const view = await this.queries.trainingToday(contextOf(request));
+    return {
+      ...view,
+      sessions: view.sessions.map((session) => ({
+        ...session,
+        exercises: session.exercises.map((exercise) => ({
+          ...exercise,
+          primaryMuscles: [...exercise.primaryMuscles],
+          secondaryMuscles: [...exercise.secondaryMuscles],
+          sets: exercise.sets.map((set) => ({ ...set })),
+        })),
+      })),
+      workouts: view.workouts.map(workoutOf),
+      checkin: view.checkin && checkinOf(view.checkin),
+    };
   }
 
   @Get('plan')
@@ -132,6 +184,8 @@ export class MeTrackingController {
       hydration: day.hydration.map(hydrationOf),
       notes: day.notes.map(noteOf),
       metrics: day.metrics.map(metricOf),
+      checkin: day.checkin && checkinOf(day.checkin),
+      workouts: day.workouts.map(workoutOf),
     };
   }
 
@@ -264,5 +318,62 @@ export class MeTrackingController {
     if (isErr(result)) throw problem(result.error);
     response.status(200);
     return metricOf(result.value);
+  }
+
+  /** El registro diario (RN-G11): otra vez el mismo día lo corrige (RN-G12); responde con la indicación del día (RN-G15). */
+  @Post('checkins')
+  @PatientOnly()
+  async logCheckin(
+    @Req() request: ContextualRequest,
+    @Res({ passthrough: true }) response: Response,
+    @Body() body: unknown,
+  ): Promise<Checkin> {
+    const result = await this.training.logCheckin(
+      contextOf(request),
+      parseBody(logCheckinSchema, body),
+    );
+    if (isErr(result)) throw problem(result.error);
+    return respond(response, result.value, checkinOf);
+  }
+
+  @Post('checkins/:id/void')
+  @PatientOnly()
+  async voidCheckin(
+    @Req() request: ContextualRequest,
+    @Res({ passthrough: true }) response: Response,
+    @Param('id', uuid) id: string,
+  ): Promise<Checkin> {
+    const result = await this.training.voidCheckin(contextOf(request), id);
+    if (isErr(result)) throw problem(result.error);
+    response.status(200);
+    return checkinOf(result.value);
+  }
+
+  @Post('workouts')
+  @PatientOnly()
+  async logWorkout(
+    @Req() request: ContextualRequest,
+    @Res({ passthrough: true }) response: Response,
+    @Body() body: unknown,
+  ): Promise<WorkoutLog> {
+    const result = await this.training.logWorkout(
+      contextOf(request),
+      parseBody(logWorkoutSchema, body),
+    );
+    if (isErr(result)) throw problem(result.error);
+    return respond(response, result.value, workoutOf);
+  }
+
+  @Post('workouts/:id/void')
+  @PatientOnly()
+  async voidWorkout(
+    @Req() request: ContextualRequest,
+    @Res({ passthrough: true }) response: Response,
+    @Param('id', uuid) id: string,
+  ): Promise<WorkoutLog> {
+    const result = await this.training.voidWorkout(contextOf(request), id);
+    if (isErr(result)) throw problem(result.error);
+    response.status(200);
+    return workoutOf(result.value);
   }
 }
