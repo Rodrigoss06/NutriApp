@@ -223,6 +223,14 @@ export class TenancyApi {
     ];
   }
 
+  /** RN-G10: hasta cuántos días atrás el paciente registra, corrige o anula; 3 por defecto. */
+  async trackingEditWindowDays(organizationId: OrganizationId): Promise<number> {
+    return settingValue(
+      'tracking.edit_window_days',
+      await this.store.getSetting(organizationId, 'tracking.edit_window_days'),
+    );
+  }
+
   async invitationTtlDays(organizationId: OrganizationId): Promise<number> {
     return settingValue(
       'invitation.ttl_days',

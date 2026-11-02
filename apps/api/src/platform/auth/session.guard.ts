@@ -41,13 +41,30 @@ export class SessionGuard implements CanActivate {
     if (rule.kind === 'platform' && principal.kind !== 'PLATFORM') {
       throw new ProblemException(403, { title: 'Solo para el panel interno.', code: 'NC-PLT-012' });
     }
+    if (
+      rule.kind === 'patient' &&
+      (principal.kind !== 'PATIENT' || !principal.patientId || !principal.activeOrganizationId)
+    ) {
+      throw new ProblemException(403, {
+        title: 'Esta sección es de la app del paciente.',
+        code: 'NC-PLT-013',
+      });
+    }
     request.session = principal;
-    request.securityContext = {
-      organizationId: null,
-      userId: principal.userId,
-      role: principal.kind === 'PLATFORM' ? 'PLATFORM_ADMIN' : 'ACCOUNT',
-      patientId: principal.patientId,
-    };
+    request.securityContext =
+      rule.kind === 'patient'
+        ? {
+            organizationId: principal.activeOrganizationId,
+            userId: principal.userId,
+            role: 'PATIENT',
+            patientId: principal.patientId,
+          }
+        : {
+            organizationId: null,
+            userId: principal.userId,
+            role: principal.kind === 'PLATFORM' ? 'PLATFORM_ADMIN' : 'ACCOUNT',
+            patientId: principal.patientId,
+          };
     return true;
   }
 }

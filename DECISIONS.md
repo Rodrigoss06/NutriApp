@@ -1668,3 +1668,43 @@ Consecuencias:
 - G-36 a G-38 en verde, con G-01 a G-35 y G-40 iguales.
 - Para Notion (/notion-sync de P13): 02 §9 (`READINESS_JV` en la familia de entrenamiento); 05.2 (`method_version` 3.0.0 de `daily_readiness`);
   07 §9 (qué es «al menos un dato») y §15 (P-19); los códigos de arriba.
+
+## ADR-081 · Registros del paciente por /me y la app: comida, agua, notas, peso, ajustes y mensajes — aceptada (2026-11-01)
+Contexto: P13, PR 2 (RF-27, RF-28, RN-G01 a RN-G10, RN-G12). 02 §10 pide rutas /me donde el paciente nunca envía su id; no existían.
+tracking solo tenía la copia del plan y las metas del día, y content no tenía módulo.
+Decisión:
+- Regla de acceso `@PatientOnly`: solo sesiones PATIENT (otra, 403 NC-PLT-013). La organización y el paciente del contexto salen de la sesión,
+  y la organización se lee con el contexto del paciente: suspendida o cerrada, 403; en solo lectura no acepta registros (422, RN-A02).
+- Rutas: GET /me/today, /me/plan?date=, /me/days/:date, /me/foods?q= y /me/app; POST /me/food-logs, /me/food-logs/:id/correct y /void,
+  /me/hydration-logs (y /void), /me/notes, /me/metrics (y /void).
+- Una comida sale del plan o del catálogo (RN-G05):
+  - intercambios: un alimento permitido del grupo y del tiempo, con las porciones del tiempo por defecto, que suman los valores del grupo por
+    porción (guía de dominio §7.1);
+  - composición: el alimento del tiempo por sus nutrientes por 100 g, con los gramos del plan por defecto;
+  - menú: la opción del día, con un registro por alimento o receta;
+  - catálogo: queda fuera del plan.
+  Los nutrientes se congelan; uno que falta queda sin dato y el total dice «al menos» (RN-I03): kcal y macronutrientes aceptan NULL en
+  `food_log` (migración `202611010000_tracking_records`, ADR-080).
+- RN-G08: índice único (paciente, clientId, día) en cada tabla de registros; 05.2 lo tenía solo en comidas. Un reintento devuelve lo de la
+  primera vez con 200, aunque el día ya esté cerrado. La opción de un menú deriva un clientId por registro (UUID v8 con SHA-256), así el
+  reintento los encuentra todos. La Idempotency-Key de la petición sigue valiendo.
+- RN-G10: el ajuste `tracking.edit_window_days` de tenancy, 3 días por defecto, de 0 a 7, en la fecha local del paciente (RN-G04).
+- RN-G12: corregir anula el registro y lo reemplaza en su mismo día (`replaced_by_id`); anular solo cambia el estado. Una nota no se anula.
+- El plan vigente se lee de su snapshot en `active_plan_view` con su `validFrom`: `effective_from` es de la fila, que comparten el plan y el
+  programa. Antes de esa fecha, lo del plan no se registra (NC-TRK-003). La sesión de Hoy sale del snapshot del programa, desde su primer día.
+- Peso en casa: la métrica global `BODY_WEIGHT` (20 a 300 kg, RN-C04), solo si la app lo permite. `tracking.metric_definition` no tenía RLS
+  y cualquier sesión podía cambiarla: pasa a catálogo global, como los de ADR-052 (migración `202611010100`).
+- content: ajustes de la app del paciente (tema #rrggbb, bienvenida, secciones y peso) y mensajes motivacionales. Los del paciente los
+  escribe su equipo con acceso de escritura, sin exigir HEALTH_DATA porque no son datos de salud (`ClinicalApi.ensurePatientWritable`);
+  los de todos, el dueño o un administrador. Nada se borra: un mensaje termina con su fecha de fin. El de hoy: los del paciente antes que los
+  de todos, y rota cada día entre los vigentes.
+- Eventos (02 §8): `tracking.food.logged` y `.voided`, `tracking.hydration.logged` y `.voided`, `tracking.metric.logged` y `.voided`, y
+  `tracking.note.logged`, solo con el paciente, el día y si fue del plan. `content.settings.changed`, `content.message.created` y `.updated`
+  van a la auditoría con los nombres de los campos (RN-B03). Los registros del paciente no se auditan: son su diario y los lee la analítica
+  (05 §8).
+- Códigos: NC-TRK-001 a NC-TRK-009, NC-CON-001, NC-CON-002 y NC-PLT-013.
+Consecuencias:
+- La sesión del día en Hoy da su nombre y cuántos ejercicios; el detalle llega con el entreno (PR 4).
+- Para Notion (/notion-sync de P13): 05.2 (kcal y macronutrientes con NULL en `food_log`, los índices `*_idem` y `*_day`, `BODY_WEIGHT` y
+  la RLS de `metric_definition`); 02 §3 (`ContentApi`, `ClinicalApi.ensurePatientWritable`, `TenancyApi.trackingEditWindowDays`), §7
+  (registros), §8 (`tracking.*.voided` y `content.*`) y §10 (`@PatientOnly` y las rutas /me); 06 (los códigos).

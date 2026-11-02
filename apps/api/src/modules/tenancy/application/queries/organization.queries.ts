@@ -2,6 +2,7 @@ import { Inject, Injectable } from '@nestjs/common';
 import {
   UNIT_OF_WORK,
   type OrganizationId,
+  type PatientId,
   type SecurityContext,
   type UnitOfWork,
   type UserId,
@@ -152,6 +153,17 @@ export class DirectoryQueries {
   membershipsOf(userId: UserId): Promise<readonly MembershipRecord[]> {
     return this.uow.query({ organizationId: null, userId, role: 'ACCOUNT', patientId: null }, () =>
       this.store.membershipsOf(userId),
+    );
+  }
+
+  /** El estado de la organización de un paciente, con su contexto PATIENT: la RLS le deja ver solo la suya. */
+  patientOrganizationStatus(
+    organizationId: OrganizationId,
+    patient: { readonly userId: UserId; readonly patientId: PatientId },
+  ): Promise<OrganizationRecord['status'] | null> {
+    return this.uow.query(
+      { organizationId, userId: patient.userId, role: 'PATIENT', patientId: patient.patientId },
+      async () => (await this.store.findOrganization(organizationId))?.status ?? null,
     );
   }
 }

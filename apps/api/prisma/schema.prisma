@@ -1525,6 +1525,7 @@ model DailyCheckin {
 
   @@id([id, localDate])
   @@unique([patientId, localDate], map: "checkin_one_per_day", where: raw("(status = 'ACTIVE'::text)"))
+  @@unique([patientId, clientId, localDate], map: "checkin_idem")
   @@map("daily_checkin")
   @@schema("tracking")
 }
@@ -1589,10 +1590,10 @@ model FoodLog {
   servings          Decimal? @db.Decimal(5, 2)
   grams             Decimal? @db.Decimal(8, 2)
   householdText     String?  @map("household_text")
-  kcal              Decimal  @db.Decimal(8, 1)
-  choG              Decimal  @map("cho_g") @db.Decimal(7, 2)
-  proteinG          Decimal  @map("protein_g") @db.Decimal(7, 2)
-  fatG              Decimal  @map("fat_g") @db.Decimal(7, 2)
+  kcal              Decimal? @db.Decimal(8, 1)
+  choG              Decimal? @map("cho_g") @db.Decimal(7, 2)
+  proteinG          Decimal? @map("protein_g") @db.Decimal(7, 2)
+  fatG              Decimal? @map("fat_g") @db.Decimal(7, 2)
   nutrients         Json     @default("{}")
   inPlan            Boolean  @map("in_plan")
   source            String   @default("APP")
@@ -1627,6 +1628,8 @@ model HydrationLog {
   createdAt      DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
 
   @@id([id, localDate])
+  @@unique([patientId, clientId, localDate], map: "hydration_log_idem")
+  @@index([organizationId, patientId, localDate], map: "hydration_log_day")
   @@map("hydration_log")
   @@schema("tracking")
 }
@@ -1684,6 +1687,8 @@ model MetricLog {
   metricDefinition MetricDefinition @relation(fields: [metricCode], references: [code], onDelete: NoAction, onUpdate: NoAction)
 
   @@id([id, localDate])
+  @@unique([patientId, clientId, localDate], map: "metric_log_idem")
+  @@index([organizationId, patientId, localDate], map: "metric_log_day")
   @@map("metric_log")
   @@schema("tracking")
 }
@@ -1703,6 +1708,8 @@ model NoteLog {
   createdAt      DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
 
   @@id([id, localDate])
+  @@unique([patientId, clientId, localDate], map: "note_log_idem")
+  @@index([organizationId, patientId, localDate], map: "note_log_day")
   @@map("note_log")
   @@schema("tracking")
 }
@@ -1737,6 +1744,7 @@ model SetLog {
   createdAt           DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
 
   @@id([id, localDate])
+  @@unique([patientId, clientId, localDate], map: "set_log_idem")
   @@index([organizationId, patientId, exerciseId, localDate], map: "set_log_exercise")
   @@map("set_log")
   @@schema("tracking")
@@ -1768,6 +1776,8 @@ model WorkoutLog {
   createdAt      DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
 
   @@id([id, localDate])
+  @@unique([patientId, clientId, localDate], map: "workout_log_idem")
+  @@index([organizationId, patientId, localDate], map: "workout_log_day")
   @@map("workout_log")
   @@schema("tracking")
 }

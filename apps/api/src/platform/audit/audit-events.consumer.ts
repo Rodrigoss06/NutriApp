@@ -29,6 +29,17 @@ const namesOf = (value: unknown): readonly string[] =>
  */
 export const AUDITED_EVENTS: Readonly<Record<string, AuditMapping>> = {
   'iam.invitation.created': { action: 'CREATE', resourceType: 'iam.invitation' },
+  'content.settings.changed': {
+    action: 'UPDATE',
+    resourceType: 'content.patient_app_setting',
+    fields: (p) => namesOf(p.fields),
+  },
+  'content.message.created': { action: 'CREATE', resourceType: 'content.motivational_message' },
+  'content.message.updated': {
+    action: 'UPDATE',
+    resourceType: 'content.motivational_message',
+    fields: (p) => namesOf(p.fields),
+  },
   'iam.invitation.accepted': {
     action: 'UPDATE',
     resourceType: 'iam.invitation',

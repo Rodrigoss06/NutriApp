@@ -34,3 +34,5 @@ export * from './training/labels.js';
 export * from './training/program.js';
 export * from './training/week-plan.js';
 export * from './exercise/library.js';
+export * from './tracking/records.js';
+export * from './content/app.js';

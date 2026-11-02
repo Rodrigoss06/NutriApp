@@ -119,6 +119,8 @@ export const settingsResponseSchema = z.object({
   /** RN-E10: rango aceptable de la adecuación, 90 a 110 % por defecto. */
   'nutrition.adequacy_min_pct': z.number().int(),
   'nutrition.adequacy_max_pct': z.number().int(),
+  /** ⚠️ RN-G10: hasta cuántos días atrás el paciente registra, corrige o anula; 3 por defecto, de 0 a 7. */
+  'tracking.edit_window_days': z.number().int(),
 });
 export type SettingsResponse = z.infer<typeof settingsResponseSchema>;
 /** PUT /api/v1/organization/settings/:key. Cada ajuste valida su rango o sus opciones (422 NC-TEN-030). */

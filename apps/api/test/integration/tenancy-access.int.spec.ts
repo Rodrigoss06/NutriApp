@@ -581,6 +581,7 @@ describe('RF-02 y RF-03 · organización, suscripción y ajustes por HTTP', () =
       'assessment.lee_reference_group_coefficient': null,
       'nutrition.adequacy_min_pct': 90,
       'nutrition.adequacy_max_pct': 110,
+      'tracking.edit_window_days': 3,
     });
     const lee = await put(
       '/organization/settings/assessment.lee_reference_group_coefficient',

@@ -70,6 +70,14 @@ export const ORGANIZATION_SETTINGS = {
     defaultValue: 110,
     editor: 'ORGANIZATION',
   },
+  /** ⚠️ RN-G10: hasta cuántos días atrás el paciente crea, corrige o anula sus registros; 0 es solo hoy (ADR-080). */
+  'tracking.edit_window_days': {
+    kind: 'INTEGER',
+    min: 0,
+    max: 7,
+    defaultValue: 3,
+    editor: 'ORGANIZATION',
+  },
 } as const satisfies Record<string, OrganizationSetting>;
 
 export type SettingKey = keyof typeof ORGANIZATION_SETTINGS;

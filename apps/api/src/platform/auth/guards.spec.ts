@@ -8,10 +8,15 @@ import { PolicyGuard } from './policy.guard.js';
 import { SessionGuard } from './session.guard.js';
 import type { SessionPrincipal } from './session-authenticator.port.js';
 import { TenantGuard } from './tenant.guard.js';
-import type { MembershipView, TenantDirectory } from './tenant-directory.port.js';
+import type {
+  MembershipView,
+  OrganizationStatus,
+  TenantDirectory,
+} from './tenant-directory.port.js';
 
 const ORG = '0192f0a0-0000-7000-8000-00000000000a';
 const USER = '0192f0a0-0000-7000-8000-0000000000aa';
+const PATIENT = '0192f0a0-0000-7000-8000-0000000000bb';
 
 function contextFor(
   request: Partial<ContextualRequest>,
@@ -37,7 +42,18 @@ const staff = (activeOrganizationId: string | null = ORG): SessionPrincipal => (
   patientId: null,
 });
 
-const directoryWith = (membership: Partial<MembershipView> | null): TenantDirectory => ({
+const patientSession = (): SessionPrincipal => ({
+  sessionId: 's',
+  userId: USER as never,
+  kind: 'PATIENT',
+  activeOrganizationId: ORG as never,
+  patientId: PATIENT as never,
+});
+
+const directoryWith = (
+  membership: Partial<MembershipView> | null,
+  patientOrganization: OrganizationStatus | null = 'ACTIVE',
+): TenantDirectory => ({
   membership: () =>
     Promise.resolve(
       membership && {
@@ -51,6 +67,7 @@ const directoryWith = (membership: Partial<MembershipView> | null): TenantDirect
       },
     ),
   membershipsOf: () => Promise.resolve([]),
+  patientOrganizationStatus: () => Promise.resolve(patientOrganization),
 });
 
 const status = async (run: () => unknown) => {
@@ -170,5 +187,61 @@ describe('02 §10 · TenantGuard y PolicyGuard', () => {
   it('RN-A04 · el rol necesita el permiso del caso de uso', async () => {
     expect(await run({ role: 'PROFESSIONAL' })).toBe(403);
     expect(await run({ role: 'ADMIN' })).toBe('ok');
+  });
+});
+
+describe('02 §10 · las rutas del paciente (/me)', () => {
+  const patientRule: AccessRule = { kind: 'patient' };
+  const authenticator = (principal: SessionPrincipal) => ({
+    authenticate: () => Promise.resolve(principal),
+  });
+  const run = async (
+    principal: SessionPrincipal,
+    options: { method?: string; organization?: OrganizationStatus | null } = {},
+  ) => {
+    const request = {
+      method: options.method ?? 'POST',
+      headers: { cookie: 'nc_session=x' },
+    } as ContextualRequest;
+    const context = contextFor(request, patientRule);
+    const session = await status(() =>
+      new SessionGuard(new Reflector(), authenticator(principal)).canActivate(context),
+    );
+    if (session !== 'ok') return { status: session, request };
+    const tenant = await status(() =>
+      new TenantGuard(
+        new Reflector(),
+        directoryWith(null, options.organization === undefined ? 'ACTIVE' : options.organization),
+      ).canActivate(context),
+    );
+    return { status: tenant, request };
+  };
+
+  it('una sesión PATIENT entra con su paciente y su organización, que salen de la sesión', async () => {
+    const { status: result, request } = await run(patientSession());
+
+    expect(result).toBe('ok');
+    expect(request.securityContext).toEqual({
+      organizationId: ORG,
+      userId: USER,
+      role: 'PATIENT',
+      patientId: PATIENT,
+    });
+  });
+
+  it('una sesión STAFF o PLATFORM no entra: 403', async () => {
+    expect((await run(staff())).status).toBe(403);
+    expect((await run({ ...staff(), kind: 'PLATFORM' })).status).toBe(403);
+  });
+
+  it('RN-A02 · con la organización en solo lectura no registra (422), pero lee; suspendida o sin verla, 403', async () => {
+    expect((await run(patientSession(), { organization: 'READ_ONLY' })).status).toBe(422);
+    expect((await run(patientSession(), { organization: 'READ_ONLY', method: 'GET' })).status).toBe(
+      'ok',
+    );
+    expect((await run(patientSession(), { organization: 'SUSPENDED', method: 'GET' })).status).toBe(
+      403,
+    );
+    expect((await run(patientSession(), { organization: null, method: 'GET' })).status).toBe(403);
   });
 });
