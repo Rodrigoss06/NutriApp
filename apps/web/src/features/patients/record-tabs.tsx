@@ -13,6 +13,7 @@ const TABS = [
   { path: '/energia', label: 'Energía' },
   { path: '/dieta', label: 'Dieta' },
   { path: '/entrenamiento', label: 'Entrenamiento' },
+  { path: '/app', label: 'App del paciente' },
   { path: '/linea-de-tiempo', label: 'Línea de tiempo' },
 ] as const;
 

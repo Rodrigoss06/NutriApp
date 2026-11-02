@@ -1,4 +1,4 @@
-import type { AccountResponse } from '@nutricoach/contracts';
+import type { AccountResponse, MeApp } from '@nutricoach/contracts';
 import { BrandStyle } from '@nutricoach/ui';
 import type { Metadata } from 'next';
 import { redirect } from 'next/navigation';
@@ -17,19 +17,28 @@ export const metadata: Metadata = {
 /**
  * App instalable del paciente (02 §11), primero para el celular. Vive bajo /mi/, el alcance de la PWA. Pide la cuenta
  * en cada petición: sin sesión PATIENT válida (perdió APP_ACCESS o HEALTH_DATA, o fue archivado: RN-B02), a /entrar.
- * Su tema de color (content.patient_app_setting) pasa por los mismos tokens que la marca de la organización.
+ * Su tema de color (content.patient_app_setting, RF-27) pasa por los mismos tokens que la marca de la organización, y la
+ * barra muestra solo las secciones que su profesional dejó a la vista.
  */
 export default async function PatientLayout({ children }: Readonly<{ children: ReactNode }>) {
-  const account = await serverApi<AccountResponse>('/account');
+  const [account, app] = await Promise.all([
+    serverApi<AccountResponse>('/account'),
+    serverApi<MeApp>('/me/app'),
+  ]);
   if (!account.ok) return <RedirectToLogin />;
   if (account.data.kind === 'PLATFORM') redirect('/admin/plataforma');
   if (account.data.kind === 'STAFF') redirect('/panel');
   const brand = organizationBrand();
+  const themeColor = app.ok ? app.data.themeColor : null;
   return (
     <>
-      <BrandStyle brand={patientBrand(brand.colors, null)} />
+      <BrandStyle brand={patientBrand(brand.colors, themeColor)} />
       <ServiceWorkerRegistration />
-      <PatientShell displayName={brand.displayName} logoUrl={brand.logoUrl}>
+      <PatientShell
+        displayName={brand.displayName}
+        logoUrl={brand.logoUrl}
+        sections={app.ok ? app.data.enabledSections : null}
+      >
         {children}
       </PatientShell>
     </>

@@ -1708,3 +1708,29 @@ Consecuencias:
 - Para Notion (/notion-sync de P13): 05.2 (kcal y macronutrientes con NULL en `food_log`, los índices `*_idem` y `*_day`, `BODY_WEIGHT` y
   la RLS de `metric_definition`); 02 §3 (`ContentApi`, `ClinicalApi.ensurePatientWritable`, `TenancyApi.trackingEditWindowDays`), §7
   (registros), §8 (`tracking.*.voided` y `content.*`) y §10 (`@PatientOnly` y las rutas /me); 06 (los códigos).
+
+## ADR-082 · Pantallas de la app del paciente: Hoy registra, el plan, Más y su app en el panel — aceptada (2026-11-01)
+Contexto: P13, PR 3 (RF-27, RF-28, RN-G05, RN-G06, RNF-03, RNF-17). Las pantallas de /mi eran de muestra; la API llegó con el PR 2
+(ADR-081).
+Decisión:
+- Hoy es la pantalla de inicio y desde ella se registra: el saludo y el mensaje del día (o la bienvenida), lo que va del día frente a la
+  meta (kcal y macronutrientes, con «al menos» si falta un dato, RN-I03), las comidas del plan, el agua, la sesión del día y lo
+  registrado, con «Anular».
+- Tres toques desde Hoy (RN-G06): el tiempo de comida, un alimento permitido o la opción del menú, y «Registrar» con la porción del
+  plan. Antes de registrar, la porción cambia con «menos» y «más» de 44 px; si es la del plan, el pedido no la envía y la API usa la
+  suya.
+- Plan: las indicaciones, la meta de agua, las mismas comidas para registrar y algo fuera del plan desde el catálogo, con su cantidad y
+  su momento.
+- Más: notas para el equipo, el peso si está habilitado, instalar la app (el aviso del navegador en Android y Chrome; en el iPhone,
+  «Agregar a inicio») y salir.
+- Cada registro genera su clientId en el celular y lo usa también como Idempotency-Key; un reintento repite los dos (RN-G08). La cola
+  sin conexión (RF-31) no entra en este PR.
+- El color del tema del paciente pinta los tokens de marca (ADR-027) y la barra inferior muestra solo las secciones habilitadas: Plan,
+  Entreno y Progreso; Hoy y Más siempre están.
+- Panel: la pestaña «App del paciente» del expediente, con sus ajustes y sus mensajes (su equipo con acceso de escritura); en Ajustes,
+  el plazo de los registros (0 a 7 días) y los mensajes para todos (dueño y administradores).
+Consecuencias:
+- E2E `e2e/app-paciente.spec.ts`: el desayuno del plan en tres toques desde Hoy, anular, agua, nota y peso; el equipo cambia el tema y
+  el mensaje, y Hoy los muestra. 2 de 2 en escritorio y 2 de 2 en el celular.
+- Lighthouse móvil en Hoy con plan, agua y mensaje (local, 5 corridas): rendimiento 96 de mediana y accesibilidad 100. LCP de 2.11 a
+  2.73 s, con mediana de 2.12 s: la variación de la fuente que ya estaba anotada.

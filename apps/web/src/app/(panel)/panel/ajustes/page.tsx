@@ -7,6 +7,8 @@ import { Notice } from '@nutricoach/ui';
 import type { Metadata } from 'next';
 import { LeeCoefficientSetting } from '@/features/assessment/lee-setting';
 import { OrganizationMethodPreferences } from '@/features/assessment/method-preferences';
+import { EditWindowSetting } from '@/features/patient-app-settings/edit-window-setting';
+import { MessagesPanel } from '@/features/patient-app-settings/messages-panel';
 import { Section } from '@/features/patients/section';
 import { getOrganization } from '@/features/patients/server';
 import { serverApi } from '@/lib/api/server';
@@ -14,8 +16,9 @@ import { serverApi } from '@/lib/api/server';
 export const metadata: Metadata = { title: 'Ajustes' };
 
 /**
- * Ajustes de cálculo de la organización: los métodos por población (RF-16, RN-D05) y el coeficiente de Lee (RN-D11).
- * Los ven todos; los cambian el dueño y los administradores (la API decide).
+ * Ajustes de la organización: los métodos por población (RF-16, RN-D05), el coeficiente de Lee (RN-D11), el plazo de los
+ * registros del paciente (RN-G10) y los mensajes para todos los pacientes (RF-27). Los ven todos; los cambian el dueño y los
+ * administradores (la API decide).
  */
 export default async function SettingsPage() {
   const [account, organization, preferences, settings] = await Promise.all([
@@ -44,6 +47,22 @@ export default async function SettingsPage() {
         <LeeCoefficientSetting
           initial={settings.data['assessment.lee_reference_group_coefficient']}
           canEdit={manager}
+        />
+      </Section>
+      <Section
+        title="Registros del paciente"
+        description="Hasta cuántos días atrás cada paciente agrega, corrige o anula lo que registró en su app."
+      >
+        <EditWindowSetting initial={settings.data['tracking.edit_window_days']} canEdit={manager} />
+      </Section>
+      <Section
+        title="Mensajes para todos los pacientes"
+        description="Uno aparece cada día en Hoy, en la app de los pacientes que no tienen mensajes propios vigentes."
+      >
+        <MessagesPanel
+          basePath="/motivational-messages"
+          canWrite={manager}
+          emptyText="Todavía no hay mensajes para todos."
         />
       </Section>
     </div>
