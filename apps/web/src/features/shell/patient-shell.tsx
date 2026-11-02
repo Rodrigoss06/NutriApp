@@ -1,3 +1,4 @@
+import type { AppSection } from '@nutricoach/contracts';
 import type { ReactNode } from 'react';
 import { BrandMark } from './brand-mark';
 import { PatientBottomNav } from './patient-bottom-nav';
@@ -6,10 +7,13 @@ import { PatientBottomNav } from './patient-bottom-nav';
 export function PatientShell({
   displayName,
   logoUrl,
+  sections,
   children,
 }: {
   displayName: string;
   logoUrl: string | null;
+  /** Las secciones a la vista (RF-27); null si no se pudieron leer: se muestran todas. */
+  sections: readonly AppSection[] | null;
   children: ReactNode;
 }) {
   return (
@@ -20,7 +24,7 @@ export function PatientShell({
       <main id="contenido" className="flex-1 px-4 pt-4 pb-24">
         {children}
       </main>
-      <PatientBottomNav />
+      <PatientBottomNav sections={sections} />
     </div>
   );
 }
