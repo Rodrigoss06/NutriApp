@@ -24,6 +24,8 @@ export interface ProfileValues {
   readonly sleepTargetHours: string;
   readonly testTargets: Readonly<Record<string, string>>;
   readonly notes: string;
+  /** Sí, no o sin dato (NONE): solo con MENSTRUAL_TRACKING vigente (RN-G17, ADR-080). */
+  readonly hormonalContraception: 'YES' | 'NO' | 'NONE';
 }
 
 const text = (value: number | null): string => (value === null ? '' : String(value));
@@ -50,6 +52,12 @@ export function valuesOf(current: AthleteProfile | null): ProfileValues {
       Object.entries(current?.testTargets ?? {}).map(([code, value]) => [code, String(value)]),
     ),
     notes: current?.notes ?? '',
+    hormonalContraception:
+      current?.hormonalContraception === true
+        ? 'YES'
+        : current?.hormonalContraception === false
+          ? 'NO'
+          : 'NONE',
   };
 }
 
@@ -74,10 +82,15 @@ export const PROFILE_HINTS = {
 
 export type ProfileProblems = Readonly<Partial<Record<keyof ProfileValues, string>>>;
 
-/** Valida con el mismo contrato que la API y devuelve el cuerpo, o el problema de cada campo. */
+/**
+ * Valida con el mismo contrato que la API y devuelve el cuerpo, o el problema de cada campo. Sin MENSTRUAL_TRACKING vigente la
+ * anticoncepción hormonal va vacía (RN-G17): si el paciente la retiró, la revisión nueva ya no la lleva y la anterior queda en
+ * el historial.
+ */
 export function parseProfile(
   values: ProfileValues,
   expectedRevision: number,
+  menstrualTrackingActive = false,
 ): { ok: true; body: SaveAthleteProfile } | { ok: false; problems: ProfileProblems } {
   const parsed = saveAthleteProfileSchema.safeParse({
     expectedRevision,
@@ -103,6 +116,10 @@ export function parseProfile(
       }),
     ),
     notes: values.notes,
+    hormonalContraception:
+      menstrualTrackingActive && values.hormonalContraception !== 'NONE'
+        ? values.hormonalContraception === 'YES'
+        : null,
   });
   if (parsed.success) return { ok: true, body: parsed.data };
   const problems: Partial<Record<keyof ProfileValues, string>> = {};

@@ -53,6 +53,24 @@ describe('NumberField · teclado numérico con unidad (RF-11)', () => {
     expect(onValueChange.mock.calls).toEqual([[12.4], [12.4], [null]]);
   });
 
+  it('sin unidad, para una escala: entero con el teclado numérico y sin texto de unidad', () => {
+    const onValueChange = vi.fn();
+    render(
+      <NumberField
+        label="RPE de la sesión"
+        inputMode="numeric"
+        value={null}
+        onValueChange={onValueChange}
+      />,
+    );
+    const input = screen.getByLabelText('RPE de la sesión');
+
+    expect(input.getAttribute('inputmode')).toBe('numeric');
+    expect(input.getAttribute('aria-describedby')).toBeNull();
+    fireEvent.change(input, { target: { value: '7' } });
+    expect(onValueChange.mock.calls).toEqual([[7]]);
+  });
+
   it('el error queda ligado al campo y se anuncia', () => {
     render(
       <NumberField

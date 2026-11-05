@@ -121,3 +121,31 @@ describe('07 §2 · el formulario del perfil de entrenamiento', () => {
     expect(parsed.ok && parsed.body).toEqual({ ...fields, expectedRevision: 2 });
   });
 });
+
+describe('RN-G17 · ADR-080 · la anticoncepción hormonal en el perfil', () => {
+  const VALUES = {
+    ...valuesOf(null),
+    objective: 'HYPERTROPHY',
+    level: 'BEGINNER',
+    daysPerWeek: '3',
+  };
+
+  it('con MENSTRUAL_TRACKING vigente, sí, no o sin dato', () => {
+    const body = (hormonalContraception: 'YES' | 'NO' | 'NONE') => {
+      const parsed = parseProfile({ ...VALUES, hormonalContraception }, 0, true);
+      return parsed.ok ? parsed.body.hormonalContraception : 'error';
+    };
+    expect(body('YES')).toBe(true);
+    expect(body('NO')).toBe(false);
+    expect(body('NONE')).toBeNull();
+  });
+
+  it('sin la autorización vigente va vacía, aunque el formulario la tuviera: así se guarda lo demás', () => {
+    const parsed = parseProfile({ ...VALUES, hormonalContraception: 'YES' }, 0, false);
+    expect(parsed.ok && parsed.body.hormonalContraception).toBeNull();
+  });
+
+  it('lo guardado se muestra como estaba', () => {
+    expect(valuesOf(null).hormonalContraception).toBe('NONE');
+  });
+});

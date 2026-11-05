@@ -55,6 +55,7 @@ export function AthleteProfileForm({
   careTeam,
   members,
   archived,
+  menstrualTrackingActive,
 }: {
   patientId: string;
   current: AthleteProfile | null;
@@ -63,6 +64,8 @@ export function AthleteProfileForm({
   careTeam: readonly CareTeamMember[];
   members: readonly MemberResponse[];
   archived: boolean;
+  /** El paciente autorizó el seguimiento del ciclo y sigue vigente (RN-G17). */
+  menstrualTrackingActive: boolean;
 }) {
   const router = useRouter();
   const { timezone } = usePanelSession();
@@ -92,7 +95,7 @@ export function AthleteProfileForm({
     },
   });
   const onSubmit = (values: ProfileValues) => {
-    const parsed = parseProfile(values, revision);
+    const parsed = parseProfile(values, revision, menstrualTrackingActive);
     setProblems(parsed.ok ? {} : parsed.problems);
     if (parsed.ok) save.mutate(parsed.body);
   };
@@ -280,6 +283,46 @@ export function AthleteProfileForm({
             {...form.register('sleepTargetHours')}
           />
         </div>
+      </fieldset>
+
+      <fieldset
+        disabled={disabled || !menstrualTrackingActive}
+        className="flex flex-col gap-4 rounded-lg border border-border bg-card p-4"
+      >
+        <legend className="px-1 font-medium">Seguimiento menstrual</legend>
+        {menstrualTrackingActive ? (
+          <Controller
+            control={form.control}
+            name="hormonalContraception"
+            render={({ field }) => (
+              <Select
+                label="Anticoncepción hormonal"
+                hint="Opcional. Contexto para revisar la recuperación; no cambia el plan."
+                value={field.value}
+                disabled={disabled}
+                onValueChange={field.onChange}
+                options={[
+                  { value: 'NONE', label: 'Sin dato' },
+                  { value: 'YES', label: 'Sí' },
+                  { value: 'NO', label: 'No' },
+                ]}
+              />
+            )}
+          />
+        ) : (
+          <>
+            <p className="text-sm text-muted-foreground">
+              Sin la autorización del seguimiento del ciclo menstrual, la anticoncepción hormonal no
+              se registra (RN-G17). La persona la autoriza desde su app.
+            </p>
+            {current?.hormonalContraception !== null && current !== null ? (
+              <Notice tone="warning" title="La persona retiró la autorización">
+                Al guardar, la revisión nueva ya no lleva la anticoncepción hormonal. Lo anterior
+                queda en el historial de revisiones.
+              </Notice>
+            ) : null}
+          </>
+        )}
       </fieldset>
 
       <fieldset

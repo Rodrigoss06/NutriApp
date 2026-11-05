@@ -1,14 +1,24 @@
 import { expect, test, type Page } from '@playwright/test';
 import { seriousViolations } from './support/axe';
 import { luisWithPrescription } from './support/luis';
-import { appAccessByApi, publishedExchangePlanByApi } from './support/patient-app';
-import { createOrganization, loginAsPatientInPage, loginInPage } from './support/stack';
+import {
+  appAccessByApi,
+  publishedExchangePlanByApi,
+  publishedProgramByApi,
+} from './support/patient-app';
+import {
+  createOrganization,
+  loginAsPatientInPage,
+  loginInPage,
+  patientWithAccess,
+} from './support/stack';
 
 /**
- * P13 (PR 3) de punta a punta, en escritorio y en el celular (RF-27, RF-28; RN-G05, RN-G06, RN-G08): Luis, con su plan por
- * intercambios publicado y su acceso a la app (preparados por la API), registra el desayuno de su plan en tres toques desde Hoy,
- * agua, una nota y su peso. Su equipo cambia el tema y le deja un mensaje, que Hoy muestra. axe en cada pantalla. Datos
- * sintéticos de seeds/luis.
+ * P13 de punta a punta, en escritorio y en el celular (RF-27 a RF-29; RN-G05, RN-G06, RN-G08, RN-G11, RN-G15, RN-G17). PR 3: Luis,
+ * con su plan por intercambios publicado y su acceso a la app (preparados por la API), registra el desayuno de su plan en tres
+ * toques desde Hoy, agua, una nota y su peso; su equipo cambia el tema y le deja un mensaje, que Hoy muestra. PR 4: con su programa
+ * publicado, registra la sesión del día serie por serie y su registro diario en menos de 2 minutos, y Hoy muestra la indicación;
+ * autoriza y retira el seguimiento del ciclo desde Más, y responde el cribado. axe en cada pantalla. Datos sintéticos.
  */
 
 /** Hoy con las comidas del plan: el worker copia el plan publicado a la app (tracking.plans). */
@@ -93,6 +103,141 @@ test.describe('P13 · App del paciente: Hoy y el plan', () => {
 
     await page.goto('/mi/hoy');
     await expect(page.getByText('Luis, vas muy bien.')).toBeVisible();
+    expect(await seriousViolations(page)).toEqual([]);
+  });
+});
+
+/** La sesión del día en Entreno: el worker copia el programa publicado a la app (tracking.programs). */
+async function entrenoWithSession(page: Page) {
+  const session = page.getByRole('region', { name: 'Sesión 1' });
+  await expect(async () => {
+    await page.goto('/mi/entreno');
+    await expect(session).toBeVisible({ timeout: 2_000 });
+  }).toPass({ timeout: 30_000 });
+  return session;
+}
+
+test.describe('P13 · App del paciente: entreno, registro diario y ciclo', () => {
+  test('RN-G11 · RN-G15: registra la sesión y su registro diario en menos de 2 minutos, y Hoy muestra la indicación', async ({
+    page,
+  }) => {
+    const organization = await createOrganization();
+    const patient = await patientWithAccess(organization.ownerEmail);
+    await publishedProgramByApi(organization.ownerEmail, patient.id);
+    await loginAsPatientInPage(page, patient.email);
+
+    // RF-29: la sesión de hoy serie por serie, con el tonelaje a la vista (RN-F03).
+    const session = await entrenoWithSession(page);
+    await expect(session.getByText('de 1,440 kg prescritos')).toBeVisible();
+    expect(await seriousViolations(page)).toEqual([]);
+    for (const set of [1, 2, 3]) {
+      await session
+        .getByRole('button', { name: `Hecha: Serie ${String(set)} de Sentadilla goblet` })
+        .click();
+    }
+    await expect(session.getByText('Tonelaje: 1,440 kg')).toBeVisible();
+    await session.getByLabel('Duración').fill('45');
+    await session.getByLabel('RPE de la sesión').fill('7');
+    await session.getByRole('button', { name: 'Registrar sesión' }).click();
+    const logged = page.getByRole('region', { name: 'Lo que registraste hoy' });
+    await expect(logged.getByText('1,440 kg')).toBeVisible();
+    expect(await seriousViolations(page)).toEqual([]);
+
+    // Criterio de P13: el registro diario, desde Hoy, en menos de 2 minutos.
+    const started = Date.now();
+    await page.goto('/mi/hoy');
+    const indication = page.getByRole('region', { name: 'Indicación del día' });
+    await expect(indication.getByText('Sin datos suficientes')).toBeVisible();
+    await indication.getByRole('link', { name: 'Hacer mi registro diario' }).click();
+    await expect(page.getByRole('heading', { level: 1, name: 'Registro diario' })).toBeVisible();
+    // La duración y el RPE vienen de la sesión registrada.
+    await expect(page.getByLabel('Duración')).toHaveValue('45');
+    await page.getByLabel('Sueño de anoche').fill('8');
+    for (const [scale, value] of [
+      ['Fatiga', '2'],
+      ['Dolor muscular', '2'],
+      ['Estrés', '2'],
+      ['Motivación', '4'],
+    ] as const) {
+      await page.getByRole('group', { name: scale }).getByText(value, { exact: true }).click();
+    }
+    expect(await seriousViolations(page)).toEqual([]);
+    await page.getByRole('button', { name: 'Guardar registro' }).click();
+
+    await page.waitForURL(/\/mi\/hoy$/);
+    await expect(indication.getByText('Verde · mantener')).toBeVisible();
+    await expect(
+      indication.getByText('Entrena según lo planificado. Cumple la sesión planificada.'),
+    ).toBeVisible();
+    await expect(indication.getByText('100.0 %')).toBeVisible();
+    expect(Date.now() - started).toBeLessThan(120_000);
+    expect(await seriousViolations(page)).toEqual([]);
+  });
+
+  test('RN-G17: autoriza el seguimiento del ciclo desde Más, el coach registra la anticoncepción y al retirarlo se deja de pedir', async ({
+    page,
+    browser,
+  }) => {
+    const organization = await createOrganization();
+    const patient = await patientWithAccess(organization.ownerEmail);
+    await publishedProgramByApi(organization.ownerEmail, patient.id);
+    await loginAsPatientInPage(page, patient.email);
+    const symptoms = page.getByRole('group', { name: 'Síntomas del ciclo' });
+
+    await page.goto('/mi/registro');
+    await expect(page.getByRole('heading', { level: 1, name: 'Registro diario' })).toBeVisible();
+    await expect(symptoms).toHaveCount(0);
+
+    await page.goto('/mi/mas');
+    const cycle = page.getByRole('region', { name: 'Seguimiento del ciclo menstrual' });
+    await expect(cycle.getByText('Texto provisional, pendiente de revisión legal.')).toBeVisible();
+    expect(await seriousViolations(page)).toEqual([]);
+    await cycle.getByRole('button', { name: 'Autorizar el seguimiento del ciclo' }).click();
+    await expect(cycle.getByText('Lo autorizaste')).toBeVisible();
+
+    await page.goto('/mi/registro');
+    await expect(symptoms).toBeVisible();
+
+    // ADR-080: la anticoncepción hormonal la registra el coach, solo con la autorización vigente.
+    const staffContext = await browser.newContext();
+    const panel = await staffContext.newPage();
+    await loginInPage(panel, organization.ownerEmail);
+    await panel.goto(`/panel/pacientes/${patient.id}/entrenamiento/perfil`);
+    await panel.getByRole('combobox', { name: 'Anticoncepción hormonal' }).click();
+    await panel.getByRole('option', { name: 'Sí', exact: true }).click();
+    await panel.getByRole('button', { name: 'Guardar perfil' }).click();
+    await expect(panel.getByText('Perfil guardado: revisión 2')).toBeVisible();
+    expect(await seriousViolations(panel)).toEqual([]);
+    await staffContext.close();
+
+    // Retirarla: el registro diario deja de pedir los síntomas (RN-B02: lo registrado se conserva).
+    await page.goto('/mi/mas');
+    await cycle.getByRole('button', { name: 'Retirar la autorización' }).click();
+    await page.getByRole('alertdialog').getByRole('button', { name: 'Retirar' }).click();
+    await expect(
+      cycle.getByRole('button', { name: 'Autorizar el seguimiento del ciclo' }),
+    ).toBeVisible();
+    await page.goto('/mi/registro');
+    await expect(page.getByRole('heading', { level: 1, name: 'Registro diario' })).toBeVisible();
+    await expect(symptoms).toHaveCount(0);
+  });
+
+  test('07 §3.2: responde el cribado de seguridad desde Más', async ({ page }) => {
+    const organization = await createOrganization();
+    const patient = await patientWithAccess(organization.ownerEmail);
+    await loginAsPatientInPage(page, patient.email);
+
+    await page.goto('/mi/mas');
+    const screening = page.getByRole('region', { name: 'Cribado de seguridad' });
+    await expect(screening.getByText('Antes de entrenar, tu coach necesita saber')).toBeVisible();
+    const questions = screening.getByRole('group');
+    await expect(questions).toHaveCount(8);
+    for (const question of await questions.all()) {
+      await question.getByText('No', { exact: true }).click();
+    }
+    expect(await seriousViolations(page)).toEqual([]);
+    await screening.getByRole('button', { name: 'Enviar mis respuestas' }).click();
+    await expect(screening.getByText('Ya respondiste el cribado')).toBeVisible();
     expect(await seriousViolations(page)).toEqual([]);
   });
 });
