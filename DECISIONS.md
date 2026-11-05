@@ -1812,3 +1812,54 @@ Consecuencias:
   MENSTRUAL_TRACKING con el valor en «sí», debe permitir vaciarlo para que el coach guarde lo demás (si no, 422 NC-CLI-032). Registrar la
   sesión después del registro diario tampoco lo recalcula (RN-D08): la pantalla debe ofrecer actualizarlo.
 
+## ADR-084 · Pantallas del registro diario, la indicación del día, Entreno, el ciclo y el cribado — aceptada (2026-11-05)
+Contexto: P13, PR 4b (RF-28, RF-29, RN-G11, RN-G12, RN-G15, RN-G17, RN-D02, RN-F11; 07 §2, §3.2 y §9). La API llegó con el PR 4a
+(ADR-083); las pantallas de Entreno eran de muestra y no había registro diario.
+Decisión:
+- Hoy, con la sección CHECKIN a la vista, muestra la indicación del día arriba:
+  - su etiqueta y su texto de 07 §9, con color, ícono y texto;
+  - la recuperación con el método que la calculó (RN-D02), el rendimiento y la carga de la sesión;
+  - si a la recuperación le faltó una parte, lo dice: usó el valor neutral y no cuenta como mal estado;
+  - «es un consejo para hoy: tu plan solo cambia cuando tu coach lo decide», con la nota visible de 07 §9;
+  - sin registro, la de «sin datos» lleva al registro diario.
+- Registro diario en /mi/registro, pensado para menos de 2 minutos:
+  - la sesión (duración y RPE, que vienen de la sesión registrada), el sueño, cuatro escalas de un toque (fatiga, dolor muscular,
+    estrés y motivación) y la alimentación;
+  - lo demás plegado y opcional: carbohidratos, el rendimiento si no sale de la sesión y los datos del reloj a mano;
+  - los síntomas del ciclo, solo con MENSTRUAL_TRACKING vigente;
+  - la nota visible de 07 §9 encabeza el formulario; un registro vacío no se guarda;
+  - si ya se hizo, el formulario lo trae para corregirlo (RN-G12); al guardar vuelve a Hoy.
+- Entreno:
+  - la semana del programa con su fase, su RIR objetivo y si es de descarga;
+  - la sesión de hoy por ejercicio: cada serie parte de lo prescrito y se marca hecha; se corrigen las repeticiones, el peso y el RIR
+    o RPE según se prescribió; el cardio va en minutos y metros;
+  - el tonelaje se ve mientras se registra, con el método TONNAGE del motor; el que vale lo da la API (RN-F03);
+  - «Hoy no hice esta sesión» la deja omitida, sin series;
+  - lo registrado se muestra con su tonelaje y se anula sin borrar; si ya hizo el registro diario, invita a actualizarlo (RN-D08);
+  - muestra la precaución, la alternativa, las variantes, las instrucciones y el enlace al video (RN-F11). La alternativa todavía
+    no se registra (ADR-083).
+- Estímulo y fatiga (RF-29): se anotan una vez por ejercicio y la API los guarda en cada una de sus series, como los pide 05.2.
+  Pedirlos serie por serie duplicaba las preguntas sin cambiar la analítica de RF-33.
+- Más:
+  - el seguimiento del ciclo menstrual con su texto vigente (0.1-provisional) para autorizarlo, y «Retirar la autorización» con
+    confirmación;
+  - el cribado de seguridad: las ocho preguntas de Sí o No, el detalle si alguna es Sí y su estado, si espera la revisión del coach;
+  - una Idempotency-Key nueva por cada acción (ADR-083).
+- Panel: el perfil de entrenamiento lleva «Seguimiento menstrual» con la anticoncepción hormonal (sí, no o sin dato), solo con la
+  autorización vigente. Sin ella el campo no está y, si el paciente la retiró con un valor guardado, se avisa que la revisión nueva lo
+  deja vacío; lo anterior queda en el historial.
+- `@nutricoach/ui`: `NumberField` puede ir sin unidad (escalas y conteos), suma las unidades h, min, lpm, ms y m, y abre el teclado
+  numérico para enteros. contracts: el tipo de número `trainingLoad` (tonelaje y carga sRPE, sin decimales).
+Consecuencias:
+- E2E `e2e/app-paciente.spec.ts`, 5 de 5 en escritorio y 5 de 5 en el celular con WebKit:
+  - la sesión de hoy serie por serie, con el tonelaje a la vista y el registrado;
+  - el registro diario desde Hoy, con la duración y el RPE de la sesión ya puestos, en menos de 2 minutos, y Hoy en verde con el
+    rendimiento de 100 % (criterio de P13);
+  - autorizar el seguimiento del ciclo, que hace aparecer los síntomas; la anticoncepción hormonal desde el panel; retirarlo, que los
+    quita;
+  - el cribado respondido desde Más.
+- Lighthouse móvil en Hoy con la indicación del día (local, 5 corridas): rendimiento 97 de mediana y accesibilidad 100. LCP de 2.12 a
+  2.57 s, con mediana de 2.12 s: la variación de la fuente ya anotada.
+- Para Notion (/notion-sync de P13): 07 §9 (cómo se ve el registro diario y la indicación; el estímulo y la fatiga por ejercicio) y
+  02 §11 (las rutas /mi/registro y /mi/entreno).
+

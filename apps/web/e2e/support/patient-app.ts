@@ -111,3 +111,69 @@ export async function appAccessByApi(staffEmail: string, patientId: string): Pro
   await guest.dispose();
   return email;
 }
+
+/** Hoy en Lima (RN-G04): la fecha local del paciente por defecto. */
+const todayInLima = (): string =>
+  new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Lima' }).format(new Date());
+
+interface ProgramRead {
+  readonly id: string;
+  readonly version: number;
+  readonly document: { readonly mesocycles: { readonly weeks: { readonly id: string }[] }[] };
+}
+
+/**
+ * El perfil de entrenamiento con su línea base (07 §2) y un programa publicado por la API que empieza hoy (07 §8): una semana
+ * con tres sesiones de sentadilla goblet, 3 series de 8 con 60 kg, así el tonelaje prescrito se calcula (P-09). Lo que haría el
+ * coach en pantalla, para que la app tenga la sesión del día.
+ */
+export async function publishedProgramByApi(ownerEmail: string, patientId: string): Promise<void> {
+  const api = await apiAs(ownerEmail);
+  const profile = await api.put(`/api/v1/patients/${patientId}/athlete-profile`, {
+    data: {
+      expectedRevision: 0,
+      objective: 'HYPERTROPHY',
+      level: 'BEGINNER',
+      daysPerWeek: 3,
+      equipmentCodes: ['FULL_GYM'],
+      medicalClearance: 'CLEARED',
+      baselineRestingHrBpm: 55,
+      baselineHrvMs: 60,
+      sleepTargetHours: 8,
+    },
+  });
+  expect(profile.status(), 'guardar el perfil de entrenamiento').toBe(200);
+  const search = await api.get('/api/v1/exercises?q=goblet');
+  const { exercises } = (await search.json()) as { exercises: { id: string; name: string }[] };
+  const squat = exercises.find((exercise) => exercise.name === 'Sentadilla goblet');
+  expect(squat, 'la sentadilla goblet de la biblioteca').toBeDefined();
+  const created = await api.post(`/api/v1/patients/${patientId}/training-programs`, {
+    data: { name: 'Fuerza base', startDate: todayInLima() },
+  });
+  expect(created.status(), 'crear el programa').toBe(201);
+  const { id } = (await created.json()) as { id: string };
+  let program = (await (await api.get(`/api/v1/training-programs/${id}`)).json()) as ProgramRead;
+  const added = await api.post(`/api/v1/training-programs/${id}/mesocycles`, {
+    headers: { 'If-Match': String(program.version) },
+    data: { name: 'Base', weeks: 1 },
+  });
+  expect(added.status(), 'agregar el mesociclo').toBe(201);
+  program = (await added.json()) as ProgramRead;
+  const set = { repsMin: 8, repsMax: 8, loadKind: 'KG', loadValue: 60, restSeconds: 90 };
+  const session = (name: string) => ({
+    name,
+    exercises: [{ exerciseId: squat?.id, sets: [set, set, set] }],
+  });
+  const weekId = program.document.mesocycles[0]?.weeks[0]?.id ?? '';
+  const saved = await api.put(`/api/v1/training-programs/${id}/weeks/${weekId}`, {
+    headers: { 'If-Match': String(program.version) },
+    data: { sessions: [session('Sesión 1'), session('Sesión 2'), session('Sesión 3')] },
+  });
+  expect(saved.status(), 'guardar la semana').toBe(200);
+  program = (await saved.json()) as ProgramRead;
+  const published = await api.post(`/api/v1/training-programs/${id}/publish`, {
+    headers: { 'If-Match': String(program.version) },
+  });
+  expect(published.status(), 'publicar el programa').toBe(200);
+  await api.dispose();
+}

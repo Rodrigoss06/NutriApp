@@ -21,6 +21,8 @@ export const NUMBER_KINDS = {
   months: 1,
   kcal: 0,
   grams: 0,
+  /** Tonelaje en kg y carga sRPE: enteros al presentar (RN-F03, RN-G14). */
+  trainingLoad: 0,
   exchanges: 0,
 } as const;
 
