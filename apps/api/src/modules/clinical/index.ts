@@ -8,6 +8,7 @@ export {
 } from './application/clinical-api.js';
 export {
   HEALTH_DATA_REQUIRED,
+  MENSTRUAL_TRACKING_REQUIRED,
   PATIENT_ARCHIVED,
   PATIENT_NOT_FOUND,
   WRITE_ACCESS_REQUIRED,

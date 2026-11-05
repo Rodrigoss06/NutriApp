@@ -244,6 +244,7 @@ const PROFILE = {
   sleepTargetHours: 8,
   testTargets: {},
   notes: null,
+  hormonalContraception: null,
   recordedBy: USER,
   recordedAt: new Date('2026-10-31T00:00:00Z'),
 } as const satisfies AthleteProfileRecord;

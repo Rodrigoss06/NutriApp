@@ -4,14 +4,24 @@ import type { Db } from '../../../../../platform/index.js';
 import type {
   ActiveSnapshot,
   DayTargetRow,
+  Indication,
+  NewCheckin,
   NewFoodLog,
+  NewReadiness,
   NewRecord,
+  NewWorkout,
+  ReadinessBasis,
+  ReadinessComponentCode,
   RecordStatus,
   RecordStore,
+  StoredCheckin,
   StoredFoodLog,
   StoredHydrationLog,
   StoredMetric,
   StoredNote,
+  StoredReadiness,
+  StoredWorkout,
+  WorkoutOutcome,
 } from '../../../application/ports/records.ports.js';
 import type { FoodLogDraft } from '../../../domain/records.js';
 
@@ -137,6 +147,127 @@ const toMetric = (row: {
   value: Number(row.value),
   status: row.status as RecordStatus,
 });
+
+type Dec = { toString(): string } | null;
+
+const CHECKIN = {
+  id: true,
+  clientId: true,
+  localDate: true,
+  status: true,
+  sessionMinutes: true,
+  sessionRpe: true,
+  sleepHours: true,
+  fatigue: true,
+  soreness: true,
+  stress: true,
+  motivation: true,
+  menstrualSymptoms: true,
+  nutritionCompliancePct: true,
+  carbsAroundTrainingG: true,
+  performancePlanned: true,
+  performanceActual: true,
+  restingHrBpm: true,
+  hrvMs: true,
+  steps: true,
+  activeKcal: true,
+} as const;
+
+interface CheckinModel {
+  readonly id: string;
+  readonly clientId: string;
+  readonly localDate: Date;
+  readonly status: string;
+  readonly sessionMinutes: number | null;
+  readonly sessionRpe: Dec;
+  readonly sleepHours: Dec;
+  readonly fatigue: number | null;
+  readonly soreness: number | null;
+  readonly stress: number | null;
+  readonly motivation: number | null;
+  readonly menstrualSymptoms: number | null;
+  readonly nutritionCompliancePct: number | null;
+  readonly carbsAroundTrainingG: Dec;
+  readonly performancePlanned: Dec;
+  readonly performanceActual: Dec;
+  readonly restingHrBpm: number | null;
+  readonly hrvMs: Dec;
+  readonly steps: number | null;
+  readonly activeKcal: Dec;
+}
+
+const toCheckin = (row: CheckinModel, readiness: StoredReadiness | null): StoredCheckin => ({
+  ...row,
+  localDate: isoDate(row.localDate),
+  status: row.status as RecordStatus,
+  sessionRpe: num(row.sessionRpe),
+  sleepHours: num(row.sleepHours),
+  carbsAroundTrainingG: num(row.carbsAroundTrainingG),
+  performancePlanned: num(row.performancePlanned),
+  performanceActual: num(row.performanceActual),
+  hrvMs: num(row.hrvMs),
+  activeKcal: num(row.activeKcal),
+  readiness,
+});
+
+const READINESS = {
+  id: true,
+  checkinId: true,
+  indication: true,
+  readinessScore: true,
+  components: true,
+  srpeLoad: true,
+  performancePct: true,
+  methodCode: true,
+  methodVersion: true,
+  status: true,
+} as const;
+
+/** components en la base: { scores: {sleep, heartRate, hrv, subjective}, neutral: [...] }. */
+interface ComponentsJson {
+  readonly scores: Readonly<Record<ReadinessComponentCode, number>>;
+  readonly neutral: readonly ReadinessComponentCode[];
+}
+
+const toReadiness = (row: {
+  id: string;
+  indication: string;
+  readinessScore: Dec;
+  components: unknown;
+  srpeLoad: Dec;
+  performancePct: Dec;
+  methodCode: string;
+  methodVersion: string;
+  status: string;
+}): StoredReadiness => {
+  const components = row.components as ComponentsJson;
+  return {
+    id: row.id,
+    indication: row.indication as Indication,
+    readinessScore: num(row.readinessScore),
+    components: components.scores,
+    neutralComponents: components.neutral,
+    srpeLoad: num(row.srpeLoad),
+    performancePct: num(row.performancePct),
+    methodCode: row.methodCode,
+    methodVersion: row.methodVersion,
+    status: row.status as StoredReadiness['status'],
+  };
+};
+
+const WORKOUT = {
+  id: true,
+  clientId: true,
+  localDate: true,
+  sessionId: true,
+  outcome: true,
+  startedAt: true,
+  finishedAt: true,
+  sessionRpe: true,
+  status: true,
+} as const;
+
+const MS_PER_MINUTE = 60_000;
 
 const base = (row: NewRecord) => ({
   id: row.id,
@@ -349,6 +480,275 @@ export class PrismaRecordStore implements RecordStore {
       select: { minValue: true, maxValue: true },
     });
     return row ? { min: num(row.minValue), max: num(row.maxValue) } : null;
+  }
+
+  async insertCheckin(row: NewCheckin): Promise<void> {
+    await this.db.tx.dailyCheckin.createMany({
+      data: [
+        {
+          ...base(row),
+          programId: row.programId,
+          weekNo: row.weekNo,
+          sessionId: row.sessionId,
+          sessionMinutes: row.sessionMinutes,
+          sessionRpe: row.sessionRpe,
+          sleepHours: row.sleepHours,
+          fatigue: row.fatigue,
+          soreness: row.soreness,
+          stress: row.stress,
+          motivation: row.motivation,
+          menstrualSymptoms: row.menstrualSymptoms,
+          nutritionCompliancePct: row.nutritionCompliancePct,
+          carbsAroundTrainingG: row.carbsAroundTrainingG,
+          performancePlanned: row.performancePlanned,
+          performanceActual: row.performanceActual,
+          restingHrBpm: row.restingHrBpm,
+          hrvMs: row.hrvMs,
+          steps: row.steps,
+          activeKcal: row.activeKcal,
+        },
+      ],
+      skipDuplicates: true,
+    });
+  }
+
+  async checkinByClientId(
+    patientId: string,
+    localDate: string,
+    clientId: string,
+  ): Promise<StoredCheckin | null> {
+    const row = await this.db.tx.dailyCheckin.findFirst({
+      where: { patientId, localDate: asDate(localDate), clientId },
+      select: CHECKIN,
+    });
+    return row ? this.#withReadiness(row) : null;
+  }
+
+  async checkin(id: string): Promise<StoredCheckin | null> {
+    const row = await this.db.tx.dailyCheckin.findFirst({ where: { id }, select: CHECKIN });
+    return row ? this.#withReadiness(row) : null;
+  }
+
+  async activeCheckin(patientId: string, localDate: string): Promise<StoredCheckin | null> {
+    const row = await this.db.tx.dailyCheckin.findFirst({
+      where: { patientId, localDate: asDate(localDate), status: 'ACTIVE' },
+      select: CHECKIN,
+    });
+    return row ? this.#withReadiness(row) : null;
+  }
+
+  async voidCheckin(id: string, localDate: string): Promise<void> {
+    await this.db.tx.dailyCheckin.updateMany({
+      where: { id, localDate: asDate(localDate) },
+      data: { status: 'VOIDED' },
+    });
+    await this.db.tx.dailyReadiness.updateMany({
+      where: { checkinId: id, localDate: asDate(localDate), status: 'CURRENT' },
+      data: { status: 'SUPERSEDED' },
+    });
+  }
+
+  async insertReadiness(row: NewReadiness): Promise<void> {
+    const components: ComponentsJson = {
+      scores: row.components,
+      neutral: row.neutralComponents,
+    };
+    await this.db.tx.dailyReadiness.createMany({
+      data: [
+        {
+          id: row.id,
+          organizationId: row.organizationId,
+          patientId: row.patientId,
+          localDate: asDate(row.localDate),
+          checkinId: row.checkinId,
+          methodCode: row.methodCode,
+          methodVersion: row.methodVersion,
+          engineVersion: row.engineVersion,
+          thresholdId: row.thresholdId,
+          inputs: JSON.parse(JSON.stringify(row.inputs)) as object,
+          inputsHash: new Uint8Array(Buffer.from(row.inputsHash, 'hex')),
+          srpeLoad: row.srpeLoad,
+          performancePct: row.performancePct,
+          readinessScore: row.readinessScore,
+          components: JSON.parse(JSON.stringify(components)) as object,
+          indication: row.indication,
+          computedAt: row.computedAt,
+        },
+      ],
+    });
+  }
+
+  async readinessBasis(localDate: string): Promise<ReadinessBasis | null> {
+    const [row] = await this.db.tx.$queryRaw<
+      {
+        sleep_target_hours: Dec;
+        baseline_resting_hr_bpm: number | null;
+        baseline_hrv_ms: Dec;
+        threshold_id: string;
+        neutral_score: Dec;
+        readiness_green_min: Dec;
+        readiness_red_below: Dec;
+        performance_min_pct: Dec;
+      }[]
+    >`SELECT * FROM app.readiness_basis(${localDate}::date)`;
+    if (!row) return null;
+    return {
+      thresholdId: row.threshold_id,
+      baseline: {
+        sleepTargetHours: num(row.sleep_target_hours),
+        restingHrBpm: row.baseline_resting_hr_bpm,
+        hrvMs: num(row.baseline_hrv_ms),
+      },
+      thresholds: {
+        neutralScore: Number(row.neutral_score),
+        readinessGreenMin: Number(row.readiness_green_min),
+        readinessRedBelow: Number(row.readiness_red_below),
+        performanceMinPct: Number(row.performance_min_pct),
+      },
+    };
+  }
+
+  async insertWorkout(row: NewWorkout): Promise<void> {
+    await this.db.tx.workoutLog.createMany({
+      data: [
+        {
+          ...base(row),
+          programId: row.programId,
+          sessionId: row.sessionId,
+          mesocycleId: row.mesocycleId,
+          weekNo: row.weekNo,
+          isDeload: row.isDeload,
+          startedAt: row.startedAt,
+          finishedAt: row.finishedAt,
+          outcome: row.outcome,
+          sessionRpe: row.sessionRpe,
+          stimulusRating: row.stimulus,
+          fatigueRating: row.fatigue,
+          notes: row.notes,
+        },
+      ],
+      skipDuplicates: true,
+    });
+    if (row.sets.length === 0) return;
+    await this.db.tx.setLog.createMany({
+      data: row.sets.map((set) => ({
+        id: set.id,
+        organizationId: row.organizationId,
+        patientId: row.patientId,
+        localDate: asDate(row.localDate),
+        clientId: set.clientId,
+        workoutLogId: row.id,
+        exerciseId: set.exerciseId,
+        exerciseName: set.exerciseName,
+        muscleContributions: set.muscleContributions.map((c) => ({ ...c })),
+        setNo: set.setNo,
+        isWarmup: set.isWarmup,
+        reps: set.reps,
+        loadKg: set.loadKg,
+        rir: set.rir,
+        rpe: set.rpe,
+        durationSeconds: set.durationSeconds,
+        distanceM: set.distanceM,
+        met: set.met,
+        stimulusRating: set.stimulus,
+        fatigueRating: set.fatigue,
+      })),
+      skipDuplicates: true,
+    });
+  }
+
+  async workoutByClientId(
+    patientId: string,
+    localDate: string,
+    clientId: string,
+  ): Promise<StoredWorkout | null> {
+    const row = await this.db.tx.workoutLog.findFirst({
+      where: { patientId, localDate: asDate(localDate), clientId },
+      select: WORKOUT,
+    });
+    return row ? ((await this.#withTonnage([row]))[0] ?? null) : null;
+  }
+
+  async workout(id: string): Promise<StoredWorkout | null> {
+    const row = await this.db.tx.workoutLog.findFirst({ where: { id }, select: WORKOUT });
+    return row ? ((await this.#withTonnage([row]))[0] ?? null) : null;
+  }
+
+  async dayWorkouts(patientId: string, localDate: string): Promise<readonly StoredWorkout[]> {
+    const rows = await this.db.tx.workoutLog.findMany({
+      where: { patientId, localDate: asDate(localDate), status: 'ACTIVE' },
+      select: WORKOUT,
+      orderBy: [{ createdAt: 'asc' }, { id: 'asc' }],
+    });
+    return this.#withTonnage(rows);
+  }
+
+  async voidWorkout(id: string, localDate: string): Promise<void> {
+    await this.db.tx.workoutLog.updateMany({
+      where: { id, localDate: asDate(localDate) },
+      data: { status: 'VOIDED' },
+    });
+    await this.db.tx.setLog.updateMany({
+      where: { workoutLogId: id, localDate: asDate(localDate) },
+      data: { status: 'VOIDED' },
+    });
+  }
+
+  async #withReadiness(row: CheckinModel): Promise<StoredCheckin> {
+    const readiness = await this.db.tx.dailyReadiness.findFirst({
+      where: { checkinId: row.id, localDate: row.localDate },
+      select: READINESS,
+      orderBy: [{ computedAt: 'desc' }, { id: 'desc' }],
+    });
+    return toCheckin(row, readiness ? toReadiness(readiness) : null);
+  }
+
+  /** El tonelaje y las series de cada entreno: la suma de tonnage_kg de sus series vigentes (RN-F03). */
+  async #withTonnage(
+    rows: readonly {
+      id: string;
+      clientId: string;
+      localDate: Date;
+      sessionId: string | null;
+      outcome: string;
+      startedAt: Date | null;
+      finishedAt: Date | null;
+      sessionRpe: Dec;
+      status: string;
+    }[],
+  ): Promise<StoredWorkout[]> {
+    if (rows.length === 0) return [];
+    const sums = await this.db.tx.setLog.groupBy({
+      by: ['workoutLogId'],
+      where: {
+        workoutLogId: { in: rows.map((row) => row.id) },
+        localDate: {
+          in: [...new Set(rows.map((row) => row.localDate.getTime()))].map((t) => new Date(t)),
+        },
+        status: 'ACTIVE',
+      },
+      _sum: { tonnageKg: true },
+      _count: { _all: true },
+    });
+    const byWorkout = new Map(sums.map((sum) => [sum.workoutLogId, sum]));
+    return rows.map((row) => {
+      const sum = byWorkout.get(row.id);
+      return {
+        id: row.id,
+        clientId: row.clientId,
+        localDate: isoDate(row.localDate),
+        sessionId: row.sessionId,
+        outcome: row.outcome as WorkoutOutcome,
+        durationMinutes:
+          row.startedAt && row.finishedAt
+            ? Math.round((row.finishedAt.getTime() - row.startedAt.getTime()) / MS_PER_MINUTE)
+            : null,
+        sessionRpe: num(row.sessionRpe),
+        tonnageKg: Number(sum?._sum.tonnageKg ?? 0),
+        setCount: sum?._count._all ?? 0,
+        status: row.status as RecordStatus,
+      };
+    });
   }
 
   /** El plan vigente, desde su validFrom (RN-E14): effective_from es de la fila, que comparten el plan y el programa. */

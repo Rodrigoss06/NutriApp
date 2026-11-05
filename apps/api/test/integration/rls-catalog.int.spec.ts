@@ -181,6 +181,7 @@ describe('RNF-12 · RN-A01 · el catálogo de PostgreSQL prueba el aislamiento',
       { name: 'app.patient_invitation_preview(bytea)', owner: 'app_owner' },
       { name: 'app.patient_of_account()', owner: 'app_owner' },
       { name: 'app.purge_rate_limits()', owner: 'app_owner' },
+      { name: 'app.readiness_basis(date)', owner: 'app_owner' },
     ]);
   });
 
@@ -208,6 +209,7 @@ describe('RNF-12 · RN-A01 · el catálogo de PostgreSQL prueba el aislamiento',
       'patient_invitation_preview',
       'patient_of_account',
       'purge_rate_limits',
+      'readiness_basis',
       'role',
       'unaccent_immutable',
       'user_id',
@@ -242,7 +244,7 @@ describe('RNF-12 · RN-A01 · el catálogo de PostgreSQL prueba el aislamiento',
     expect(foreign).toEqual([]);
   });
 
-  it('existe la partición del mes siguiente en las nueve tablas particionadas (05 §5)', async () => {
+  it('existe la partición del mes siguiente en las diez tablas particionadas (05 §5)', async () => {
     const missing = await withContext('user', {}, async (client) => {
       const result = await client.query<{ parent: string }>(
         'SELECT * FROM app.missing_next_month_partitions() AS parent',
@@ -257,6 +259,6 @@ describe('RNF-12 · RN-A01 · el catálogo de PostgreSQL prueba el aislamiento',
     );
 
     expect(missing).toEqual([]);
-    expect(parents).toHaveLength(9);
+    expect(parents).toHaveLength(10);
   });
 });

@@ -1734,3 +1734,81 @@ Consecuencias:
   el mensaje, y Hoy los muestra. 2 de 2 en escritorio y 2 de 2 en el celular.
 - Lighthouse móvil en Hoy con plan, agua y mensaje (local, 5 corridas): rendimiento 96 de mediana y accesibilidad 100. LCP de 2.11 a
   2.73 s, con mediana de 2.12 s: la variación de la fuente que ya estaba anotada.
+
+## ADR-083 · Registro diario, indicación del día, entreno, MENSTRUAL_TRACKING y cribado del paciente por /me — aceptada (2026-11-02)
+Contexto: P13, PR 4a (RF-29, RN-G11, RN-G12, RN-G14, RN-G15, RN-G17, RN-F03, RN-F06; 07 §2, §3.2, §9 y §11; ADR-080). El motor ya calcula
+el día (PR 1); faltaban dónde guardarlo, cómo lo registra el paciente y lo que el paciente no puede leer. El PR 4 se divide en 4a (API) y
+4b (pantallas): P13 queda en 6 PR.
+Decisión:
+- Migración `202611020000_tracking_daily_readiness`:
+  - MENSTRUAL_TRACKING en el CHECK de `clinical.consent`, con su texto 0.1-provisional, que revisa el abogado;
+  - `training.athlete_profile.hormonal_contraception` (sí, no o vacío);
+  - `training.readiness_threshold`, catálogo con RLS (`enable_catalog_rls`) que el paciente no lee: una fila global con los valores de
+    07 §11 desde 2026-10-21; la de la organización, si existe, manda. En P13 solo se lee; editarlo es de P14;
+  - las columnas del registro diario en `tracking.daily_checkin` (07 §9), con sus rangos;
+  - `tracking.daily_readiness`, particionada por mes: el resultado del motor por registro diario, con método, versión, versión del
+    motor, umbral, insumos y su hash (RN-D01). Disparador de restricción hacia el registro diario (ADR-024), equipo de atención, el
+    paciente lee y escribe lo suyo y solo se actualiza `status`. Entra en la lista cerrada de particiones y en `PARTITIONED_TABLES`;
+  - `app.readiness_basis(fecha)`, SECURITY DEFINER y solo para la sesión PATIENT: la línea base de su perfil vigente y el umbral vigente.
+    No devuelve nada más del perfil.
+- Migración `202611020100_tracking_set_log_by_workout`: índice de `set_log` por entreno, para su tonelaje y su anulación.
+- Migración `202611020200_tracking_readiness_account_scope`: ACCOUNT no ve la recuperación, como el resto de los registros (P6).
+- Registro diario (POST /me/checkins y /:id/void): uno vigente por día. Registrarlo otra vez anula el anterior y deja su recuperación
+  SUPERSEDED (RN-G12). La recuperación se calcula con `READINESS_JV` en la misma transacción y se guarda con el umbral usado. Anular el
+  registro deja Hoy sin indicación. Con síntomas del ciclo exige MENSTRUAL_TRACKING vigente (NC-CLI-032, RN-G17); sin síntomas, no.
+- Rendimiento del día (P-09, ADR-080):
+  - si el paciente registró ese día sesiones del programa, no omitidas y con tonelaje, el planificado es su tonelaje prescrito, solo si
+    todas tienen kg y repeticiones fijas, y el real, su tonelaje registrado. Una sesión marcada hecha sin series o sin peso no cuenta:
+    no dice nada del rendimiento y no debe valer 0 % ni dar amarillo;
+  - si no, vale el par que escribe el paciente. Las dos fuentes no se mezclan, porque pueden estar en unidades distintas;
+  - anular un entreno no recalcula el registro diario ya hecho (RN-D08): el paciente lo vuelve a registrar.
+- Entreno (POST /me/workouts y /:id/void):
+  - exige programa vigente: desde su primer día hasta su última semana (NC-TRK-010). Fuera de ellas, el registro diario tampoco lleva
+    programa;
+  - una sesión omitida no lleva series (contrato);
+  - la sesión debe ser del snapshot y se guarda en su semana, aunque se haga otro día;
+  - cada ejercicio, de esa sesión o, sin sesión, del programa (NC-TRK-011). La alternativa y las variantes todavía no se registran: no
+    traen sus músculos en el snapshot;
+  - cada serie congela el nombre del ejercicio y sus músculos, principal 1 y secundario 0.5 (RN-F06), y la base calcula su tonelaje sin
+    el calentamiento (RN-F03). Su clientId sale del de la petición (UUID v8, como los del menú);
+  - 05.2 no tiene columna de duración: `finished_at` es el momento del registro y `started_at`, ese momento menos los minutos; sin
+    minutos, los dos quedan vacíos.
+- Lecturas:
+  - GET /me/training: la semana del programa con su fase y su RIR objetivo, las sesiones de hoy como las ve el paciente (sin la nota de
+    la sustitución, ADR-079) con su tonelaje prescrito, lo registrado y el registro diario;
+  - GET /me/today trae la recuperación de hoy y GET /me/days/:date, el registro diario y los entrenos del día;
+  - los textos de cada indicación y la nota visible de 07 §9 están en contracts (`INDICATION_TEXTS`, `READINESS_NOTE`) para la web.
+- clinical, para el paciente:
+  - GET y POST /me/consents, y POST /me/consents/MENSTRUAL_TRACKING/revoke: solo esa finalidad, por el canal APP y con el texto vigente;
+  - GET y POST /me/screening: el cribado lo responde él; en rojo o ámbar espera la revisión del coach (RN-F15).
+- La anticoncepción hormonal la registra el coach en el perfil y, si no está vacía, exige MENSTRUAL_TRACKING vigente (NC-CLI-032).
+- `RecordGate` reúne lo que todo registro comprueba: HEALTH_DATA, la ventana y su evento. Lo usan `RecordCommands` y el nuevo
+  `TrainingLogCommands`.
+- `Idempotency-Key` obligatoria en toda escritura de las rutas `@PatientOnly`, como pide 06 §5: sin ella, 400 NC-PLT-004. Hasta el PR 2 era
+  opcional y solo el clientId protegía de un reintento; `POST /me/screening` y `POST /me/consents` no tienen clientId. La web la envía en
+  cada registro y al anular (`void:<id>`). El PR 4b genera una clave por cada acción en el consentimiento y el cribado: retirar y volver a
+  autorizar son dos acciones.
+- Eventos: `tracking.checkin.logged` y `.voided`, `tracking.workout.logged` y `.voided`, solo con el paciente y el día; nunca los síntomas
+  ni la indicación.
+- Códigos: NC-TRK-010 a NC-TRK-012, NC-CLI-032 y NC-PLT-004.
+Consecuencias:
+- Unitarias de la aplicación con dobles en memoria: `training-log.application.spec.ts` y `patient-self-service.spec.ts`. Cubren RN-D08 (anular
+  un entreno no recalcula) y ADR-042 (un menor de 14 no autoriza desde la app). Contratos: los esquemas nuevos y los textos de 07 §9.
+- E2E `e2e/app-paciente.spec.ts`, porque anular cambió en la web: 2 de 2 en escritorio y 2 de 2 en el celular con WebKit.
+- Integración: en `patient-app.int.spec.ts`, la clave obligatoria. `test/integration/patient-training.int.spec.ts` (14 casos, como app_user)
+  cubre:
+  - la sesión de hoy y su registro con series;
+  - el registro diario en verde, la corrección en amarillo, anular y «sin datos»;
+  - el criterio 6 de P13: sin MENSTRUAL_TRACKING se rechazan los síntomas; con él, síntomas en 3 dan rojo;
+  - la anticoncepción hormonal, el cribado propio y que `app.readiness_basis` no responde a otra sesión.
+- Para Notion (/notion-sync de P13):
+  - 05.1: MENSTRUAL_TRACKING y `hormonal_contraception`;
+  - 05.2: `readiness_threshold`, las columnas de `daily_checkin`, `daily_readiness`, el índice `set_log_by_workout` y
+    `app.readiness_basis`;
+  - 02: §7 (registro diario y entreno), §8 (los eventos) y §10 (las rutas /me);
+  - 06: los códigos (06 §5 ya pedía la clave y no cambia);
+  - 07 §9: el rendimiento de la sesión registrada, la sesión sin tonelaje y los textos ya en contracts.
+- Para el PR 4b: el formulario del perfil debe enviar `hormonalContraception`, porque hoy guardarlo lo dejaría vacío; y si el paciente retiró
+  MENSTRUAL_TRACKING con el valor en «sí», debe permitir vaciarlo para que el coach guarde lo demás (si no, 422 NC-CLI-032). Registrar la
+  sesión después del registro diario tampoco lo recalcula (RN-D08): la pantalla debe ofrecer actualizarlo.
+

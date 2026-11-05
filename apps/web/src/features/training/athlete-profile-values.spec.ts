@@ -108,6 +108,7 @@ describe('07 §2 · el formulario del perfil de entrenamiento', () => {
       sleepTargetHours: 7.5,
       testTargets: { GRIP_R: 40 },
       notes: null,
+      hormonalContraception: null,
       recordedBy: '01920000-0000-7000-8000-000000000001',
       recordedAt: '2026-10-20T14:00:00.000Z',
     };

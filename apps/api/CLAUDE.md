@@ -12,7 +12,7 @@
 - Controladores: validan con @nutricoach/contracts, no tienen lógica, responden errores RFC 9457 con code y rule.
 - Guardias en orden: OriginGuard, SessionGuard, TenantGuard, PolicyGuard. Se niega por defecto: cada ruta declara
   @Public, @Authenticated, @PlatformOnly o @RequirePermission (test/access-rules.api.spec.ts lo verifica). Las
-  escrituras permitidas en solo lectura llevan @AllowedWhenReadOnly. El paciente usa /api/v1/me/... y nunca envía su id.
+  escrituras permitidas en solo lectura llevan @AllowedWhenReadOnly. El paciente usa /api/v1/me/... y nunca envía su id; sus POST exigen Idempotency-Key (06 §5).
 - Errores: casos de uso devuelven Result con DomainError; el controlador usa problemFromDomainError. Cuerpos con
   parseBody y su contrato. Entradas sensibles al abuso pasan por RateLimiter (ADR-030).
 - Lectura de expediente clínico y exportaciones: AuditPort.record().

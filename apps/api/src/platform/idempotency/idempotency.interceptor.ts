@@ -9,10 +9,12 @@ import {
   type ExecutionContext,
   type NestInterceptor,
 } from '@nestjs/common';
+import { Reflector } from '@nestjs/core';
 import { TransactionHost } from '@nestjs-cls/transactional';
 import { UNIT_OF_WORK, type SecurityContext, type UnitOfWork } from '@nutricoach/shared-kernel';
 import type { Response } from 'express';
 import { from, lastValueFrom, type Observable } from 'rxjs';
+import { ACCESS_RULE, type AccessRule } from '../auth/access.js';
 import type { Prisma } from '../database/generated/client.js';
 import type { Db } from '../database/prisma.provider.js';
 import type { ContextualRequest } from '../http/request-context.js';
@@ -46,13 +48,15 @@ function problem(status: number, code: string, title: string): Record<string, un
  * Idempotency-Key (05.3 platform.idempotency_key, RN-G08). Con la misma clave y el mismo cuerpo, la segunda
  * petición recibe la respuesta guardada sin volver a ejecutar el caso de uso; con otro cuerpo, 422; si la
  * primera sigue en curso, 409. Las respuestas 5xx no se guardan: el reintento vuelve a ejecutar. Sin usuario
- * autenticado o sin cabecera, la petición sigue sin cambios.
+ * autenticado o sin cabecera, la petición sigue sin cambios, salvo en las rutas de la app del paciente, donde la
+ * cabecera es obligatoria (06 §5): sin ella, 400.
  */
 @Injectable()
 export class IdempotencyInterceptor implements NestInterceptor {
   constructor(
     @Inject(UNIT_OF_WORK) private readonly uow: UnitOfWork,
     @Inject(TransactionHost) private readonly db: Db,
+    @Inject(Reflector) private readonly reflector: Reflector,
   ) {}
 
   intercept(context: ExecutionContext, next: CallHandler): Observable<unknown> {
@@ -61,6 +65,11 @@ export class IdempotencyInterceptor implements NestInterceptor {
     const response = http.getResponse<Response>();
     const key = request.header(IDEMPOTENCY_HEADER);
     const user = request.securityContext;
+    if (key === undefined && MUTATING.has(request.method) && this.#isPatientRoute(context)) {
+      throw new BadRequestException(
+        problem(400, 'NC-PLT-004', 'Falta la Idempotency-Key: la app la envía en cada registro.'),
+      );
+    }
     if (key === undefined || !MUTATING.has(request.method) || user?.userId == null)
       return next.handle();
     if (!KEY_FORMAT.test(key)) {
@@ -73,6 +82,15 @@ export class IdempotencyInterceptor implements NestInterceptor {
       );
     }
     return from(this.#run(user, key, request, response, next));
+  }
+
+  /** Las rutas @PatientOnly: las de la app del paciente, /api/v1/me (02 §10). */
+  #isPatientRoute(context: ExecutionContext): boolean {
+    const rule = this.reflector.getAllAndOverride<AccessRule | undefined>(ACCESS_RULE, [
+      context.getHandler(),
+      context.getClass(),
+    ]);
+    return rule?.kind === 'patient';
   }
 
   async #run(

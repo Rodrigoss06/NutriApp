@@ -95,3 +95,14 @@ export type Screening = z.infer<typeof screeningSchema>;
 
 export const screeningListResponseSchema = z.object({ screenings: z.array(screeningSchema) });
 export type ScreeningListResponse = z.infer<typeof screeningListResponseSchema>;
+
+/** GET /api/v1/me/screening: el último cribado del paciente, sin su estado; si espera la revisión del coach (RN-F15). */
+export const meScreeningSchema = z.object({
+  latest: z
+    .object({
+      answeredAt: z.iso.datetime({ offset: true }),
+      awaitingReview: z.boolean(),
+    })
+    .nullable(),
+});
+export type MeScreening = z.infer<typeof meScreeningSchema>;

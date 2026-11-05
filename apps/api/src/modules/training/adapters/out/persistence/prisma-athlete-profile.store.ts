@@ -51,6 +51,7 @@ export class PrismaAthleteProfileStore implements AthleteProfileStore {
       sleepTargetHours: Number(row.sleepTargetHours),
       testTargets: row.testTargets as Readonly<Record<string, number>>,
       notes: row.notes,
+      hormonalContraception: row.hormonalContraception,
       recordedBy: row.recordedBy as UserId,
       recordedAt: row.recordedAt,
     };

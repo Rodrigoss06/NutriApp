@@ -5,42 +5,32 @@ import {
   err,
   ID_GENERATOR,
   ok,
-  OUTBOX,
   UNIT_OF_WORK,
   type Clock,
   type DomainError,
   type IdGenerator,
-  type OrganizationId,
-  type Outbox,
   type Result,
   type SecurityContext,
   type UnitOfWork,
-  type UserId,
 } from '@nutricoach/shared-kernel';
 import { atomically } from '../../../../platform/index.js';
-import { ClinicalApi, PATIENT_NOT_FOUND } from '../../../clinical/index.js';
 import { ContentApi } from '../../../content/index.js';
 import { FoodApi } from '../../../food/index.js';
 import type { PlanSnapshot } from '../../../nutrition/index.js';
-import { TenancyApi } from '../../../tenancy/index.js';
-import { localDate as localDateOf } from '../../domain/active-plan.js';
 import {
   catalogFoodDraft,
   planDrafts,
-  recordWindow,
   type FoodLogDraft,
   type LoggablePlan,
 } from '../../domain/records.js';
 import {
   FOOD_NOT_FOUND,
-  FUTURE_DATE,
   METRIC_OUT_OF_RANGE,
   NO_ACTIVE_PLAN,
   NOT_IN_PLAN,
   RECORD_NOT_FOUND,
   RECORD_VOIDED,
   WEIGHT_LOG_DISABLED,
-  WINDOW_CLOSED,
 } from '../../domain/tracking-errors.js';
 import {
   RECORD_STORE,
@@ -50,11 +40,10 @@ import {
   type StoredMetric,
   type StoredNote,
 } from '../ports/records.ports.js';
-import {
-  trackingEvent,
-  type TrackingEventPayload,
-  type TrackingEventType,
-} from '../tracking-events.js';
+import type { TrackingEventPayload, TrackingEventType } from '../tracking-events.js';
+import { patientOf, RecordGate, type Logged, type PatientContext } from './record-gate.js';
+
+export type { Logged } from './record-gate.js';
 
 /** Lo que el paciente eligió, como llega del contrato (RN-G05). */
 export type FoodSource =
@@ -79,12 +68,6 @@ export type FoodSource =
       readonly grams: number;
     };
 
-/** Lo registrado y si ya estaba: un reintento con el mismo clientId devuelve lo de la primera vez (RN-G08). */
-export interface Logged<T> {
-  readonly value: T;
-  readonly replayed: boolean;
-}
-
 /** Cuántos registros puede dejar una sola petición: la opción de un menú tiene un registro por alimento o receta. */
 const MAX_ITEMS_PER_REQUEST = 50;
 
@@ -108,23 +91,6 @@ export function itemClientId(clientId: string, index: number): string {
 const requestClientIds = (clientId: string): string[] =>
   Array.from({ length: MAX_ITEMS_PER_REQUEST }, (_, index) => itemClientId(clientId, index));
 
-interface PatientContext {
-  readonly organizationId: OrganizationId;
-  readonly patientId: string;
-  readonly userId: UserId;
-}
-
-function patientOf(context: SecurityContext): PatientContext {
-  if (!context.organizationId || !context.patientId || !context.userId) {
-    throw new Error('Un registro necesita la sesión del paciente.');
-  }
-  return {
-    organizationId: context.organizationId,
-    patientId: context.patientId,
-    userId: context.userId,
-  };
-}
-
 /**
  * Lo que el paciente registra sobre sí mismo (RN-G01, 02 §7): comida, agua, notas y peso. Cada caso de uso exige HEALTH_DATA
  * vigente (RN-B01), un día dentro de la ventana (RN-G10) y no duplica un clientId (RN-G08). Corregir o anular no borra (RN-G12).
@@ -136,10 +102,8 @@ export class RecordCommands {
     @Inject(UNIT_OF_WORK) private readonly uow: UnitOfWork,
     @Inject(CLOCK) private readonly clock: Clock,
     @Inject(ID_GENERATOR) private readonly ids: IdGenerator,
-    @Inject(OUTBOX) private readonly outbox: Outbox,
     @Inject(RECORD_STORE) private readonly store: RecordStore,
-    @Inject(ClinicalApi) private readonly clinical: ClinicalApi,
-    @Inject(TenancyApi) private readonly tenancy: TenancyApi,
+    @Inject(RecordGate) private readonly gate: RecordGate,
     @Inject(FoodApi) private readonly food: FoodApi,
     @Inject(ContentApi) private readonly content: ContentApi,
   ) {}
@@ -153,7 +117,7 @@ export class RecordCommands {
     return atomically<Logged<readonly StoredFoodLog[]>>(this.uow, context, async () => {
       const replay = await this.#foodReplay(patient.patientId, input.localDate, input.clientId);
       if (replay) return ok({ value: replay, replayed: true });
-      const open = await this.#ensureOpen(patient, input.localDate);
+      const open = await this.gate.ensureOpen(patient, input.localDate);
       if (!open.ok) return open;
       const drafts = await this.#drafts(patient.patientId, input.localDate, input.source);
       if (!drafts.ok) return drafts;
@@ -175,7 +139,7 @@ export class RecordCommands {
       const replay = await this.#foodReplay(patient.patientId, current.localDate, input.clientId);
       if (replay) return ok({ value: replay, replayed: true });
       if (current.status === 'VOIDED') return err(RECORD_VOIDED);
-      const open = await this.#ensureOpen(patient, current.localDate);
+      const open = await this.gate.ensureOpen(patient, current.localDate);
       if (!open.ok) return open;
       const drafts = await this.#drafts(patient.patientId, current.localDate, input.source);
       if (!drafts.ok) return drafts;
@@ -201,7 +165,7 @@ export class RecordCommands {
       const current = await this.store.foodLog(id);
       if (!current) return err(RECORD_NOT_FOUND);
       if (current.status === 'VOIDED') return err(RECORD_VOIDED);
-      const open = await this.#ensureOpen(patient, current.localDate);
+      const open = await this.gate.ensureOpen(patient, current.localDate);
       if (!open.ok) return open;
       await this.store.voidFoodLog(id, current.localDate, null);
       await this.#emit(context, 'tracking.food.voided', id, {
@@ -223,7 +187,7 @@ export class RecordCommands {
         this.store.hydrationByClientId(patient.patientId, input.localDate, input.clientId);
       const replay = await lookup();
       if (replay) return ok({ value: replay, replayed: true });
-      const open = await this.#ensureOpen(patient, input.localDate);
+      const open = await this.gate.ensureOpen(patient, input.localDate);
       if (!open.ok) return open;
       const id = this.ids.newId<'HydrationLogId'>();
       await this.store.insertHydration({
@@ -253,7 +217,7 @@ export class RecordCommands {
       const current = await this.store.hydrationLog(id);
       if (!current) return err(RECORD_NOT_FOUND);
       if (current.status === 'VOIDED') return err(RECORD_VOIDED);
-      const open = await this.#ensureOpen(patient, current.localDate);
+      const open = await this.gate.ensureOpen(patient, current.localDate);
       if (!open.ok) return open;
       await this.store.voidHydration(id, current.localDate);
       await this.#emit(context, 'tracking.hydration.voided', id, {
@@ -275,7 +239,7 @@ export class RecordCommands {
         this.store.noteByClientId(patient.patientId, input.localDate, input.clientId);
       const replay = await lookup();
       if (replay) return ok({ value: replay, replayed: true });
-      const open = await this.#ensureOpen(patient, input.localDate);
+      const open = await this.gate.ensureOpen(patient, input.localDate);
       if (!open.ok) return open;
       const id = this.ids.newId<'NoteLogId'>();
       await this.store.insertNote({ ...this.#base(patient, input), id, body: input.body });
@@ -321,7 +285,7 @@ export class RecordCommands {
       ) {
         return err(METRIC_OUT_OF_RANGE);
       }
-      const open = await this.#ensureOpen(patient, input.localDate);
+      const open = await this.gate.ensureOpen(patient, input.localDate);
       if (!open.ok) return open;
       const id = this.ids.newId<'MetricLogId'>();
       await this.store.insertMetric({
@@ -349,7 +313,7 @@ export class RecordCommands {
       const current = await this.store.metricLog(id);
       if (!current) return err(RECORD_NOT_FOUND);
       if (current.status === 'VOIDED') return err(RECORD_VOIDED);
-      const open = await this.#ensureOpen(patient, current.localDate);
+      const open = await this.gate.ensureOpen(patient, current.localDate);
       if (!open.ok) return open;
       await this.store.voidMetric(id, current.localDate);
       await this.#emit(context, 'tracking.metric.voided', id, {
@@ -381,23 +345,6 @@ export class RecordCommands {
       requestClientIds(clientId),
     );
     return found.length > 0 ? found : null;
-  }
-
-  /** HEALTH_DATA vigente (RN-B01) y un día ni futuro ni cerrado, en la fecha local del paciente (RN-G04, RN-G10). */
-  async #ensureOpen(
-    patient: PatientContext,
-    localDate: string,
-  ): Promise<Result<void, DomainError>> {
-    const consent = await this.clinical.ensureHealthDataConsent(patient.patientId);
-    if (!consent.ok) return consent;
-    const ref = await this.clinical.patientRef(patient.patientId);
-    if (!ref) return err(PATIENT_NOT_FOUND);
-    const today = localDateOf(this.clock.now(), ref.timezone);
-    const windowDays = await this.tenancy.trackingEditWindowDays(patient.organizationId);
-    const verdict = recordWindow(localDate, today, windowDays);
-    if (verdict === 'FUTURE') return err(FUTURE_DATE);
-    if (verdict === 'CLOSED') return err(WINDOW_CLOSED);
-    return ok(undefined);
   }
 
   /** Lo que aporta lo elegido: del snapshot del plan vigente ese día (RN-E15) o del catálogo (RN-G05). */
@@ -468,21 +415,12 @@ export class RecordCommands {
     return stored;
   }
 
-  async #emit(
+  #emit(
     context: Pick<SecurityContext, 'organizationId' | 'userId' | 'role'>,
     type: TrackingEventType,
     aggregateId: string,
     payload: TrackingEventPayload,
   ): Promise<void> {
-    if (!context.organizationId) throw new Error('Un evento de tracking necesita la organización.');
-    await this.outbox.append(
-      [
-        trackingEvent(type, context.organizationId, aggregateId, payload, {
-          clock: this.clock,
-          ids: this.ids,
-        }),
-      ],
-      { actorUserId: context.userId, actorRole: context.role },
-    );
+    return this.gate.emit(context, type, aggregateId, payload);
   }
 }

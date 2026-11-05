@@ -26,7 +26,7 @@
 - Números clínicos: se muestran los de la API, siempre con su método (MethodBadge, RN-D02).
   @nutricoach/engine solo para vistas previas mientras se escribe.
 - App del paciente: primero el celular, objetivos táctiles de 44 px o más, teclado numérico, registrar una comida
-  del plan en tres toques o menos (RN-G06). Cada registro envía clientId e Idempotency-Key.
+  del plan en tres toques o menos (RN-G06). Cada registro envía clientId, y todo POST a /me, Idempotency-Key (la API responde 400 sin ella).
 - La palabra "Paciente" sale de la configuración de la organización (puede ser "Asesorado").
 - Accesibilidad: etiquetas, foco visible y contraste AA; axe en las pruebas de Playwright.
 - Tablas que pueden desbordar en el celular: dentro de TableScroll (región con nombre que se puede enfocar).

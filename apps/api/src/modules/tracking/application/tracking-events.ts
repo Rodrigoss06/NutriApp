@@ -16,7 +16,11 @@ export type TrackingEventType =
   | 'tracking.hydration.voided'
   | 'tracking.note.logged'
   | 'tracking.metric.logged'
-  | 'tracking.metric.voided';
+  | 'tracking.metric.voided'
+  | 'tracking.checkin.logged'
+  | 'tracking.checkin.voided'
+  | 'tracking.workout.logged'
+  | 'tracking.workout.voided';
 
 export interface TrackingEventPayload {
   readonly patientId: string;

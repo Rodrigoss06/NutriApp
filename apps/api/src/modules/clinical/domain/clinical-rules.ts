@@ -14,7 +14,17 @@ export type PatientStatus = 'ACTIVE' | 'ARCHIVED';
 export type CareTeamRole = 'RESPONSIBLE' | 'NUTRITION' | 'TRAINING' | 'COLLABORATOR';
 export type CareTeamAccess = 'READ' | 'WRITE';
 export type ConsentPurpose =
-  'HEALTH_DATA' | 'APP_ACCESS' | 'IMAGES' | 'ANONYMIZED_RESEARCH' | 'MARKETING';
+  | 'HEALTH_DATA'
+  | 'APP_ACCESS'
+  | 'IMAGES'
+  | 'ANONYMIZED_RESEARCH'
+  | 'MARKETING'
+  | 'MENSTRUAL_TRACKING';
+
+/** Las finalidades opcionales que el paciente autoriza o retira él mismo desde la app (RN-G17, 07 §9). */
+export const SELF_SERVICE_PURPOSES = [
+  'MENSTRUAL_TRACKING',
+] as const satisfies readonly ConsentPurpose[];
 export type ConsentChannel = 'APP' | 'IN_PERSON_DIGITAL' | 'PAPER_SCANNED';
 export type ActorRole = 'OWNER' | 'ADMIN' | 'PROFESSIONAL';
 export type ConditionKind =
@@ -162,6 +172,12 @@ export const SCREENING_NOT_REVIEWABLE = domainError({
   code: 'NC-CLI-030',
   rule: 'RN-F15',
   message: 'Este cribado no necesita revisión o ya la tiene.',
+});
+/** Los síntomas del ciclo y la anticoncepción hormonal solo con MENSTRUAL_TRACKING vigente (RN-G17). */
+export const MENSTRUAL_TRACKING_REQUIRED = domainError({
+  code: 'NC-CLI-032',
+  rule: 'RN-G17',
+  message: 'El ciclo menstrual solo se registra con su autorización vigente.',
 });
 /** Fotos, videos y enlaces de evidencia necesitan autorización previa (07 §4). */
 export const IMAGES_CONSENT_REQUIRED = domainError({

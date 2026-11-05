@@ -31,7 +31,11 @@ export function useRecord<TBody extends { readonly clientId: string }, TResponse
 export function useVoid(path: string) {
   const router = useRouter();
   return useMutation({
-    mutationFn: (id: string) => apiFetch<unknown>(`${path}/${id}/void`, { method: 'POST' }),
+    mutationFn: (id: string) =>
+      apiFetch<unknown>(`${path}/${id}/void`, {
+        method: 'POST',
+        headers: { 'Idempotency-Key': `void:${id}` },
+      }),
     onSuccess: () => {
       router.refresh();
     },

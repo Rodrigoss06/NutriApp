@@ -13,6 +13,7 @@ export const PARTITIONED_TABLES = [
   'tracking.metric_log',
   'tracking.note_log',
   'tracking.device_reading',
+  'tracking.daily_readiness',
   'audit.audit_log',
 ] as const;
 

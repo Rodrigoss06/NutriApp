@@ -18,6 +18,7 @@ import { TenancyApi } from '../../../tenancy/index.js';
 import type { ProgramSnapshot } from '../../../training/index.js';
 import { localDate as localDateOf } from '../../domain/active-plan.js';
 import { sessionsOn } from '../../domain/active-program.js';
+import { sessionView, type SessionView } from '../../domain/training-day.js';
 import {
   dayTotals,
   planView,
@@ -27,15 +28,19 @@ import {
   type PlanView,
 } from '../../domain/records.js';
 import { FUTURE_DATE } from '../../domain/tracking-errors.js';
+import { trainingDayOf } from '../active-training.js';
 import {
   RECORD_STORE,
   type ActiveSnapshot,
   type DayTargetRow,
   type RecordStore,
+  type StoredCheckin,
   type StoredFoodLog,
   type StoredHydrationLog,
   type StoredMetric,
   type StoredNote,
+  type StoredReadiness,
+  type StoredWorkout,
 } from '../ports/records.ports.js';
 
 export interface DaySessionView {
@@ -53,6 +58,24 @@ export interface TodayView {
   readonly waterMl: number;
   readonly plan: { readonly planId: string; readonly modality: PlanView['modality'] } | null;
   readonly sessions: readonly DaySessionView[] | null;
+  /** La recuperación e indicación de hoy, si ya hizo su registro diario (RN-G15). */
+  readonly readiness: StoredReadiness | null;
+}
+
+/** El entreno de hoy (RF-29): la semana del programa vigente, sus sesiones de hoy y lo ya registrado. */
+export interface TrainingTodayView {
+  readonly localDate: string;
+  readonly program: {
+    readonly programId: string;
+    readonly name: string;
+    readonly weekNo: number;
+    readonly isDeload: boolean;
+    readonly phase: string | null;
+    readonly targetRir: number | null;
+  } | null;
+  readonly sessions: readonly SessionView[];
+  readonly workouts: readonly StoredWorkout[];
+  readonly checkin: StoredCheckin | null;
 }
 
 export interface DayView {
@@ -64,6 +87,8 @@ export interface DayView {
   readonly metrics: readonly StoredMetric[];
   readonly totals: DayTotals;
   readonly waterMl: number;
+  readonly checkin: StoredCheckin | null;
+  readonly workouts: readonly StoredWorkout[];
 }
 
 interface PatientScope {
@@ -130,14 +155,16 @@ export class MeQueries {
     const scope = scopeOf(context);
     return this.uow.query(context, async () => {
       const today = await this.#today(scope.patientId);
-      const [editWindowDays, target, foods, hydration, nutrition, training] = await Promise.all([
-        this.tenancy.trackingEditWindowDays(scope.organizationId),
-        this.store.dayTarget(scope.patientId, today),
-        this.store.dayFoodLogs(scope.patientId, today),
-        this.store.dayHydration(scope.patientId, today),
-        this.store.activeNutrition(scope.patientId),
-        this.store.activeTraining(scope.patientId),
-      ]);
+      const [editWindowDays, target, foods, hydration, nutrition, training, checkin] =
+        await Promise.all([
+          this.tenancy.trackingEditWindowDays(scope.organizationId),
+          this.store.dayTarget(scope.patientId, today),
+          this.store.dayFoodLogs(scope.patientId, today),
+          this.store.dayHydration(scope.patientId, today),
+          this.store.activeNutrition(scope.patientId),
+          this.store.activeTraining(scope.patientId),
+          this.store.activeCheckin(scope.patientId, today),
+        ]);
       const plan = appPlanOn(nutrition, today);
       return {
         localDate: today,
@@ -147,6 +174,7 @@ export class MeQueries {
         waterMl: water(hydration),
         plan: plan ? { planId: plan.planId, modality: plan.modality } : null,
         sessions: sessionsOf(training, today),
+        readiness: checkin?.readiness ?? null,
       };
     });
   }
@@ -159,11 +187,13 @@ export class MeQueries {
       const windowDays = await this.tenancy.trackingEditWindowDays(scope.organizationId);
       const verdict = recordWindow(localDate, today, windowDays);
       if (verdict === 'FUTURE') return err(FUTURE_DATE);
-      const [foods, hydration, notes, metrics] = await Promise.all([
+      const [foods, hydration, notes, metrics, checkin, workouts] = await Promise.all([
         this.store.dayFoodLogs(scope.patientId, localDate),
         this.store.dayHydration(scope.patientId, localDate),
         this.store.dayNotes(scope.patientId, localDate),
         this.store.dayMetrics(scope.patientId, localDate),
+        this.store.activeCheckin(scope.patientId, localDate),
+        this.store.dayWorkouts(scope.patientId, localDate),
       ]);
       return ok({
         localDate,
@@ -174,7 +204,37 @@ export class MeQueries {
         metrics,
         totals: dayTotals(foods),
         waterMl: water(hydration),
+        checkin,
+        workouts,
       });
+    });
+  }
+
+  /** El entreno de hoy (RF-29): las sesiones del día como las ve el paciente (RN-F11), lo registrado y su registro diario. */
+  trainingToday(context: SecurityContext): Promise<TrainingTodayView> {
+    const scope = scopeOf(context);
+    return this.uow.query(context, async () => {
+      const today = await this.#today(scope.patientId);
+      const [active, workouts, checkin] = await Promise.all([
+        this.store.activeTraining(scope.patientId),
+        this.store.dayWorkouts(scope.patientId, today),
+        this.store.activeCheckin(scope.patientId, today),
+      ]);
+      const training = trainingDayOf(active, today);
+      return {
+        localDate: today,
+        program: training && {
+          programId: training.program.programId,
+          name: training.program.name,
+          weekNo: training.day.week.weekNo,
+          isDeload: training.day.week.isDeload,
+          phase: training.day.week.phaseEs,
+          targetRir: training.day.week.targetRir,
+        },
+        sessions: training?.day.sessions.map(sessionView) ?? [],
+        workouts,
+        checkin,
+      };
     });
   }
 

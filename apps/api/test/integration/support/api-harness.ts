@@ -118,7 +118,13 @@ export class ApiHarness {
     return this.#with(request(this.app.getHttpServer()).get(`/api/v1${path}`), cookie);
   }
 
+  /** Como la app: un POST a /me lleva su Idempotency-Key (06 §5), una distinta en cada llamada. */
   post(path: string, body: object | undefined, cookie?: string): request.Test {
+    const req = this.postWithoutIdempotencyKey(path, body, cookie);
+    return path.startsWith('/me/') ? req.set('Idempotency-Key', `test:${id()}`) : req;
+  }
+
+  postWithoutIdempotencyKey(path: string, body: object | undefined, cookie?: string): request.Test {
     const req = request(this.app.getHttpServer()).post(`/api/v1${path}`).set('Origin', ORIGIN);
     return this.#with(body === undefined ? req : req.send(body), cookie);
   }

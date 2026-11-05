@@ -65,6 +65,147 @@ export interface NewFoodLog extends NewRecord {
   readonly draft: FoodLogDraft;
 }
 
+/** Lo que el paciente anota en su registro diario (RN-G11, 07 §9); lo que no anota queda en null. */
+export interface CheckinFields {
+  readonly sessionMinutes: number | null;
+  readonly sessionRpe: number | null;
+  readonly sleepHours: number | null;
+  readonly fatigue: number | null;
+  readonly soreness: number | null;
+  readonly stress: number | null;
+  readonly motivation: number | null;
+  readonly menstrualSymptoms: number | null;
+  readonly nutritionCompliancePct: number | null;
+  readonly carbsAroundTrainingG: number | null;
+  readonly performancePlanned: number | null;
+  readonly performanceActual: number | null;
+  readonly restingHrBpm: number | null;
+  readonly hrvMs: number | null;
+  readonly steps: number | null;
+  readonly activeKcal: number | null;
+}
+
+export type Indication = 'GREEN' | 'YELLOW' | 'RED' | 'NO_DATA';
+export type ReadinessComponentCode = 'sleep' | 'heartRate' | 'hrv' | 'subjective';
+
+/** La recuperación e indicación de un registro diario, con su método (RN-G14, RN-G15, RN-D01). */
+export interface StoredReadiness {
+  readonly id: string;
+  readonly indication: Indication;
+  readonly readinessScore: number | null;
+  readonly components: Readonly<Record<ReadinessComponentCode, number>>;
+  readonly neutralComponents: readonly ReadinessComponentCode[];
+  readonly srpeLoad: number | null;
+  readonly performancePct: number | null;
+  readonly methodCode: string;
+  readonly methodVersion: string;
+  readonly status: 'CURRENT' | 'SUPERSEDED';
+}
+
+export interface StoredCheckin extends CheckinFields {
+  readonly id: string;
+  readonly clientId: string;
+  readonly localDate: string;
+  readonly status: RecordStatus;
+  readonly readiness: StoredReadiness | null;
+}
+
+export interface NewCheckin extends NewRecord, CheckinFields {
+  readonly programId: string | null;
+  readonly weekNo: number | null;
+  readonly sessionId: string | null;
+}
+
+export interface NewReadiness {
+  readonly id: string;
+  readonly organizationId: string;
+  readonly patientId: string;
+  readonly localDate: string;
+  readonly checkinId: string;
+  readonly methodCode: string;
+  readonly methodVersion: string;
+  readonly engineVersion: string;
+  readonly thresholdId: string;
+  readonly inputs: unknown;
+  /** SHA-256 de los insumos, en hexadecimal, como lo da el motor (RN-D01). */
+  readonly inputsHash: string;
+  readonly srpeLoad: number | null;
+  readonly performancePct: number | null;
+  readonly readinessScore: number | null;
+  readonly components: Readonly<Record<ReadinessComponentCode, number>>;
+  readonly neutralComponents: readonly ReadinessComponentCode[];
+  readonly indication: Indication;
+  readonly computedAt: Date;
+}
+
+/** La línea base del perfil vigente y el umbral vigente ese día (app.readiness_basis): lo que el paciente no lee directo. */
+export interface ReadinessBasis {
+  readonly thresholdId: string;
+  readonly baseline: {
+    readonly sleepTargetHours: number | null;
+    readonly restingHrBpm: number | null;
+    readonly hrvMs: number | null;
+  };
+  readonly thresholds: {
+    readonly neutralScore: number;
+    readonly readinessGreenMin: number;
+    readonly readinessRedBelow: number;
+    readonly performanceMinPct: number;
+  };
+}
+
+export type WorkoutOutcome = 'COMPLETED' | 'PARTIAL' | 'SKIPPED';
+
+/** Una serie hecha, con el nombre de su ejercicio y sus músculos congelados (RN-F06). */
+export interface NewSetLog {
+  readonly id: string;
+  readonly clientId: string;
+  readonly exerciseId: string;
+  readonly exerciseName: string;
+  readonly muscleContributions: readonly { readonly muscle: string; readonly weight: number }[];
+  readonly setNo: number;
+  readonly isWarmup: boolean;
+  readonly reps: number | null;
+  readonly loadKg: number | null;
+  readonly rir: number | null;
+  readonly rpe: number | null;
+  readonly durationSeconds: number | null;
+  readonly distanceM: number | null;
+  readonly met: number | null;
+  readonly stimulus: number | null;
+  readonly fatigue: number | null;
+}
+
+export interface NewWorkout extends NewRecord {
+  readonly programId: string;
+  readonly sessionId: string | null;
+  readonly mesocycleId: string | null;
+  readonly weekNo: number | null;
+  readonly isDeload: boolean;
+  readonly startedAt: Date | null;
+  readonly finishedAt: Date | null;
+  readonly outcome: WorkoutOutcome;
+  readonly sessionRpe: number | null;
+  readonly stimulus: number | null;
+  readonly fatigue: number | null;
+  readonly notes: string | null;
+  readonly sets: readonly NewSetLog[];
+}
+
+export interface StoredWorkout {
+  readonly id: string;
+  readonly clientId: string;
+  readonly localDate: string;
+  readonly sessionId: string | null;
+  readonly outcome: WorkoutOutcome;
+  readonly durationMinutes: number | null;
+  readonly sessionRpe: number | null;
+  /** Peso × repeticiones de sus series efectivas vigentes (RN-F03). */
+  readonly tonnageKg: number;
+  readonly setCount: number;
+  readonly status: RecordStatus;
+}
+
 /** El plan o el programa vigente del paciente (tracking.active_plan_view), con su snapshot (RN-E15, RN-F12). */
 export interface ActiveSnapshot {
   readonly id: string;
@@ -134,6 +275,33 @@ export interface RecordStore {
   metricRange(
     code: string,
   ): Promise<{ readonly min: number | null; readonly max: number | null } | null>;
+
+  insertCheckin(row: NewCheckin): Promise<void>;
+  checkinByClientId(
+    patientId: string,
+    localDate: string,
+    clientId: string,
+  ): Promise<StoredCheckin | null>;
+  checkin(id: string): Promise<StoredCheckin | null>;
+  /** El registro diario vigente de ese día (uno por día, RN-G11). */
+  activeCheckin(patientId: string, localDate: string): Promise<StoredCheckin | null>;
+  /** Anula el registro diario y deja su recuperación SUPERSEDED (RN-G12). */
+  voidCheckin(id: string, localDate: string): Promise<void>;
+  insertReadiness(row: NewReadiness): Promise<void>;
+  /** Sin umbral vigente, null. Solo la sesión del paciente lo lee (app.readiness_basis). */
+  readinessBasis(localDate: string): Promise<ReadinessBasis | null>;
+
+  /** El entreno y sus series, en la misma transacción. */
+  insertWorkout(row: NewWorkout): Promise<void>;
+  workoutByClientId(
+    patientId: string,
+    localDate: string,
+    clientId: string,
+  ): Promise<StoredWorkout | null>;
+  workout(id: string): Promise<StoredWorkout | null>;
+  dayWorkouts(patientId: string, localDate: string): Promise<readonly StoredWorkout[]>;
+  /** Anula el entreno y sus series (RN-G12). */
+  voidWorkout(id: string, localDate: string): Promise<void>;
 
   activeNutrition(patientId: string): Promise<ActiveSnapshot | null>;
   activeTraining(patientId: string): Promise<ActiveSnapshot | null>;

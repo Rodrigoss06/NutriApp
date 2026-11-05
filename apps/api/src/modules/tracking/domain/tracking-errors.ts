@@ -51,3 +51,19 @@ export const METRIC_OUT_OF_RANGE = domainError({
   rule: 'RN-C04',
   message: 'Ese valor está fuera del rango de la medida.',
 });
+
+export const NO_ACTIVE_PROGRAM = domainError({
+  code: 'NC-TRK-010',
+  message: 'Ese día no tenías un programa de entrenamiento vigente.',
+});
+
+export const NOT_IN_PROGRAM = domainError({
+  code: 'NC-TRK-011',
+  message: 'Esa sesión o ese ejercicio no está en tu programa.',
+});
+
+export const CHECKIN_INVALID = domainError({
+  code: 'NC-TRK-012',
+  rule: 'RN-G11',
+  message: 'Revisa tu registro diario: hay un dato fuera de rango.',
+});

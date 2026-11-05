@@ -10,6 +10,7 @@ import {
   canWriteRecord,
   HEALTH_DATA_REQUIRED,
   IMAGES_CONSENT_REQUIRED,
+  MENSTRUAL_TRACKING_REQUIRED,
   PATIENT_ARCHIVED,
   PATIENT_NOT_FOUND,
   WRITE_ACCESS_REQUIRED,
@@ -140,6 +141,13 @@ export class ClinicalApi {
       return err(WRITE_ACCESS_REQUIRED);
     }
     return ok(refOf(patient));
+  }
+
+  /** Los síntomas del ciclo y la anticoncepción hormonal necesitan MENSTRUAL_TRACKING vigente (RN-G17). */
+  async ensureMenstrualTrackingConsent(patientId: string): Promise<Result<void, DomainError>> {
+    return (await this.consents.active(patientId, 'MENSTRUAL_TRACKING'))
+      ? ok(undefined)
+      : err(MENSTRUAL_TRACKING_REQUIRED);
   }
 
   /** La evidencia necesita el consentimiento de imágenes vigente (RN-B01, 07 §4). */

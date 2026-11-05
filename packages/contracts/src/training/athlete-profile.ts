@@ -61,6 +61,8 @@ const athleteProfileFields = {
   /** El objetivo de cada prueba física, por su código (07 §4). */
   testTargets: z.record(z.string().max(40), z.number().min(0).max(999_999)).default({}),
   notes: optionalText,
+  /** Anticoncepción hormonal: sí, no o sin dato. Solo con MENSTRUAL_TRACKING vigente (RN-G17, ADR-080). */
+  hormonalContraception: z.boolean().nullable().default(null),
 };
 
 /** PUT /api/v1/patients/:id/athlete-profile. */
@@ -89,6 +91,7 @@ export const athleteProfileSchema = z.object({
   sleepTargetHours: z.number(),
   testTargets: z.record(z.string(), z.number()),
   notes: z.string().nullable(),
+  hormonalContraception: z.boolean().nullable(),
   recordedBy: z.uuid(),
   recordedAt: z.iso.datetime(),
 });
