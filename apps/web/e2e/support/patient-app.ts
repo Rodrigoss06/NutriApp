@@ -1,7 +1,9 @@
+import { randomUUID } from 'node:crypto';
 import { expect } from '@playwright/test';
 import {
   apiAs,
   apiContext,
+  apiLogin,
   linkFromMail,
   mailCount,
   PASSWORD,
@@ -175,5 +177,27 @@ export async function publishedProgramByApi(ownerEmail: string, patientId: strin
     headers: { 'If-Match': String(program.version) },
   });
   expect(published.status(), 'publicar el programa').toBe(200);
+  await api.dispose();
+}
+
+/**
+ * Lo que el paciente registra desde su app, por la API con su sesión: cada POST con su clientId y su Idempotency-Key (RN-G08,
+ * 06 §5), en su fecha local de hoy.
+ */
+export async function patientRecordsByApi(
+  email: string,
+  records: readonly { readonly path: string; readonly body: Readonly<Record<string, unknown>> }[],
+): Promise<void> {
+  const api = await apiContext();
+  await apiLogin(api, email, PASSWORD);
+  const localDate = todayInLima();
+  for (const { path, body } of records) {
+    const clientId = randomUUID();
+    const response = await api.post(`/api/v1${path}`, {
+      headers: { 'Idempotency-Key': `rec:${clientId}` },
+      data: { clientId, localDate, ...body },
+    });
+    expect(response.status(), `registrar ${path}`).toBe(201);
+  }
   await api.dispose();
 }

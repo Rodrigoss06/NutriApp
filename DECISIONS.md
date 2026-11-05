@@ -1863,3 +1863,47 @@ Consecuencias:
 - Para Notion (/notion-sync de P13): 07 §9 (cómo se ve el registro diario y la indicación; el estímulo y la fatiga por ejercicio) y
   02 §11 (las rutas /mi/registro y /mi/entreno).
 
+## ADR-085 · El profesional y los registros del paciente: solo lectura, ajustes con motivo y notas leídas — aceptada (2026-11-05)
+Contexto: P13, PR 5 (RN-G01, RN-G02, RN-G13, RN-B03; criterio de P13: «el profesional no puede editar un registro; su ajuste queda con
+autor y motivo»). Rodrigo decidió el 2026-11-05: se corrigen la cantidad y los valores; la cola sin conexión (RF-31) queda fuera de P13;
+el paciente no ve los ajustes.
+Decisión:
+- Rutas para el equipo:
+  - GET /patients/:id/records/:date: el día con sus registros vigentes, sus ajustes y los totales con y sin ajustes;
+  - GET /patients/:id/app-notes/unread y POST /patients/:id/app-notes/read: las notas del paciente. `/notes` ya era de las notas
+    clínicas;
+  - POST /patients/:id/record-adjustments.
+  Leer el día o las notas deja un READ en la auditoría (RN-B03).
+- Ajustes (RN-G02): cualquier registro se excluye; se corrigen:
+  - la comida: la cantidad en la unidad en que se registró (porciones si las tiene; si no, gramos), y sus nutrientes congelados se
+    escalan en proporción; un nutriente sin dato sigue sin dato (RN-I03);
+  - el agua: los ml; el peso: el valor, dentro de su rango (RN-C04);
+  - la serie: repeticiones y peso, con su tonelaje sin el calentamiento (RN-F03); la sesión: duración y RPE;
+  - el registro diario solo se excluye: corregirlo obligaría a recalcular la recuperación (RN-D08).
+- El ajuste guarda lo corregido y lo que se deriva (los nutrientes, el tonelaje): la analítica de P14 lo usa sin recalcular. Vale el más
+  reciente de cada registro; los anteriores quedan como historial. Motivo de 10 caracteres o más.
+- Ajusta el equipo con acceso de escritura y HEALTH_DATA vigente (`ensureRecordWritable`), también frente al dueño (RN-A05). El registro
+  se busca entre los vigentes de ese paciente y ese día: uno de otro paciente, de otro día o anulado no existe para el ajuste
+  (NC-TRK-005); una corrección que no corresponde al registro, NC-TRK-013.
+- Migración `202611050000_tracking_adjustments`: app_user pierde UPDATE sobre `log_adjustment` (un ajuste no se edita), un CHECK exige
+  que excluir no lleve valores y corregir sí, y un índice parcial para las notas sin leer.
+- El paciente no ve los ajustes: la política de P2 se mantiene y su app muestra lo que registró.
+- Notas (RN-G13): aparecen nuevas en la pestaña Seguimiento hasta que alguien del equipo las abre; abrirlas las marca leídas por ese
+  miembro (`read_by` es el miembro). /me no devuelve quién ni cuándo las leyó.
+- Eventos `tracking.log.adjusted`, con los nombres de lo corregido y nunca sus valores, y `tracking.note.read`; los dos van a la
+  auditoría.
+- Panel: la pestaña «Seguimiento» del expediente (`/registros` ya era la de condiciones, objetivos y notas):
+  - las notas nuevas arriba;
+  - el día con su navegación, en la fecha local del paciente (RN-G04);
+  - los totales con ajustes y lo registrado; comidas, agua y peso, entrenos con sus series, el registro diario con su método y las notas
+    del día;
+  - cada registro con su ajuste, su autor y su motivo, y «Ajustar» para quien escribe en el expediente.
+- La cola sin conexión (RF-31, deseable) queda fuera de P13: cada registro ya lleva su clientId y su Idempotency-Key.
+Consecuencias:
+- Integración `test/integration/patient-records.int.spec.ts` (11 casos, como app_user); unitarias del dominio y de la aplicación;
+  contratos; E2E del panel en `e2e/app-paciente.spec.ts`.
+- Para Notion (/notion-sync de P13):
+  - 05.2: `log_adjustment` sin UPDATE, su CHECK y lo derivado en `corrected_values`; el índice de notas sin leer;
+  - 03 RN-G02: qué se corrige de cada tipo;
+  - 02 §7, §8 y §10: las rutas y los eventos; 06: NC-TRK-013;
+  - 04 RF-31: fuera de P13.

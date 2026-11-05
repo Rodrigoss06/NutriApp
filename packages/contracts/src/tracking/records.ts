@@ -105,7 +105,7 @@ export const dayTotalSchema = z.object({
 });
 export type DayTotal = z.infer<typeof dayTotalSchema>;
 
-const dayTotalsSchema = z.object({
+export const dayTotalsSchema = z.object({
   kcal: dayTotalSchema,
   choG: dayTotalSchema,
   proteinG: dayTotalSchema,

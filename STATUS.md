@@ -20,7 +20,7 @@ Próxima demo: Demo 3 · Entrenamiento y app del paciente · semana 6
 | P10 Composición, menú y recetario | ✅ | Rodrigo | #28, #30 y #31 | 2 criterios en verde (integración y E2E en escritorio y celular): recetario (ADR-061), composición y menú en la API (ADR-062) y pantallas (ADR-063). Plantillas (RF-22, deseable) fuera. /notion-sync aplicado (17 cambios en 02, 03, 04, 05 y 05.2) |
 | P11 Fichas PDF, Demo 2 | ✅ | Rodrigo | #32 a #37 | 4 criterios en verde (integración y E2E en escritorio y celular): contexto documents y ficha de intercambios (ADR-064), fichas del menú y de resultados (ADR-065; 1.0.1 en ADR-069), marca mínima (ADR-066), descargas (ADR-067), semilla, guion y acta de la Demo 2 (ADR-068). Etiqueta v0.2.0 (e05f8de); staging, pendiente de P4. /notion-sync aplicado (17 cambios en 02, 03, 04, 05, 05.1, 05.3 y 06) |
 | P12 Ejercicios y rutinas | ✅ | Rodrigo | #39 a #42 y #44 a #47 | 5 criterios en verde (integración y E2E en escritorio y celular): motor (ADR-070), biblioteca (ADR-071), anamnesis V2 (ADR-072), alergias (ADR-074), seguridad (ADR-075), programa por la API y en la web (ADR-077, ADR-078) y ficha de rutina (ADR-079) |
-| P13 App del paciente | 🟨 | Rodrigo | #50 a #53 | Plan aprobado (2026-11-01, ADR-080): 6 PR. PR 1 (motor), PR 2 (registros por la API), PR 3 (Hoy y el plan), PR 4a (registro diario y entreno por la API) y PR 4b (sus pantallas) hechos. Falta el PR 5 |
+| P13 App del paciente | 🟨 | Rodrigo | #50 a #53 | Plan aprobado (2026-11-01, ADR-080): 6 PR. PR 1 (motor), PR 2 (registros por la API), PR 3 (Hoy y el plan), PR 4a (registro diario y entreno por la API), PR 4b (sus pantallas) y PR 5 (el profesional y los registros) hechos. Falta el cierre |
 | P14 Analítica y evolución, Demo 3 | ⬜ | Rodrigo | | |
 | P15 Marca, calendario, admin y migración | ⬜ | Rodrigo | | |
 | P16 Producción y entrega, Demo 4 | ⬜ | Rodrigo | | |
@@ -41,8 +41,8 @@ Leyenda: ⬜ pendiente · 🟨 en curso · ✅ terminado · ⛔ bloqueado
   - PR 4b, pantallas (ADR-084): el registro diario en menos de 2 minutos, la indicación del día en Hoy, Entreno serie por serie con el
     tonelaje, el seguimiento del ciclo y el cribado en Más, y la anticoncepción hormonal en el panel. E2E en escritorio y celular;
     Lighthouse móvil 97 en Hoy;
-  - PR 5, profesional y cierre: registros en solo lectura, ajustes con motivo y notas leídas; la cola sin conexión
-    (RF-31) si alcanza.
+  - PR 5, el profesional y los registros (ADR-085): la pestaña Seguimiento con el día en solo lectura, los ajustes con motivo (excluir o
+    corregir la cantidad y los valores) y las notas que quedan leídas al abrirlas. La cola sin conexión (RF-31) queda fuera de P13.
 - P12 terminado (#39 a #42 y #44 a #47; #43 se fusionó en la rama de alergias y #44 lo llevó a main):
   - #39 (ADR-070): en el motor, `PRI_JV`, las llaves de seguridad, la propuesta y el macrociclo; G-29 a G-35 y G-40 en verde. Motor 1.4.0;
   - #40 (ADR-071): biblioteca de 169 ejercicios (146 provisionales), tabla patrón × nivel y ejercicios propios; `patient_no_delete`;
@@ -117,8 +117,7 @@ Leyenda: ⬜ pendiente · 🟨 en curso · ✅ terminado · ⛔ bloqueado
 ## Siguiente paso
 - Antes de la Demo 3: la matriz manual de navegadores (RNF-19: Chrome, Edge, Safari y Firefox; la E2E cubre Chromium
   y WebKit), que no quedó registrada en las demos 1 y 2
-- P13 App del paciente, PR 5: el profesional ve los registros en solo lectura y los ajusta con motivo (RN-G01, RN-G02), las notas
-  leídas (RN-G13) y la cola sin conexión (RF-31) si alcanza; después, el cierre de P13 con /cierre y /notion-sync
+- P13: subir el PR 5 cuando se fusione #54 y, con todo fusionado, el cierre con /cierre y /notion-sync (ADR-080 a ADR-085)
 - Demo 2: presentada, a la espera de su feedback. Falta enviar el acta (docs/actas/demo-2.md) con los nombres de las partes
   confirmados contra el contrato (ADR-068): la aceptación por escrito deja el cobro de la semana 7 sin otra revisión
 - Cada base nueva necesita los catálogos: `pnpm --filter api build && pnpm catalog:load plataforma@demo.example.com`
