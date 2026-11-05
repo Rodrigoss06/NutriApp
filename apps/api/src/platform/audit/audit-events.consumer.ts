@@ -260,6 +260,18 @@ export const AUDITED_EVENTS: Readonly<Record<string, AuditMapping>> = {
     resourceType: 'tenancy.organization_setting',
     fields: (p) => (typeof p.key === 'string' ? [p.key] : []),
   },
+  // RN-G02: el ajuste del profesional sobre un registro del paciente, con los nombres de lo corregido.
+  'tracking.log.adjusted': {
+    action: 'CREATE',
+    resourceType: 'tracking.log_adjustment',
+    fields: (p) => namesOf(p.fields),
+  },
+  // RN-G13: quién abrió una nota del paciente.
+  'tracking.note.read': {
+    action: 'UPDATE',
+    resourceType: 'tracking.note_log',
+    fields: () => ['read_at', 'read_by'],
+  },
   'tenancy.branding.changed': {
     action: 'UPDATE',
     resourceType: 'tenancy.branding',

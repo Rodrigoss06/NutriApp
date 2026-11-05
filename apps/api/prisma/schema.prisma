@@ -1727,6 +1727,7 @@ model NoteLog {
   @@id([id, localDate])
   @@unique([patientId, clientId, localDate], map: "note_log_idem")
   @@index([organizationId, patientId, localDate], map: "note_log_day")
+  @@index([patientId, createdAt], map: "note_log_unread", where: raw("(read_at IS NULL)"))
   @@map("note_log")
   @@schema("tracking")
 }

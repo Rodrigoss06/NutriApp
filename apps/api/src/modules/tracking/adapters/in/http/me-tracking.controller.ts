@@ -87,8 +87,12 @@ const hydrationOf = (log: StoredHydrationLog): HydrationLog => ({
   ...log,
   loggedAt: log.loggedAt.toISOString(),
 });
+/** La nota como la ve el paciente: sin quién ni cuándo la leyó su equipo (RN-G13). */
 const noteOf = (note: StoredNote): NoteLog => ({
-  ...note,
+  id: note.id,
+  clientId: note.clientId,
+  localDate: note.localDate,
+  body: note.body,
   createdAt: note.createdAt.toISOString(),
 });
 const metricOf = (metric: StoredMetric): MetricLog => ({

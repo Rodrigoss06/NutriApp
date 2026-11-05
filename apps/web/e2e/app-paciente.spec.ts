@@ -3,6 +3,7 @@ import { seriousViolations } from './support/axe';
 import { luisWithPrescription } from './support/luis';
 import {
   appAccessByApi,
+  patientRecordsByApi,
   publishedExchangePlanByApi,
   publishedProgramByApi,
 } from './support/patient-app';
@@ -239,5 +240,54 @@ test.describe('P13 · App del paciente: entreno, registro diario y ciclo', () =>
     await screening.getByRole('button', { name: 'Enviar mis respuestas' }).click();
     await expect(screening.getByText('Ya respondiste el cribado')).toBeVisible();
     expect(await seriousViolations(page)).toEqual([]);
+  });
+});
+
+test.describe('P13 · El equipo y los registros del paciente', () => {
+  test('RN-G01 · RN-G02 · RN-G13: el equipo ve el día, excluye un registro con motivo y abre las notas nuevas', async ({
+    page,
+  }) => {
+    const organization = await createOrganization();
+    const patient = await patientWithAccess(organization.ownerEmail);
+    await patientRecordsByApi(patient.email, [
+      { path: '/me/hydration-logs', body: { volumeMl: 250 } },
+      { path: '/me/hydration-logs', body: { volumeMl: 250 } },
+      { path: '/me/notes', body: { body: 'Anoche me costó dormir.' } },
+    ]);
+    await loginInPage(page, organization.ownerEmail);
+
+    // RN-G13: la nota aparece nueva; al abrirla queda leída.
+    const read = page.waitForResponse(
+      (response) => response.url().includes('/app-notes/read') && response.status() === 200,
+    );
+    await page.goto(`/panel/pacientes/${patient.id}/seguimiento`);
+    const fresh = page.getByRole('region', { name: 'Notas nuevas del paciente' });
+    await expect(fresh.getByText('Anoche me costó dormir.')).toBeVisible();
+    await expect(fresh.getByText('Nueva', { exact: true })).toBeVisible();
+    await read;
+    expect(await seriousViolations(page)).toEqual([]);
+
+    // RN-G02: excluir el agua repetida, con su motivo; el original se conserva.
+    const water = page.getByRole('region', { name: 'Agua y peso' });
+    const adjust = water.getByRole('button', { name: 'Ajustar: Agua, 250 ml' }).nth(1);
+    await adjust.click();
+    const form = page.locator(`[id="${(await adjust.getAttribute('aria-controls')) ?? ''}"]`);
+    await form.getByText('Excluir', { exact: true }).click();
+    await form.getByLabel('Motivo').fill('Lo registró dos veces por error.');
+    await form.getByRole('button', { name: 'Guardar ajuste' }).click();
+    await expect(water.getByText('Excluido')).toBeVisible();
+    await expect(water.getByText('Lo registró dos veces por error.')).toBeVisible();
+    const totals = page.getByRole('region', { name: 'Totales del día' });
+    const waterRow = totals.getByRole('row', { name: /Agua \(ml\)/ });
+    await expect(waterRow).toContainText('250');
+    await expect(waterRow).toContainText('500');
+    expect(await seriousViolations(page)).toEqual([]);
+
+    await page.waitForLoadState('networkidle');
+    await page.reload();
+    await expect(page.getByRole('region', { name: 'Notas nuevas del paciente' })).toHaveCount(0);
+    await expect(
+      page.getByRole('region', { name: 'Notas del día' }).getByText('Leída'),
+    ).toBeVisible();
   });
 });

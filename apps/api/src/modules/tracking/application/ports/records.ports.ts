@@ -38,6 +38,8 @@ export interface StoredNote {
   readonly localDate: string;
   readonly body: string;
   readonly createdAt: Date;
+  /** Cuándo la abrió alguien del equipo (RN-G13); sin abrir, null. */
+  readonly readAt: Date | null;
 }
 
 export interface StoredMetric {
@@ -206,6 +208,44 @@ export interface StoredWorkout {
   readonly status: RecordStatus;
 }
 
+export interface StoredSetLog {
+  readonly id: string;
+  readonly workoutLogId: string;
+  readonly localDate: string;
+  readonly exerciseId: string;
+  readonly exerciseName: string;
+  readonly setNo: number;
+  readonly isWarmup: boolean;
+  readonly reps: number | null;
+  readonly loadKg: number | null;
+  readonly rir: number | null;
+  readonly rpe: number | null;
+  readonly durationSeconds: number | null;
+  readonly distanceM: number | null;
+  readonly tonnageKg: number;
+  readonly status: RecordStatus;
+}
+
+export type AdjustmentTarget = 'FOOD' | 'HYDRATION' | 'WORKOUT' | 'SET' | 'CHECKIN' | 'METRIC';
+
+/** Un ajuste del profesional (RN-G02): el registro, qué hizo, lo corregido, su motivo y su autor. */
+export interface StoredAdjustment {
+  readonly id: string;
+  readonly targetType: AdjustmentTarget;
+  readonly targetId: string;
+  readonly targetLocalDate: string;
+  readonly action: 'EXCLUDE' | 'CORRECT';
+  readonly correctedValues: Readonly<Record<string, number | null>> | null;
+  readonly reason: string;
+  readonly authorMemberId: string;
+  readonly createdAt: Date;
+}
+
+export interface NewAdjustment extends Omit<StoredAdjustment, 'createdAt'> {
+  readonly organizationId: string;
+  readonly patientId: string;
+}
+
 /** El plan o el programa vigente del paciente (tracking.active_plan_view), con su snapshot (RN-E15, RN-F12). */
 export interface ActiveSnapshot {
   readonly id: string;
@@ -302,6 +342,23 @@ export interface RecordStore {
   dayWorkouts(patientId: string, localDate: string): Promise<readonly StoredWorkout[]>;
   /** Anula el entreno y sus series (RN-G12). */
   voidWorkout(id: string, localDate: string): Promise<void>;
+
+  /** Las series de los entrenos de un día, vigentes o no: el profesional ve y ajusta cada una (RN-G01). */
+  daySets(patientId: string, localDate: string): Promise<readonly StoredSetLog[]>;
+  setLog(id: string): Promise<StoredSetLog | null>;
+  /** Los ajustes de los registros de un día, del más antiguo al más reciente (RN-G02). */
+  dayAdjustments(patientId: string, localDate: string): Promise<readonly StoredAdjustment[]>;
+  insertAdjustment(row: NewAdjustment): Promise<void>;
+  adjustment(id: string): Promise<StoredAdjustment | null>;
+  /** Las notas del paciente que nadie del equipo abrió todavía, de la más antigua a la más nueva (RN-G13). */
+  unreadNotes(patientId: string, limit: number): Promise<readonly StoredNote[]>;
+  /** Marca leídas las notas sin leer de esa lista; devuelve las que marcó. */
+  markNotesRead(
+    patientId: string,
+    noteIds: readonly string[],
+    readBy: string,
+    at: Date,
+  ): Promise<readonly { readonly id: string; readonly localDate: string }[]>;
 
   activeNutrition(patientId: string): Promise<ActiveSnapshot | null>;
   activeTraining(patientId: string): Promise<ActiveSnapshot | null>;

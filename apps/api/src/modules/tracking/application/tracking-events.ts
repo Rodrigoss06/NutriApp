@@ -20,7 +20,9 @@ export type TrackingEventType =
   | 'tracking.checkin.logged'
   | 'tracking.checkin.voided'
   | 'tracking.workout.logged'
-  | 'tracking.workout.voided';
+  | 'tracking.workout.voided'
+  | 'tracking.log.adjusted'
+  | 'tracking.note.read';
 
 export interface TrackingEventPayload {
   readonly patientId: string;
@@ -28,6 +30,10 @@ export interface TrackingEventPayload {
   readonly inPlan?: boolean;
   /** El registro que reemplaza al anulado, si se corrigió (RN-G12). */
   readonly replacedById?: string | null;
+  /** El ajuste del profesional (RN-G02): qué registro, qué hizo y los nombres de lo corregido, nunca sus valores. */
+  readonly targetType?: string;
+  readonly action?: string;
+  readonly fields?: readonly string[];
 }
 
 export function trackingEvent(

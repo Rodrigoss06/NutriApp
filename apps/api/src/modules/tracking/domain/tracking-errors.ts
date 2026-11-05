@@ -67,3 +67,9 @@ export const CHECKIN_INVALID = domainError({
   rule: 'RN-G11',
   message: 'Revisa tu registro diario: hay un dato fuera de rango.',
 });
+
+export const CORRECTION_INVALID = domainError({
+  code: 'NC-TRK-013',
+  rule: 'RN-G02',
+  message: 'Esa corrección no corresponde a ese registro: revisa la cantidad o exclúyelo.',
+});

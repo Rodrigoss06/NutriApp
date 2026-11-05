@@ -6,6 +6,7 @@ import type {
   DayTargetRow,
   Indication,
   NewCheckin,
+  NewAdjustment,
   NewFoodLog,
   NewReadiness,
   NewRecord,
@@ -14,12 +15,15 @@ import type {
   ReadinessComponentCode,
   RecordStatus,
   RecordStore,
+  AdjustmentTarget,
+  StoredAdjustment,
   StoredCheckin,
   StoredFoodLog,
   StoredHydrationLog,
   StoredMetric,
   StoredNote,
   StoredReadiness,
+  StoredSetLog,
   StoredWorkout,
   WorkoutOutcome,
 } from '../../../application/ports/records.ports.js';
@@ -115,7 +119,14 @@ const toHydration = (row: {
   status: row.status as RecordStatus,
 });
 
-const NOTE = { id: true, clientId: true, localDate: true, body: true, createdAt: true } as const;
+const NOTE = {
+  id: true,
+  clientId: true,
+  localDate: true,
+  body: true,
+  createdAt: true,
+  readAt: true,
+} as const;
 
 const toNote = (row: {
   id: string;
@@ -123,7 +134,82 @@ const toNote = (row: {
   localDate: Date;
   body: string;
   createdAt: Date;
+  readAt: Date | null;
 }): StoredNote => ({ ...row, localDate: isoDate(row.localDate) });
+
+const SET = {
+  id: true,
+  workoutLogId: true,
+  localDate: true,
+  exerciseId: true,
+  exerciseName: true,
+  setNo: true,
+  isWarmup: true,
+  reps: true,
+  loadKg: true,
+  rir: true,
+  rpe: true,
+  durationSeconds: true,
+  distanceM: true,
+  tonnageKg: true,
+  status: true,
+} as const;
+
+const toSet = (row: {
+  id: string;
+  workoutLogId: string;
+  localDate: Date;
+  exerciseId: string;
+  exerciseName: string;
+  setNo: number;
+  isWarmup: boolean;
+  reps: number | null;
+  loadKg: { toString(): string } | null;
+  rir: number | null;
+  rpe: { toString(): string } | null;
+  durationSeconds: number | null;
+  distanceM: { toString(): string } | null;
+  tonnageKg: { toString(): string } | null;
+  status: string;
+}): StoredSetLog => ({
+  ...row,
+  localDate: isoDate(row.localDate),
+  loadKg: num(row.loadKg),
+  rpe: num(row.rpe),
+  distanceM: num(row.distanceM),
+  tonnageKg: Number(row.tonnageKg ?? 0),
+  status: row.status as RecordStatus,
+});
+
+const ADJUSTMENT = {
+  id: true,
+  targetType: true,
+  targetId: true,
+  targetLocalDate: true,
+  action: true,
+  correctedValues: true,
+  reason: true,
+  authorMemberId: true,
+  createdAt: true,
+} as const;
+
+const toAdjustment = (row: {
+  id: string;
+  targetType: string;
+  targetId: string;
+  targetLocalDate: Date;
+  action: string;
+  correctedValues: unknown;
+  reason: string;
+  authorMemberId: string;
+  createdAt: Date;
+}): StoredAdjustment => ({
+  ...row,
+  targetType: row.targetType as AdjustmentTarget,
+  targetLocalDate: isoDate(row.targetLocalDate),
+  action: row.action as StoredAdjustment['action'],
+  correctedValues: (row.correctedValues ?? null) as StoredAdjustment['correctedValues'],
+});
 
 const METRIC = {
   id: true,
@@ -749,6 +835,83 @@ export class PrismaRecordStore implements RecordStore {
         status: row.status as RecordStatus,
       };
     });
+  }
+
+  async daySets(patientId: string, localDate: string): Promise<readonly StoredSetLog[]> {
+    const rows = await this.db.tx.setLog.findMany({
+      where: { patientId, localDate: asDate(localDate) },
+      select: SET,
+      orderBy: [{ createdAt: 'asc' }, { setNo: 'asc' }, { id: 'asc' }],
+    });
+    return rows.map(toSet);
+  }
+
+  async setLog(id: string): Promise<StoredSetLog | null> {
+    const row = await this.db.tx.setLog.findFirst({ where: { id }, select: SET });
+    return row ? toSet(row) : null;
+  }
+
+  async dayAdjustments(patientId: string, localDate: string): Promise<readonly StoredAdjustment[]> {
+    const rows = await this.db.tx.logAdjustment.findMany({
+      where: { patientId, targetLocalDate: asDate(localDate) },
+      select: ADJUSTMENT,
+      orderBy: [{ createdAt: 'asc' }, { id: 'asc' }],
+    });
+    return rows.map(toAdjustment);
+  }
+
+  async insertAdjustment(row: NewAdjustment): Promise<void> {
+    await this.db.tx.logAdjustment.create({
+      data: {
+        id: row.id,
+        organizationId: row.organizationId,
+        patientId: row.patientId,
+        targetType: row.targetType,
+        targetId: row.targetId,
+        targetLocalDate: asDate(row.targetLocalDate),
+        action: row.action,
+        // Excluir no lleva valores: el campo queda en NULL (log_adjustment_values_check).
+        ...(row.correctedValues === null
+          ? {}
+          : { correctedValues: JSON.parse(JSON.stringify(row.correctedValues)) as object }),
+        reason: row.reason,
+        authorMemberId: row.authorMemberId,
+      },
+    });
+  }
+
+  async adjustment(id: string): Promise<StoredAdjustment | null> {
+    const row = await this.db.tx.logAdjustment.findFirst({ where: { id }, select: ADJUSTMENT });
+    return row ? toAdjustment(row) : null;
+  }
+
+  async unreadNotes(patientId: string, limit: number): Promise<readonly StoredNote[]> {
+    const rows = await this.db.tx.noteLog.findMany({
+      where: { patientId, readAt: null },
+      select: NOTE,
+      orderBy: [{ createdAt: 'asc' }, { id: 'asc' }],
+      take: limit,
+    });
+    return rows.map(toNote);
+  }
+
+  async markNotesRead(
+    patientId: string,
+    noteIds: readonly string[],
+    readBy: string,
+    at: Date,
+  ): Promise<readonly { readonly id: string; readonly localDate: string }[]> {
+    const unread = await this.db.tx.noteLog.findMany({
+      where: { patientId, id: { in: [...noteIds] }, readAt: null },
+      select: { id: true, localDate: true },
+    });
+    for (const note of unread) {
+      await this.db.tx.noteLog.updateMany({
+        where: { id: note.id, localDate: note.localDate, readAt: null },
+        data: { readAt: at, readBy },
+      });
+    }
+    return unread.map((note) => ({ id: note.id, localDate: isoDate(note.localDate) }));
   }
 
   /** El plan vigente, desde su validFrom (RN-E14): effective_from es de la fila, que comparten el plan y el programa. */
