@@ -87,7 +87,7 @@ export class PrismaFactsStore implements FactsStore {
     });
     const readiness = await tx.dailyReadiness.findMany({
       where: { patientId, localDate: range, status: 'CURRENT' },
-      select: { checkinId: true, performancePct: true },
+      select: { checkinId: true, performancePct: true, srpeLoad: true },
     });
     const workouts = await tx.workoutLog.findMany({
       where: { patientId, localDate: range, status: 'ACTIVE' },
@@ -108,7 +108,7 @@ export class PrismaFactsStore implements FactsStore {
       },
       orderBy: [{ createdAt: 'asc' }, { id: 'asc' }],
     });
-    const performanceOf = new Map(readiness.map((r) => [r.checkinId, num(r.performancePct)]));
+    const readinessOf = new Map(readiness.map((r) => [r.checkinId, r]));
     return {
       targets: targets.map((t) => ({
         localDate: isoDate(t.localDate),
@@ -161,7 +161,8 @@ export class PrismaFactsStore implements FactsStore {
         nutritionCompliancePct: c.nutritionCompliancePct,
         restingHrBpm: c.restingHrBpm,
         hrvMs: num(c.hrvMs),
-        performancePct: performanceOf.get(c.id) ?? null,
+        performancePct: num(readinessOf.get(c.id)?.performancePct ?? null),
+        srpeLoad: num(readinessOf.get(c.id)?.srpeLoad ?? null),
       })),
       workouts: workouts.flatMap((w) =>
         WORKOUT_OUTCOMES.has(w.outcome as FactWorkout['outcome'])
@@ -193,6 +194,7 @@ export class PrismaFactsStore implements FactsStore {
         rpe: num(s.rpe),
         stimulusRating: s.stimulusRating,
         fatigueRating: s.fatigueRating,
+        durationSeconds: s.durationSeconds,
         tonnageKg: num(s.tonnageKg) ?? 0,
       })),
       adjustments: adjustments.map((a) => ({
@@ -217,6 +219,27 @@ export class PrismaFactsStore implements FactsStore {
       ) AS days`;
     if (!row?.first || !row.last) return null;
     return { from: isoDate(row.first), to: isoDate(row.last) };
+  }
+
+  async programIds(patientId: string, from: string, to: string): Promise<readonly string[]> {
+    const rows = await this.db.tx.workoutLog.findMany({
+      where: {
+        patientId,
+        localDate: { gte: asDate(from), lte: asDate(to) },
+        programId: { not: null },
+      },
+      select: { programId: true },
+      distinct: ['programId'],
+    });
+    return rows.flatMap((row) => (row.programId === null ? [] : [row.programId]));
+  }
+
+  async activeProgramId(patientId: string): Promise<string | null> {
+    const row = await this.db.tx.activePlanView.findUnique({
+      where: { patientId },
+      select: { trainingProgramId: true },
+    });
+    return row?.trainingProgramId ?? null;
   }
 
   async patientIds(since: string | null): Promise<readonly string[]> {

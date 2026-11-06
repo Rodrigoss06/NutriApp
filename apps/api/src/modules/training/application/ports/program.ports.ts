@@ -103,6 +103,8 @@ export interface ProgramStore {
   supersedePublished(patientId: string, now: Date): Promise<string | null>;
   /** Lo que se congeló al publicar; null si es un borrador o no se ve. */
   snapshot(id: string): Promise<ProgramSnapshot | null>;
+  /** El snapshot de la última versión publicada (vigente o reemplazada) de una línea; null si no hay ninguna o no se ve. */
+  latestSnapshot(lineageId: string): Promise<ProgramSnapshot | null>;
   /** null si no existe o no se ve. */
   status(id: string): Promise<ProgramStatus | null>;
   timeline(

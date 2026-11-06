@@ -1979,3 +1979,45 @@ Consecuencias:
 - PR 2b: el volumen semanal por grupo muscular, la serie de 1RM, `patient_overview` y la analítica de rutina.
 - Para Notion (/notion-sync de P14): 05.3 (`meal_slots` y `nutrients_missing`); 02 §3 (`TrackingApi`, y analytics hacia tracking, nutrition y
   tenancy), §8 (el consumidor `analytics.daily-summary` y el trabajo de cada hora) y §10 (la ruta de la analítica); 06 (NC-ANA-001).
+
+## ADR-088 · Analítica de rutina por la API: volumen semanal por grupo, 1RM y macrociclo — aceptada (2026-11-06)
+Contexto: P14, PR 2b (RF-33; RN-F03 a RN-F09, RN-G02, RN-D03). Rodrigo decidió el 2026-11-06:
+- el tonelaje de una serie se reparte entre sus grupos como las series fraccionadas;
+- los read models suman `srpe_load`, `cardio_minutes` y `sfr`;
+- `patient_overview` pasa al PR 6, con el panel y las alertas del control semanal.
+Decisión:
+- Volumen semanal por grupo muscular (05.3) por semana del macrociclo: la semana n empieza el día de inicio del programa más 7 × (n − 1).
+  Lo programado sale de la última versión publicada de la línea, porque una versión nueva copia las semanas pasadas tal como estaban
+  (RN-F12):
+  - lo hecho son las series efectivas de los entrenos de esa semana del programa (una sesión cuenta en su semana aunque se haga otro día,
+    ADR-083), con `FRACTIONAL_SETS` y los músculos congelados en cada serie (principal 1, secundario 0.5);
+  - el tonelaje de una serie se reparte igual: 100 % al principal y 50 % al secundario;
+  - el RPE es el registrado o 10 − RIR (RN-F05); estímulo y fatiga son promedios, y el SFR sale del motor con las series que tienen las dos
+    valoraciones (RN-F07);
+  - el grupo CARDIO no entra (ADR-071); lo programado y no hecho queda en 0;
+  - se recalcula la línea entera (hasta 12 semanas) con el consumidor de los registros (si cambió un entreno o se ajustó una serie o un
+    entreno), el consumidor nuevo `analytics.training-weeks` (`training.program.published`), el trabajo de cada hora (el programa vigente)
+    y la reconstrucción.
+- `TrainingApi.latestPublishedOfLineage`; en tracking, `TrackingApi.programIds` (también los de entrenos anulados) y `activeProgramId`, que
+  lee la copia sin bloquearla: la lectura de tracking usa FOR UPDATE y falla en una transacción de solo lectura.
+- 1RM por día y ejercicio (05.3) con la fórmula del programa de cada entreno (RN-F04), con el motor: la mejor serie efectiva de 1 a 12
+  repeticiones con peso. Fórmulas distintas no comparten serie (RN-D03). Se recalcula con el resumen del día.
+- Migración `202611060100_analytics_training`: `srpe_load` (la carga que calculó la recuperación, RN-G14) y `cardio_minutes` (los minutos de
+  las series de cardio de los entrenos hechos) en el resumen diario; `sfr` en el volumen semanal.
+- `GET /patients/:id/analytics/training?programId=`, con `patients.read`, la RLS del equipo de atención y un READ en la auditoría. Da el
+  macrociclo del programa vigente, o del que se pida si es del paciente (si no, 404 NC-ANA-002), con sus mesociclos y, por semana:
+  - la fase, el factor de volumen y el RIR objetivo, lo programado y, si ya empezó, lo hecho;
+  - sesiones, tonelaje, carga sRPE y minutos de cardio, sumados por fecha dentro de la semana, como 07 §10;
+  - el cumplimiento de sesiones, de series por grupo y de minutos de cardio con `COMPLIANCE` (RN-F09: 0 sin prescripción);
+  - por grupo: series fraccionadas hechas y programadas, tonelaje, RPE, estímulo, fatiga y SFR.
+  Trae también el 1RM de cada ejercicio en el tiempo y el método de cada número (RN-D02).
+Consecuencias:
+- Integración `test/integration/analytics-training.int.spec.ts` (6 casos, como app_user): la semana con sus series y su cumplimiento, el
+  tonelaje repartido, la carga sRPE, el 1RM de Epley, el ajuste de una serie que cambia la semana y el 1RM, la reconstrucción idéntica y los
+  accesos. Unitarias con G-21, G-22, G-24 y G-25.
+- Las sesiones de una semana cuentan por fecha y las series por semana del programa: una sesión de la semana 3 hecha en la 4 suma sus series a
+  la 3 y su sesión a la 4.
+- `patient_overview` y el panel con alertas pasan al PR 6.
+- Para Notion (/notion-sync de P14): 05.3 (`srpe_load`, `cardio_minutes`, `sfr` y el reparto del tonelaje por grupo); 02 §3
+  (`TrainingApi.latestPublishedOfLineage` y lo nuevo de `TrackingApi`), §8 (el consumidor `analytics.training-weeks`) y §10 (la ruta);
+  06 (NC-ANA-002).

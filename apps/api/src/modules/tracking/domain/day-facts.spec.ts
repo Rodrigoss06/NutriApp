@@ -72,6 +72,7 @@ const set = (id: string, values: Partial<FactSet> = {}): FactSet => ({
   rpe: null,
   stimulusRating: 4,
   fatigueRating: 3,
+  durationSeconds: null,
   tonnageKg: 480,
   ...values,
 });
@@ -92,6 +93,7 @@ const checkin: FactCheckin = {
   restingHrBpm: null,
   hrvMs: null,
   performancePct: 100,
+  srpeLoad: 350,
 };
 
 describe('RN-G09 · los días del rango', () => {

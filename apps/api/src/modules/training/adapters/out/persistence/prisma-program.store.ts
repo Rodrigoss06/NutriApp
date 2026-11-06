@@ -375,6 +375,15 @@ export class PrismaProgramStore implements ProgramStore {
     return row?.snapshot ?? null;
   }
 
+  async latestSnapshot(lineageId: string): Promise<ProgramSnapshot | null> {
+    const [row] = await this.db.tx.$queryRaw<{ snapshot: ProgramSnapshot }[]>`
+      SELECT snapshot FROM training.program
+      WHERE lineage_id = ${lineageId}::uuid AND status <> 'DRAFT'
+      ORDER BY version_no DESC
+      LIMIT 1`;
+    return row?.snapshot ?? null;
+  }
+
   async status(id: string): Promise<ProgramStatus | null> {
     const row = await this.db.tx.trainingProgram.findUnique({
       where: { id },

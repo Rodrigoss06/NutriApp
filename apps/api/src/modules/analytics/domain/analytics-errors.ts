@@ -6,3 +6,9 @@ export const RANGE_INVALID = domainError({
   rule: 'RN-G09',
   message: 'El rango va de una fecha a otra igual o posterior, y abarca 371 días como máximo.',
 });
+
+export const PROGRAM_NOT_FOUND = domainError({
+  code: 'NC-ANA-002',
+  rule: 'RN-A05',
+  message: 'Ese programa no existe para este paciente.',
+});

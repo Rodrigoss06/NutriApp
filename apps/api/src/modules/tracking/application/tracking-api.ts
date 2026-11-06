@@ -21,6 +21,16 @@ export class TrackingApi {
     return this.facts.span(patientId);
   }
 
+  /** Los programas de los entrenos del rango, también de los anulados. */
+  programIds(patientId: string, from: string, to: string): Promise<readonly string[]> {
+    return this.facts.programIds(patientId, from, to);
+  }
+
+  /** El programa vigente del paciente según la copia de tracking (active_plan_view); null si no tiene. */
+  activeProgramId(patientId: string): Promise<string | null> {
+    return this.facts.activeProgramId(patientId);
+  }
+
   /** Los pacientes de la organización del contexto con meta o con algún registro desde ese día (o desde siempre). */
   patientIds(since: string | null): Promise<readonly string[]> {
     return this.facts.patientIds(since);

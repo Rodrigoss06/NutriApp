@@ -70,6 +70,8 @@ export interface FactCheckin {
   readonly restingHrBpm: number | null;
   readonly hrvMs: number | null;
   readonly performancePct: number | null;
+  /** La carga sRPE que calculó la recuperación: minutos × RPE (RN-G14). */
+  readonly srpeLoad: number | null;
 }
 
 export interface FactWorkout {
@@ -98,6 +100,8 @@ export interface FactSet {
   readonly rpe: number | null;
   readonly stimulusRating: number | null;
   readonly fatigueRating: number | null;
+  /** El cardio va en segundos (RN-F10). */
+  readonly durationSeconds: number | null;
   /** Sin el calentamiento (RN-F03). */
   readonly tonnageKg: number;
 }
@@ -230,6 +234,7 @@ function dayWorkouts(
                 rpe: set.rpe,
                 stimulusRating: set.stimulusRating,
                 fatigueRating: set.fatigueRating,
+                durationSeconds: set.durationSeconds,
                 reps: numberIn(corrected, 'reps', set.reps),
                 loadKg: numberIn(corrected, 'loadKg', set.loadKg),
                 tonnageKg: numberIn(corrected, 'tonnageKg', set.tonnageKg) ?? 0,
@@ -306,5 +311,6 @@ function checkinFields(checkin: FactCheckin): DayCheckin {
     restingHrBpm: checkin.restingHrBpm,
     hrvMs: checkin.hrvMs,
     performancePct: checkin.performancePct,
+    srpeLoad: checkin.srpeLoad,
   };
 }

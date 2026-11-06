@@ -33,12 +33,21 @@ export interface SummaryDay {
     readonly stress: number | null;
     readonly sleepHours: number | null;
     readonly energy: number | null;
+    readonly srpeLoad: number | null;
   } | null;
   readonly workouts: readonly {
     readonly outcome: 'COMPLETED' | 'PARTIAL' | 'SKIPPED';
-    readonly sets: readonly { readonly isWarmup: boolean; readonly tonnageKg: number }[];
+    readonly sets: readonly {
+      readonly isWarmup: boolean;
+      readonly tonnageKg: number;
+      readonly durationSeconds: number | null;
+      readonly muscleContributions: readonly { readonly muscle: string; readonly weight: number }[];
+    }[];
   }[];
 }
+
+/** El grupo «Cardiorrespiratorio»: sus series son cardio en minutos, no volumen por grupo muscular (ADR-071, RN-F10). */
+export const CARDIO_MUSCLE = 'CARDIO';
 
 export const SUMMARY_NUTRIENTS = ['kcal', 'choG', 'proteinG', 'fatG', 'fiberG'] as const;
 export type SummaryNutrient = (typeof SUMMARY_NUTRIENTS)[number];
@@ -88,6 +97,8 @@ export interface DailySummary {
   readonly workoutsPlanned: number | null;
   readonly tonnageKg: number | null;
   readonly effectiveSets: number | null;
+  readonly srpeLoad: number | null;
+  readonly cardioMinutes: number | null;
   readonly stress: number | null;
   readonly sleepHours: number | null;
   readonly energy: number | null;
@@ -165,6 +176,13 @@ export function dailySummary(
     workoutsPlanned: target?.plannedSessions ?? null,
     tonnageKg: done.length === 0 ? null : sets.reduce((total, set) => total + set.tonnageKg, 0),
     effectiveSets: done.length === 0 ? null : sets.length,
+    srpeLoad: day.checkin?.srpeLoad ?? null,
+    cardioMinutes:
+      done.length === 0
+        ? null
+        : sets
+            .filter((set) => set.muscleContributions.some((c) => c.muscle === CARDIO_MUSCLE))
+            .reduce((total, set) => total + (set.durationSeconds ?? 0) / 60, 0),
     stress: day.checkin?.stress ?? null,
     sleepHours: day.checkin?.sleepHours ?? null,
     energy: day.checkin?.energy ?? null,
