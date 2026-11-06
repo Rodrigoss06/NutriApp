@@ -1,6 +1,6 @@
 # STATUS — NutriCoach v1.0
 
-Actualizado: 2026-11-01 · Por: Rodrigo, con Claude Code
+Actualizado: 2026-11-05 · Por: Rodrigo, con Claude Code
 Inicio del proyecto: POR CONFIRMAR (día siguiente al Pago 1) · Semana actual: por confirmar
 Próxima demo: Demo 3 · Entrenamiento y app del paciente · semana 6
 
@@ -20,7 +20,7 @@ Próxima demo: Demo 3 · Entrenamiento y app del paciente · semana 6
 | P10 Composición, menú y recetario | ✅ | Rodrigo | #28, #30 y #31 | 2 criterios en verde (integración y E2E en escritorio y celular): recetario (ADR-061), composición y menú en la API (ADR-062) y pantallas (ADR-063). Plantillas (RF-22, deseable) fuera. /notion-sync aplicado (17 cambios en 02, 03, 04, 05 y 05.2) |
 | P11 Fichas PDF, Demo 2 | ✅ | Rodrigo | #32 a #37 | 4 criterios en verde (integración y E2E en escritorio y celular): contexto documents y ficha de intercambios (ADR-064), fichas del menú y de resultados (ADR-065; 1.0.1 en ADR-069), marca mínima (ADR-066), descargas (ADR-067), semilla, guion y acta de la Demo 2 (ADR-068). Etiqueta v0.2.0 (e05f8de); staging, pendiente de P4. /notion-sync aplicado (17 cambios en 02, 03, 04, 05, 05.1, 05.3 y 06) |
 | P12 Ejercicios y rutinas | ✅ | Rodrigo | #39 a #42 y #44 a #47 | 5 criterios en verde (integración y E2E en escritorio y celular): motor (ADR-070), biblioteca (ADR-071), anamnesis V2 (ADR-072), alergias (ADR-074), seguridad (ADR-075), programa por la API y en la web (ADR-077, ADR-078) y ficha de rutina (ADR-079) |
-| P13 App del paciente | 🟨 | Rodrigo | #50 a #53 | Plan aprobado (2026-11-01, ADR-080): 6 PR. PR 1 (motor), PR 2 (registros por la API), PR 3 (Hoy y el plan), PR 4a (registro diario y entreno por la API), PR 4b (sus pantallas) y PR 5 (el profesional y los registros) hechos. Falta el cierre |
+| P13 App del paciente | ✅ | Rodrigo | #50 a #55 | 6 criterios en verde (integración y E2E en escritorio y celular): recuperación del día en el motor (ADR-080), registros por /me (ADR-081), Hoy y el plan (ADR-082), registro diario y entreno (ADR-083, ADR-084) y el profesional con los registros (ADR-085). Lighthouse móvil 97 en Hoy (local). La cola sin conexión (RF-31, deseable) queda fuera. /notion-sync aplicado (30 cambios en 11 páginas) |
 | P14 Analítica y evolución, Demo 3 | ⬜ | Rodrigo | | |
 | P15 Marca, calendario, admin y migración | ⬜ | Rodrigo | | |
 | P16 Producción y entrega, Demo 4 | ⬜ | Rodrigo | | |
@@ -28,7 +28,9 @@ Próxima demo: Demo 3 · Entrenamiento y app del paciente · semana 6
 Leyenda: ⬜ pendiente · 🟨 en curso · ✅ terminado · ⛔ bloqueado
 
 ## En curso
-- P13 en curso (plan aprobado el 2026-11-01, ADR-080), en 6 PR contra main:
+- P14 (Analítica y evolución, Demo 3) por empezar. Plan de Rodrigo (2026-11-05): completar la Demo 3 y, en ella, corregir cada punto
+  faltante, como P4, para llevar bien la Demo 4 y cerrar el proyecto.
+- P13 terminado (#50 a #55; plan aprobado el 2026-11-01, ADR-080), en 6 PR contra main:
   - PR 1, motor: `READINESS_JV` 3.0.0 con la carga sRPE, el rendimiento, la recuperación y la indicación del día (RN-G14, RN-G15);
     G-36 a G-38 en verde. Motor 1.5.0;
   - PR 2, registros por la API (ADR-081): comida del plan o del catálogo, agua, notas y peso por /me, con `@PatientOnly`, la ventana de 3
@@ -42,7 +44,8 @@ Leyenda: ⬜ pendiente · 🟨 en curso · ✅ terminado · ⛔ bloqueado
     tonelaje, el seguimiento del ciclo y el cribado en Más, y la anticoncepción hormonal en el panel. E2E en escritorio y celular;
     Lighthouse móvil 97 en Hoy;
   - PR 5, el profesional y los registros (ADR-085): la pestaña Seguimiento con el día en solo lectura, los ajustes con motivo (excluir o
-    corregir la cantidad y los valores) y las notas que quedan leídas al abrirlas. La cola sin conexión (RF-31) queda fuera de P13.
+    corregir la cantidad y los valores) y las notas que quedan leídas al abrirlas. La cola sin conexión (RF-31) queda fuera de P13;
+  - los PR 1 a 5 son #50 a #55 (el 4 se dividió en 4a, #53, y 4b, #54). Idempotency-Key obligatoria en los POST de /me (06 §5).
 - P12 terminado (#39 a #42 y #44 a #47; #43 se fusionó en la rama de alergias y #44 lo llevó a main):
   - #39 (ADR-070): en el motor, `PRI_JV`, las llaves de seguridad, la propuesta y el macrociclo; G-29 a G-35 y G-40 en verde. Motor 1.4.0;
   - #40 (ADR-071): biblioteca de 169 ejercicios (146 provisionales), tabla patrón × nivel y ejercicios propios; `patient_no_delete`;
@@ -103,6 +106,9 @@ Leyenda: ⬜ pendiente · 🟨 en curso · ✅ terminado · ⛔ bloqueado
   - migración 202610210000_food_tafera: fuente TAFERA_2016, columnas de origen y peso bruto en household_measure y
     tabla food.cooking_factor con la RLS de catálogo;
   - importadores TAFERA_MEASURES y TAFERA_COOKING_FACTORS; catalog:load los carga después de la TPCA.
+- Notion: el /notion-sync de P13 (2026-11-05) llevó ADR-080 a ADR-085 a 02, 03 (1.13), 04, 05 (1.11), 05.1, 05.2, 06, 07 (1.2),
+  Proyecto, el prompt de P14 y el Documento técnico (1.8: el resumen de ADR-052 a ADR-085, que se había quedado en ADR-051, y el
+  glosario): 30 cambios aprobados por Rodrigo.
 - Notion: el /notion-sync de P12 (2026-10-31) llevó ADR-070 a ADR-079 a 02, 03 (1.12), 04, 05 (1.10), 05.1, 05.2, 06, 07 (1.1) y
   Archivos del repositorio: 35 cambios aprobados por Rodrigo.
 - Notion: el método de entrenamiento de Jeremy (plantilla V3, sin reloj) quedó documentado en la página 07 y en 03
@@ -117,9 +123,13 @@ Leyenda: ⬜ pendiente · 🟨 en curso · ✅ terminado · ⛔ bloqueado
 ## Siguiente paso
 - Antes de la Demo 3: la matriz manual de navegadores (RNF-19: Chrome, Edge, Safari y Firefox; la E2E cubre Chromium
   y WebKit), que no quedó registrada en las demos 1 y 2
-- P13: subir el PR 5 cuando se fusione #54 y, con todo fusionado, el cierre con /cierre y /notion-sync (ADR-080 a ADR-085)
+- P14 · Analítica, control semanal, evolución y material educativo → Demo 3 (/prompt P14). Su criterio de 300 ms sobre dos años de
+  datos necesita el generador de `pnpm seed:load`, que hoy está en P16: decidirlo en el plan de P14
+- Para la Demo 3 y la Demo 4, según el plan de Rodrigo (2026-11-05): resolver lo que falta del Notion maestro, empezando por P4
+  (staging) en cuanto llegue la cuenta de Hetzner
+- Confirmar la fecha de inicio: si fue el 24-09, el 2026-11-05 es el primer día de la semana 7 y la Demo 4 cae el 25-11
 - Demo 2: presentada, a la espera de su feedback. Falta enviar el acta (docs/actas/demo-2.md) con los nombres de las partes
-  confirmados contra el contrato (ADR-068): la aceptación por escrito deja el cobro de la semana 7 sin otra revisión
+  confirmados contra el contrato (ADR-068): la aceptación por escrito deja el cobro de la semana 7 (Pago 2) sin otra revisión
 - Cada base nueva necesita los catálogos: `pnpm --filter api build && pnpm catalog:load plataforma@demo.example.com`
   en local; en staging y producción, con el correo de su PLATFORM_ADMIN
 - db:seed carga el caso Luis: sus resultados aparecen cuando corre el worker
@@ -152,7 +162,7 @@ Leyenda: ⬜ pendiente · 🟨 en curso · ✅ terminado · ⛔ bloqueado
   confirmar el quinto día (P-04)
 - [x] P-17: un plan no lleva el alimento enlazado a una alergia o intolerancia activa; Jeremy dio el visto bueno (ADR-074)
 - [ ] P-18, notas del coach (ADR-077, ADR-079): la ficha de la rutina imprime las de la sesión y del ejercicio, no la de la
-  sustitución. Confirmar con Jeremy antes de P13, que decide qué ve el paciente en la app
+  sustitución, y la app de P13 sigue el mismo criterio (ADR-080). Confirmar con Jeremy
 - [ ] R4: permiso de uso de las listas Dextre y ADA
 - [x] Porción sugerida de verduras, frutas y almidones: carbohidratos totales de la TPCA (CHOCDF), los que la app
   muestra como «Carbohidratos»; lo decidió Rodrigo (2026-10-22, ADR-059)
@@ -160,8 +170,11 @@ Leyenda: ⬜ pendiente · 🟨 en curso · ✅ terminado · ⛔ bloqueado
   condiciones (ADR-055): la API no devuelve el código del alimento en la TPCA, el texto «de referencia» en vez de
   «oficiales» y la atribución de fuentes una sola vez, en «Acerca de» (ADR-056). Sin logos ni aval del Estado
 - [ ] Captura de un plato por foto: la visión espera un acuerdo con Jeremy (un modelo propio también es IA, regla 10)
-- [ ] Textos legales revisados por el abogado del cliente, en lenguaje claro: desde los 14 años los acepta el propio
-  paciente (ADR-042). Incluye el de MENSTRUAL_TRACKING, 0.1-provisional desde P13 (ADR-083)
+- [x] Textos legales revisados por el abogado del cliente, en lenguaje claro (Notion, Proyecto §7; lo confirmó Rodrigo el
+  2026-11-05). El repositorio sigue con las versiones 0.1-provisional: las revisadas entran como versión nueva (ADR-039) y la marca
+  «Provisional» se quita en P16
+- [ ] Recordatorio (Rodrigo, 2026-11-05): revisar después el texto de MENSTRUAL_TRACKING, 0.1-provisional desde P13 (ADR-083), que
+  no estaba entre los que revisó el abogado
 - [ ] ⚠️ Menores: desde los 14 consienten como un adulto; antes, solo en papel firmado por su padre, madre o tutor, sin
   registrar quién es el tutor (ADR-042). Pendiente de confirmar con el abogado
 
@@ -182,8 +195,13 @@ Leyenda: ⬜ pendiente · 🟨 en curso · ✅ terminado · ⛔ bloqueado
   create-platform-admin para el primer PLATFORM_ADMIN
 - Para P4: Caddy sin trusted_proxies, para que reescriba X-Forwarded-For con la IP real; en el Sentry de la web,
   quitar el fragmento de las URL (beforeSend y beforeBreadcrumb): ahí viajan los tokens de invitación y recuperación
-- Por decidir en el prompt que lo use: si el paciente marca content.resource_assignment.viewed_at (la meta diaria y
-  la copia del plan vigente quedaron resueltas en ADR-058)
+- Por decidir en P14: si el paciente marca content.resource_assignment.viewed_at (la meta diaria y la copia del plan vigente
+  quedaron resueltas en ADR-058)
+- P14: las fichas en la app del paciente (ADR-080) y la analítica con los ajustes del profesional (ADR-085: el ajuste más reciente de
+  cada registro vale y trae lo derivado en corrected_values)
+- RF-31, cola sin conexión (deseable): fuera de P13 por decisión de Rodrigo (ADR-085); hoy cada registro lleva clientId e
+  Idempotency-Key, así que un reintento no duplica
+- La alternativa y las variantes de un ejercicio todavía no se registran en la app: el snapshot no trae sus músculos (ADR-083)
 - Lighthouse móvil en CI sobre staging (RNF-03) cuando exista staging; hoy se mide en local
 - CSP del despliegue: style-src con 'unsafe-inline' por BrandStyle (ADR-027)
 - La marca es provisional hasta la personalización (módulo 19, RF-36), que se hace en P15; la organización activa ya
@@ -195,7 +213,6 @@ Leyenda: ⬜ pendiente · 🟨 en curso · ✅ terminado · ⛔ bloqueado
 - TypeScript fijado en 6.0 hasta que typescript-eslint soporte TypeScript 7 (ADR-018)
 - Jackson y Pollock 7 deja de crecer con la suma de pliegues sobre 395 mm (hombres) y 419 mm (mujeres): consultar si se advierte
 - RF-06: LOGIN y LOGIN_FAILED (sin organización) solo los ve la plataforma; su vista llega con el panel interno (P15)
-- La app del paciente (/mi) ya exige la sesión PATIENT, pero sus pantallas son de muestra hasta P13
 - P14: las series de evolución leen result_metric unido a calculation_result vigente (ADR-046)
 - Dos copias de atomically en iam, en las invitaciones de staff y de paciente: usar la de apps/api/src/platform
   (ADR-045). backoffice ya la usa
@@ -229,6 +246,11 @@ Leyenda: ⬜ pendiente · 🟨 en curso · ✅ terminado · ⛔ bloqueado
   reintentar (#35, 2026-10-27)
 
 ## Registro de sesiones (solo las 5 últimas)
+- 2026-11-05 · P13 (PR 4b, PR 5 y cierre) · #53, #54 y #55 fusionados. Pantallas del registro diario, la indicación del día, Entreno serie por
+  serie, el ciclo y el cribado (ADR-084); el profesional ve los registros, los ajusta con motivo y abre las notas (ADR-085). P13 terminado:
+  los 6 criterios en verde y el /notion-sync aplicado (30 cambios)
+- 2026-11-02 · P13 (PR 2 a PR 4a) · #51 y #52 fusionados. Registros por /me (ADR-081), Hoy y el plan (ADR-082), y la API del registro diario,
+  el entreno, MENSTRUAL_TRACKING y el cribado (ADR-083), con la Idempotency-Key obligatoria en /me
 - 2026-11-01 · Pendientes de P12 · #48 fusionado, con el CI de main en verde. STATUS al día (demos 1 y 2 presentadas, la
   próxima es la Demo 3; P19 era el módulo 19, que se hace en P15; seed:load llega en P16); backoffice usa atomically de
   platform y axe espera el título de la página. Recordatorio para después de la Demo 3: borrado de ramas y seed:load
@@ -236,8 +258,3 @@ Leyenda: ⬜ pendiente · 🟨 en curso · ✅ terminado · ⛔ bloqueado
   iguales juntas (12 semanas en 8 páginas y 1 s). P12 terminado: los 5 criterios en verde y el /notion-sync aplicado (35 cambios)
 - 2026-10-31 · P12 (PR 6) · #44 lleva a main lo de #43 y #45 fusiona el programa por la API. Programa en la web (ADR-078): lista, propuesta con
   aprobación por bloque, macrociclo, editor por semana, duplicar y publicar, con la E2E en escritorio y celular
-- 2026-10-31 · P12 (PR 5) · #42 y #43 fusionados, pero #43 quedó en la rama de alergias y no en main: la corrección va en un PR nuevo. Programa
-  por la API (ADR-077): a mano o propuesta, semanas, duplicar, aprobar por bloque, publicar y metas del día. E2E de la Demo 1 más robusta (run #88)
-- 2026-10-31 · P12 (PR 4) · Seguridad antes de prescribir (ADR-075): perfil, cribado con revisión, postura y pruebas físicas,
-  con sus pantallas y la E2E en escritorio y celular. Se agrega el texto de consentimiento IMAGES, provisional, que no existía.
-  La interfaz oculta en todo el expediente lo que la API negaría, con un aviso y enlace a la Ficha (ADR-076)
