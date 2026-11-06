@@ -14,12 +14,13 @@ const TABS = [
   { path: '/dieta', label: 'Dieta' },
   { path: '/entrenamiento', label: 'Entrenamiento' },
   { path: '/seguimiento', label: 'Seguimiento' },
+  { path: '/analitica', label: 'Analítica' },
   { path: '/app', label: 'App del paciente' },
   { path: '/linea-de-tiempo', label: 'Línea de tiempo' },
 ] as const;
 
 /**
- * Secciones del expediente (RF-09 a RF-19), con aria-current en la activa. Evaluaciones, energía y dieta siguen activas
+ * Secciones del expediente (RF-09 a RF-19, RF-32 y RF-33), con aria-current en la activa. Evaluaciones, energía y dieta siguen activas
  * en sus páginas internas (una evaluación, su comparación, una prescripción, un plan).
  */
 export function RecordTabs({ patientId }: { patientId: string }) {
