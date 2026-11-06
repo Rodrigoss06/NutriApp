@@ -8,6 +8,7 @@ import { MeTrackingController } from './adapters/in/http/me-tracking.controller.
 import { PatientRecordsController } from './adapters/in/http/patient-records.controller.js';
 import { ProgramsConsumer } from './adapters/in/events/programs.consumer.js';
 import { DailyTargetsJob } from './adapters/in/jobs/daily-targets.job.js';
+import { PrismaFactsStore } from './adapters/out/persistence/prisma-facts.store.js';
 import { PrismaRecordStore } from './adapters/out/persistence/prisma-record.store.js';
 import { PrismaTrackingStore } from './adapters/out/persistence/prisma-tracking.store.js';
 import { AdjustmentCommands } from './application/commands/adjustment.commands.js';
@@ -16,15 +17,18 @@ import { RecordCommands } from './application/commands/record.commands.js';
 import { TrainingLogCommands } from './application/commands/training-log.commands.js';
 import { DailyTargetsHandler } from './application/daily-targets.handler.js';
 import { PlanActivation } from './application/plan-activation.js';
+import { FACTS_STORE } from './application/ports/facts.ports.js';
 import { RECORD_STORE } from './application/ports/records.ports.js';
 import { TRACKING_STORE } from './application/ports/tracking.ports.js';
 import { ProgramActivation } from './application/program-activation.js';
 import { MeQueries } from './application/queries/me.queries.js';
 import { PatientRecordsQueries } from './application/queries/patient-records.queries.js';
+import { TrackingApi } from './application/tracking-api.js';
 
 /**
  * tracking (02 §2, núcleo): la copia del plan y del programa vigentes y la meta de cada día, que alimentan los eventos de nutrition y
- * training (02 §3), y lo que el paciente registra desde su app por /me (RN-G01 a RN-G17).
+ * training (02 §3), y lo que el paciente registra desde su app por /me (RN-G01 a RN-G17). TrackingApi da a la analítica los hechos
+ * de cada día con los ajustes aplicados (RN-G02).
  */
 @Module({
   imports: [NutritionModule, TrainingModule, FoodModule, ContentModule],
@@ -44,6 +48,9 @@ import { PatientRecordsQueries } from './application/queries/patient-records.que
     ProgramsConsumer,
     DailyTargetsJob,
     { provide: TRACKING_STORE, useClass: PrismaTrackingStore },
+    TrackingApi,
+    { provide: FACTS_STORE, useClass: PrismaFactsStore },
   ],
+  exports: [TrackingApi],
 })
 export class TrackingModule {}

@@ -1,4 +1,5 @@
 import { Module } from '@nestjs/common';
+import { AnalyticsModule } from './modules/analytics/index.js';
 import { AssessmentModule } from './modules/assessment/index.js';
 import { AuditLogModule } from './modules/audit/index.js';
 import { ExerciseModule } from './modules/exercise/index.js';
@@ -31,6 +32,7 @@ import { AuthModule, HealthModule, IdempotencyModule, PlatformModule } from './p
     NutritionModule,
     ContentModule,
     TrackingModule,
+    AnalyticsModule,
     DocumentsModule,
     AuditLogModule,
     BackofficeModule,

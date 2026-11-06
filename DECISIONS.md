@@ -1941,3 +1941,41 @@ Consecuencias:
 - Para Notion (/notion-sync de P14): 02 §9 (`WEEKLY_REVIEW_JV`); 05.2 (`method_version` de `weekly_review` en semver); 05.3 (`meal_slots`);
   07 §10 (las razones del semáforo y que un promedio sin dato no lo enciende); 04 RF-34 (los valores de las alertas); los códigos
   NC-ENG-409 y NC-ENG-410.
+
+## ADR-087 · Analítica por la API: resumen diario, reconstrucción y analítica de dieta — aceptada (2026-11-06)
+Contexto: P14, PR 2a (RF-32, RN-G02, RN-G03, RN-G09, RN-E10, RN-I03; criterios 1 a 3 de P14). Las tablas de analytics existían desde P2
+(05.3), vacías y sin módulo. Rodrigo decidió el 2026-11-06 que el resumen guarde lo conocido y en cuántos registros falta cada nutriente. El
+PR 2 se divide en 2a (dieta) y 2b (rutina y panel).
+Decisión:
+- tracking ofrece `TrackingApi` (02 §3), en la transacción de quien llama:
+  - los hechos de cada día con el ajuste más reciente aplicado (RN-G02) y su meta (RN-G03): comidas (la fibra, FIBTG, en la misma proporción
+    que la cantidad corregida), agua con cuántos registros cuentan, el último peso, el registro diario con su rendimiento y los entrenos con
+    sus series;
+  - el primer y el último día del paciente, y los pacientes con actividad desde un día;
+  - una lectura de rango por tabla, con poda de particiones (`PrismaFactsStore`).
+- Módulo `analytics`: `DailyProjection` recalcula los días del rango desde `TrackingApi`, `NutritionApi` (los tiempos del plan de ese día) y
+  `TenancyApi` (el rango de adecuación), y reemplaza esas filas. La usan, con los mismos números:
+  - el consumidor `analytics.daily-summary`, con `tracking.*.logged`, `.voided` y `tracking.log.adjusted`;
+  - el trabajo `analytics.daily-refresh`, cada hora en el minuto 25: ayer y hoy de cada paciente con actividad en los últimos dos días, en su
+    fecha local. Así un día con meta y sin registros también tiene su fila y cuenta para la adherencia;
+  - `AnalyticsRebuild` y la CLI `pnpm --filter api analytics:rebuild --patient ID | --all`: borra lo del paciente y lo recalcula desde su
+    primer día hasta hoy, una transacción por paciente.
+- Migración `202611060000_analytics_daily_summary`: `meal_slots` (por tiempo, si el plan lo tenía y cuántos registros tuvo) y
+  `nutrients_missing` (en cuántos registros falta cada nutriente, sobre el total), con claves en snake_case como las columnas.
+- Reglas del resumen:
+  - kcal y macronutrientes suman lo conocido; un día sin comidas registradas queda sin dato, no en 0; sin agua registrada, `water_ml` null;
+  - la adecuación sale de `ADEQUACY` del motor contra la meta de ese día, sin redondear antes de guardarla (05.3 la guarda con 1 decimal);
+  - con un dato faltante, `kcal_in_range` solo es false si lo conocido ya pasa el máximo; si no, queda sin saber («Faltan datos», RN-E10);
+  - un entreno omitido no cuenta como hecho (RN-F09); el tonelaje y las series efectivas no cuentan el calentamiento (RN-F03, RN-F06).
+- Analítica de dieta: `GET /patients/:id/analytics/diet?from=&to=`, con `patients.read`, la RLS del equipo de atención (RN-A05) y un READ en la
+  auditoría (RN-B03). Trae:
+  - los días;
+  - las semanas de lunes a domingo: el promedio de los días con registros y meta, la adecuación del promedio contra la meta promedio
+    (`ADEQUACY`), y los días con meta, con registros y en rango. Si en un día faltó un dato, el nutriente de esa semana es «al menos»;
+  - la adherencia por tiempo de comida: días con registro sobre los días en que el plan lo tenía, y los días fuera del plan.
+  Sin rango, las últimas 4 semanas hasta hoy; un rango al revés o de más de 371 días responde 400 (NC-ANA-001).
+Consecuencias:
+- Criterios 1, 2 y 3 de P14 en la integración (`test/integration/analytics.int.spec.ts`, 7 casos, como app_user).
+- PR 2b: el volumen semanal por grupo muscular, la serie de 1RM, `patient_overview` y la analítica de rutina.
+- Para Notion (/notion-sync de P14): 05.3 (`meal_slots` y `nutrients_missing`); 02 §3 (`TrackingApi`, y analytics hacia tracking, nutrition y
+  tenancy), §8 (el consumidor `analytics.daily-summary` y el trabajo de cada hora) y §10 (la ruta de la analítica); 06 (NC-ANA-001).

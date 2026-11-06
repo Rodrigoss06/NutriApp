@@ -36,4 +36,5 @@ export * from './training/week-plan.js';
 export * from './exercise/library.js';
 export * from './tracking/adjustments.js';
 export * from './tracking/records.js';
+export * from './analytics/diet.js';
 export * from './content/app.js';
