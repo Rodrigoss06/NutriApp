@@ -45,9 +45,12 @@ function saveFile(url: string, fileName: string): void {
 export function DownloadSheetButton({
   patientId,
   source,
+  label = 'Descargar ficha (PDF)',
 }: {
   patientId: string;
   source: DocumentSource;
+  /** El rótulo del botón, si la página tiene más de una ficha: «Descargar ficha de evolución (PDF)». */
+  label?: string;
 }) {
   const closed = useRef(new AbortController());
   useEffect(() => {
@@ -87,7 +90,7 @@ export function DownloadSheetButton({
           }}
         >
           <Download aria-hidden />
-          {download.isPending ? 'Generando…' : 'Descargar ficha (PDF)'}
+          {download.isPending ? 'Generando…' : label}
         </Button>
       </div>
       <p role="status" className="sr-only">

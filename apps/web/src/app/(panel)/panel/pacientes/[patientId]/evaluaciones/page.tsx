@@ -61,6 +61,16 @@ export default async function EvaluationsPage({
             </div>
           </RecordWriteGate>
         )}
+        {list.some((evaluation) => evaluation.status === 'CLOSED') ? (
+          <p className="text-sm">
+            <Link href={`${base}/evolucion`} className="font-medium text-brand-text underline">
+              Ver la evolución
+            </Link>{' '}
+            <span className="text-muted-foreground">
+              · cada medida en el tiempo frente al CMD95, cada método por separado y la ficha.
+            </span>
+          </p>
+        ) : null}
         {list.length === 0 ? (
           <EmptyState
             icon={Ruler}

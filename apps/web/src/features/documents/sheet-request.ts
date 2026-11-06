@@ -41,6 +41,10 @@ export async function readySheet(ports: SheetRequestPorts): Promise<GeneratedDoc
   throw new SheetTimeout();
 }
 
-/** La consulta del estado: el mismo origen que se pidió. */
+/** La consulta del estado: el mismo origen que se pidió, con la ficha si la evaluación tiene dos (ADR-091). */
 export const statusQuery = (source: DocumentSource): string =>
-  new URLSearchParams({ sourceType: source.sourceType, sourceId: source.sourceId }).toString();
+  new URLSearchParams({
+    sourceType: source.sourceType,
+    sourceId: source.sourceId,
+    ...(source.kind ? { kind: source.kind } : {}),
+  }).toString();
