@@ -227,5 +227,6 @@ export const COMPLIANCE = defineMethod<
 export * from './macrocycle.js';
 export * from './performance-profile.js';
 export * from './readiness.js';
+export * from './weekly-review.js';
 export * from './routine-proposal.js';
 export * from './safety.js';

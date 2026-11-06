@@ -1907,3 +1907,37 @@ Consecuencias:
   - 03 RN-G02: qué se corrige de cada tipo;
   - 02 §7, §8 y §10: las rutas y los eventos; 06: NC-TRK-013;
   - 04 RF-31: fuera de P13.
+
+## ADR-086 · Plan de P14 y control semanal en el motor — aceptada (2026-11-05)
+Contexto: P14 (RF-30, RF-32 a RF-35, RF-42; RN-G16, RN-F17; 07 §10 y §11). Rodrigo aprobó el plan el 2026-11-05: 7 PR, con cuatro
+decisiones que Notion no fija. El PR 1 trae el control semanal al motor.
+Decisión:
+- `WEEKLY_REVIEW_JV` 3.0.0 en el registro de métodos, con su sobre (RN-D01): los agregados de la semana, el semáforo con sus razones, el
+  factor ajustado y la decisión sugerida (07 §10). Semver y no «V3» como dice el comentario de 05.2; la mayor sigue a la plantilla V3, como
+  `READINESS_JV` (ADR-080).
+  - Los umbrales de la organización son un insumo (`training.readiness_threshold`); × 0.75, × 0.90 y los síntomas en 2 son del método.
+  - El rendimiento de cada día es el que guardó `READINESS_JV` (con su tope de 120 %).
+  - Un promedio sin dato no enciende el semáforo: la falta de un dato no es mal estado. Sin sesiones, «falta registro», sin factor
+    sugerido.
+  - Insumos fuera de rango: NC-ENG-409 (la semana, hasta 7 días) y NC-ENG-410 (el factor del plan y los umbrales). Motor 1.6.0.
+- Proyecciones: un módulo `analytics` recalcula el día o la semana afectados desde los datos de origen, que pide a las API públicas de
+  tracking, nutrition y training (tracking ya aplica el ajuste vigente, ADR-085), y reemplaza esas filas. `analytics:rebuild` usa la misma
+  función: reconstruir da los mismos números. Lo que depende del paso del tiempo (días sin registro) se calcula al leer.
+- Decisiones de Rodrigo:
+  - adherencia por tiempo de comida (RF-32): columna `meal_slots jsonb` en `analytics.patient_daily_summary` (por tiempo, las comidas
+    planificadas y las registradas), en vez de sumarla al leer;
+  - alertas del panel (RF-34): sin registros en 3 días; adherencia de 7 días (días en rango ÷ días con meta, RN-G09) baja si es menor que
+    80 %, la alimentación mínima de 07 §11;
+  - el generador de `pnpm seed:load` de 500 pacientes con dos años de historia entra en P14, para el criterio de 300 ms; el de 3 000 y k6
+    siguen en P16;
+  - ajustar o descargar crea la versión nueva del programa en borrador con el factor decidido en la semana siguiente: en una propuesta se
+    recalculan sus series (P-06); en un programa a mano el coach las ajusta. Publica el coach (RN-F17, RN-F12).
+- Por defecto: el paciente marca `viewed_at` al abrir un recurso; la ficha de evolución usa la última evaluación cerrada como origen, sin
+  cambiar el DDL de documents.
+- PR: 1, motor; 2, analítica por la API; 3, control semanal por la API; 4, web de la analítica y del control semanal; 5, evolución y su
+  ficha; 6, panel con alertas, material educativo y fichas en la app; 7, Demo 3 (`seed:load`, p95, `pnpm demo:3`, guion y v0.3.0).
+Consecuencias:
+- G-39 en verde, con G-01 a G-38 y G-40 iguales.
+- Para Notion (/notion-sync de P14): 02 §9 (`WEEKLY_REVIEW_JV`); 05.2 (`method_version` de `weekly_review` en semver); 05.3 (`meal_slots`);
+  07 §10 (las razones del semáforo y que un promedio sin dato no lo enciende); 04 RF-34 (los valores de las alertas); los códigos
+  NC-ENG-409 y NC-ENG-410.

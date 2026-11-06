@@ -3,6 +3,17 @@
 Cambiar una fórmula o una constante sube la versión del método afectado y la del motor (02 §9).
 Los resultados guardados conservan la versión con que se calcularon (RN-D01, RN-D08).
 
+## 1.6.0 — 2026-11-05
+
+- Nuevo método `WEEKLY_REVIEW_JV` 3.0.0: control semanal de JV Fitness (RN-G16, 07 §10). Da los agregados de la semana
+  (sesiones con duración mayor que 0, carga sRPE y los promedios sobre los días con dato), el semáforo con sus razones, el
+  factor ajustado (× 0.75 en rojo, × 0.90 en ámbar) y la decisión sugerida, con los umbrales vigentes de la organización,
+  que recibe como insumo. Sin sesiones, falta registro y no hay factor sugerido. Un promedio sin dato no enciende el
+  semáforo. Funciones puras `weeklyAggregates` y `weeklyDecision`. Insumos fuera de rango: NC-ENG-409 (la semana) y
+  NC-ENG-410 (el factor del plan y los umbrales).
+- La validación de rangos de `READINESS_JV` pasa a un módulo común, sin cambiar sus mensajes ni su versión.
+- Ningún método existente cambia: G-01 a G-38 y G-40 siguen igual.
+
 ## 1.5.0 — 2026-11-01
 
 - Nuevo método `READINESS_JV` 3.0.0: recuperación e indicación del día de JV Fitness (RN-G14, RN-G15, 07 §9). Da la carga
