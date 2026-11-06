@@ -1905,6 +1905,7 @@ model TrainingProgram {
   origin                 String          @default("MANUAL")
   mesocycles             Mesocycle[]
   athleteProfile         AthleteProfile? @relation(fields: [athleteProfileId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  weeklyReviews          WeeklyReview[]
 
   @@unique([lineageId, versionNo])
   @@index([organizationId, patientId, createdAt(sort: Desc)], map: "program_by_patient")
@@ -2251,5 +2252,42 @@ model ReadinessThreshold {
 
   @@unique([organizationId, validFrom])
   @@map("readiness_threshold")
+  @@schema("training")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model WeeklyReview {
+  id                    String          @id @db.Uuid
+  organizationId        String          @map("organization_id") @db.Uuid
+  patientId             String          @map("patient_id") @db.Uuid
+  programId             String          @map("program_id") @db.Uuid
+  weekNo                Int             @map("week_no") @db.SmallInt
+  weekStart             DateTime        @map("week_start") @db.Date
+  weekEnd               DateTime        @map("week_end") @db.Date
+  methodCode            String          @map("method_code")
+  methodVersion         String          @map("method_version")
+  engineVersion         String          @map("engine_version")
+  thresholdId           String          @map("threshold_id") @db.Uuid
+  inputs                Json
+  inputsHash            Bytes           @map("inputs_hash")
+  light                 String
+  plannedVolumeFactor   Decimal         @map("planned_volume_factor") @db.Decimal(4, 2)
+  suggestedVolumeFactor Decimal?        @map("suggested_volume_factor") @db.Decimal(5, 3)
+  suggestedAction       String          @map("suggested_action")
+  computedAt            DateTime        @map("computed_at") @db.Timestamptz(6)
+  coachDecision         String?         @map("coach_decision")
+  decidedVolumeFactor   Decimal?        @map("decided_volume_factor") @db.Decimal(4, 2)
+  decisionNote          String?         @map("decision_note")
+  decidedBy             String?         @map("decided_by") @db.Uuid
+  decidedAt             DateTime?       @map("decided_at") @db.Timestamptz(6)
+  resultingProgramId    String?         @map("resulting_program_id") @db.Uuid
+  status                String          @default("CURRENT")
+  trainingProgram       TrainingProgram @relation(fields: [programId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@unique([programId, weekNo], map: "weekly_review_current", where: raw("(status = 'CURRENT'::text)"))
+  @@unique([programId, weekNo, inputsHash])
+  @@index([organizationId, patientId, weekStart(sort: Desc)], map: "weekly_review_by_patient")
+  @@map("weekly_review")
   @@schema("training")
 }

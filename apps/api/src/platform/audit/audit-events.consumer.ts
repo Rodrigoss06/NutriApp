@@ -182,6 +182,16 @@ export const AUDITED_EVENTS: Readonly<Record<string, AuditMapping>> = {
     fields: (p) => namesOf(p.fields),
   },
   'training.program.published': { action: 'PUBLISH', resourceType: 'training.program' },
+  'training.review.decided': {
+    action: 'UPDATE',
+    resourceType: 'training.weekly_review',
+    fields: (p) => namesOf(p.fields),
+  },
+  'training.threshold.changed': {
+    action: 'UPDATE',
+    resourceType: 'training.readiness_threshold',
+    fields: (p) => namesOf(p.fields),
+  },
   'training.program.superseded': {
     action: 'UPDATE',
     resourceType: 'training.program',

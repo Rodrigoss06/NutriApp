@@ -2021,3 +2021,47 @@ Consecuencias:
 - Para Notion (/notion-sync de P14): 05.3 (`srpe_load`, `cardio_minutes`, `sfr` y el reparto del tonelaje por grupo); 02 §3
   (`TrainingApi.latestPublishedOfLineage` y lo nuevo de `TrackingApi`), §8 (el consumidor `analytics.training-weeks`) y §10 (la ruta);
   06 (NC-ANA-002).
+
+## ADR-089 · Control semanal por la API: cálculo al cerrar la semana, decisión del coach y umbrales editables — aceptada (2026-11-06)
+Contexto: P14, PR 3 (RF-42; RN-G16, RN-F17, RN-F12, RN-G15; 07 §10 y §11; criterio 5 de P14). El motor llegó con el PR 1 (`WEEKLY_REVIEW_JV`,
+ADR-086); faltaban guardarlo, calcularlo y que el coach decida.
+Decisión:
+- Migración `202611060200_training_weekly_review`: el DDL de 05.2, con estas diferencias y agregados:
+  - `suggested_volume_factor` es numeric(5,3) y no (4,2): el factor ajustado de G-39 es 0.825;
+  - `decision_note` es obligatoria con la decisión (RN-F17), de hasta 1000 caracteres, y hay un índice por paciente;
+  - RLS del equipo de atención, ACCOUNT y PLATFORM_ADMIN; el paciente no lo ve;
+  - UPDATE solo de la decisión y del estado. Un disparador deja decidir una vez y solo el control vigente, y el estado solo pasa a
+    SUPERSEDED.
+- Cálculo (`WeeklyReviewService`): cada semana cerrada del programa publicado (su último día ya pasó en la fecha local del paciente), con
+  los registros diarios de esa semana y los umbrales vigentes al cerrarla (los de la organización o los de la V3):
+  - una semana sin factor (un programa a mano sin tabla de fases) vale 1.0;
+  - con los mismos insumos, el control vigente no cambia; con registros tardíos, se crea otro y el anterior queda SUPERSEDED con su
+    decisión. Hay un solo control vigente por semana en toda la línea del programa;
+  - lo hacen el trabajo `training.weekly-reviews`, cada hora en el minuto 40, y el coach al abrir el control
+    (`POST /patients/:id/weekly-reviews/compute`, con `patients.write`).
+- training lee los registros diarios de tracking sin importarlo, porque tracking ya importa training: `WeekCheckinSources`, que tracking
+  registra al iniciar, como las fuentes de la línea de tiempo de clinical (02 §4).
+- Decisión (`POST /patients/:id/weekly-reviews/:reviewId/decision`, con `patients.write` y `ensureRecordWritable`):
+  - mantener, ajustar o descargar, siempre con nota (RN-F17); ajustar o descargar exige el factor;
+  - mantener solo queda registrado;
+  - ajustar o descargar deja la versión siguiente del programa en borrador, o usa la que ya estaba en borrador, con el factor decidido en la
+    semana siguiente. En una propuesta, sus series de trabajo se recalculan con P-06 (series base × factor); en un programa a mano quedan
+    como estaban. Sin semana siguiente no hay borrador;
+  - `resulting_program_id` es esa versión: la semana cambia para el paciente solo al publicarla (RN-F12).
+- Lectura (`GET /patients/:id/weekly-reviews`, con `patients.read` y un READ en la auditoría): los controles vigentes por semana, con las
+  razones y los agregados que da el motor con los insumos guardados (RN-D01), la decisión, la versión que resultó con su estado y cuántos
+  controles se reemplazaron.
+- Umbrales (07 §11): `GET` y `PUT /organization/readiness-thresholds`, con `organization.read` y `organization.update`. Guardar crea la
+  versión de hoy en la fecha de la organización; un segundo cambio el mismo día corrige esa versión. Lo ya calculado conserva en sus
+  insumos los valores que usó (RN-D01, RN-D08), y los controles de semanas ya cerradas no cambian.
+- Eventos `training.review.decided` y `training.threshold.changed`, a la auditoría con los nombres de los campos. Códigos NC-TRA-020 a
+  NC-TRA-025.
+Consecuencias:
+- Criterio 5 de P14 y G-39 por HTTP en la integración (`test/integration/weekly-review.int.spec.ts`, 11 casos, como app_user); unitarias con
+  dobles en memoria (17).
+- PR 4: las pantallas del control semanal y de la analítica, y los umbrales en Ajustes. PR 6: el panel suma los controles sin decidir y el
+  semáforo de la semana.
+- Para Notion (/notion-sync de P14): 05.2 (`weekly_review`: el factor sugerido con 3 decimales, la nota, el índice, el disparador y un
+  control vigente por semana en la línea); 02 §3 (`WeekCheckinSources`), §7 (`WeeklyReview`), §8 (`training.review.decided`,
+  `training.threshold.changed`) y §10 (las rutas); 07 §10 (cuándo cierra una semana y el factor 1.0 sin tabla de fases) y §11 (la versión
+  del día que se corrige); 06 (NC-TRA-020 a NC-TRA-025).
