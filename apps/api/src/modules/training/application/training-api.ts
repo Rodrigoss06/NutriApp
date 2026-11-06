@@ -16,6 +16,14 @@ export class TrainingApi {
     return this.programs.snapshot(id);
   }
 
+  /**
+   * La última versión publicada de una línea, vigente o reemplazada: la que dice qué se programó en cada semana, porque una versión
+   * nueva copia las semanas ya pasadas tal como estaban (RN-F12). null si no hay ninguna o no se ve.
+   */
+  latestPublishedOfLineage(lineageId: string): Promise<ProgramSnapshot | null> {
+    return this.programs.latestSnapshot(lineageId);
+  }
+
   /** Su estado: así quien lo pide sabe si es un borrador o algo que no existe. null si no existe o no se ve. */
   programStatus(id: string): Promise<ProgramStatus | null> {
     return this.programs.status(id);

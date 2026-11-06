@@ -19,6 +19,13 @@ const food = (values: Partial<SummaryFood> = {}): SummaryFood => ({
   ...values,
 });
 
+const SET = {
+  isWarmup: false,
+  tonnageKg: 480,
+  durationSeconds: null,
+  muscleContributions: [{ muscle: 'QUADRICEPS', weight: 1 }],
+};
+
 const DAY: SummaryDay = {
   localDate: '2026-11-02',
   target: { kcal: 1835, choG: 184, proteinG: 160, fatG: 51, waterMl: 2500, plannedSessions: 1 },
@@ -127,9 +134,9 @@ describe('RN-F03 · RN-F09 · el entrenamiento del día', () => {
           {
             outcome: 'COMPLETED',
             sets: [
-              { isWarmup: true, tonnageKg: 0 },
-              { isWarmup: false, tonnageKg: 480 },
-              { isWarmup: false, tonnageKg: 480 },
+              { ...SET, isWarmup: true, tonnageKg: 0 },
+              { ...SET, tonnageKg: 480 },
+              { ...SET, tonnageKg: 480 },
             ],
           },
           { outcome: 'SKIPPED', sets: [] },
@@ -152,5 +159,41 @@ describe('RN-F03 · RN-F09 · el entrenamiento del día', () => {
       null,
       null,
     ]);
+  });
+});
+
+describe('RN-G14 · RN-F09 · la carga sRPE y los minutos de cardio del día', () => {
+  it('la carga sRPE es la que calculó la recuperación del registro diario; sin registro diario, sin dato', () => {
+    const checkin = { stress: 2, sleepHours: 7, energy: null, srpeLoad: 350 };
+
+    expect(dailySummary({ ...DAY, checkin }, null, rule).srpeLoad).toBe(350);
+    expect(dailySummary(DAY, null, rule).srpeLoad).toBeNull();
+  });
+
+  it('los minutos de cardio salen de las series del grupo cardiorrespiratorio de los entrenos hechos', () => {
+    const cardio = {
+      ...SET,
+      tonnageKg: 0,
+      durationSeconds: 1200,
+      muscleContributions: [{ muscle: 'CARDIO', weight: 1 }],
+    };
+    const summary = dailySummary(
+      {
+        ...DAY,
+        workouts: [
+          { outcome: 'COMPLETED', sets: [SET, cardio, { ...cardio, durationSeconds: 600 }] },
+          { outcome: 'SKIPPED', sets: [cardio] },
+        ],
+      },
+      null,
+      rule,
+    );
+
+    expect(summary.cardioMinutes).toBe(30);
+    expect(
+      dailySummary({ ...DAY, workouts: [{ outcome: 'COMPLETED', sets: [SET] }] }, null, rule)
+        .cardioMinutes,
+    ).toBe(0);
+    expect(dailySummary(DAY, null, rule).cardioMinutes).toBeNull();
   });
 });

@@ -121,7 +121,7 @@ beforeAll(async () => {
 });
 
 afterAll(async () => {
-  await harness.app.close();
+  await harness.stop();
 });
 
 describe('Criterio 1 de P14 · G-20 · RN-E10 · RN-G09 · la semana de Luis', () => {

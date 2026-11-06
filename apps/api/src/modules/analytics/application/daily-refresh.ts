@@ -13,6 +13,7 @@ import { TrackingApi } from '../../tracking/index.js';
 import { addDays } from '../domain/diet-weeks.js';
 import { DailyProjection } from './daily-projection.js';
 import { localDateIn } from './local-date.js';
+import { TrainingProjection } from './training-projection.js';
 
 const platformContext: SecurityContext = {
   organizationId: null,
@@ -22,8 +23,9 @@ const platformContext: SecurityContext = {
 };
 
 /**
- * Cada hora en el worker: el resumen de ayer y de hoy de cada paciente con actividad reciente, en su fecha local (RN-G04). Así un
- * día con meta y sin registros también tiene su fila: cuenta como un día con meta para la adherencia. Idempotente.
+ * Cada hora en el worker: el resumen de ayer y de hoy de cada paciente con actividad reciente, en su fecha local (RN-G04), y las
+ * semanas de su programa vigente. Así un día con meta y sin registros también tiene su fila (cuenta como un día con meta para la
+ * adherencia) y una semana sin entrenos queda con lo programado y nada hecho. Idempotente.
  */
 @Injectable()
 export class DailyRefresh {
@@ -34,6 +36,7 @@ export class DailyRefresh {
     @Inject(ClinicalApi) private readonly clinical: ClinicalApi,
     @Inject(TrackingApi) private readonly tracking: TrackingApi,
     @Inject(DailyProjection) private readonly projection: DailyProjection,
+    @Inject(TrainingProjection) private readonly training: TrainingProjection,
   ) {}
 
   /** Los pacientes recalculados. */
@@ -54,6 +57,7 @@ export class DailyRefresh {
           if (!patient || patient.status === 'ARCHIVED') return false;
           const today = localDateIn(now, patient.timezone);
           await this.projection.refresh(organizationId, patientId, addDays(today, -1), today);
+          await this.training.refreshForRange(organizationId, patientId, addDays(today, -1), today);
           return true;
         });
         if (done) refreshed += 1;

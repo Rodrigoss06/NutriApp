@@ -187,6 +187,10 @@ class MemoryPrograms implements ProgramStore {
   snapshot(id: string) {
     return Promise.resolve(this.snapshots.get(id) ?? null);
   }
+  latestSnapshot(lineageId: string) {
+    const versions = [...this.snapshots.values()].filter((s) => s.lineageId === lineageId);
+    return Promise.resolve(versions.sort((a, b) => b.versionNo - a.versionNo)[0] ?? null);
+  }
   status(id: string) {
     return Promise.resolve(this.rows.get(id)?.status ?? null);
   }

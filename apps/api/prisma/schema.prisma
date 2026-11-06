@@ -61,6 +61,8 @@ model PatientDailySummary {
   updatedAt          DateTime @default(now()) @map("updated_at") @db.Timestamptz(6)
   mealSlots          Json     @default("{}") @map("meal_slots")
   nutrientsMissing   Json     @default("{}") @map("nutrients_missing")
+  srpeLoad           Decimal? @map("srpe_load") @db.Decimal(7, 1)
+  cardioMinutes      Decimal? @map("cardio_minutes") @db.Decimal(6, 1)
 
   @@id([patientId, localDate])
   @@index([organizationId, localDate], map: "daily_summary_org")
@@ -102,6 +104,7 @@ model PatientWeeklyMuscleVolume {
   avgRpe                Decimal? @map("avg_rpe") @db.Decimal(3, 1)
   avgStimulus           Decimal? @map("avg_stimulus") @db.Decimal(3, 1)
   avgFatigue            Decimal? @map("avg_fatigue") @db.Decimal(3, 1)
+  sfr                   Decimal? @db.Decimal(4, 2)
 
   @@id([patientId, weekStart, muscleCode])
   @@map("patient_weekly_muscle_volume")

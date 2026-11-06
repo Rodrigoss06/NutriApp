@@ -1,13 +1,17 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { TransactionHost } from '@nestjs-cls/transactional';
 import type { Db } from '../../../../../platform/index.js';
-import type { AnalyticsStore } from '../../../application/ports/analytics.ports.js';
+import type {
+  AnalyticsStore,
+  WeeklyMuscleRow,
+} from '../../../application/ports/analytics.ports.js';
 import {
   SUMMARY_NUTRIENTS,
   type DailySummary,
   type MealSlotDay,
   type SummaryNutrient,
 } from '../../../domain/daily-summary.js';
+import type { OneRmPoint } from '../../../domain/one-rm.js';
 
 const isoDate = (value: Date): string => value.toISOString().slice(0, 10);
 const asDate = (value: string): Date => new Date(`${value}T00:00:00Z`);
@@ -87,6 +91,8 @@ export class PrismaAnalyticsStore implements AnalyticsStore {
         workoutsPlanned: row.workoutsPlanned,
         tonnageKg: row.tonnageKg,
         effectiveSets: row.effectiveSets,
+        srpeLoad: row.srpeLoad,
+        cardioMinutes: row.cardioMinutes,
         stress: row.stress,
         sleepHours: row.sleepHours,
         energy: row.energy,
@@ -145,6 +151,8 @@ export class PrismaAnalyticsStore implements AnalyticsStore {
       workoutsPlanned: row.workoutsPlanned,
       tonnageKg: num(row.tonnageKg),
       effectiveSets: num(row.effectiveSets),
+      srpeLoad: num(row.srpeLoad),
+      cardioMinutes: num(row.cardioMinutes),
       stress: row.stress,
       sleepHours: num(row.sleepHours),
       energy: row.energy,
@@ -156,6 +164,110 @@ export class PrismaAnalyticsStore implements AnalyticsStore {
           SUMMARY_NUTRIENTS.map((key) => [key, countAt(row.nutrientsMissing, MISSING_COLUMN[key])]),
         ) as Record<SummaryNutrient, number>),
       },
+    }));
+  }
+
+  async replaceWeeklyVolume(
+    organizationId: string,
+    patientId: string,
+    from: string,
+    to: string,
+    rows: readonly WeeklyMuscleRow[],
+  ): Promise<void> {
+    await this.db.tx.patientWeeklyMuscleVolume.deleteMany({
+      where: { patientId, weekStart: { gte: asDate(from), lte: asDate(to) } },
+    });
+    if (rows.length === 0) return;
+    await this.db.tx.patientWeeklyMuscleVolume.createMany({
+      data: rows.map((row) => ({
+        patientId,
+        organizationId,
+        weekStart: asDate(row.weekStart),
+        muscleCode: row.muscleCode,
+        programId: row.programId,
+        mesocycleId: row.mesocycleId,
+        weekNo: row.weekNo,
+        isDeload: row.isDeload,
+        fractionalSetsDone: row.fractionalSetsDone,
+        fractionalSetsPlanned: row.fractionalSetsPlanned,
+        tonnageKg: row.tonnageKg,
+        avgRpe: row.avgRpe,
+        avgStimulus: row.avgStimulus,
+        avgFatigue: row.avgFatigue,
+        sfr: row.sfr,
+      })),
+    });
+  }
+
+  async deleteWeeklyVolume(patientId: string): Promise<void> {
+    await this.db.tx.patientWeeklyMuscleVolume.deleteMany({ where: { patientId } });
+  }
+
+  async weeklyVolume(
+    patientId: string,
+    from: string,
+    to: string,
+  ): Promise<readonly WeeklyMuscleRow[]> {
+    const rows = await this.db.tx.patientWeeklyMuscleVolume.findMany({
+      where: { patientId, weekStart: { gte: asDate(from), lte: asDate(to) } },
+      orderBy: [{ weekStart: 'asc' }, { muscleCode: 'asc' }],
+    });
+    return rows.map((row) => ({
+      weekStart: isoDate(row.weekStart),
+      muscleCode: row.muscleCode,
+      programId: row.programId,
+      mesocycleId: row.mesocycleId,
+      weekNo: row.weekNo,
+      isDeload: row.isDeload,
+      fractionalSetsDone: Number(row.fractionalSetsDone),
+      fractionalSetsPlanned: num(row.fractionalSetsPlanned),
+      tonnageKg: num(row.tonnageKg),
+      avgRpe: num(row.avgRpe),
+      avgStimulus: num(row.avgStimulus),
+      avgFatigue: num(row.avgFatigue),
+      sfr: num(row.sfr),
+    }));
+  }
+
+  async replaceOneRm(
+    organizationId: string,
+    patientId: string,
+    from: string,
+    to: string,
+    points: readonly OneRmPoint[],
+  ): Promise<void> {
+    await this.db.tx.exerciseOneRmSeries.deleteMany({
+      where: { patientId, localDate: { gte: asDate(from), lte: asDate(to) } },
+    });
+    if (points.length === 0) return;
+    await this.db.tx.exerciseOneRmSeries.createMany({
+      data: points.map((point) => ({
+        patientId,
+        organizationId,
+        exerciseId: point.exerciseId,
+        localDate: asDate(point.localDate),
+        formula: point.formula,
+        bestEstimated1rmKg: point.bestEstimated1rmKg,
+        sourceSetId: point.sourceSetId,
+      })),
+    });
+  }
+
+  async deleteOneRm(patientId: string): Promise<void> {
+    await this.db.tx.exerciseOneRmSeries.deleteMany({ where: { patientId } });
+  }
+
+  async oneRmSeries(patientId: string, from: string, to: string): Promise<readonly OneRmPoint[]> {
+    const rows = await this.db.tx.exerciseOneRmSeries.findMany({
+      where: { patientId, localDate: { gte: asDate(from), lte: asDate(to) } },
+      orderBy: [{ exerciseId: 'asc' }, { formula: 'asc' }, { localDate: 'asc' }],
+    });
+    return rows.map((row) => ({
+      localDate: isoDate(row.localDate),
+      exerciseId: row.exerciseId,
+      formula: row.formula,
+      bestEstimated1rmKg: Number(row.bestEstimated1rmKg),
+      sourceSetId: row.sourceSetId,
     }));
   }
 }
