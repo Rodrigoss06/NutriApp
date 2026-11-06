@@ -77,7 +77,12 @@ export class DocumentRequests {
             'documents.document.requested',
             this.#organization(context),
             source.id,
-            { patientId, sourceType: source.type, sourceId: source.id },
+            {
+              patientId,
+              sourceType: source.type,
+              sourceId: source.id,
+              ...(source.kind ? { sheet: source.kind } : {}),
+            },
             { clock: this.clock, ids: this.ids },
           ),
         ],

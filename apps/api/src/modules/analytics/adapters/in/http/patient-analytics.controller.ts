@@ -1,5 +1,5 @@
 import { Controller, Get, Header, Param, ParseUUIDPipe, Query, Req } from '@nestjs/common';
-import type { DietAnalytics, TrainingAnalytics } from '@nutricoach/contracts';
+import type { DietAnalytics, DietTrend, TrainingAnalytics } from '@nutricoach/contracts';
 import { isErr, type DomainError, type SecurityContext } from '@nutricoach/shared-kernel';
 import { z } from 'zod';
 import {
@@ -109,6 +109,31 @@ export class PatientAnalyticsController {
         fatG: { ...week.fatG },
       })),
       mealSlots: view.mealSlots.map((slot) => ({ ...slot })),
+    };
+  }
+
+  /** RN-G09 · la tendencia por mes, para leerla frente a la evolución antropométrica (ADR-091). */
+  @Get('trend')
+  @RequirePermission('patients.read')
+  @Header('Cache-Control', 'no-store')
+  async trend(
+    @Req() request: ContextualRequest,
+    @Param('patientId', ParseUUIDPipe) patientId: string,
+    @Query('from') from?: string,
+    @Query('to') to?: string,
+  ): Promise<DietTrend> {
+    const result = await this.diet.trend(contextOf(request), patientId, {
+      from: dateOf(from, 'La fecha de inicio'),
+      to: dateOf(to, 'La fecha de fin'),
+    });
+    if (isErr(result)) throw problem(result.error);
+    const view = result.value;
+    return {
+      from: view.from,
+      to: view.to,
+      adequacyRangePct: [view.adequacyRangePct[0], view.adequacyRangePct[1]],
+      method: { ...view.method },
+      months: view.months.map((month) => ({ ...month, kcal: { ...month.kcal } })),
     };
   }
 

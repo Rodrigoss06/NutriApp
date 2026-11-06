@@ -15,14 +15,16 @@ import {
 } from '../domain/sheet.js';
 import type { DocumentKey } from './ports/documents.ports.js';
 import { anthropometrySheet } from './sheets/anthropometry-sheet.js';
+import { evolutionSheet } from './sheets/evolution-sheet.js';
 import { menuSheet } from './sheets/menu-sheet.js';
 import { exchangeDietSheet, sheetPatient, type SheetContent } from './sheets/sheet-content.js';
 import { trainingSheet } from './sheets/training-sheet.js';
 
-/** El origen de una ficha (RN-H02). */
+/** El origen de una ficha (RN-H02). Una evaluación da dos: la de sus resultados y, con EVOLUTION, la evolución hasta ella. */
 export interface SheetSource {
   readonly type: SourceType;
   readonly id: string;
+  readonly kind?: 'EVOLUTION';
 }
 
 /** Una ficha lista para dibujar o para buscar si ya existe: su contenido, su marca y quién la firma. */
@@ -78,7 +80,9 @@ export class SheetSources {
       case 'NUTRITION_PLAN':
         return this.#plan(organizationId, source);
       case 'EVALUATION':
-        return this.#evaluation(organizationId, source);
+        return source.kind === 'EVOLUTION'
+          ? this.#evolution(organizationId, source)
+          : this.#evaluation(organizationId, source);
       case 'TRAINING_PROGRAM':
         return this.#program(organizationId, source);
     }
@@ -142,6 +146,41 @@ export class SheetSources {
         brand: resolveSheetBrand(branding.member, branding.organization, branding.organizationName),
         issuedAt: new Date(snapshot.publishedAt),
         authorUserId: author,
+      },
+    };
+  }
+
+  /**
+   * La evolución hasta la evaluación de origen (RN-H01, ADR-091): la firma quien la evaluó (RN-H03), la edad es la de ese día y la
+   * fecha del PDF, la de su cierre (RN-H02). Mientras el worker calcula sus resultados, NOT_READY.
+   */
+  async #evolution(organizationId: OrganizationId, source: SheetSource): Promise<SheetPreparation> {
+    const data = await this.assessment.evaluationSheet(source.id);
+    if (!data) return { ok: false, reason: 'NOT_FOUND' };
+    const { evaluation } = data;
+    if (evaluation.status === 'DRAFT' || !evaluation.closedAt) {
+      return { ok: false, reason: 'NOT_PUBLISHED' };
+    }
+    if (data.results.status === 'PENDING') return { ok: false, reason: 'NOT_READY' };
+    const evolution = await this.assessment.evolutionSheet(source.id);
+    if (!evolution) return { ok: false, reason: 'NOT_FOUND' };
+    const card = await this.clinical.patientCard(evaluation.patientId);
+    if (!card) return { ok: false, reason: 'NOT_FOUND' };
+    const branding = await this.tenancy.sheetBranding(organizationId, {
+      memberId: evaluation.evaluatorMemberId,
+    });
+    if (!branding) return { ok: false, reason: 'NOT_FOUND' };
+    return {
+      ok: true,
+      sheet: {
+        organizationId,
+        patientId: evaluation.patientId,
+        kind: 'EVOLUTION',
+        source,
+        content: evolutionSheet(evolution, sheetPatient(card, evaluation.localDate)),
+        brand: resolveSheetBrand(branding.member, branding.organization, branding.organizationName),
+        issuedAt: evaluation.closedAt,
+        authorUserId: evaluation.createdBy as UserId,
       },
     };
   }

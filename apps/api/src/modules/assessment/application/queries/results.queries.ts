@@ -33,6 +33,7 @@ import {
 import type { SiteUnit } from '../../domain/assessment-rules.js';
 import { CalculationService, shownResults } from '../calculation.service.js';
 import { consolidate, mdc95, technicalError } from '../data-quality.js';
+import { minutesOfDay } from '../local-date.js';
 import {
   CALCULATION_STORE,
   EVALUATION_STORE,
@@ -100,19 +101,6 @@ export interface TargetWeightView {
 }
 
 export type PreferencesView = Readonly<Record<MethodPurpose, EffectivePreference>>;
-
-const minutesOfDay = (instant: Date, timeZone: string): number => {
-  const [hours = 0, minutes = 0] = new Intl.DateTimeFormat('en-GB', {
-    timeZone,
-    hour: '2-digit',
-    minute: '2-digit',
-    hourCycle: 'h23',
-  })
-    .format(instant)
-    .split(':')
-    .map(Number);
-  return hours * 60 + minutes;
-};
 
 /**
  * Resultados (RF-15): cada número con su método (RN-D02) y su interpretación con fuente sobre el valor sin redondear

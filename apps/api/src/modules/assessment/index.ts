@@ -4,4 +4,8 @@ export {
   type CompositionBasis,
   type EvaluationSheet,
 } from './application/assessment-api.js';
+export type {
+  EvolutionSheetSource,
+  EvolutionView,
+} from './application/queries/evolution.queries.js';
 export { AssessmentModule } from './assessment.module.js';
