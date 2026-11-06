@@ -1,8 +1,8 @@
-import { Module } from '@nestjs/common';
+import { Module, type OnModuleInit } from '@nestjs/common';
 import { ContentModule } from '../content/index.js';
 import { FoodModule } from '../food/index.js';
 import { NutritionModule } from '../nutrition/index.js';
-import { TrainingModule } from '../training/index.js';
+import { TrainingModule, WeekCheckinSources } from '../training/index.js';
 import { PlansConsumer } from './adapters/in/events/plans.consumer.js';
 import { MeTrackingController } from './adapters/in/http/me-tracking.controller.js';
 import { PatientRecordsController } from './adapters/in/http/patient-records.controller.js';
@@ -24,6 +24,7 @@ import { ProgramActivation } from './application/program-activation.js';
 import { MeQueries } from './application/queries/me.queries.js';
 import { PatientRecordsQueries } from './application/queries/patient-records.queries.js';
 import { TrackingApi } from './application/tracking-api.js';
+import { TrackingWeekCheckins } from './application/week-checkins.source.js';
 
 /**
  * tracking (02 §2, núcleo): la copia del plan y del programa vigentes y la meta de cada día, que alimentan los eventos de nutrition y
@@ -49,8 +50,19 @@ import { TrackingApi } from './application/tracking-api.js';
     DailyTargetsJob,
     { provide: TRACKING_STORE, useClass: PrismaTrackingStore },
     TrackingApi,
+    TrackingWeekCheckins,
     { provide: FACTS_STORE, useClass: PrismaFactsStore },
   ],
   exports: [TrackingApi],
 })
-export class TrackingModule {}
+export class TrackingModule implements OnModuleInit {
+  constructor(
+    private readonly sources: WeekCheckinSources,
+    private readonly weekCheckins: TrackingWeekCheckins,
+  ) {}
+
+  /** El control semanal de training lee los registros diarios de aquí, sin importar tracking (02 §4). */
+  onModuleInit(): void {
+    this.sources.register(this.weekCheckins);
+  }
+}

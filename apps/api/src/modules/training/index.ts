@@ -2,3 +2,8 @@
 export { TrainingApi } from './application/training-api.js';
 export type { ProgramSnapshot } from './application/program-document.js';
 export { TrainingModule } from './training.module.js';
+export {
+  WeekCheckinSources,
+  type WeekCheckin,
+  type WeekCheckinSource,
+} from './application/week-checkins.js';
