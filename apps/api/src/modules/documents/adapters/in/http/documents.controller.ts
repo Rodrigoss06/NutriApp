@@ -37,9 +37,11 @@ const contextOf = (request: ContextualRequest): SecurityContext => {
   return request.securityContext;
 };
 
+/** Sin `kind`, o con ANTHROPOMETRY, la ficha de siempre del origen; con EVOLUTION, la evolución hasta la evaluación. */
 const sourceOf = (input: DocumentSource): SheetSource => ({
   type: input.sourceType,
   id: input.sourceId,
+  ...(input.kind === 'EVOLUTION' ? { kind: 'EVOLUTION' as const } : {}),
 });
 
 function statusOf(status: DocumentStatus): DocumentStatusResponse {

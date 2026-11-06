@@ -3,10 +3,12 @@ import { renderToBuffer, type DocumentProps } from '@react-pdf/renderer';
 import type { ReactElement } from 'react';
 import type { PdfRenderer, SheetRender } from '../../../application/ports/documents.ports.js';
 import type { AnthropometrySheet } from '../../../application/sheets/anthropometry-sheet.js';
+import type { EvolutionSheet } from '../../../application/sheets/evolution-sheet.js';
 import type { MenuSheet } from '../../../application/sheets/menu-sheet.js';
 import type { ExchangeDietSheet, SheetContent } from '../../../application/sheets/sheet-content.js';
 import type { TrainingSheet } from '../../../application/sheets/training-sheet.js';
 import { anthropometryTitles, anthropometryV1, anthropometryV101 } from './anthropometry.v1.js';
+import { evolutionTitles, evolutionV1 } from './evolution.v1.js';
 import { exchangeDietTitles, exchangeDietV1 } from './exchange-diet.v1.js';
 import { sheetColors, type SheetFrame } from './sheet-kit.js';
 import { trainingTitles, trainingV1 } from './training.v1.js';
@@ -60,6 +62,7 @@ const TEMPLATES: Readonly<Record<string, Template>> = {
     anthropometryTitles,
   ),
   'TRAINING@1.0.0': template<TrainingSheet>('TRAINING', trainingV1, trainingTitles),
+  'EVOLUTION@1.0.0': template<EvolutionSheet>('EVOLUTION', evolutionV1, evolutionTitles),
 };
 
 /**

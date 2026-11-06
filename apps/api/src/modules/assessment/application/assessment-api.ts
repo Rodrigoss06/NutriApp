@@ -4,6 +4,7 @@ import type { EvaluationLevel, SiteFamily, SiteUnit } from '../domain/assessment
 import { effectivePreferences } from '../domain/calculation-plan.js';
 import { CalculationService, shownResults } from './calculation.service.js';
 import { consolidate } from './data-quality.js';
+import { EvolutionQueries, type EvolutionSheetSource } from './queries/evolution.queries.js';
 import { ResultsAssembly, type ResultsView } from './results-assembly.js';
 import {
   CALCULATION_STORE,
@@ -92,7 +93,17 @@ export class AssessmentApi {
     @Inject(CalculationService) private readonly calculation: CalculationService,
     @Inject(ResultsAssembly) private readonly assembly: ResultsAssembly,
     @Inject(FUNCTIONAL_EVALUATION_STORE) private readonly functional: FunctionalEvaluationStore,
+    @Inject(EvolutionQueries) private readonly evolution: EvolutionQueries,
   ) {}
+
+  /**
+   * La evolución para su ficha PDF (RN-H01, ADR-091): las evaluaciones cerradas vigentes del paciente hasta la de origen,
+   * incluida, en la transacción de quien llama. null si el origen no es una evaluación cerrada vigente o el contexto no la
+   * ve (RN-A05). Sin auditar: audita la descarga.
+   */
+  evolutionSheet(evaluationId: string): Promise<EvolutionSheetSource | null> {
+    return this.evolution.sheetSource(evaluationId);
+  }
 
   /** La llave de la postura (RN-F15): si hay una evaluación cerrada, y los estados de la vigente y de los borradores. */
   movementKeys(patientId: string): ReturnType<FunctionalEvaluationStore['movementKeys']> {

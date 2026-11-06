@@ -526,6 +526,7 @@ describe('AssessmentApi · lo que la seguridad lee de la postura', () => {
       {} as never,
       {} as never,
       functional,
+      {} as never,
     );
     const id = await open();
     value(await saveMovement(id, 'PLANK', { pain: true }));

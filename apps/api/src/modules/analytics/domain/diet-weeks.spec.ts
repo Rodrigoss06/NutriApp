@@ -1,6 +1,8 @@
 import {
   ANALYTICS_DEFAULT_DAYS as CONTRACT_DEFAULT_DAYS,
   ANALYTICS_MAX_DAYS as CONTRACT_MAX_DAYS,
+  TREND_DEFAULT_MONTHS as CONTRACT_TREND_DEFAULT,
+  TREND_MAX_MONTHS as CONTRACT_TREND_MAX,
 } from '@nutricoach/contracts';
 import { describe, expect, it } from 'vitest';
 import type { DailySummary } from './daily-summary.js';
@@ -11,6 +13,11 @@ import {
   daysBetween,
   dietWeeks,
   mealSlotAdherence,
+  monthsBetween,
+  monthStartOf,
+  TREND_DEFAULT_MONTHS,
+  TREND_MAX_MONTHS,
+  trendMonths,
   weekStartOf,
   type AverageAdequacy,
 } from './diet-weeks.js';
@@ -133,5 +140,52 @@ describe('RF-32 · adherencia por tiempo de comida', () => {
       { slotCode: 'LUNCH', plannedDays: 3, loggedDays: 0, adherencePct: 0, offPlanDays: 0 },
       { slotCode: 'SNACK', plannedDays: 0, loggedDays: 0, adherencePct: null, offPlanDays: 1 },
     ]);
+  });
+});
+
+describe('RN-G09 · la tendencia por mes, frente a la evolución antropométrica (ADR-091)', () => {
+  it('el rango por meses es el mismo que publica el contrato, y cuenta meses calendario', () => {
+    expect([TREND_MAX_MONTHS, TREND_DEFAULT_MONTHS]).toEqual([
+      CONTRACT_TREND_MAX,
+      CONTRACT_TREND_DEFAULT,
+    ]);
+    expect(monthStartOf('2026-11-06')).toBe('2026-11-01');
+    expect(monthStartOf('2026-11-06', 11)).toBe('2025-12-01');
+    expect(monthStartOf('2026-01-15', 1)).toBe('2025-12-01');
+    expect(monthsBetween('2025-12-01', '2026-11-06')).toBe(12);
+  });
+
+  it('G-20 dentro de noviembre: promedio 1910 kcal, 104.1 % y 4 días en rango; las sesiones contra las programadas', () => {
+    const kcal = [1790, 1950, 1600, 2100, 1830, 2400, 1700];
+    const inRange = [true, true, false, false, true, false, true];
+    const november = kcal.map((value, i) => ({
+      ...row(addDays('2026-11-02', i), value, { kcalInRange: inRange[i] ?? null }),
+      workoutsDone: i % 2 === 0 ? 1 : 0,
+      workoutsPlanned: 1,
+    }));
+    const october = [
+      { ...row('2026-10-30', 1800, { kcalInRange: true }), workoutsDone: 1, workoutsPlanned: 1 },
+      { ...row('2026-10-31', null), workoutsDone: 0, workoutsPlanned: null },
+    ];
+
+    const months = trendMonths([...november, ...october], average);
+
+    expect(months.map((m) => [m.month, m.daysWithTarget, m.daysLogged, m.daysInRange])).toEqual([
+      ['2026-10', 2, 1, 1],
+      ['2026-11', 7, 7, 4],
+    ]);
+    const [oct, nov] = months;
+    expect(nov?.kcal.consumed).toBeCloseTo(1910, 6);
+    expect(nov?.kcal.adequacyPct).toBeCloseTo(104.1, 1);
+    expect([nov?.sessionsDone, nov?.sessionsPlanned]).toEqual([4, 7]);
+    expect([oct?.sessionsDone, oct?.sessionsPlanned]).toEqual([1, 1]);
+  });
+
+  it('sin meta de entrenamiento en el mes, las programadas quedan sin dato y no en 0', () => {
+    const [month] = trendMonths(
+      [{ ...row('2026-09-10', 1800), workoutsDone: 0, workoutsPlanned: null }],
+      average,
+    );
+    expect(month?.sessionsPlanned).toBeNull();
   });
 });

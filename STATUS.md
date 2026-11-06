@@ -21,7 +21,7 @@ Próxima demo: Demo 3 · Entrenamiento y app del paciente · semana 6
 | P11 Fichas PDF, Demo 2 | ✅ | Rodrigo | #32 a #37 | 4 criterios en verde (integración y E2E en escritorio y celular): contexto documents y ficha de intercambios (ADR-064), fichas del menú y de resultados (ADR-065; 1.0.1 en ADR-069), marca mínima (ADR-066), descargas (ADR-067), semilla, guion y acta de la Demo 2 (ADR-068). Etiqueta v0.2.0 (e05f8de); staging, pendiente de P4. /notion-sync aplicado (17 cambios en 02, 03, 04, 05, 05.1, 05.3 y 06) |
 | P12 Ejercicios y rutinas | ✅ | Rodrigo | #39 a #42 y #44 a #47 | 5 criterios en verde (integración y E2E en escritorio y celular): motor (ADR-070), biblioteca (ADR-071), anamnesis V2 (ADR-072), alergias (ADR-074), seguridad (ADR-075), programa por la API y en la web (ADR-077, ADR-078) y ficha de rutina (ADR-079) |
 | P13 App del paciente | ✅ | Rodrigo | #50 a #55 | 6 criterios en verde (integración y E2E en escritorio y celular): recuperación del día en el motor (ADR-080), registros por /me (ADR-081), Hoy y el plan (ADR-082), registro diario y entreno (ADR-083, ADR-084) y el profesional con los registros (ADR-085). Lighthouse móvil 97 en Hoy (local). La cola sin conexión (RF-31, deseable) queda fuera. /notion-sync aplicado (30 cambios en 11 páginas) |
-| P14 Analítica y evolución, Demo 3 | 🟨 | Rodrigo | #57 a #60 | Plan aprobado (2026-11-05, ADR-086): 7 PR. PR 1 (motor, #57), PR 2a (dieta, #58), PR 2b (rutina, #59) y PR 3 (control semanal, #60) por la API; PR 4 (web de la analítica y del control semanal, ADR-090) con E2E en escritorio y celular. Criterios 1, 2, 3 y 5 en verde |
+| P14 Analítica y evolución, Demo 3 | 🟨 | Rodrigo | #57 a #61 | Plan aprobado (2026-11-05, ADR-086): 7 PR. PR 1 (motor, #57), PR 2a (dieta, #58), PR 2b (rutina, #59) y PR 3 (control semanal, #60) por la API; PR 4 (web de la analítica y del control semanal, #61, ADR-090) con E2E en escritorio y celular; PR 5a (evolución, tendencia por mes y ficha por la API, ADR-091). Criterios 1, 2, 3 y 5 en verde |
 | P15 Marca, calendario, admin y migración | ⬜ | Rodrigo | | |
 | P16 Producción y entrega, Demo 4 | ⬜ | Rodrigo | | |
 
@@ -39,11 +39,13 @@ Leyenda: ⬜ pendiente · 🟨 en curso · ✅ terminado · ⛔ bloqueado
   - PR 3, control semanal por la API (#60, ADR-089): `training.weekly_review`, el cálculo al cerrar cada semana (trabajo de cada hora o al
     abrir el control), la decisión del coach con nota que deja la versión siguiente en borrador, el registro tardío que reemplaza el
     control y los umbrales editables. Criterio 5 y G-39 por HTTP;
-  - PR 4, web (ADR-090): la pestaña Analítica con dieta y rutina (gráficos de `@nutricoach/ui/chart` con su tabla accesible), el control
+  - PR 4, web (#61, ADR-090): la pestaña Analítica con dieta y rutina (gráficos de `@nutricoach/ui/chart` con su tabla accesible), el control
     semanal en Entrenamiento con el resumen del macrociclo y la decisión (el factor sugerido a 2 decimales) y los umbrales en Ajustes. E2E
     en escritorio y celular, con el criterio 5 en pantalla;
-  - siguen: la evolución y su ficha (PR 5), el panel con `patient_overview` y sus alertas, el material educativo y las fichas en la app
-    (PR 6), y la Demo 3 con `seed:load` (PR 7).
+  - PR 5a, evolución por la API (ADR-091): las series por método con el cambio frente al CMD95, lo que ve el paciente (por dos
+    funciones SECURITY DEFINER que solo le devuelven lo suyo), la tendencia por mes de RN-G09 y la ficha de evolución 1.0.0;
+  - siguen: las pantallas de la evolución (PR 5b), el panel con `patient_overview` y sus alertas, el material educativo y las fichas
+    en la app (PR 6), y la Demo 3 con `seed:load` (PR 7).
 - P13 terminado (#50 a #55; plan aprobado el 2026-11-01, ADR-080), en 6 PR contra main:
   - PR 1, motor: `READINESS_JV` 3.0.0 con la carga sRPE, el rendimiento, la recuperación y la indicación del día (RN-G14, RN-G15);
     G-36 a G-38 en verde. Motor 1.5.0;
@@ -137,8 +139,8 @@ Leyenda: ⬜ pendiente · 🟨 en curso · ✅ terminado · ⛔ bloqueado
 ## Siguiente paso
 - Antes de la Demo 3: la matriz manual de navegadores (RNF-19: Chrome, Edge, Safari y Firefox; la E2E cubre Chromium
   y WebKit), que no quedó registrada en las demos 1 y 2
-- P14: subir el PR 4 cuando se fusione #60; después, el PR 5 (la evolución antropométrica por método, RF-35 y RF-30, con la ficha
-  `EVOLUTION@1.0.0` y `/mi/progreso`). El generador de `pnpm seed:load` de 500 pacientes llega en el PR 7 (ADR-086)
+- P14: subir el PR 5a cuando se fusione #61; después, el PR 5b (Evaluaciones › Evolución con la tendencia y la ficha, y `/mi/progreso`).
+  El generador de `pnpm seed:load` de 500 pacientes llega en el PR 7 (ADR-086)
 - Para la Demo 3 y la Demo 4, según el plan de Rodrigo (2026-11-05): resolver lo que falta del Notion maestro, empezando por P4
   (staging) en cuanto llegue la cuenta de Hetzner
 - Confirmar la fecha de inicio: si fue el 24-09, el 2026-11-05 es el primer día de la semana 7 y la Demo 4 cae el 25-11

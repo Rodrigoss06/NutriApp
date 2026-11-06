@@ -80,21 +80,11 @@ export function unavailableReason(
   }
 }
 
-export const SIGNIFICANCE_LABELS = {
-  CHANGE: 'Cambio real',
-  NO_SIGNIFICANT_CHANGE: 'Sin cambio significativo',
-  UNKNOWN: 'Sin ETM: no se puede saber',
-} as const satisfies Record<EvaluationComparisonResponse['sites'][number]['significance'], string>;
+// Los mismos textos que las fichas PDF: viven en @nutricoach/contracts (ADR-091).
+export { CONDITION_DIFFERENCE_LABELS, SIGNIFICANCE_LABELS } from '@nutricoach/contracts';
 
 export const SIGNIFICANCE_TONES = {
   CHANGE: 'success',
   NO_SIGNIFICANT_CHANGE: 'info',
   UNKNOWN: 'warning',
 } as const satisfies Record<EvaluationComparisonResponse['sites'][number]['significance'], Tone>;
-
-export const CONDITION_DIFFERENCE_LABELS = {
-  EVALUATOR: 'otro evaluador',
-  FASTING: 'distinto ayuno',
-  INTENSE_ACTIVITY: 'distinta actividad intensa previa',
-  TIME_OF_DAY: 'más de 2 horas de diferencia en la hora del día',
-} as const satisfies Record<EvaluationComparisonResponse['conditionDifferences'][number], string>;

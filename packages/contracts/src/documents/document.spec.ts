@@ -14,6 +14,25 @@ describe('RN-H02 · fichas desde un origen publicado', () => {
     expect(documentSourceSchema.safeParse({ ...source, sourceId: 'plan-1' }).success).toBe(false);
   });
 
+  it('ADR-091: una evaluación da dos fichas; la evolución se pide con kind, y solo desde una evaluación', () => {
+    const evaluation = {
+      sourceType: 'EVALUATION',
+      sourceId: '019a1c00-0000-7000-8000-000000000003',
+    };
+    expect(documentSourceSchema.parse({ ...evaluation, kind: 'EVOLUTION' })).toMatchObject({
+      kind: 'EVOLUTION',
+    });
+    expect(documentSourceSchema.parse(evaluation).kind).toBeUndefined();
+    expect(
+      documentSourceSchema.safeParse({
+        ...evaluation,
+        sourceType: 'NUTRITION_PLAN',
+        kind: 'EVOLUTION',
+      }).success,
+    ).toBe(false);
+    expect(documentSourceSchema.safeParse({ ...evaluation, kind: 'TRAINING' }).success).toBe(false);
+  });
+
   it('responde la ficha lista o en la cola', () => {
     expect(documentStatusSchema.parse({ status: 'PENDING' })).toEqual({ status: 'PENDING' });
     const ready = {

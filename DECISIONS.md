@@ -2111,3 +2111,53 @@ Consecuencias:
   - 07 §10: en la 1.0, el resumen muestra las sesiones registradas y las próximas; las verificadas y por validar llegan con el calendario.
     Además, el factor que propone la decisión;
   - prompt P15: el calendario valida la asistencia y suma las sesiones verificadas y por validar al resumen del macrociclo.
+
+## ADR-091 · Evolución antropométrica por la API, tendencia por mes y ficha de evolución — aceptada (2026-11-06)
+Contexto: P14, PR 5a (RF-35, RF-30; RN-C05, RN-C06, RN-C08, RN-C09, RN-D02, RN-D03, RN-D05, RN-G09, RN-H01, RN-H02). P7 dejó la
+comparación con la evaluación anterior (ADR-046) y result_metric; faltaban la serie en el tiempo, lo que ve el paciente y la ficha.
+Rodrigo decidió el 2026-11-06 tres puntos que Notion no fija.
+Decisión:
+- `GET /patients/:id/evolution` (`patients.read`, RLS del equipo de atención, un READ de `assessment.evolution`): las evaluaciones
+  cerradas vigentes en orden de medición:
+  - cada sitio medido, consolidado como en la evaluación (RN-C03). El cambio de cada punto contra el anterior, y del primero al
+    último, se compara con el CMD95 del evaluador del punto con su ETM vigente ese día (RN-C05, RN-C06), como en la comparación
+    de P7; la suma de 6 pliegues usa el %ETM agrupado (G-04);
+  - cada indicador de los resultados vigentes, por método (RN-D03). A los números derivados no se les traslada el CMD95 (RN-C05):
+    solo se muestra el cambio;
+  - la bioimpedancia por equipo, «marca · modelo» (RN-C08);
+  - lo que cambió en las condiciones o el evaluador frente a la evaluación anterior (RN-C09).
+- Lo que ve el paciente en Progreso (decisión de Rodrigo, RF-30), `GET /me/evolution`: el peso, la cintura y la suma de 6 pliegues
+  con el CMD95, y el % de grasa y la masa muscular de su método principal (RN-D05; es el que el equipo ve marcado en los resultados).
+  Sin interpretaciones:
+  - su RLS no le deja leer las tomas, el ETM ni las preferencias (05.1). Dos funciones SECURITY DEFINER, como app.readiness_basis
+    (ADR-080), le devuelven solo lo suyo y solo con `app.role() = 'PATIENT'`;
+  - `app.patient_evolution_sites()` devuelve las tomas de los 8 sitios de sus evaluaciones cerradas, con el ETM de su evaluador en
+    esa fecha;
+  - `app.patient_method_preferences()` devuelve sus preferencias y las de su organización;
+  - las dos llegan con la migración `202611060300_assessment_patient_evolution`.
+- RN-G09, la tercera agregación, por mes calendario (decisión de Rodrigo): `GET /patients/:id/analytics/trend?from&to`, hasta 24
+  meses (sin rango, los últimos 12). Por mes trae la adecuación del promedio de energía con ADEQUACY, los días con meta, con
+  registros y en rango, y las sesiones registradas contra las programadas. La web la muestra junto a la evolución.
+- Ficha de evolución 1.0.0 (RN-H01), con la última evaluación cerrada como origen y sin cambiar el DDL de documents (ADR-086):
+  - el pedido de una evaluación lleva `kind: 'EVOLUTION'`; sin él, da la ficha de resultados. La serie llega hasta la evaluación de
+    origen, incluida;
+  - muestra las evaluaciones con sus condiciones, cada medida con su primer y último valor y su cambio frente al CMD95, cada
+    indicador por método y la bioimpedancia por equipo. Una medida tomada una sola vez no entra;
+  - la plantilla llega con `202611060400_documents_evolution_template`. El hash del origen es el del contenido: una enmienda que
+    cambia un valor da otro PDF, y cualquier otra cosa da el mismo (RN-H02).
+- Los textos de la significancia y de las condiciones pasan a @nutricoach/contracts, para que la pantalla y la ficha digan lo mismo.
+Consecuencias:
+- Integración en `test/integration/evolution.int.spec.ts`, con 8 casos como app_user:
+  - la evolución de Luis: la suma de 6 pliegues bajó 6.9 mm contra un CMD95 de 6.18 mm, un cambio real (G-04), y el abdominal no tuvo
+    cambio significativo;
+  - los métodos por separado, los accesos y la auditoría;
+  - lo que ve el paciente, con el método principal que ve el equipo, y que las funciones no devuelven nada fuera de su sesión;
+  - la ficha: la genera el worker, se reutiliza y dice «Cambio real».
+- La tendencia se prueba en `analytics.int.spec.ts`.
+- PR 5b: las pantallas (Evaluaciones › Evolución, con la tendencia y la ficha, y Progreso en la app) y su E2E.
+- Para Notion (/notion-sync de P14):
+  - 05.1: las dos funciones del paciente;
+  - 02: §3 (`AssessmentApi.evolutionSheet`) y §10 (las rutas);
+  - 04 RF-30: lo que ve el paciente;
+  - 03 RN-G09: el mes calendario;
+  - 06: el `kind` del pedido de una ficha.

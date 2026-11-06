@@ -7,6 +7,7 @@ import type {
 } from '../../../nutrition/index.js';
 import { ageOn } from '../../domain/sheet.js';
 import type { AnthropometrySheet } from './anthropometry-sheet.js';
+import type { EvolutionSheet } from './evolution-sheet.js';
 import type { MenuSheet } from './menu-sheet.js';
 import type { TrainingSheet } from './training-sheet.js';
 
@@ -88,7 +89,8 @@ export interface ExchangeDietSheet {
   readonly methods: readonly SheetMethod[];
 }
 
-export type SheetContent = ExchangeDietSheet | MenuSheet | AnthropometrySheet | TrainingSheet;
+export type SheetContent =
+  ExchangeDietSheet | MenuSheet | AnthropometrySheet | EvolutionSheet | TrainingSheet;
 
 export function sheetPatient(card: PatientCard, onDate: string): SheetPatient {
   return {

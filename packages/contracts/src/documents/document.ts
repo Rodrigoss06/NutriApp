@@ -14,11 +14,23 @@ export type SheetKind = (typeof SHEET_KINDS)[number];
 export const DOCUMENT_SOURCE_TYPES = ['NUTRITION_PLAN', 'EVALUATION', 'TRAINING_PROGRAM'] as const;
 export type DocumentSourceType = (typeof DOCUMENT_SOURCE_TYPES)[number];
 
-/** POST /patients/:patientId/documents y GET …/documents/status: el origen de la ficha. */
-export const documentSourceSchema = z.object({
-  sourceType: z.enum(DOCUMENT_SOURCE_TYPES),
-  sourceId: z.uuid(),
-});
+/** Las fichas que salen de una evaluación cerrada: la de sus resultados y la evolución hasta ella (ADR-091). */
+export const EVALUATION_SHEET_KINDS = ['ANTHROPOMETRY', 'EVOLUTION'] as const;
+
+/**
+ * POST /patients/:patientId/documents y GET …/documents/status: el origen de la ficha. Una evaluación da dos: sin `kind`, la de
+ * sus resultados; con EVOLUTION, la de evolución hasta ella.
+ */
+export const documentSourceSchema = z
+  .object({
+    sourceType: z.enum(DOCUMENT_SOURCE_TYPES),
+    sourceId: z.uuid(),
+    kind: z.enum(EVALUATION_SHEET_KINDS).optional(),
+  })
+  .refine((source) => source.kind === undefined || source.sourceType === 'EVALUATION', {
+    path: ['kind'],
+    message: 'Solo una evaluación tiene más de una ficha.',
+  });
 export type DocumentSource = z.infer<typeof documentSourceSchema>;
 
 export const generatedDocumentSchema = z.object({
