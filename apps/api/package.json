@@ -19,6 +19,7 @@
     "seed": "node scripts/seed.ts",
     "demo:2": "node scripts/demo-2.ts",
     "platform-admin:create": "node dist/cli/create-platform-admin.js",
+    "analytics:rebuild": "node dist/cli/analytics-rebuild.js",
     "catalog:import": "node dist/cli/import-catalog.js",
     "catalog:load": "node dist/cli/load-catalogs.js",
     "test:int": "vitest run --config vitest.int.config.js --coverage"

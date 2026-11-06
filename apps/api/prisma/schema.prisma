@@ -59,6 +59,8 @@ model PatientDailySummary {
   energy             Int?     @db.SmallInt
   bodyWeightKg       Decimal? @map("body_weight_kg") @db.Decimal(6, 2)
   updatedAt          DateTime @default(now()) @map("updated_at") @db.Timestamptz(6)
+  mealSlots          Json     @default("{}") @map("meal_slots")
+  nutrientsMissing   Json     @default("{}") @map("nutrients_missing")
 
   @@id([patientId, localDate])
   @@index([organizationId, localDate], map: "daily_summary_org")
