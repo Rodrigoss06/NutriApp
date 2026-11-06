@@ -11,9 +11,13 @@ const TABS = [
   { path: '/postura', label: 'Postura' },
   { path: '/pruebas', label: 'Pruebas físicas' },
   { path: '/programas', label: 'Programas' },
+  { path: '/control-semanal', label: 'Control semanal' },
 ] as const;
 
-/** Las partes de la seguridad antes de prescribir (RF-41), con aria-current en la activa, también en sus páginas internas. */
+/**
+ * Las partes de la seguridad antes de prescribir (RF-41), los programas y su control semanal (RF-42), con aria-current en la
+ * activa, también en sus páginas internas.
+ */
 export function TrainingTabs({ patientId }: { patientId: string }) {
   const pathname = usePathname();
   const base = `/panel/pacientes/${patientId}/entrenamiento`;

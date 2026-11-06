@@ -1,7 +1,10 @@
 import type { ReactNode } from 'react';
 import { TrainingTabs } from '@/features/training/training-tabs';
 
-/** Entrenamiento del expediente (RF-41, RF-26): el resumen de las llaves, el perfil, el cribado, la postura, las pruebas físicas y los programas. */
+/**
+ * Entrenamiento del expediente (RF-41, RF-26, RF-42): el resumen de las llaves, el perfil, el cribado, la postura, las pruebas
+ * físicas, los programas y el control semanal.
+ */
 export default async function TrainingLayout({
   children,
   params,

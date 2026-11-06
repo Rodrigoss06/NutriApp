@@ -2065,3 +2065,49 @@ Consecuencias:
   control vigente por semana en la línea); 02 §3 (`WeekCheckinSources`), §7 (`WeeklyReview`), §8 (`training.review.decided`,
   `training.threshold.changed`) y §10 (las rutas); 07 §10 (cuándo cierra una semana y el factor 1.0 sin tabla de fases) y §11 (la versión
   del día que se corrige); 06 (NC-TRA-020 a NC-TRA-025).
+
+## ADR-090 · Web de la analítica y del control semanal — aceptada (2026-11-06)
+Contexto: P14, PR 4 (RF-32, RF-33, RF-42; RN-G16, RN-F17, RN-F12; 07 §10 y §11). La API llegó con los PR 2a, 2b y 3 (ADR-087 a ADR-089);
+faltaban las pantallas. Rodrigo decidió el 2026-11-06 tres puntos que Notion no fija.
+Decisión:
+- Pestaña «Analítica» en el expediente, con «Dieta» y «Rutina». Los números son los de la API, con su método a la vista (RN-D02):
+  - dieta (RF-32): la semana actual y las anteriores, completas de lunes a domingo: 4, 12, 26 o 52 semanas (`?semanas=`). Muestra la
+    semana más reciente con registros (energía promedio, adecuación con el rango de la organización, días en rango sobre los días con meta
+    y el promedio por nutriente), la energía de cada día contra su meta, las semanas, la adherencia por tiempo de comida y el día por día,
+    con enlace a Seguimiento. Un día sin registros queda vacío y no cuenta como 0; «al menos» cuando a un registro le falta el dato
+    (RN-I03). Las tablas solo muestran días y semanas con comida, meta o agua: un día con solo entrenamiento también tiene resumen;
+  - rutina (RF-33): el programa vigente, o uno publicado o reemplazado del paciente (`?programa=`). Tres gráficos por semana: sesiones
+    registradas contra programadas, tonelaje y carga sRPE, cada uno con su propio eje. Las semanas van agrupadas por mesociclo, con fase,
+    factor, RIR, sesiones, cumplimiento, tonelaje, carga y cardio. Además, las series por grupo muscular de la semana elegida
+    (`?semana=`), con RPE, estímulo, fatiga y estímulo/fatiga, y el 1RM estimado en el tiempo por ejercicio, con su fórmula.
+- Control semanal en Entrenamiento, junto a «Programas» (decisión de Rodrigo):
+  - al abrirlo, si quien mira escribe en el expediente, calcula ya las semanas cerradas (`POST …/weekly-reviews/compute`) y la página se
+    actualiza si hubo controles nuevos;
+  - resumen del macrociclo (07 §10): por semana, el semáforo, la carga sRPE, los promedios de sueño, rendimiento y alimentación, el factor
+    del plan, el factor ajustado, la decisión y las sesiones registradas contra las programadas. Arriba, las sesiones registradas hasta hoy
+    y las próximas. Las «verificadas» y «por validar» dependen de validar la asistencia a una cita del calendario, que llega en P15
+    (decisión de Rodrigo);
+  - la semana elegida: el semáforo con sus razones, la decisión sugerida, los promedios, el método con la fecha del cálculo y cuántos
+    controles reemplazaron los registros tardíos;
+  - la decisión: mantener, ajustar o descargar, con nota obligatoria y sin ninguna opción marcada. Al ajustar o descargar, el factor de la
+    semana siguiente viene con el sugerido redondeado a 2 decimales, con el medio hacia arriba (0.825 → 0.83, 0.945 → 0.95), porque la
+    semana guarda 2 (decisión de Rodrigo). El coach lo puede cambiar, y al lado ve el sugerido exacto y el factor que tenía el plan;
+  - ya decidida, la semana muestra el autor, la fecha y la nota, y el enlace para revisar y publicar la versión nueva o el aviso de que ya
+    se publicó.
+- Umbrales en Ajustes (07 §11): los siete valores con su uso y el valor base de la V3, si rigen los de la organización y desde cuándo, y
+  «Usar los valores base». Guardar crea la versión de hoy. Los ve todo el equipo; los cambian el dueño y los administradores.
+- `@nutricoach/ui/chart` suma `ColumnChart` (columnas finas de un color y lo programado como línea punteada) y `TrendChart` (una serie con
+  sus puntos). Al pasar el puntero, la ayuda muestra primero el valor; cada gráfico tiene una tabla para lectores de pantalla y ninguno se
+  anima, porque las cifras no cuentan desde cero (ADR-051).
+Consecuencias:
+- E2E `e2e/analitica.spec.ts` en escritorio y celular:
+  - Luis registra hoy 1800 kcal y la analítica muestra 98.1 % de adecuación, en rango, con su método;
+  - la semana 1 de su programa muestra 1440 kg de tonelaje y un 1RM de Epley de 76 kg;
+  - el coach abre el control semanal: ámbar por fatiga y factor ajustado 0.945. Ajusta con 0.95 prellenado y su nota, y la semana 2
+    cambia a 0.95 recién al publicar la versión nueva (criterio 5);
+  - la dueña cambia los umbrales.
+- PR 5: la evolución. PR 6: el panel con los controles sin decidir y el semáforo. PR 7: la Demo 3.
+- Para Notion (/notion-sync de P14):
+  - 07 §10: en la 1.0, el resumen muestra las sesiones registradas y las próximas; las verificadas y por validar llegan con el calendario.
+    Además, el factor que propone la decisión;
+  - prompt P15: el calendario valida la asistencia y suma las sesiones verificadas y por validar al resumen del macrociclo.

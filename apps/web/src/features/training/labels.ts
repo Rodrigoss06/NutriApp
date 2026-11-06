@@ -3,6 +3,7 @@ import type {
   PhysicalTestSummaryResponse,
   Screening,
   TrainingSafetyResponse,
+  WeeklyReview,
 } from '@nutricoach/contracts';
 import type { Tone } from '@nutricoach/ui';
 
@@ -52,3 +53,25 @@ const TEST_VALUE = new Intl.NumberFormat('es-PE', { maximumFractionDigits: 2 });
 /** El valor de una prueba tal como se midió: hasta 2 decimales, sin ceros de relleno. Sin valor, una raya. */
 export const formatTestValue = (value: number | null | undefined): string =>
   value === null || value === undefined ? '—' : TEST_VALUE.format(value);
+
+/** El semáforo del control semanal (07 §10): color, ícono y texto, nunca solo color. */
+export const WEEKLY_LIGHT_LABELS = {
+  GREEN: 'Verde',
+  AMBER: 'Ámbar',
+  RED: 'Rojo',
+  NO_DATA: 'Sin datos',
+} as const satisfies Record<WeeklyReview['light'], string>;
+
+export const WEEKLY_LIGHT_TONES = {
+  GREEN: 'success',
+  AMBER: 'warning',
+  RED: 'danger',
+  NO_DATA: 'info',
+} as const satisfies Record<WeeklyReview['light'], Tone>;
+
+/** La decisión del coach (RN-F17). */
+export const COACH_DECISION_LABELS = {
+  KEEP: 'Mantener',
+  ADJUST: 'Ajustar',
+  DELOAD: 'Descargar',
+} as const satisfies Record<NonNullable<WeeklyReview['decision']>['decision'], string>;
