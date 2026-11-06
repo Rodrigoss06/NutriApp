@@ -21,15 +21,19 @@ Próxima demo: Demo 3 · Entrenamiento y app del paciente · semana 6
 | P11 Fichas PDF, Demo 2 | ✅ | Rodrigo | #32 a #37 | 4 criterios en verde (integración y E2E en escritorio y celular): contexto documents y ficha de intercambios (ADR-064), fichas del menú y de resultados (ADR-065; 1.0.1 en ADR-069), marca mínima (ADR-066), descargas (ADR-067), semilla, guion y acta de la Demo 2 (ADR-068). Etiqueta v0.2.0 (e05f8de); staging, pendiente de P4. /notion-sync aplicado (17 cambios en 02, 03, 04, 05, 05.1, 05.3 y 06) |
 | P12 Ejercicios y rutinas | ✅ | Rodrigo | #39 a #42 y #44 a #47 | 5 criterios en verde (integración y E2E en escritorio y celular): motor (ADR-070), biblioteca (ADR-071), anamnesis V2 (ADR-072), alergias (ADR-074), seguridad (ADR-075), programa por la API y en la web (ADR-077, ADR-078) y ficha de rutina (ADR-079) |
 | P13 App del paciente | ✅ | Rodrigo | #50 a #55 | 6 criterios en verde (integración y E2E en escritorio y celular): recuperación del día en el motor (ADR-080), registros por /me (ADR-081), Hoy y el plan (ADR-082), registro diario y entreno (ADR-083, ADR-084) y el profesional con los registros (ADR-085). Lighthouse móvil 97 en Hoy (local). La cola sin conexión (RF-31, deseable) queda fuera. /notion-sync aplicado (30 cambios en 11 páginas) |
-| P14 Analítica y evolución, Demo 3 | ⬜ | Rodrigo | | |
+| P14 Analítica y evolución, Demo 3 | 🟨 | Rodrigo | | Plan aprobado (2026-11-05, ADR-086): 7 PR. PR 1 (motor, control semanal) en curso |
 | P15 Marca, calendario, admin y migración | ⬜ | Rodrigo | | |
 | P16 Producción y entrega, Demo 4 | ⬜ | Rodrigo | | |
 
 Leyenda: ⬜ pendiente · 🟨 en curso · ✅ terminado · ⛔ bloqueado
 
 ## En curso
-- P14 (Analítica y evolución, Demo 3) por empezar. Plan de Rodrigo (2026-11-05): completar la Demo 3 y, en ella, corregir cada punto
-  faltante, como P4, para llevar bien la Demo 4 y cerrar el proyecto.
+- P14 en curso (plan aprobado el 2026-11-05, ADR-086), en 7 PR contra main. Plan de Rodrigo: completar la Demo 3 y, en ella, corregir
+  cada punto faltante, como P4, para llevar bien la Demo 4 y cerrar el proyecto:
+  - PR 1, motor: `WEEKLY_REVIEW_JV` 3.0.0 con los agregados, el semáforo, el factor ajustado y la decisión sugerida (RN-G16); G-39 en
+    verde. Motor 1.6.0;
+  - siguen: la analítica por la API (PR 2), el control semanal por la API (PR 3), su web (PR 4), la evolución y su ficha (PR 5), el panel
+    con alertas, el material educativo y las fichas en la app (PR 6), y la Demo 3 con `seed:load` (PR 7).
 - P13 terminado (#50 a #55; plan aprobado el 2026-11-01, ADR-080), en 6 PR contra main:
   - PR 1, motor: `READINESS_JV` 3.0.0 con la carga sRPE, el rendimiento, la recuperación y la indicación del día (RN-G14, RN-G15);
     G-36 a G-38 en verde. Motor 1.5.0;
@@ -123,8 +127,8 @@ Leyenda: ⬜ pendiente · 🟨 en curso · ✅ terminado · ⛔ bloqueado
 ## Siguiente paso
 - Antes de la Demo 3: la matriz manual de navegadores (RNF-19: Chrome, Edge, Safari y Firefox; la E2E cubre Chromium
   y WebKit), que no quedó registrada en las demos 1 y 2
-- P14 · Analítica, control semanal, evolución y material educativo → Demo 3 (/prompt P14). Su criterio de 300 ms sobre dos años de
-  datos necesita el generador de `pnpm seed:load`, que hoy está en P16: decidirlo en el plan de P14
+- P14, PR 2: el módulo analytics con sus proyecciones, `analytics:rebuild` y la lectura de dieta y rutina (criterios 1 a 3). El generador
+  de `pnpm seed:load` de 500 pacientes llega en el PR 7 (ADR-086)
 - Para la Demo 3 y la Demo 4, según el plan de Rodrigo (2026-11-05): resolver lo que falta del Notion maestro, empezando por P4
   (staging) en cuanto llegue la cuenta de Hetzner
 - Confirmar la fecha de inicio: si fue el 24-09, el 2026-11-05 es el primer día de la semana 7 y la Demo 4 cae el 25-11

@@ -12,10 +12,13 @@ import {
   routineSplit,
   screeningStatus,
   suggestedExercise,
+  WEEKLY_REVIEW_JV,
   type PeriodizationPhase,
   type ReadinessDay,
   type ReadinessThresholds,
   type SafetyKeys,
+  type WeeklyReviewDay,
+  type WeeklyReviewThresholds,
 } from '../../src/training/index.js';
 import { expectOk, patternChoiceSeed } from '../support.js';
 
@@ -289,6 +292,71 @@ describe('G-38 · RN-G14 · carga sRPE y rendimiento', () => {
   it('real 95 con plan 100: 95 %; real 130 con plan 100: 120 %, el tope', () => {
     expect(run({ performancePlanned: 100, performanceActual: 95 }).performancePct).toBe(95);
     expect(run({ performancePlanned: 100, performanceActual: 130 }).performancePct).toBe(120);
+  });
+});
+
+/** Los umbrales semanales de la V3 (07 §11). */
+const V3_WEEKLY: WeeklyReviewThresholds = {
+  performanceMinPct: 90,
+  weeklySleepMinHours: 6.5,
+  fatigueSorenessAmberAbove: 4,
+  nutritionMinPct: 80,
+};
+
+const WEEK_DAY: WeeklyReviewDay = {
+  sessionMinutes: 60,
+  sessionRpe: 7,
+  sleepHours: 7.5,
+  restingHrBpm: null,
+  hrvMs: null,
+  fatigue: 2,
+  soreness: 2,
+  performancePct: 100,
+  nutritionCompliancePct: 90,
+  menstrualSymptoms: null,
+};
+
+describe('G-39 · RN-G16 · control semanal', () => {
+  const review = (days: readonly Partial<WeeklyReviewDay>[], plannedVolumeFactor: number) =>
+    expectOk(
+      runMethod(WEEKLY_REVIEW_JV, {
+        days: days.map((day) => ({ ...WEEK_DAY, ...day })),
+        plannedVolumeFactor,
+        thresholds: V3_WEEKLY,
+      }),
+    ).outputs;
+
+  it('rendimiento promedio 88 % y factor 1.1: ROJO, factor 0.825, «descarga 20–30 % y revisar»', () => {
+    const outputs = review(
+      [{ performancePct: 86 }, { performancePct: 90 }, { performancePct: 88 }],
+      1.1,
+    );
+
+    expect(outputs.aggregates.avgPerformancePct).toBe(88);
+    expect(outputs.light).toBe('RED');
+    expect(outputs.suggestedVolumeFactor).toBeCloseTo(0.825, 10);
+    expect(outputs.suggestedAction).toBe('DELOAD');
+  });
+
+  it('fatiga promedio 4.2 y factor 1.0: ÁMBAR, 0.90, «ajustar 5–15 %»', () => {
+    const outputs = review(
+      [{ fatigue: 4 }, { fatigue: 4 }, { fatigue: 5 }, { fatigue: 4 }, { fatigue: 4 }],
+      1,
+    );
+
+    expect(outputs.aggregates.avgFatigue).toBeCloseTo(4.2, 10);
+    expect(outputs.light).toBe('AMBER');
+    expect(outputs.suggestedVolumeFactor).toBe(0.9);
+    expect(outputs.suggestedAction).toBe('ADJUST');
+  });
+
+  it('sin sesiones: FALTA REGISTRO, sin factor sugerido', () => {
+    const outputs = review([{ sessionMinutes: 0 }, { sessionMinutes: null }], 1);
+
+    expect(outputs.aggregates.sessions).toBe(0);
+    expect(outputs.light).toBe('NO_DATA');
+    expect(outputs.suggestedVolumeFactor).toBeNull();
+    expect(outputs.suggestedAction).toBe('MISSING_LOG');
   });
 });
 

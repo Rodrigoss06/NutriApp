@@ -44,6 +44,7 @@ import {
   ONERM_EPLEY1985,
   PRI_JV,
   READINESS_JV,
+  WEEKLY_REVIEW_JV,
   RPE_FROM_RIR,
   SFR,
   TONNAGE,
@@ -97,6 +98,7 @@ export const METHODS: Readonly<Record<MethodCode, AnyMethod>> = Object.freeze({
   COMPLIANCE,
   PRI_JV,
   READINESS_JV,
+  WEEKLY_REVIEW_JV,
 } satisfies Record<MethodCode, unknown>);
 
 /**
