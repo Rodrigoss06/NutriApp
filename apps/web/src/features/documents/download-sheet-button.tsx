@@ -1,6 +1,10 @@
 'use client';
 
-import type { DocumentSource, DocumentStatusResponse } from '@nutricoach/contracts';
+import type {
+  DocumentSource,
+  DocumentStatusResponse,
+  GeneratedDocument,
+} from '@nutricoach/contracts';
 import { Button, Notice } from '@nutricoach/ui';
 import { useMutation } from '@tanstack/react-query';
 import { Download } from 'lucide-react';
@@ -37,20 +41,26 @@ function saveFile(url: string, fileName: string): void {
   link.remove();
 }
 
+/** Lo que necesita un botón de ficha: cómo pedirla, cómo saber si ya está y desde dónde se descarga. */
+export interface SheetEndpoints {
+  readonly request: () => Promise<DocumentStatusResponse | undefined>;
+  readonly status: () => Promise<DocumentStatusResponse>;
+  readonly fileUrl: (sheet: GeneratedDocument) => string;
+}
+
 /**
- * «Descargar ficha (PDF)» (RF-24): la del plan publicado o reemplazado, o la de la evaluación cerrada con resultados.
- * Si el worker la está generando, «Generando…» hasta que esté. Exportar vale también en solo lectura (RN-A02), y cada
- * descarga queda auditada (RN-B03).
+ * Un botón que descarga una ficha (RF-24): si el worker la está generando, «Generando…» hasta que esté. Lo usan el panel y la app
+ * del paciente, cada uno con sus rutas.
  */
-export function DownloadSheetButton({
-  patientId,
-  source,
-  label = 'Descargar ficha (PDF)',
+export function SheetButton({
+  label,
+  endpoints,
+  size = 'md',
 }: {
-  patientId: string;
-  source: DocumentSource;
-  /** El rótulo del botón, si la página tiene más de una ficha: «Descargar ficha de evolución (PDF)». */
-  label?: string;
+  label: string;
+  endpoints: SheetEndpoints;
+  /** touch en la app del paciente: 44 px (06 §8). */
+  size?: 'md' | 'touch';
 }) {
   const closed = useRef(new AbortController());
   useEffect(() => {
@@ -63,20 +73,13 @@ export function DownloadSheetButton({
   const download = useMutation({
     mutationFn: () =>
       readySheet({
-        request: () =>
-          apiFetch<DocumentStatusResponse | undefined>(`/patients/${patientId}/documents`, {
-            method: 'POST',
-            body: source,
-          }),
-        status: () =>
-          apiFetch<DocumentStatusResponse>(
-            `/patients/${patientId}/documents/status?${statusQuery(source)}`,
-          ),
+        request: endpoints.request,
+        status: endpoints.status,
         wait: (ms) => pause(ms, closed.current.signal),
         now: () => Date.now(),
       }),
     onSuccess: (sheet) => {
-      saveFile(`/api/v1/documents/${sheet.id}/file`, sheet.fileName);
+      saveFile(endpoints.fileUrl(sheet), sheet.fileName);
     },
   });
   return (
@@ -84,6 +87,7 @@ export function DownloadSheetButton({
       <div>
         <Button
           variant="secondary"
+          size={size}
           disabled={download.isPending}
           onClick={() => {
             download.mutate();
@@ -104,5 +108,38 @@ export function DownloadSheetButton({
         <FormError error={download.error} title="No se descargó la ficha" />
       )}
     </div>
+  );
+}
+
+/**
+ * «Descargar ficha (PDF)» (RF-24): la del plan publicado o reemplazado, o la de la evaluación cerrada con resultados.
+ * Exportar vale también en solo lectura (RN-A02), y cada descarga queda auditada (RN-B03).
+ */
+export function DownloadSheetButton({
+  patientId,
+  source,
+  label = 'Descargar ficha (PDF)',
+}: {
+  patientId: string;
+  source: DocumentSource;
+  /** El rótulo del botón, si la página tiene más de una ficha: «Descargar ficha de evolución (PDF)». */
+  label?: string;
+}) {
+  return (
+    <SheetButton
+      label={label}
+      endpoints={{
+        request: () =>
+          apiFetch<DocumentStatusResponse | undefined>(`/patients/${patientId}/documents`, {
+            method: 'POST',
+            body: source,
+          }),
+        status: () =>
+          apiFetch<DocumentStatusResponse>(
+            `/patients/${patientId}/documents/status?${statusQuery(source)}`,
+          ),
+        fileUrl: (sheet) => `/api/v1/documents/${sheet.id}/file`,
+      }}
+    />
   );
 }

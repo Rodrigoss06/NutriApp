@@ -2266,3 +2266,28 @@ Consecuencias:
   equipo ve que los abrió.
 - Para Notion (/notion-sync de P14): 05.3 (las restricciones, los índices, el borrado de asignaciones y `app.mark_resource_viewed`),
   04 RF-30 (los cuatro tipos y la marca de visto) y 06 (los códigos NC-CON-003 a NC-CON-007).
+
+## ADR-095 · Fichas en la app del paciente — aceptada (2026-11-07)
+Contexto: P14, PR 6c (ADR-080: las fichas en la app pasan a P14; RF-24, RN-H01 a RN-H03, RN-B03). Rodrigo decidió el 2026-11-07
+que el paciente ve las vigentes.
+Decisión:
+- Las fichas vigentes, en el orden de la app:
+  - `PLAN`: el plan que el paciente ve en su app (la copia vigente de tracking, `active_plan_view`);
+  - `PROGRAM`: la rutina de esa misma copia;
+  - `RESULTS`: los resultados de su última evaluación cerrada;
+  - `EVOLUTION`: su evolución hasta esa evaluación, si tiene dos o más cerradas.
+  Tracking (`activePlans`) y assessment (`closedEvaluationIds`) dan los ids por su API pública.
+- El paciente pide una ficha por su nombre (`item`), nunca por su origen: la API lo elige con el id de su sesión. Como su RLS no ve
+  las plantillas ni todo lo que muestra la ficha, se arma como SYSTEM de su organización y el pedido queda a su nombre en el outbox.
+  La descarga va con su RLS (`generated_document` y `file_object` ya le dejan ver lo suyo), como adjunto y auditada como
+  exportación (RN-B03).
+- Rutas `GET /me/documents`, `POST /me/documents` (200 si ya existe un PDF igual, 202 si lo genera el worker),
+  `GET /me/documents/status?item=` y `GET /me/documents/:id/file`.
+- En la app, Más › Fichas en PDF muestra un botón por ficha, si su sección está a la vista: el plan con Alimentación, la rutina con
+  Entrenamiento, y los resultados y la evolución con Progreso. El botón de ficha del panel y el de la app comparten `SheetButton`.
+Consecuencias:
+- Integración `me-documents.int.spec.ts`: las fichas de Luis (plan y resultados) y ninguna de Inés; pedir por el nombre (un origen
+  enviado es 400), el 202 y luego READY, la evolución que no existe con una sola evaluación, la descarga solo para él y auditada con
+  `actor_role` PATIENT, y el equipo fuera de /me.
+- E2E `e2e/fichas-app.spec.ts` en escritorio y celular, con axe: Luis descarga la ficha de su plan y la de sus resultados.
+- Para Notion (/notion-sync de P14): 04 (las fichas vigentes en la app, RF-24 o RF-30) y 02 §10 (las rutas /me de documents).

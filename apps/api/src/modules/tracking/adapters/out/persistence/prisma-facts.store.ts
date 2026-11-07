@@ -1,7 +1,11 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { TransactionHost } from '@nestjs-cls/transactional';
 import type { Db } from '../../../../../platform/index.js';
-import type { FactsStore, OverviewFacts } from '../../../application/ports/facts.ports.js';
+import type {
+  ActivePlans,
+  FactsStore,
+  OverviewFacts,
+} from '../../../application/ports/facts.ports.js';
 import type { FactWorkout, RawFacts } from '../../../domain/day-facts.js';
 
 const isoDate = (value: Date): string => value.toISOString().slice(0, 10);
@@ -240,6 +244,17 @@ export class PrismaFactsStore implements FactsStore {
       select: { trainingProgramId: true },
     });
     return row?.trainingProgramId ?? null;
+  }
+
+  async activePlans(patientId: string): Promise<ActivePlans> {
+    const row = await this.db.tx.activePlanView.findUnique({
+      where: { patientId },
+      select: { nutritionPlanId: true, trainingProgramId: true },
+    });
+    return {
+      nutritionPlanId: row?.nutritionPlanId ?? null,
+      trainingProgramId: row?.trainingProgramId ?? null,
+    };
   }
 
   async patientIds(since: string | null): Promise<readonly string[]> {
