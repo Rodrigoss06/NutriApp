@@ -1,4 +1,4 @@
-import { dietAnalyticsSchema, type DietAnalytics } from '@nutricoach/contracts';
+import { dietAnalyticsSchema, dietTrendSchema, type DietAnalytics } from '@nutricoach/contracts';
 import type request from 'supertest';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { AnalyticsRebuild } from '../../src/modules/analytics/index.js';
@@ -180,6 +180,48 @@ describe('Criterio 1 de P14 · G-20 · RN-E10 · RN-G09 · la semana de Luis', (
       [luisId],
     );
     expect(Number(reads[0]?.count)).toBeGreaterThan(0);
+  });
+});
+
+describe('RN-G09 · ADR-091 · la tendencia por mes, frente a la evolución antropométrica', () => {
+  it('la semana de G-20 se reparte en octubre y noviembre: el promedio, la adecuación y los días en rango de cada mes', async () => {
+    const response = await harness.get(
+      `/patients/${luisId}/analytics/trend?from=2026-10-01&to=2026-11-30`,
+      cookie,
+    );
+    expect(response.status, JSON.stringify(response.body)).toBe(200);
+    const trend = dietTrendSchema.parse(response.body);
+    expect(trend.months.map((m) => [m.month, m.daysLogged, m.daysInRange])).toEqual([
+      ['2026-10', 6, 3],
+      ['2026-11', 1, 1],
+    ]);
+    const [october, november] = trend.months;
+    // (1790 + 1950 + 1600 + 2100 + 1830 + 2400) ÷ 6 = 1945 kcal, contra ≈ 1834.54: 106.0 %.
+    expect(october?.kcal.consumed).toBeCloseTo(1945, 6);
+    expect(october?.kcal.adequacyPct).toBeCloseTo(106.0, 1);
+    expect(november?.kcal.consumed).toBe(1700);
+    expect(trend.method).toEqual({ code: 'ADEQUACY', version: '1.0.0' });
+  });
+
+  it('un rango al revés o de más de 24 meses es 400; fuera del equipo, 404', async () => {
+    const reversed = await harness.get(
+      `/patients/${luisId}/analytics/trend?from=2026-11-01&to=2026-10-01`,
+      cookie,
+    );
+    expect([reversed.status, (reversed.body as { code: string }).code]).toEqual([
+      400,
+      'NC-ANA-001',
+    ]);
+    const tooLong = await harness.get(
+      `/patients/${luisId}/analytics/trend?from=2024-10-01&to=2026-11-01`,
+      cookie,
+    );
+    expect(tooLong.status).toBe(400);
+    const outside = await harness.get(
+      `/patients/${luisId}/analytics/trend`,
+      org.staff.outsider.cookie,
+    );
+    expect(outside.status).toBe(404);
   });
 });
 

@@ -19,7 +19,12 @@ import {
 import { AssessmentApi } from './assessment-api.js';
 import { CalculationService } from './calculation.service.js';
 import { CalculationCommands } from './commands/calculation.commands.js';
-import type { FunctionalEvaluationStore } from './ports/assessment.ports.js';
+import type {
+  FunctionalEvaluationStore,
+  PatientEvolutionSite,
+  PatientEvolutionStore,
+} from './ports/assessment.ports.js';
+import { EvolutionQueries } from './queries/evolution.queries.js';
 import { EvaluationCommands } from './commands/evaluation.commands.js';
 import { TechnicalErrorCommands } from './commands/technical-error.commands.js';
 import { ResultsQueries } from './queries/results.queries.js';
@@ -128,6 +133,7 @@ const assessmentApi = () =>
     service(),
     new ResultsAssembly(evaluations, memoryCatalog, calculations, service()),
     {} as FunctionalEvaluationStore,
+    {} as never,
   );
 
 function value<T>(result: Result<T, DomainError>): T {
@@ -623,5 +629,143 @@ describe('RN-H04 · RN-D02 · lo que la ficha de resultados dice de una evaluaci
     expect(
       await assessmentApi().evaluationSheet('00000000-0000-7000-8000-000000000000'),
     ).toBeNull();
+  });
+});
+
+describe('RF-35 · RF-30 · ADR-091 · la evolución', () => {
+  const study = async () =>
+    value(
+      await new TechnicalErrorCommands(
+        uow,
+        clock,
+        fakeIds,
+        outbox,
+        errors,
+        memoryCatalog,
+        tenancy(),
+      ).record(responsible, RESPONSIBLE, {
+        source: 'CALCULATED',
+        validFrom: '2026-07-15',
+        sites: luisSeed.technicalErrorStudy.sites as {
+          siteCode: string;
+          pairs: [number, number][];
+        }[],
+      }),
+    );
+
+  /** Las funciones del paciente, desde los repositorios en memoria: las tomas de los 8 sitios y el ETM de su evaluador. */
+  const patientStore = (): PatientEvolutionStore => ({
+    sites: async () => {
+      const rows: PatientEvolutionSite[] = [];
+      for (const evaluation of await evaluations.listByPatient(PATIENT)) {
+        if (evaluation.status !== 'CLOSED') continue;
+        const tem = new Map(
+          (await errors.current(evaluation.evaluatorMemberId, evaluation.localDate)).map((row) => [
+            row.siteCode,
+            row,
+          ]),
+        );
+        for (const measurement of await evaluations.measurements(evaluation.id)) {
+          if (
+            !['BASIC_WEIGHT', 'GIRTH_WAIST'].includes(measurement.siteCode) &&
+            !measurement.siteCode.startsWith('SKF_')
+          )
+            continue;
+          rows.push({
+            evaluationId: evaluation.id,
+            siteCode: measurement.siteCode,
+            attempts: measurement.attempts,
+            temAbs: tem.get(measurement.siteCode)?.temAbs ?? null,
+            pairs: tem.get(measurement.siteCode)?.pairs ?? null,
+          });
+        }
+      }
+      return rows;
+    },
+    preferences: () => Promise.resolve([]),
+  });
+
+  const evolution = () =>
+    new EvolutionQueries(
+      uow,
+      audit,
+      evaluations,
+      memoryCatalog,
+      calculations,
+      errors,
+      patientStore(),
+      clinical.asApi(),
+    );
+
+  const patient = { ...responsible, role: 'PATIENT' as const, patientId: PATIENT as never };
+
+  it('G-04 · RN-C06: la suma de 6 pliegues como en la comparación; cada indicador por método (RN-D03); queda auditada', async () => {
+    await study();
+    const previous = await closedLuis(
+      '2026-09-15T13:30:00.000Z',
+      luisSeed.evaluations.previous.measurements,
+    );
+    const latest = await current();
+    const view = await evolution().evolution(responsible, PATIENT);
+    expect(view?.evaluations.map((e) => e.evaluationId)).toEqual([previous, latest]);
+    expect(view?.skinfoldSum6?.overall?.change).toBeCloseTo(-6.9, 9);
+    expect(view?.skinfoldSum6?.overall?.significance).toBe('CHANGE');
+    const fat = view?.metrics.filter((metric) => metric.metricCode === 'FAT_PCT') ?? [];
+    expect(new Set(fat.map((m) => m.methodCode)).size).toBe(fat.length);
+    expect(fat.every((m) => m.overall?.significance === null)).toBe(true);
+    expect(audit.entries.at(-1)).toMatchObject({
+      action: 'READ',
+      resourceType: 'assessment.evolution',
+    });
+    expect(
+      await evolution().evolution(responsible, '0192f0a0-0000-7000-8000-0000000000ff'),
+    ).toBeNull();
+  });
+
+  it('la ficha llega hasta su evaluación de origen; un borrador no es origen', async () => {
+    const previous = await closedLuis(
+      '2026-09-15T13:30:00.000Z',
+      luisSeed.evaluations.previous.measurements,
+    );
+    await current();
+    const source = await evolution().sheetSource(previous);
+    expect(source?.view.evaluations.map((e) => e.evaluationId)).toEqual([previous]);
+    const draft = value(
+      await evaluationCommands().create(responsible, PATIENT, {
+        kind: 'ANTHROPOMETRY',
+        level: 'BASIC',
+        measuredAt: '2026-11-01T13:30:00.000Z',
+        conditions: CONDITIONS,
+      }),
+    ).id;
+    expect(await evolution().sheetSource(draft)).toBeNull();
+  });
+
+  it('RF-30: el paciente ve el peso, la cintura y la suma con el CMD95, y el % de grasa y la masa muscular del método principal', async () => {
+    await study();
+    await closedLuis('2026-09-15T13:30:00.000Z', luisSeed.evaluations.previous.measurements);
+    const latest = await current();
+    const view = await evolution().patientEvolution(patient);
+    expect(view.evaluationCount).toBe(2);
+    expect(view.items.map((item) => item.item)).toEqual([
+      'WEIGHT',
+      'WAIST',
+      'SKINFOLD_SUM6',
+      'FAT_PCT',
+      'MUSCLE_MASS',
+    ]);
+    // El método principal es el que el equipo ve marcado en los resultados (RN-D05).
+    const results = (await queries().results(responsible, latest))?.results ?? [];
+    const principal = (purpose: 'FAT_PCT' | 'MUSCLE') =>
+      results.find((r) => r.principalFor.includes(purpose))?.methodCode;
+    expect(view.items.find((i) => i.item === 'FAT_PCT')?.methodCode).toBe(principal('FAT_PCT'));
+    expect(view.items.find((i) => i.item === 'MUSCLE_MASS')?.methodCode).toBe(principal('MUSCLE'));
+    expect(view.items.find((i) => i.item === 'SKINFOLD_SUM6')?.overall?.significance).toBe(
+      'CHANGE',
+    );
+    expect(await evolution().patientEvolution({ ...patient, patientId: null })).toEqual({
+      evaluationCount: 0,
+      items: [],
+    });
   });
 });

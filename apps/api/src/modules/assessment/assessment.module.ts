@@ -10,10 +10,12 @@ import {
   CALCULATION_STORE,
   EVALUATION_STORE,
   FUNCTIONAL_EVALUATION_STORE,
+  PATIENT_EVOLUTION_STORE,
   SITE_CATALOG,
   TECHNICAL_ERROR_STORE,
 } from './application/ports/assessment.ports.js';
 import { EvaluationQueries } from './application/queries/evaluation.queries.js';
+import { EvolutionQueries } from './application/queries/evolution.queries.js';
 import { FunctionalEvaluationQueries } from './application/queries/functional-evaluation.queries.js';
 import { ResultsQueries } from './application/queries/results.queries.js';
 import { ResultsAssembly } from './application/results-assembly.js';
@@ -29,6 +31,10 @@ import {
   ResultsController,
 } from './adapters/in/http/results.controller.js';
 import {
+  EvolutionController,
+  MeEvolutionController,
+} from './adapters/in/http/evolution.controller.js';
+import {
   FunctionalEvaluationController,
   PatientFunctionalEvaluationsController,
 } from './adapters/in/http/functional-evaluation.controller.js';
@@ -36,6 +42,7 @@ import { PrismaFunctionalEvaluationStore } from './adapters/out/persistence/pris
 import { FunctionalEvaluationCommands } from './application/commands/functional-evaluation.commands.js';
 import { TechnicalErrorController } from './adapters/in/http/technical-error.controller.js';
 import { PrismaCalculationStore } from './adapters/out/persistence/prisma-calculation.store.js';
+import { PrismaPatientEvolutionStore } from './adapters/out/persistence/prisma-patient-evolution.store.js';
 import {
   PrismaEvaluationStore,
   PrismaSiteCatalog,
@@ -44,7 +51,7 @@ import {
 
 /**
  * assessment (02 §2, núcleo): evaluaciones, tomas, consolidación, ETM, bioimpedancia manual, resultados calculados en
- * el worker al cerrar y rangos de referencia. Usa a clinical por su
+ * el worker al cerrar, rangos de referencia y la evolución por método (RF-35, RF-30). Usa a clinical por su
  * API pública (PatientRef y la escritura de datos de salud) y le suma sus evaluaciones a la línea de tiempo.
  */
 @Module({
@@ -58,6 +65,8 @@ import {
     FunctionalEvaluationController,
     OrganizationPreferencesController,
     PatientPreferencesController,
+    EvolutionController,
+    MeEvolutionController,
   ],
   providers: [
     EvaluationCommands,
@@ -69,6 +78,7 @@ import {
     AssessmentApi,
     CalculationCommands,
     ResultsQueries,
+    EvolutionQueries,
     ResultsAssembly,
     CalculationConsumer,
     AssessmentTimelineSource,
@@ -77,6 +87,7 @@ import {
     { provide: SITE_CATALOG, useClass: PrismaSiteCatalog },
     { provide: TECHNICAL_ERROR_STORE, useClass: PrismaTechnicalErrorStore },
     { provide: CALCULATION_STORE, useClass: PrismaCalculationStore },
+    { provide: PATIENT_EVOLUTION_STORE, useClass: PrismaPatientEvolutionStore },
   ],
   exports: [AssessmentApi],
 })

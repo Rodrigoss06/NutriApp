@@ -16,6 +16,8 @@ export interface DocumentRequestedPayload {
   readonly patientId: string;
   readonly sourceType: SourceType;
   readonly sourceId: string;
+  /** Solo si el origen tiene más de una ficha: la evolución hasta una evaluación (ADR-091). */
+  readonly sheet?: 'EVOLUTION';
 }
 
 export interface DocumentGeneratedPayload extends DocumentRequestedPayload {

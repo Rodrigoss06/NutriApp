@@ -319,3 +319,23 @@ export interface CalculationStore {
 }
 
 export const CALCULATION_STORE = Symbol.for('nutricoach.assessment.CalculationStore');
+
+/** Un sitio de una evaluación cerrada del paciente, con el ETM vigente de su evaluador en esa fecha (RN-C05). */
+export interface PatientEvolutionSite {
+  readonly evaluationId: string;
+  readonly siteCode: string;
+  readonly attempts: readonly number[];
+  readonly temAbs: number | null;
+  readonly pairs: readonly (readonly [number, number])[] | null;
+}
+
+/**
+ * Lo que la evolución del paciente en su app necesita y su RLS no le deja leer (ADR-091), por funciones SECURITY DEFINER que
+ * solo devuelven lo suyo: las tomas del peso, la cintura y los 6 pliegues con el ETM de su evaluador, y sus preferencias.
+ */
+export interface PatientEvolutionStore {
+  sites(): Promise<readonly PatientEvolutionSite[]>;
+  preferences(): Promise<readonly PreferenceRow[]>;
+}
+
+export const PATIENT_EVOLUTION_STORE = Symbol.for('nutricoach.assessment.PatientEvolutionStore');

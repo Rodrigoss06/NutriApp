@@ -26,8 +26,14 @@ import {
   daysBetween,
   dietWeeks,
   mealSlotAdherence,
+  monthsBetween,
+  monthStartOf,
+  TREND_DEFAULT_MONTHS,
+  TREND_MAX_MONTHS,
+  trendMonths,
   type DietWeek,
   type MealSlotAdherence,
+  type TrendMonth,
 } from '../../domain/diet-weeks.js';
 import { ADEQUACY_METHOD, averageAdequacy } from '../adequacy.js';
 import { localDateIn } from '../local-date.js';
@@ -41,6 +47,14 @@ export interface DietAnalyticsView {
   readonly days: readonly DailySummary[];
   readonly weeks: readonly DietWeek[];
   readonly mealSlots: readonly MealSlotAdherence[];
+}
+
+export interface DietTrendView {
+  readonly from: string;
+  readonly to: string;
+  readonly adequacyRangePct: readonly [number, number];
+  readonly method: typeof ADEQUACY_METHOD;
+  readonly months: readonly TrendMonth[];
 }
 
 /**
@@ -88,6 +102,41 @@ export class DietQueries {
         days,
         weeks: dietWeeks(days, averageAdequacy(adequacyRangePct)),
         mealSlots: mealSlotAdherence(days),
+      });
+    });
+  }
+
+  /**
+   * RN-G09 · la tendencia por mes calendario (ADR-091), para leerla junto a la evolución antropométrica. Sin rango, los últimos
+   * 12 meses hasta hoy en la fecha local del paciente; hasta 24.
+   */
+  trend(
+    context: SecurityContext,
+    patientId: string,
+    range: { readonly from: string | null; readonly to: string | null },
+  ): Promise<Result<DietTrendView, DomainError>> {
+    return this.uow.query(context, async () => {
+      const patient = await this.clinical.patientRef(patientId);
+      if (!patient) return err(PATIENT_NOT_FOUND);
+      const to = range.to ?? localDateIn(this.clock.now(), patient.timezone);
+      const from = range.from ?? monthStartOf(to, TREND_DEFAULT_MONTHS - 1);
+      if (from > to || monthsBetween(from, to) > TREND_MAX_MONTHS) return err(RANGE_INVALID);
+      const days = await this.store.dailySummaries(patientId, from, to);
+      const adequacyRangePct = await this.tenancy.adequacyRangePct(
+        context.organizationId as OrganizationId,
+      );
+      await this.audit.record(context, {
+        action: 'READ',
+        resourceType: 'analytics.patient_daily_summary',
+        resourceId: patientId as Id<string>,
+        patientId: patientId as PatientId,
+      });
+      return ok({
+        from,
+        to,
+        adequacyRangePct,
+        method: ADEQUACY_METHOD,
+        months: trendMonths(days, averageAdequacy(adequacyRangePct)),
       });
     });
   }

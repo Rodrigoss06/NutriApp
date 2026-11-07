@@ -1,6 +1,8 @@
 import type { ProgramSnapshot } from '../../../training/index.js';
 import type { SheetBrand } from '../../domain/sheet.js';
 import type { AnthropometrySheet } from './anthropometry-sheet.js';
+import { evolutionSheet, type EvolutionSheet } from './evolution-sheet.js';
+import type { EvolutionSheetSource } from '../../../assessment/index.js';
 import type { MenuSheet, SheetTotals } from './menu-sheet.js';
 import type { ExchangeDietSheet } from './sheet-content.js';
 import { trainingSheet, type TrainingSheet } from './training-sheet.js';
@@ -569,3 +571,118 @@ export const DEMO_TRAINING_SHEET: TrainingSheet = trainingSheet(
   TRAINING_SNAPSHOT,
   TRAINING_PATIENT,
 );
+
+const point = (
+  evaluationId: string,
+  localDate: string,
+  value: number,
+  change: number | null,
+  significance: 'CHANGE' | 'NO_SIGNIFICANT_CHANGE' | 'UNKNOWN' | null,
+  mdc95: number | null = null,
+) => ({ evaluationId, localDate, value, change, mdc95, significance });
+
+/**
+ * La evolución sintética de Luis entre sus dos evaluaciones (G-04): la suma de 6 pliegues bajó 6.9 mm contra un CMD95 de 6.18
+ * mm, el abdominal bajó sin pasar su CMD95, el % de grasa por dos métodos y una lectura de bioimpedancia (RN-C08).
+ */
+export const LUIS_EVOLUTION_SOURCE: EvolutionSheetSource = {
+  origin: {} as EvolutionSheetSource['origin'],
+  view: {
+    evaluations: [
+      {
+        evaluationId: 'e1',
+        localDate: '2026-09-15',
+        kind: 'ANTHROPOMETRY',
+        level: 'ISAK2',
+        revision: 1,
+        evaluatorMemberId: 'm1',
+        conditionDifferences: [],
+      },
+      {
+        evaluationId: 'e2',
+        localDate: '2026-10-13',
+        kind: 'MIXED',
+        level: 'ISAK2',
+        revision: 1,
+        evaluatorMemberId: 'm2',
+        conditionDifferences: ['EVALUATOR'],
+      },
+    ],
+    sites: [
+      {
+        siteCode: 'BASIC_WEIGHT',
+        name: 'Peso',
+        family: 'BASIC',
+        unit: 'kg',
+        points: [
+          point('e1', '2026-09-15', 81.2, null, null),
+          point('e2', '2026-10-13', 80, -1.2, 'CHANGE', 0.4),
+        ],
+        overall: { change: -1.2, mdc95: 0.4, significance: 'CHANGE' },
+      },
+      {
+        siteCode: 'SKF_ABDOMINAL',
+        name: 'Abdominal',
+        family: 'SKINFOLD',
+        unit: 'mm',
+        points: [
+          point('e1', '2026-09-15', 26, null, null),
+          point('e2', '2026-10-13', 25, -1, 'NO_SIGNIFICANT_CHANGE', 1.6),
+        ],
+        overall: { change: -1, mdc95: 1.6, significance: 'NO_SIGNIFICANT_CHANGE' },
+      },
+      {
+        siteCode: 'BREADTH_HUMERUS',
+        name: 'Húmero',
+        family: 'BREADTH',
+        unit: 'cm',
+        points: [point('e2', '2026-10-13', 7, null, null)],
+        overall: null,
+      },
+    ],
+    skinfoldSum6: {
+      points: [
+        point('e1', '2026-09-15', 101.9, null, null),
+        point('e2', '2026-10-13', 95, -6.9, 'CHANGE', 6.18),
+      ],
+      overall: { change: -6.9, mdc95: 6.18, significance: 'CHANGE' },
+    },
+    metrics: [
+      {
+        metricCode: 'FAT_PCT',
+        methodCode: 'FAT_DW1974_SIRI1961',
+        unit: '%',
+        points: [
+          point('e1', '2026-09-15', 21.1, null, null),
+          point('e2', '2026-10-13', 20.26, -0.84, null),
+        ],
+        overall: { change: -0.84, mdc95: null, significance: null },
+      },
+      {
+        metricCode: 'FAT_PCT',
+        methodCode: 'FAT_YUHASZ1974',
+        unit: '%',
+        points: [
+          point('e1', '2026-09-15', 13.1, null, null),
+          point('e2', '2026-10-13', 12.57, -0.53, null),
+        ],
+        overall: { change: -0.53, mdc95: null, significance: null },
+      },
+    ],
+    bia: [
+      {
+        device: 'Marca Demo · BIA-200',
+        metric: 'FAT_PCT',
+        deviceLabel: 'Grasa corporal',
+        unit: '%',
+        points: [
+          point('e1', '2026-09-15', 19, null, null),
+          point('e2', '2026-10-13', 18.4, -0.6, null),
+        ],
+        overall: { change: -0.6, mdc95: null, significance: null },
+      },
+    ],
+  },
+};
+
+export const LUIS_EVOLUTION_SHEET: EvolutionSheet = evolutionSheet(LUIS_EVOLUTION_SOURCE, PATIENT);

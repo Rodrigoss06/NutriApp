@@ -53,7 +53,11 @@ export class SheetsConsumer implements EventConsumer, OnModuleInit {
     const payload = event.payload as DocumentRequestedPayload;
     await this.generation.generate(
       organizationId,
-      { type: payload.sourceType, id: payload.sourceId },
+      {
+        type: payload.sourceType,
+        id: payload.sourceId,
+        ...(payload.sheet ? { kind: payload.sheet } : {}),
+      },
       (event.metadata.actorUserId ?? null) as UserId | null,
     );
   }

@@ -6,6 +6,7 @@ import {
   DEMO_BRAND,
   DEMO_TRAINING_SHEET,
   LUIS_COMPOSITION_SHEET,
+  LUIS_EVOLUTION_SHEET,
   LUIS_EXCHANGE_SHEET,
   LUIS_MENU_SHEET,
   LUIS_RESULTS_SHEET,
@@ -276,6 +277,45 @@ describe('RN-H01 · RN-H04 · la ficha de la rutina (ADR-079)', () => {
       }
       // La nota de la sustitución es de la aprobación: no va en la ficha.
       expect(text).not.toContain('Le molesta el hombro');
+    },
+  );
+});
+
+describe('RN-H01 · RN-H04 · ADR-091 · la ficha de evolución', () => {
+  const EVOLUTION_INPUT: SheetRender = {
+    ...INPUT,
+    content: LUIS_EVOLUTION_SHEET,
+    issuedAt: new Date('2026-10-13T15:00:00.000Z'),
+  };
+
+  it('RN-H02: dos veces con la misma evolución, los mismos bytes', SLOW, async () => {
+    expect(sha256(await renderer.render(EVOLUTION_INPUT))).toBe(
+      sha256(await renderer.render(EVOLUTION_INPUT)),
+    );
+  });
+
+  it(
+    'las evaluaciones, cada medida frente al CMD95, cada indicador con su método y la bioimpedancia aparte',
+    SLOW,
+    async () => {
+      const text = await pdfText(await renderer.render(EVOLUTION_INPUT));
+      for (const expected of [
+        'Evolución antropométrica',
+        '2 evaluaciones · del 15 de setiembre de 2026 al 13 de octubre de 2026',
+        // RN-C09: el evaluador cambió.
+        'Atención: otro evaluador',
+        // RN-C06: la suma bajó más que su CMD95; el abdominal, no.
+        'Suma de 6 pliegues',
+        '−6.9 mm',
+        'Cambio real',
+        'Sin cambio significativo',
+        // RN-D02 · RN-D03: cada indicador con su método, en su propia fila.
+        '% de grasa (Durnin & Womersley (1974) + Siri)',
+        // RN-C08: la bioimpedancia, con su equipo.
+        'Lecturas del equipo Marca Demo · BIA-200',
+      ]) {
+        expect(text).toContain(expected);
+      }
     },
   );
 });

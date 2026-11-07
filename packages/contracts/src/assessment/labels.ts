@@ -1,7 +1,13 @@
 import type { NumberKind } from '../presentation/format-number.js';
 import type { EvaluationLevel, MeasurementSite } from './catalog.js';
 import type { BiaMetric, BiaUnit, EvaluationSummary } from './evaluation.js';
-import type { MethodPurpose, MetricCode, MetricUnit } from './results.js';
+import type {
+  CONDITION_DIFFERENCES,
+  MethodPurpose,
+  MetricCode,
+  MetricUnit,
+  SIGNIFICANCES,
+} from './results.js';
 
 /**
  * Textos y formato de la evaluación y sus resultados (interfaz en español, regla 9): los usan el panel y la ficha PDF de
@@ -115,3 +121,18 @@ export function formatReading(value: number, unit: BiaUnit): string {
   if (unit === 'level') return `${number} (nivel)`;
   return `${number} ${BIA_UNIT_LABELS[unit]}`;
 }
+
+/** El cambio de una medida frente al CMD95 del evaluador (RN-C06), en las pantallas y en las fichas. */
+export const SIGNIFICANCE_LABELS = {
+  CHANGE: 'Cambio real',
+  NO_SIGNIFICANT_CHANGE: 'Sin cambio significativo',
+  UNKNOWN: 'Sin ETM: no se puede saber',
+} as const satisfies Record<(typeof SIGNIFICANCES)[number], string>;
+
+/** Lo que cambió entre dos evaluaciones comparadas (RN-C09): se advierte, no se bloquea. */
+export const CONDITION_DIFFERENCE_LABELS = {
+  EVALUATOR: 'otro evaluador',
+  FASTING: 'distinto ayuno',
+  INTENSE_ACTIVITY: 'distinta actividad intensa previa',
+  TIME_OF_DAY: 'más de 2 horas de diferencia en la hora del día',
+} as const satisfies Record<(typeof CONDITION_DIFFERENCES)[number], string>;

@@ -161,3 +161,69 @@ export function mealSlotAdherence(rows: readonly DietRow[]): MealSlotAdherence[]
       offPlanDays: offPlan,
     }));
 }
+
+/** RN-G09 · la tendencia por mes: hasta 24 meses calendario (el contrato repite el número para la web). */
+export const TREND_MAX_MONTHS = 24;
+/** Sin rango, el mes actual y los 11 anteriores, en la fecha local del paciente (RN-G04). */
+export const TREND_DEFAULT_MONTHS = 12;
+
+const monthIndex = (date: string): number => {
+  const [year = 0, month = 1] = date.split('-').map(Number);
+  return year * 12 + month - 1;
+};
+
+/** El primer día del mes de esa fecha, `monthsBack` meses antes. */
+export function monthStartOf(date: string, monthsBack = 0): string {
+  const index = monthIndex(date) - monthsBack;
+  return `${String(Math.floor(index / 12)).padStart(4, '0')}-${String((index % 12) + 1).padStart(2, '0')}-01`;
+}
+
+/** Los meses calendario que toca un rango, contando los dos extremos. */
+export function monthsBetween(from: string, to: string): number {
+  return monthIndex(to) - monthIndex(from) + 1;
+}
+
+type TrendRow = DietRow & Pick<DailySummary, 'workoutsDone' | 'workoutsPlanned'>;
+
+/** Un mes calendario de la tendencia (RN-G09). */
+export interface TrendMonth {
+  /** YYYY-MM, en la fecha local del paciente. */
+  readonly month: string;
+  readonly daysWithTarget: number;
+  readonly daysLogged: number;
+  readonly daysInRange: number;
+  /** La energía: el promedio de los días con registros y meta, contra la meta promedio (RN-E10). */
+  readonly kcal: WeekNutrientSummary;
+  readonly sessionsDone: number;
+  /** Las programadas en los días con meta de entrenamiento; null si ningún día del mes la tuvo. */
+  readonly sessionsPlanned: number | null;
+}
+
+/**
+ * RN-G09 · la tercera agregación: por mes calendario, para leer la tendencia frente a la evolución antropométrica (ADR-091).
+ * La adecuación es la del promedio del mes, como la de la semana; las sesiones, las registradas contra las programadas.
+ */
+export function trendMonths(rows: readonly TrendRow[], adequacy: AverageAdequacy): TrendMonth[] {
+  const byMonth = new Map<string, TrendRow[]>();
+  for (const row of rows) {
+    const month = row.localDate.slice(0, 7);
+    byMonth.set(month, [...(byMonth.get(month) ?? []), row]);
+  }
+  return [...byMonth.entries()]
+    .sort(([a], [b]) => a.localeCompare(b))
+    .map(([month, days]) => {
+      const planned = days.filter((day) => day.workoutsPlanned !== null);
+      return {
+        month,
+        daysWithTarget: days.filter((day) => day.targetKcal !== null).length,
+        daysLogged: days.filter((day) => day.nutrientsMissing.items > 0).length,
+        daysInRange: days.filter((day) => day.kcalInRange === true).length,
+        kcal: weekNutrient(days, 'kcal', adequacy),
+        sessionsDone: days.reduce((total, day) => total + day.workoutsDone, 0),
+        sessionsPlanned:
+          planned.length === 0
+            ? null
+            : planned.reduce((total, day) => total + (day.workoutsPlanned ?? 0), 0),
+      };
+    });
+}
