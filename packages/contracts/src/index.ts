@@ -40,6 +40,7 @@ export * from './exercise/library.js';
 export * from './tracking/adjustments.js';
 export * from './tracking/records.js';
 export * from './analytics/diet.js';
+export * from './analytics/overview.js';
 export * from './analytics/training.js';
 export * from './analytics/trend.js';
 export * from './content/app.js';

@@ -68,6 +68,8 @@ export interface PatientSearch {
   /** Índices ciegos del documento buscado: uno por tipo si no se indicó el tipo. null: sin filtro de documento. */
   readonly documentBidxes: readonly Uint8Array[] | null;
   readonly status: PatientStatus;
+  /** Solo estos pacientes: el panel pide los nombres de los que tienen alertas (RF-34). null: sin filtro. */
+  readonly ids: readonly string[] | null;
   readonly after: { lastName: string; id: string } | null;
   readonly limit: number;
 }

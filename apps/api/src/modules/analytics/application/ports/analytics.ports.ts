@@ -1,5 +1,26 @@
 import type { DailySummary } from '../../domain/daily-summary.js';
 import type { OneRmPoint } from '../../domain/one-rm.js';
+import type { OverviewAlert } from '../../domain/overview.js';
+
+/** Un paciente en el panel del profesional (05.3 `analytics.patient_overview`, RF-34). */
+export interface OverviewRow {
+  readonly patientId: string;
+  readonly lastLogDate: string | null;
+  readonly lastEvaluationAt: Date | null;
+  readonly lastWeightKg: number | null;
+  readonly adherence7dPct: number | null;
+  readonly adherence30dPct: number | null;
+  readonly unreadNotes: number;
+  readonly alerts: readonly OverviewAlert[];
+  readonly updatedAt: Date;
+}
+
+/** Una página del panel: los pacientes con alertas y cuántos tienen cada una. */
+export interface OverviewPage {
+  readonly counts: Readonly<Record<OverviewAlert, number>>;
+  readonly total: number;
+  readonly rows: readonly OverviewRow[];
+}
 
 /** Un grupo muscular en una semana del macrociclo (05.3 `analytics.patient_weekly_muscle_volume`). */
 export interface WeeklyMuscleRow {
@@ -55,6 +76,14 @@ export interface AnalyticsStore {
   deleteOneRm(patientId: string): Promise<void>;
   /** Los 1RM del rango, por ejercicio y en orden de fecha. */
   oneRmSeries(patientId: string, from: string, to: string): Promise<readonly OneRmPoint[]>;
+  /** Escribe la fila del paciente en el panel, la tenga o no. */
+  replaceOverview(organizationId: string, row: OverviewRow): Promise<void>;
+  deleteOverview(patientId: string): Promise<void>;
+  /**
+   * Los pacientes con alguna alerta (o con esa), con la RLS del equipo de atención (RN-A05): primero los de más alertas y, a igual
+   * número, los de registro más antiguo.
+   */
+  overviewPage(alert: OverviewAlert | null, limit: number): Promise<OverviewPage>;
 }
 
 export const ANALYTICS_STORE = Symbol('ANALYTICS_STORE');

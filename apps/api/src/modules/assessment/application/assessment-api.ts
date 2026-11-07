@@ -105,6 +105,14 @@ export class AssessmentApi {
     return this.evolution.sheetSource(evaluationId);
   }
 
+  /** Cuándo se midió la última evaluación cerrada vigente del paciente (05.3 `patient_overview`); null si no tiene ninguna. */
+  async lastClosedEvaluationAt(patientId: string): Promise<Date | null> {
+    const closed = (await this.evaluations.listByPatient(patientId)).find(
+      (evaluation) => evaluation.status === 'CLOSED',
+    );
+    return closed?.measuredAt ?? null;
+  }
+
   /** La llave de la postura (RN-F15): si hay una evaluación cerrada, y los estados de la vigente y de los borradores. */
   movementKeys(patientId: string): ReturnType<FunctionalEvaluationStore['movementKeys']> {
     return this.functional.movementKeys(patientId);

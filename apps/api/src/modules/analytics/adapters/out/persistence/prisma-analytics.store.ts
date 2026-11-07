@@ -3,6 +3,8 @@ import { TransactionHost } from '@nestjs-cls/transactional';
 import type { Db } from '../../../../../platform/index.js';
 import type {
   AnalyticsStore,
+  OverviewPage,
+  OverviewRow,
   WeeklyMuscleRow,
 } from '../../../application/ports/analytics.ports.js';
 import {
@@ -12,6 +14,7 @@ import {
   type SummaryNutrient,
 } from '../../../domain/daily-summary.js';
 import type { OneRmPoint } from '../../../domain/one-rm.js';
+import { OVERVIEW_ALERTS, type OverviewAlert } from '../../../domain/overview.js';
 
 const isoDate = (value: Date): string => value.toISOString().slice(0, 10);
 const asDate = (value: string): Date => new Date(`${value}T00:00:00Z`);
@@ -269,5 +272,82 @@ export class PrismaAnalyticsStore implements AnalyticsStore {
       bestEstimated1rmKg: Number(row.bestEstimated1rmKg),
       sourceSetId: row.sourceSetId,
     }));
+  }
+
+  async replaceOverview(organizationId: string, row: OverviewRow): Promise<void> {
+    const values = {
+      lastLogDate: row.lastLogDate === null ? null : asDate(row.lastLogDate),
+      lastEvaluationAt: row.lastEvaluationAt,
+      lastWeightKg: row.lastWeightKg,
+      adherence7dPct: row.adherence7dPct,
+      adherence30dPct: row.adherence30dPct,
+      unreadNotes: row.unreadNotes,
+      alerts: [...row.alerts],
+      updatedAt: row.updatedAt,
+    };
+    await this.db.tx.patientOverview.upsert({
+      where: { patientId: row.patientId },
+      create: { patientId: row.patientId, organizationId, ...values },
+      update: values,
+    });
+  }
+
+  async deleteOverview(patientId: string): Promise<void> {
+    await this.db.tx.patientOverview.deleteMany({ where: { patientId } });
+  }
+
+  async overviewPage(alert: OverviewAlert | null, limit: number): Promise<OverviewPage> {
+    const tallies = await this.db.tx.$queryRaw<{ alert: string; patients: bigint }[]>`
+      SELECT alert, count(*) AS patients
+      FROM analytics.patient_overview, unnest(alerts) AS alert
+      GROUP BY alert`;
+    const counts = Object.fromEntries(OVERVIEW_ALERTS.map((code) => [code, 0])) as Record<
+      OverviewAlert,
+      number
+    >;
+    for (const tally of tallies) {
+      if ((OVERVIEW_ALERTS as readonly string[]).includes(tally.alert)) {
+        counts[tally.alert as OverviewAlert] = Number(tally.patients);
+      }
+    }
+    const [total] = await this.db.tx.$queryRaw<{ patients: bigint }[]>`
+      SELECT count(*) AS patients FROM analytics.patient_overview
+      WHERE cardinality(alerts) > 0 AND (${alert}::text IS NULL OR ${alert}::text = ANY(alerts))`;
+    const rows = await this.db.tx.$queryRaw<
+      {
+        patient_id: string;
+        last_log_date: Date | null;
+        last_evaluation_at: Date | null;
+        last_weight_kg: { toString(): string } | null;
+        adherence_7d_pct: { toString(): string } | null;
+        adherence_30d_pct: { toString(): string } | null;
+        unread_notes: number;
+        alerts: string[];
+        updated_at: Date;
+      }[]
+    >`
+      SELECT patient_id, last_log_date, last_evaluation_at, last_weight_kg, adherence_7d_pct, adherence_30d_pct,
+             unread_notes, alerts, updated_at
+      FROM analytics.patient_overview
+      WHERE cardinality(alerts) > 0 AND (${alert}::text IS NULL OR ${alert}::text = ANY(alerts))
+      ORDER BY cardinality(alerts) DESC, last_log_date ASC NULLS FIRST, patient_id
+      LIMIT ${limit}`;
+    return {
+      counts,
+      total: Number(total?.patients ?? 0),
+      rows: rows.map((row) => ({
+        patientId: row.patient_id,
+        lastLogDate: row.last_log_date ? isoDate(row.last_log_date) : null,
+        lastEvaluationAt: row.last_evaluation_at,
+        lastWeightKg: num(row.last_weight_kg),
+        adherence7dPct: num(row.adherence_7d_pct),
+        adherence30dPct: num(row.adherence_30d_pct),
+        unreadNotes: row.unread_notes,
+        alerts: row.alerts.filter((code): code is OverviewAlert =>
+          (OVERVIEW_ALERTS as readonly string[]).includes(code),
+        ),
+        updatedAt: row.updated_at,
+      })),
+    };
   }
 }

@@ -88,6 +88,7 @@ export class PatientQueries {
       documentType?: DocumentType | undefined;
       documentNumber?: string | undefined;
       status: PatientStatus;
+      ids?: readonly string[] | undefined;
       cursor?: string | undefined;
       limit: number;
     },
@@ -111,6 +112,7 @@ export class PatientQueries {
         nameQuery: params.q?.trim() || null,
         documentBidxes,
         status: params.status,
+        ids: params.ids ?? null,
         after: decodeCursor(params.cursor),
         limit: params.limit + 1,
       });

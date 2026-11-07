@@ -1,6 +1,6 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { dayFacts, type DayFacts } from '../domain/day-facts.js';
-import { FACTS_STORE, type FactsStore } from './ports/facts.ports.js';
+import { FACTS_STORE, type FactsStore, type OverviewFacts } from './ports/facts.ports.js';
 
 /**
  * Lo que tracking ofrece a otros contextos (02 §3): los hechos de cada día del paciente para la analítica (P14), con el ajuste
@@ -29,6 +29,11 @@ export class TrackingApi {
   /** El programa vigente del paciente según la copia de tracking (active_plan_view); null si no tiene. */
   activeProgramId(patientId: string): Promise<string | null> {
     return this.facts.activeProgramId(patientId);
+  }
+
+  /** Lo del paciente que usa el panel del profesional para sus alertas (RF-34): último registro, notas sin leer y recuperación. */
+  overviewFacts(patientId: string): Promise<OverviewFacts> {
+    return this.facts.overview(patientId);
   }
 
   /** Los pacientes de la organización del contexto con meta o con algún registro desde ese día (o desde siempre). */
