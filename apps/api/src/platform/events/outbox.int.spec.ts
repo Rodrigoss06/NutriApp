@@ -100,6 +100,12 @@ const waitFor = async (
 };
 
 beforeAll(async () => {
+  // La base es compartida: los archivos que prueban por HTTP entregan sus eventos con ApiHarness.deliver, sin publicarlos, y
+  // quedan pendientes. El despachador publica 100 por segundo en orden de emisión: con ese atraso, el evento de esta prueba
+  // no llegaba en 15 s. Este archivo prueba el despachador desde un outbox sin pendientes.
+  await pool('owner').query(
+    'UPDATE platform.outbox_event SET published_at = now() WHERE published_at IS NULL',
+  );
   tenant = await createTenant('Outbox');
   moduleRef = await Test.createTestingModule({
     imports: [DatabaseModule, EventsModule],
