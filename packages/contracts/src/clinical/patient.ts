@@ -96,6 +96,13 @@ export const patientSearchSchema = z.object({
   documentType: z.enum(DOCUMENT_TYPES).optional(),
   documentNumber: z.string().trim().max(20).optional(),
   status: z.enum(PATIENT_STATUSES).default('ACTIVE'),
+  /** ids=a,b,c: solo esos pacientes, hasta 100 (el panel pide los nombres de los que tienen alertas, RF-34). */
+  ids: z
+    .string()
+    .max(3_700)
+    .transform((value) => value.split(',').filter(Boolean))
+    .pipe(z.array(z.uuid()).min(1).max(100))
+    .optional(),
   cursor: z.string().max(200).optional(),
   limit: z.coerce.number().int().min(1).max(100).default(25),
 });

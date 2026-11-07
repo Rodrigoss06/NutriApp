@@ -12,6 +12,7 @@ import { ClinicalApi } from '../../clinical/index.js';
 import { TenancyApi } from '../../tenancy/index.js';
 import { TrackingApi } from '../../tracking/index.js';
 import { DailyProjection } from './daily-projection.js';
+import { OverviewProjection } from './overview-projection.js';
 import { TrainingProjection } from './training-projection.js';
 import { localDateIn } from './local-date.js';
 import { ANALYTICS_STORE, type AnalyticsStore } from './ports/analytics.ports.js';
@@ -45,6 +46,7 @@ export class AnalyticsRebuild {
     @Inject(DailyProjection) private readonly projection: DailyProjection,
     @Inject(TrainingProjection) private readonly training: TrainingProjection,
     @Inject(ANALYTICS_STORE) private readonly store: AnalyticsStore,
+    @Inject(OverviewProjection) private readonly overview: OverviewProjection,
   ) {}
 
   /** Un paciente, en la organización donde exista; null si no existe en ninguna. */
@@ -92,6 +94,7 @@ export class AnalyticsRebuild {
       const to = span.to > today ? span.to : today;
       const days = await this.projection.refresh(organizationId, patientId, span.from, to);
       await this.training.refreshForRange(organizationId, patientId, span.from, to);
+      await this.overview.refresh(organizationId, patientId);
       return days;
     });
   }

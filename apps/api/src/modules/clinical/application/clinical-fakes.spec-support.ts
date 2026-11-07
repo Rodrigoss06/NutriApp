@@ -138,6 +138,7 @@ export class MemoryPatients implements PatientStore {
     return Promise.resolve(
       [...this.rows.values()]
         .filter((p) => p.status === search.status)
+        .filter((p) => !search.ids || search.ids.includes(p.id))
         .filter(
           (p) =>
             !search.nameQuery ||

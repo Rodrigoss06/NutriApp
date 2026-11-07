@@ -816,7 +816,7 @@ describe('RF-26 · RN-B03 · leer', () => {
 
   it('la API pública entrega lo publicado; la línea de tiempo, lo del almacén', async () => {
     const id = await manual();
-    const api = new TrainingApi(programs);
+    const api = new TrainingApi(programs, {} as never);
     expect(await api.publishedProgram(id)).toBeNull();
 
     expect(await new TrainingTimelineSource(programs).entries(PATIENT, null, 5)).toEqual([]);

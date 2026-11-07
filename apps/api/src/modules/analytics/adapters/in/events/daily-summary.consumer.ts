@@ -5,6 +5,7 @@ import {
   type OutboxEnvelope,
 } from '../../../../../platform/index.js';
 import { DailyProjection } from '../../../application/daily-projection.js';
+import { OverviewProjection } from '../../../application/overview-projection.js';
 import { TrainingProjection } from '../../../application/training-projection.js';
 
 const isoDate = /^\d{4}-\d{2}-\d{2}$/;
@@ -53,6 +54,7 @@ export class DailySummaryConsumer implements EventConsumer, OnModuleInit {
     private readonly registry: ConsumerRegistry,
     @Inject(DailyProjection) private readonly projection: DailyProjection,
     @Inject(TrainingProjection) private readonly training: TrainingProjection,
+    @Inject(OverviewProjection) private readonly overview: OverviewProjection,
   ) {}
 
   onModuleInit(): void {
@@ -75,5 +77,7 @@ export class DailySummaryConsumer implements EventConsumer, OnModuleInit {
         day.localDate,
       );
     }
+    // El panel después del día: su adherencia lee el resumen recién escrito (RF-34).
+    await this.overview.refresh(organizationId, day.patientId);
   }
 }

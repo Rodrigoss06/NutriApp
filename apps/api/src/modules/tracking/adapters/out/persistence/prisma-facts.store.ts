@@ -1,7 +1,7 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { TransactionHost } from '@nestjs-cls/transactional';
 import type { Db } from '../../../../../platform/index.js';
-import type { FactsStore } from '../../../application/ports/facts.ports.js';
+import type { FactsStore, OverviewFacts } from '../../../application/ports/facts.ports.js';
 import type { FactWorkout, RawFacts } from '../../../domain/day-facts.js';
 
 const isoDate = (value: Date): string => value.toISOString().slice(0, 10);
@@ -257,4 +257,45 @@ export class PrismaFactsStore implements FactsStore {
       ORDER BY patient_id`;
     return rows.map((row) => row.patient_id);
   }
+
+  async overview(patientId: string): Promise<OverviewFacts> {
+    const [days] = await this.db.tx.$queryRaw<
+      { last_record: Date | null; first_target: Date | null; unread: bigint }[]
+    >`
+      SELECT
+        (SELECT max(local_date) FROM (
+           SELECT max(local_date) AS local_date FROM tracking.food_log WHERE patient_id = ${patientId}::uuid AND status = 'ACTIVE'
+           UNION ALL SELECT max(local_date) FROM tracking.hydration_log WHERE patient_id = ${patientId}::uuid AND status = 'ACTIVE'
+           UNION ALL SELECT max(local_date) FROM tracking.metric_log WHERE patient_id = ${patientId}::uuid AND status = 'ACTIVE'
+           UNION ALL SELECT max(local_date) FROM tracking.daily_checkin WHERE patient_id = ${patientId}::uuid AND status = 'ACTIVE'
+           UNION ALL SELECT max(local_date) FROM tracking.workout_log WHERE patient_id = ${patientId}::uuid AND status = 'ACTIVE'
+           UNION ALL SELECT max(local_date) FROM tracking.note_log WHERE patient_id = ${patientId}::uuid
+         ) AS last_days) AS last_record,
+        (SELECT min(local_date) FROM tracking.daily_target WHERE patient_id = ${patientId}::uuid) AS first_target,
+        (SELECT count(*) FROM tracking.note_log WHERE patient_id = ${patientId}::uuid AND read_at IS NULL) AS unread`;
+    const checkin = await this.db.tx.dailyCheckin.findFirst({
+      where: { patientId, status: 'ACTIVE' },
+      orderBy: [{ localDate: 'desc' }, { createdAt: 'desc' }],
+      select: { id: true, localDate: true },
+    });
+    const readiness = checkin
+      ? await this.db.tx.dailyReadiness.findFirst({
+          where: { checkinId: checkin.id, localDate: checkin.localDate, status: 'CURRENT' },
+          select: { indication: true },
+        })
+      : null;
+    return {
+      lastRecordDate: days?.last_record ? isoDate(days.last_record) : null,
+      firstTargetDate: days?.first_target ? isoDate(days.first_target) : null,
+      unreadNotes: Number(days?.unread ?? 0),
+      latestCheckin: checkin
+        ? {
+            localDate: isoDate(checkin.localDate),
+            indication: (readiness?.indication ?? null) as OverviewIndication,
+          }
+        : null,
+    };
+  }
 }
+
+type OverviewIndication = NonNullable<OverviewFacts['latestCheckin']>['indication'];

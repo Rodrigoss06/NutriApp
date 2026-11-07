@@ -2189,3 +2189,43 @@ Consecuencias:
   - el % de grasa de Durnin y Siri va en su propia fila, y la tendencia muestra octubre;
   - la ficha se descarga, y Luis ve su Progreso.
 - PR 6: el panel con `patient_overview` y sus alertas, el material educativo y las fichas en la app. PR 7: la Demo 3.
+
+## ADR-093 · Panel del profesional con alertas — aceptada (2026-11-07)
+Contexto: P14, PR 6a (RF-34; RN-A05, RN-B03, RN-D09, RN-F17, RN-G04, RN-G09, RN-G13, RN-G15; ADR-086). `analytics.patient_overview`
+existía desde P2 (05.3), vacía. El PR 6 se parte en tres, cada uno con su API y su pantalla: 6a, el panel; 6b, el material educativo;
+6c, las fichas en la app. Rodrigo decidió el 2026-11-07 que el semáforo del día es el del último registro diario si es de hoy o de ayer.
+Decisión:
+- Las alertas, en este orden (los valores de ADR-086, en la fecha local del paciente):
+  - `NO_RECENT_LOGS`: sin registros en los 3 días que ya terminaron (hoy todavía no cuenta); quien nunca registró cuenta desde su
+    primera meta, y sin metas ni registros no se le espera nada;
+  - `LOW_ADHERENCE`: días en rango ÷ días con meta de los 7 días que terminaron ayer, menor que 80 % (RN-G09); sin días con meta no hay
+    adherencia;
+  - `UNREAD_NOTES`: notas del paciente que su equipo no abrió (RN-G13);
+  - `READINESS_RED` y `READINESS_YELLOW`: la indicación del último registro diario si es de hoy o de ayer (RN-G15);
+  - `WEEKLY_RED` y `WEEKLY_AMBER`: el control vigente de la semana más reciente del programa vigente, hasta 7 días después de que
+    terminó (07 §10);
+  - `PENDING_REVIEW`: controles vigentes del programa vigente sin la decisión del coach (RN-F17).
+- La fila de cada paciente guarda las alertas y los números con que se calcularon: último registro, adherencia de 7 y 30 días, notas sin
+  leer, última evaluación cerrada y el último peso del resumen diario (con el ajuste del profesional). La próxima cita queda en null hasta
+  la agenda (P15).
+- Quién la recalcula:
+  - el consumidor del resumen diario, después del día (su adherencia lee ese resumen);
+  - `analytics.overview`: las notas, la decisión de un control y el cierre de una evaluación;
+  - un trabajo de cada hora (minuto 50) para los pacientes con metas o registros en los últimos 35 días, porque varias alertas cambian
+    con el paso del tiempo; `analytics:rebuild` también.
+  Esto precisa ADR-086 («lo que depende del paso del tiempo se calcula al leer»): las alertas se guardan y se recalculan cada hora, con
+  hasta una hora de atraso al cambiar el día. Un paciente archivado sale del panel.
+- Por la API: tracking (`overviewFacts`), training (`reviewOverview`) y assessment (`lastClosedEvaluationAt`) dan sus hechos; analytics
+  no lee nombres (ADR-064). `GET /api/v1/analytics/overview?alert&limit` devuelve los pacientes con alertas que ve el equipo de atención
+  (RN-A05), primero los de más alertas y, a igual número, los de registro más antiguo, con el conteo por alerta. La lectura queda
+  auditada (RN-B03). La web pide los nombres con `GET /patients?ids=` (hasta 100).
+- Inicio: debajo del saludo, las alertas con su filtro en la URL (`?alerta=`). Cada paciente aparece con los números de sus alertas
+  y cada alerta lleva a donde se atiende: el seguimiento (notas, semáforo del día, días sin registro), la analítica (adherencia) o el
+  control semanal. Sin alertas, un estado vacío.
+Consecuencias:
+- Integración `overview.int.spec.ts`: las alertas de tres pacientes, una nota que se lee por la API y apaga la alerta por el evento, el
+  filtro, los nombres desde /patients, el equipo de atención, la auditoría y el archivado.
+- E2E `e2e/inicio.spec.ts` en escritorio y celular, con axe: la nota de Luis aparece en Inicio, se atiende en su seguimiento y la
+  alerta se apaga.
+- Para Notion (/notion-sync de P14): 04 RF-34 (las alertas y sus valores), 05.3 (`patient_overview`: quién la recalcula y que
+  `next_appointment_at` llega con P15) y 02 §8 (el consumidor `analytics.overview`).

@@ -1,8 +1,15 @@
-import type { AccountResponse, OrganizationResponse } from '@nutricoach/contracts';
-import { Button, ContourBackground, EmptyState, enterStyle } from '@nutricoach/ui';
-import { LayoutDashboard, Search, UserPlus } from 'lucide-react';
+import type {
+  AccountResponse,
+  OrganizationResponse,
+  OverviewResponse,
+  PatientListResponse,
+} from '@nutricoach/contracts';
+import { Button, ContourBackground, enterStyle, Notice } from '@nutricoach/ui';
+import { Search, UserPlus } from 'lucide-react';
 import type { Metadata } from 'next';
 import Link from 'next/link';
+import { alertFilter, namesById } from '@/features/analytics/overview-view';
+import { PatientAlerts } from '@/features/analytics/patient-alerts';
 import { pluralLabel } from '@/features/organization/labels';
 import { serverApi } from '@/lib/api/server';
 
@@ -22,15 +29,30 @@ function greeting(timezone: string, now: Date): string {
   return 'Buenas noches';
 }
 
+/** Los nombres de los pacientes con alertas, de /patients: analytics no lee nombres (ADR-064). */
+async function patientNames(overview: OverviewResponse): Promise<ReadonlyMap<string, string>> {
+  if (overview.patients.length === 0) return new Map();
+  const ids = overview.patients.map((patient) => patient.patientId).join(',');
+  const list = await serverApi<PatientListResponse>(`/patients?ids=${ids}&limit=100`);
+  return list.ok ? namesById(list.data.patients) : new Map();
+}
+
 /**
- * Inicio del panel (ADR-051): la zona destacada con el fondo de curvas, el saludo y lo que se hace más seguido.
- * Las alertas de los pacientes llegan con la analítica (RF-34, P14).
+ * Inicio del panel (ADR-051): la zona destacada con el fondo de curvas, el saludo y lo que se hace más seguido; debajo, las
+ * alertas de los pacientes (RF-34, ADR-093).
  */
-export default async function PanelHomePage() {
-  const [account, organization] = await Promise.all([
+export default async function PanelHomePage({
+  searchParams,
+}: {
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+}) {
+  const filter = alertFilter((await searchParams).alerta);
+  const [account, organization, overview] = await Promise.all([
     serverApi<AccountResponse>('/account'),
     serverApi<OrganizationResponse>('/organization'),
+    serverApi<OverviewResponse>(`/analytics/overview?limit=50${filter ? `&alert=${filter}` : ''}`),
   ]);
+  const names = overview.ok ? await patientNames(overview.data) : new Map<string, string>();
   const now = new Date();
   const timezone = organization.ok ? organization.data.timezone : 'America/Lima';
   const label = organization.ok ? organization.data.patientLabel : 'Paciente';
@@ -77,11 +99,19 @@ export default async function PanelHomePage() {
           </div>
         </div>
       </section>
-      <EmptyState
-        icon={LayoutDashboard}
-        title="Aquí verás las alertas de tus pacientes"
-        description="Días sin registros, adherencia baja, notas sin leer y la próxima cita. Llegan cuando los pacientes empiecen a registrar desde su app."
-      />
+      {overview.ok ? (
+        <PatientAlerts
+          overview={overview.data}
+          names={names}
+          filter={filter}
+          patientLabel={label}
+          pluralPatientLabel={pluralLabel(label)}
+        />
+      ) : (
+        <Notice tone="danger" title="No pudimos cargar las alertas">
+          Vuelve a intentarlo en unos minutos.
+        </Notice>
+      )}
     </div>
   );
 }
