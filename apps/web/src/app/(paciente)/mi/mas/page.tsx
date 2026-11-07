@@ -13,7 +13,7 @@ import { serverApi } from '@/lib/api/server';
 export const metadata: Metadata = { title: 'Más' };
 
 /**
- * Más: escribir a tu equipo (RN-G13), tu peso si está habilitado, el seguimiento del ciclo menstrual (RN-G17) y el cribado de
+ * Más: escribir a tu equipo (RN-G13), el material que te asignó (RF-30), tu peso si está habilitado, el seguimiento del ciclo menstrual (RN-G17) y el cribado de
  * seguridad (07 §3.2) si su sección está a la vista, instalar la app (RF-27) y salir.
  */
 export default async function Page() {
@@ -37,6 +37,19 @@ export default async function Page() {
             Notas
           </h2>
           <NotesForm localDate={today.data.localDate} editable />
+        </section>
+      ) : null}
+      {sections.has('RESOURCES') ? (
+        <section aria-labelledby="material" className="flex flex-col gap-2">
+          <h2 id="material" className="text-lg font-semibold">
+            Material
+          </h2>
+          <Link
+            href="/mi/material"
+            className="flex min-h-touch items-center text-brand-text underline"
+          >
+            Guías, artículos y videos de tu equipo
+          </Link>
         </section>
       ) : null}
       {app.data.allowWeightLog ? (

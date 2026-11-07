@@ -15,12 +15,22 @@ import {
   type AppSettingsView,
   type MessageRecord,
 } from '../../../domain/app-content.js';
+import {
+  RESOURCE_ARCHIVED,
+  RESOURCE_FIELD_MISMATCH,
+  RESOURCE_FILE_UNSUPPORTED,
+  RESOURCE_NOT_FOUND,
+} from '../../../domain/resources.js';
 
 const STATUS_BY_CODE: Readonly<Record<string, number>> = {
   [PATIENT_NOT_FOUND.code]: 404,
   [MESSAGE_NOT_FOUND.code]: 404,
   [PATIENT_ARCHIVED.code]: 409,
   [WRITE_ACCESS_REQUIRED.code]: 403,
+  [RESOURCE_NOT_FOUND.code]: 404,
+  [RESOURCE_ARCHIVED.code]: 409,
+  [RESOURCE_FILE_UNSUPPORTED.code]: 415,
+  [RESOURCE_FIELD_MISMATCH.code]: 422,
 };
 
 export const problem = (error: DomainError) =>

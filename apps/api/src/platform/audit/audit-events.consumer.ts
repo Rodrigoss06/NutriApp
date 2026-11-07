@@ -40,6 +40,19 @@ export const AUDITED_EVENTS: Readonly<Record<string, AuditMapping>> = {
     resourceType: 'content.motivational_message',
     fields: (p) => namesOf(p.fields),
   },
+  'content.resource.created': { action: 'CREATE', resourceType: 'content.educational_resource' },
+  'content.resource.updated': {
+    action: 'UPDATE',
+    resourceType: 'content.educational_resource',
+    fields: (p) => namesOf(p.fields),
+  },
+  'content.resource.assigned': { action: 'GRANT', resourceType: 'content.resource_assignment' },
+  'content.resource.unassigned': { action: 'REVOKE', resourceType: 'content.resource_assignment' },
+  'content.resource.viewed': {
+    action: 'UPDATE',
+    resourceType: 'content.resource_assignment',
+    fields: (p) => namesOf(p.fields),
+  },
   'iam.invitation.accepted': {
     action: 'UPDATE',
     resourceType: 'iam.invitation',

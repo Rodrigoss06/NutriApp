@@ -542,6 +542,7 @@ model EducationalResource {
   createdAt           DateTime             @default(now()) @map("created_at") @db.Timestamptz(6)
   resourceAssignments ResourceAssignment[]
 
+  @@index([organizationId, status, createdAt(sort: Desc)], map: "educational_resource_by_org")
   @@map("educational_resource")
   @@schema("content")
 }
@@ -587,6 +588,7 @@ model ResourceAssignment {
   educationalResource EducationalResource @relation(fields: [resourceId], references: [id], onDelete: NoAction, onUpdate: NoAction)
 
   @@id([resourceId, patientId])
+  @@index([patientId, assignedAt(sort: Desc)], map: "resource_assignment_by_patient")
   @@map("resource_assignment")
   @@schema("content")
 }

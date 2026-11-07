@@ -12,6 +12,7 @@ const TABS = [
   { path: '/listas', label: 'Listas de intercambio' },
   { path: '/ejercicios', label: 'Ejercicios' },
   { path: '/patrones', label: 'Patrón y nivel' },
+  { path: '/material', label: 'Material educativo' },
 ] as const;
 
 /** Secciones de la Biblioteca (RF-38), con aria-current en la activa; Alimentos sigue activa en el detalle. */
