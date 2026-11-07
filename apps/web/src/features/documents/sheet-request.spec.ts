@@ -64,5 +64,9 @@ describe('RF-24 · RN-H02 · descargar una ficha desde el panel', () => {
     expect(statusQuery({ sourceType: 'EVALUATION', sourceId: SHEET.sourceId })).toBe(
       `sourceType=EVALUATION&sourceId=${SHEET.sourceId}`,
     );
+    // ADR-091: la evolución sale de la misma evaluación; se pide y se consulta con su kind.
+    expect(
+      statusQuery({ sourceType: 'EVALUATION', sourceId: SHEET.sourceId, kind: 'EVOLUTION' }),
+    ).toBe(`sourceType=EVALUATION&sourceId=${SHEET.sourceId}&kind=EVOLUTION`);
   });
 });

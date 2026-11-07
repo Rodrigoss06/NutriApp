@@ -2161,3 +2161,31 @@ Consecuencias:
   - 04 RF-30: lo que ve el paciente;
   - 03 RN-G09: el mes calendario;
   - 06: el `kind` del pedido de una ficha.
+
+## ADR-092 · Pantallas de la evolución — aceptada (2026-11-06)
+Contexto: P14, PR 5b (RF-35, RF-30; RN-C05, RN-C06, RN-C08, RN-C09, RN-D02, RN-D03, RN-G09, RN-H01). La API llegó con el PR 5a
+(ADR-091).
+Decisión:
+- Evaluaciones › Evolución (decisión de Rodrigo, ADR-091), con un enlace desde la lista de evaluaciones:
+  - las evaluaciones en orden, con su nivel, su evaluador y lo que cambió frente a la anterior (RN-C09);
+  - las medidas con su primer y último valor, el cambio, el CMD95 y si es un cambio real (RN-C06), junto a los métodos de la
+    consolidación y del CMD95;
+  - los indicadores por método y la bioimpedancia por equipo, sin CMD95 (RN-C05, RN-D03, RN-C08);
+  - un gráfico en el tiempo de la serie que se elige: nunca dos métodos en el mismo gráfico;
+  - la tendencia por mes (RN-G09), junto a las evaluaciones de cada mes, desde el mes de la primera evaluación y hasta 24 meses;
+  - «Descargar ficha de evolución (PDF)», con la última evaluación como origen.
+- Progreso en la app (RF-30): una tarjeta por número (peso, cintura, suma de 6 pliegues, y % de grasa y masa muscular del método
+  principal):
+  - el último valor con su método y el cambio desde la primera evaluación; en las medidas, también «Cambio real» o «Sin cambio
+    significativo»;
+  - debajo, la lista de los valores de cada evaluación;
+  - no usa Recharts, para no cargar la app del paciente, ni muestra interpretaciones;
+  - si el profesional no activó la sección, la pantalla lo dice.
+- La auditoría del panel nombra los recursos de P14: la evolución, la analítica de dieta y de rutina, el control semanal y los
+  umbrales.
+Consecuencias:
+- E2E `e2e/evolucion.spec.ts` en escritorio y celular, con axe:
+  - la suma de 6 pliegues sale −6.9 mm, «Cambio real», y el abdominal, «Sin cambio significativo»;
+  - el % de grasa de Durnin y Siri va en su propia fila, y la tendencia muestra octubre;
+  - la ficha se descarga, y Luis ve su Progreso.
+- PR 6: el panel con `patient_overview` y sus alertas, el material educativo y las fichas en la app. PR 7: la Demo 3.
