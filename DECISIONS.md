@@ -2383,3 +2383,23 @@ Consecuencias:
   - correrla otra vez no duplica nada.
 - Corrido contra la API y el worker locales: el worker calculó las dos evaluaciones de Mateo y no dejó eventos pendientes.
 - Para Notion (/notion-sync de P14): 07 §15, las preguntas P-20 a P-37. Ninguna regla cambia.
+
+## ADR-098 · P14.5: lo que trae la hoja piloto de Jeremy, por fases — aceptada (2026-11-08)
+Contexto: la hoja piloto «JV Fitness · Mi plan» (2026-11-07, interna hasta que Jeremy la valide) trae funciones que la app no tiene:
+metas de alimentación por tipo de día, panel de fatiga y recuperación, volumen ajustado por RIR y descanso, fatiga por grupo muscular,
+check-in semanal, informe mensual con fotos y expediente de documentos. ADR-097 cargó a Mateo en la Demo 3 y dejó las preguntas P-20 a
+P-37. Rodrigo aprobó el 2026-11-08 cerrar P14 primero y hacer P14.5 antes de P15.
+Decisión:
+- P14.5, en tres fases, cada PR contra main:
+  - fase A, sin esperar respuestas: PR 1a, metas de día de entrenamiento y de descanso (por defecto, como la hoja: proteína y grasa
+    fijas y carbohidratos por diferencia; se confirma P-20 antes de fusionar); PR 2, volumen ajustado; PR 6a, la cadera en Progreso
+    de la app, la comparativa inicial → actual en el panel y el estrés en el resumen del control semanal;
+  - fase B, con las respuestas de Jeremy: PR 3, panel de fatiga (P-23 a P-25); PR 4, fatiga por grupo muscular (P-27); PR 5,
+    check-in semanal (P-21, P-22); PR 1b, comidas por tipo de día (P-20.5); PR 9, la prescripción de la hoja (P-34, P-35, P-37);
+  - fase C, fuera del contrato: PR 7, informe mensual (sería la sexta ficha; P-28, P-29); PR 6b, fotos con consentimiento propio
+    (P-30); PR 8, expediente (P-31). Solo con acuerdo y cotización por la cláusula décimo segunda.
+- Lo que depende de una respuesta se construye con sus valores como datos versionados (como los umbrales de 07 §11) y no se publica
+  con valores inventados: un factor que la hoja no trae queda «sin factor».
+Consecuencias:
+- El prompt P14.5 está en Notion (Prompts P9 a P16), con su fila en el orden de prompts (semana 7) y el riesgo R9 en Proyecto.
+- Si el proyecto empezó el 24-09, la Demo 4 cae el 25-11: lo que no entre se acuerda con Jeremy antes de mover la fecha.
