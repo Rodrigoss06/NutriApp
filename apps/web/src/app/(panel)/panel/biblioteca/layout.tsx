@@ -3,7 +3,7 @@ import { LibraryTabs } from '@/features/food/library-tabs';
 
 /**
  * Biblioteca (RF-38): alimentos de referencia y propios, recetas (RF-21), un plato armado, actividades, listas de
- * intercambio y ejercicios con su tabla patrón × nivel (RF-25).
+ * intercambio, ejercicios con su tabla patrón × nivel (RF-25) y el material educativo (RF-30).
  */
 export default function LibraryLayout({ children }: { children: ReactNode }) {
   return (

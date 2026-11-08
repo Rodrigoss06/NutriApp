@@ -2229,3 +2229,40 @@ Consecuencias:
   alerta se apaga.
 - Para Notion (/notion-sync de P14): 04 RF-34 (las alertas y sus valores), 05.3 (`patient_overview`: quién la recalcula y que
   `next_appointment_at` llega con P15) y 02 §8 (el consumidor `analytics.overview`).
+
+## ADR-094 · Material educativo — aceptada (2026-11-07)
+Contexto: P14, PR 6b (RF-30; RN-A05, RN-B03; ADR-038, ADR-086). `content.educational_resource` y `content.resource_assignment`
+existían desde P2 (05.3), vacías. Rodrigo decidió el 2026-11-07 que entran los cuatro tipos del modelo.
+Decisión:
+- La biblioteca es de la organización: cualquier profesional la lee y la escribe (permisos `catalog.read` y `catalog.write`, como los
+  alimentos propios). Los cuatro tipos:
+  - enlace y video: una URL https; el paciente la abre afuera (sin incrustar, para no tocar la CSP);
+  - artículo: hasta 20 000 caracteres con formato simple («#», «##», «###», listas con «-» o «*» y **negrita**); la web lo muestra
+    sin interpretar HTML;
+  - PDF: hasta 5 MB por multipart, con el tipo sacado de los bytes y registrado con FileRegistry (`EDUCATIONAL_RESOURCE`).
+- Un recurso cambia de título, etiquetas o contenido sin cambiar de tipo; archivarlo lo quita de la biblioteca y de la app sin borrar
+  sus asignaciones, y uno archivado solo se restaura.
+- Asignar o quitar un recurso exige acceso de escritura al paciente (RN-A05). Repetir la asignación no la duplica, y quitarla borra la
+  fila (`GRANT DELETE`, con `patient_no_delete` para el paciente).
+- El paciente ve lo vigente que su equipo le asignó en Más › Material, si la sección `RESOURCES` está activa. Al abrir un recurso,
+  la app avisa (`POST /me/resources/:id/view`) y queda la primera hora en `viewed_at` (ADR-086). Lo hace
+  `app.mark_resource_viewed(uuid)`, SECURITY DEFINER, que solo escribe esa columna en una asignación suya: una política de escritura le
+  dejaría cambiar cualquier columna.
+- El PDF se descarga solo por la API, como adjunto y auditado como exportación (ADR-038, RN-B03), por el equipo desde la biblioteca o
+  por el paciente si lo tiene asignado y vigente.
+- Migración `202611070000_content_resources`: las restricciones de estado y de contenido por tipo, los índices de la biblioteca y de lo
+  asignado a cada paciente, el permiso de borrar asignaciones y la función.
+- Eventos `content.resource.created`, `updated`, `assigned`, `unassigned` y `viewed`, en la auditoría como CREATE, UPDATE, GRANT,
+  REVOKE y UPDATE.
+- Pantallas:
+  - Biblioteca › Material educativo, para agregar y archivar;
+  - en la app de cada paciente, Material educativo: asignar, quitar y ver si lo abrió;
+  - en la app del paciente, Material, con el artículo en pantalla y el botón de cada tipo.
+Consecuencias:
+- Integración `resources.int.spec.ts`: los cuatro tipos y el PDF falso (415), el tipo que no cambia, la asignación del equipo y no de
+  alguien de fuera, lo que ve cada paciente, la primera hora que no cambia, la descarga auditada, y el archivado y quitar la asignación.
+  La prueba del catálogo cuenta la función nueva.
+- E2E `e2e/material.spec.ts` en escritorio y celular, con axe: el artículo y el PDF que se agregan, se asignan a Luis, él los abre y su
+  equipo ve que los abrió.
+- Para Notion (/notion-sync de P14): 05.3 (las restricciones, los índices, el borrado de asignaciones y `app.mark_resource_viewed`),
+  04 RF-30 (los cuatro tipos y la marca de visto) y 06 (los códigos NC-CON-003 a NC-CON-007).

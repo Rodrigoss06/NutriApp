@@ -44,3 +44,4 @@ export * from './analytics/overview.js';
 export * from './analytics/training.js';
 export * from './analytics/trend.js';
 export * from './content/app.js';
+export * from './content/resources.js';
