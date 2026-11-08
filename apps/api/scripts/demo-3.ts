@@ -5,6 +5,8 @@
  *   (1910 kcal de promedio, 104.1 % de adecuación y 4 de 7 días en rango) y de rutina, el control semanal y el panel con datos.
  * - Mateo Prueba (seeds/mateo/demo-3.json): el alumno ficticio de la hoja piloto de Jeremy y su mes de octubre, para comparar la
  *   app con la hoja. El control de sus cuatro semanas da lo que da la hoja: descarga, descarga, continuar y continuar (07 §10).
+ *   Su plan tiene los perfiles de día de las respuestas de Jeremy a P-20 (P14.5, ADR-101): Entrenamiento es su prescripción,
+ *   2,510 kcal, y Descanso, 2,230; cada día de octubre lleva la meta del perfil que pide su programa.
  *
  * Por la API, como la dueña demo (igual que demo:2): los perfiles de entrenamiento y los programas, publicados (RN-F12). Por SQL,
  * con source IMPORT, lo que la app ya no deja registrar, porque son días cerrados (RN-G10) o porque el profesional no registra por
@@ -70,6 +72,8 @@ export interface Demo3Report {
   };
   readonly mateo: {
     readonly patient: Outcome;
+    /** Su plan con los perfiles de día (P14.5): Entrenamiento 2,510 kcal y Descanso 2,230. */
+    readonly plan: Outcome;
     readonly program: Outcome;
     /** Los controles de sus semanas cerradas, en orden; vacío si el programa ya estaba. */
     readonly reviews: readonly WeekReview[];
@@ -309,6 +313,9 @@ const TARGET_COLUMNS = [
   ['water_ml', 'int'],
   ['planned_sessions', 'smallint'],
   ['planned_sets', 'jsonb'],
+  ['day_kind', 'text'],
+  ['day_profile_code', 'text'],
+  ['day_profile_name', 'text'],
 ] as const;
 
 /** Las metas de cada día (RN-G03): las que ya existían se completan con lo del programa. */
@@ -319,7 +326,9 @@ async function upsertTargets(db: Demo3Db, rows: readonly unknown[][]): Promise<v
      ON CONFLICT (patient_id, local_date) DO UPDATE SET
        nutrition_plan_id = EXCLUDED.nutrition_plan_id, kcal = EXCLUDED.kcal, cho_g = EXCLUDED.cho_g,
        protein_g = EXCLUDED.protein_g, fat_g = EXCLUDED.fat_g, water_ml = EXCLUDED.water_ml,
-       planned_sessions = EXCLUDED.planned_sessions, planned_sets = EXCLUDED.planned_sets`,
+       planned_sessions = EXCLUDED.planned_sessions, planned_sets = EXCLUDED.planned_sets,
+       day_kind = EXCLUDED.day_kind, day_profile_code = EXCLUDED.day_profile_code,
+       day_profile_name = EXCLUDED.day_profile_name`,
     TARGET_COLUMNS.map((_, i) => rows.map((row) => row[i])),
   );
 }
@@ -662,6 +671,9 @@ async function importLuisWeek(
       plan.hydration_target_ml ?? 2_000,
       sessions.length,
       JSON.stringify(plannedSets(sessions)),
+      sessions.length > 0 ? 'TRAINING' : 'REST',
+      null,
+      null,
     ]);
     const kcal = luis.week.kcal[d] ?? target.kcal;
     const factor = kcal / target.kcal;
@@ -1112,12 +1124,205 @@ interface LoggedSession {
  * El mes de Mateo con source IMPORT: las metas de entrenamiento de cada día, los entrenos de la hoja con sus series (la ausencia
  * del 22/10 queda como sesión no hecha, con su motivo) y un registro diario por día con los valores de su semana.
  */
+/**
+ * La meta de un día de Mateo (RN-G03): la del perfil que pide su programa (07 §2, P-20.4). Un día con sesión es Entrenamiento,
+ * su prescripción; uno sin sesión, Descanso. Una ausencia no la cambia: nadie reprogramó la sesión (P-20.3).
+ */
+function mateoTarget(
+  organizationId: string,
+  mateoId: string,
+  date: string,
+  planned: readonly SnapshotSession[],
+  plan: MateoPlan,
+): unknown[] {
+  const rest = plan.dayProfiles.find((profile) => profile.code === 'REST');
+  const profile =
+    planned.length > 0 || !rest
+      ? { code: 'TRAINING', name: 'Entrenamiento', ...plan.targets }
+      : rest;
+  return [
+    mateoId,
+    date,
+    organizationId,
+    plan.id,
+    profile.kcal,
+    profile.choG,
+    profile.proteinG,
+    profile.fatG,
+    plan.hydrationTargetMl,
+    planned.length,
+    JSON.stringify(plannedSets(planned)),
+    planned.length > 0 ? 'TRAINING' : 'REST',
+    profile.code,
+    profile.name,
+  ];
+}
+
+/** Las sesiones del programa que caen en cada día del mes de Mateo, semana por semana. */
+function mateoDays(
+  snapshot: ProgramSnapshot,
+): { readonly date: string; readonly planned: readonly SnapshotSession[] }[] {
+  const weeks = snapshot.mesocycles.flatMap((mesocycle) => mesocycle.weeks);
+  return mateo.weeks.flatMap((logged) => {
+    const week = weeks.find((w) => w.weekNo === logged.weekNo);
+    const weekStart = addDays(mateo.program.startDate, 7 * (logged.weekNo - 1));
+    return Array.from({ length: 7 }, (_, d) => {
+      const date = addDays(weekStart, d);
+      return {
+        date,
+        planned: (week?.sessions ?? []).filter((s) => s.dayOfWeek === isoWeekday(date)),
+      };
+    });
+  });
+}
+
+interface MateoPlan {
+  readonly id: string;
+  readonly targets: { kcal: number; choG: number; proteinG: number; fatG: number };
+  readonly dayProfiles: readonly {
+    code: string;
+    name: string;
+    kcal: number;
+    choG: number;
+    proteinG: number;
+    fatG: number;
+  }[];
+  readonly hydrationTargetMl: number;
+}
+
+interface FoodHit {
+  readonly id: string;
+  readonly name: string;
+  readonly own: boolean;
+}
+
+/**
+ * El plan de Mateo por la API (P14.5, ADR-101): su prescripción con la meta de Entrenamiento de la hoja, 160/310/70 g (2,510 kcal),
+ * y la composición con el perfil Descanso, 160/240/70 g (2,230 kcal; mandan los gramos, P-20.2). La prescripción sale de su
+ * evaluación del 05/10: la vista previa da su GET y el ajuste lo lleva a 2,510 kcal. Si ya tiene un plan publicado, no se toca.
+ */
+async function publishMateoPlan(
+  api: Demo3Api,
+  mateoId: string,
+): Promise<{ readonly outcome: Outcome; readonly plan: MateoPlan }> {
+  const { nutrition } = mateo;
+  const listed = await ok(
+    api,
+    'leer los planes de Mateo',
+    'GET',
+    `/patients/${mateoId}/nutrition-plans`,
+  );
+  const published = (listed as { plans: { id: string; status: string }[] }).plans.find(
+    (p) => p.status === 'PUBLISHED',
+  );
+  if (published) {
+    const plan = await ok(api, 'leer el plan de Mateo', 'GET', `/nutrition-plans/${published.id}`);
+    return { outcome: 'EXISTING', plan: plan as MateoPlan };
+  }
+
+  const evaluations = await ok(
+    api,
+    'leer las evaluaciones de Mateo',
+    'GET',
+    `/patients/${mateoId}/evaluations`,
+  );
+  const [first] = (
+    evaluations as { evaluations: { id: string; status: string; measuredAt: string }[] }
+  ).evaluations
+    .filter((e) => e.status === 'CLOSED')
+    .sort((a, b) => a.measuredAt.localeCompare(b.measuredAt));
+  if (!first) throw new Error('Mateo no tiene una evaluación cerrada.');
+  const [weighed] = mateo.evaluations;
+  if (!weighed) throw new Error('La semilla de Mateo no trae su primera evaluación.');
+  const { training } = nutrition;
+  const base = {
+    ...nutrition.prescription,
+    evaluationId: first.id,
+    // La proteína y la grasa de la hoja: 160 g con 80 kg es 2 g/kg, y 70 g son el 25.1 % de 2,510 kcal (RN-E07).
+    proteinGPerKg: training.proteinG / weighed.weightKg,
+    fatPctKcal: ((training.fatG * 9) / training.kcal) * 100,
+    targetFatPct: null,
+  };
+  const preview = (await ok(
+    api,
+    'calcular el gasto de Mateo',
+    'POST',
+    `/patients/${mateoId}/energy-prescriptions/preview`,
+    {
+      body: { ...base, adjustment: { kind: 'KCAL_PER_DAY', kcalPerDay: 0 } },
+    },
+  )) as { tee: { teeKcal: number } };
+  const prescription = (await ok(
+    api,
+    'prescribir la energía de Mateo',
+    'POST',
+    `/patients/${mateoId}/energy-prescriptions`,
+    {
+      body: {
+        ...base,
+        adjustment: { kind: 'KCAL_PER_DAY', kcalPerDay: training.kcal - preview.tee.teeKcal },
+      },
+    },
+  )) as { id: string };
+
+  const items = [];
+  for (const meal of nutrition.meals) {
+    const foods = [];
+    for (const item of meal.items) {
+      const found = (await ok(
+        api,
+        `buscar «${item.food}»`,
+        'GET',
+        `/foods?q=${encodeURIComponent(item.food)}&limit=20`,
+      )) as { foods: FoodHit[] };
+      const food = found.foods.find((f) => f.name === item.food && !f.own);
+      if (!food) throw new Error(`El catálogo no trae «${item.food}»: corre pnpm catalog:load.`);
+      foods.push({ itemType: 'FOOD', foodId: food.id, grams: item.grams, householdText: null });
+    }
+    items.push({
+      slotCode: meal.slotCode,
+      name: meal.name,
+      timeOfDay: meal.timeOfDay,
+      sharePct: meal.sharePct,
+      items: foods,
+    });
+  }
+  const draft = (await ok(
+    api,
+    'crear el plan de Mateo',
+    'POST',
+    `/patients/${mateoId}/nutrition-plans`,
+    {
+      body: { modality: 'COMPOSITION', energyPrescriptionId: prescription.id },
+    },
+  )) as { id: string; version: number };
+  const saved = (await ok(api, 'armar el plan de Mateo', 'PUT', `/nutrition-plans/${draft.id}`, {
+    body: {
+      modality: 'COMPOSITION',
+      meals: items,
+      hydrationTargetMl: nutrition.hydrationTargetMl,
+      instructions: null,
+      dayProfiles: [nutrition.restProfile],
+    },
+    ifMatch: draft.version,
+  })) as { id: string; version: number };
+  const plan = await ok(
+    api,
+    'publicar el plan de Mateo',
+    'POST',
+    `/nutrition-plans/${saved.id}/publish`,
+    { ifMatch: saved.version },
+  );
+  return { outcome: 'CREATED', plan: plan as MateoPlan };
+}
+
 async function importMateoMonth(
   db: Demo3Db,
   organizationId: string,
   mateoId: string,
   programId: string,
   snapshot: ProgramSnapshot,
+  plan: MateoPlan,
 ): Promise<void> {
   const weeks = snapshot.mesocycles.flatMap((mesocycle) =>
     mesocycle.weeks.map((week) => ({ mesocycleId: mesocycle.id, week })),
@@ -1138,19 +1343,7 @@ async function importMateoMonth(
       const planned = place.week.sessions.filter(
         (session) => session.dayOfWeek === isoWeekday(date),
       );
-      targets.push([
-        mateoId,
-        date,
-        organizationId,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        planned.length,
-        JSON.stringify(plannedSets(planned)),
-      ]);
+      targets.push(mateoTarget(organizationId, mateoId, date, planned, plan));
       const entry: LoggedSession | undefined = logged.sessions.find((item) => item.date === date);
       const session = planned[0];
       const trained = entry !== undefined && session !== undefined && entry.absence === undefined;
@@ -1239,8 +1432,28 @@ async function seedMateo(
     .length;
   if (!exists) await insertMateo(db, place, mateoId);
   const patient: Outcome = exists ? 'EXISTING' : 'CREATED';
+  const { outcome: planOutcome, plan } = await publishMateoPlan(api, mateoId);
   if ((await programNames(api, mateoId)).includes(mateo.program.name)) {
-    return { patient, program: 'EXISTING', reviews: [] };
+    if (planOutcome === 'CREATED') {
+      // Un mes ya importado sin plan (una demo anterior a P14.5): sus metas toman ahora la del perfil de cada día.
+      const [row] = (
+        await db.query(
+          `SELECT id FROM training.program WHERE patient_id = $1 AND name = $2 AND status = 'PUBLISHED'`,
+          [mateoId, mateo.program.name],
+        )
+      ).rows as { id: string }[];
+      if (row) {
+        const snapshot = await snapshotOf(db, row.id);
+        await upsertTargets(
+          db,
+          mateoDays(snapshot).map(({ date, planned }) =>
+            mateoTarget(place.organizationId, mateoId, date, planned, plan),
+          ),
+        );
+        await options.rebuild(mateoId);
+      }
+    }
+    return { patient, plan: planOutcome, program: 'EXISTING', reviews: [] };
   }
   const programId = await publishMateoProgram(api, mateoId);
   await ensureThreshold(db, place.organizationId, mateo.registeredAt.slice(0, 10));
@@ -1250,9 +1463,15 @@ async function seedMateo(
     mateoId,
     programId,
     await snapshotOf(db, programId),
+    plan,
   );
   await options.rebuild(mateoId);
-  return { patient, program: 'CREATED', reviews: await weeklyReviews(api, mateoId) };
+  return {
+    patient,
+    plan: planOutcome,
+    program: 'CREATED',
+    reviews: await weeklyReviews(api, mateoId),
+  };
 }
 
 export interface Demo3Options {
@@ -1357,8 +1576,13 @@ if (import.meta.main) {
             `registrada. Control de la semana 1: ${report.luis.light ?? 'sin calcular'}.`,
     );
     console.log(
+      report.mateo.plan === 'EXISTING'
+        ? 'Mateo ya tiene su plan publicado.'
+        : 'Mateo: plan publicado con Entrenamiento (2,510 kcal) y Descanso (2,230 kcal).',
+    );
+    console.log(
       report.mateo.program === 'EXISTING'
-        ? 'Mateo ya tiene «Full Body»: no se cambió nada.'
+        ? 'Mateo ya tiene «Full Body»: no se cambió su mes.'
         : `Mateo: ficha ${report.mateo.patient === 'CREATED' ? 'creada' : 'ya existía'}, «Full Body» publicada y su mes ` +
             `registrado. Controles: ${report.mateo.reviews.map(lightLabel).join('; ')}.`,
     );

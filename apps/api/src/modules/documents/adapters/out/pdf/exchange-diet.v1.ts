@@ -13,7 +13,7 @@ import {
   table,
   type SheetFrame,
 } from './sheet-kit.js';
-import { energyCard, patientLine } from './plan-parts.js';
+import { dayProfilesSection, energyCard, patientLine } from './plan-parts.js';
 
 /**
  * Ficha de la dieta por intercambios, versión 1.0.0 (RF-24, RN-H01): metas con su método (RN-D02, RN-H04), lo que
@@ -150,15 +150,17 @@ function meals(sheet: ExchangeDietSheet, frame: SheetFrame): ReactElement {
   );
 }
 
-export function exchangeDietV1(
+function exchangeDiet(
   sheet: ExchangeDietSheet,
   frame: SheetFrame,
+  withProfiles: boolean,
 ): ReactElement<DocumentProps> {
   const { patient } = sheet;
   return sheetDocument(
     frame,
     patientLine(patient),
     targets(sheet, frame),
+    withProfiles ? dayProfilesSection(sheet.targets, sheet.dayProfiles, frame) : null,
     sheet.hydrationMl === null
       ? null
       : section(
@@ -192,6 +194,14 @@ export function exchangeDietV1(
 }
 
 /** El título y el subtítulo del encabezado de esta ficha. */
+/** Versión 1.0.0: la de P11, igual para volver a dibujar lo que ya se generó (RN-H02). */
+export const exchangeDietV1 = (sheet: ExchangeDietSheet, frame: SheetFrame) =>
+  exchangeDiet(sheet, frame, false);
+
+/** Versión 1.1.0 (P14.5): además, la meta de cada perfil de día (07 §2). */
+export const exchangeDietV110 = (sheet: ExchangeDietSheet, frame: SheetFrame) =>
+  exchangeDiet(sheet, frame, true);
+
 export function exchangeDietTitles(sheet: ExchangeDietSheet): { title: string; subtitle: string } {
   return {
     title: 'Dieta por intercambios',

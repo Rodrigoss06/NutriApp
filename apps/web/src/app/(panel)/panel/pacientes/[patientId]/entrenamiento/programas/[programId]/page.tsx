@@ -1,4 +1,6 @@
 import type {
+  NutritionPlan,
+  NutritionPlanListResponse,
   ProgramDetail,
   ProgramListResponse,
   TrainingSafetyResponse,
@@ -12,6 +14,18 @@ import { serverApi } from '@/lib/api/server';
 
 export const metadata: Metadata = { title: 'Programa de entrenamiento' };
 
+/**
+ * Los perfiles de día del plan nutricional más reciente del paciente, publicado o en borrador (07 §2, P-20.4): la sesión elige
+ * uno. Un perfil que todavía no se publicó vale desde que se publique el plan.
+ */
+async function dayProfilesOf(path: string): Promise<{ code: string; name: string }[]> {
+  const plans = await serverApi<NutritionPlanListResponse>(`${path}/nutrition-plans`);
+  const [latest] = plans.ok ? plans.data.plans : [];
+  if (!latest) return [];
+  const plan = await serverApi<NutritionPlan>(`/nutrition-plans/${encodeURIComponent(latest.id)}`);
+  return plan.ok ? plan.data.dayProfiles.map(({ code, name }) => ({ code, name })) : [];
+}
+
 /** Un programa, en borrador o publicado (RF-26, RN-F12). Leerlo deja un READ en la auditoría (RN-B03). */
 export default async function ProgramPage({
   params,
@@ -20,12 +34,13 @@ export default async function ProgramPage({
 }) {
   const { patientId, programId } = await params;
   const path = `/patients/${encodeURIComponent(patientId)}`;
-  const [patient, program, programs, safety, members] = await Promise.all([
+  const [patient, program, programs, safety, members, dayProfiles] = await Promise.all([
     getPatient(patientId),
     serverApi<ProgramDetail>(`/training-programs/${encodeURIComponent(programId)}`),
     serverApi<ProgramListResponse>(`${path}/training-programs`),
     serverApi<TrainingSafetyResponse>(`${path}/training-safety`),
     getMembers(),
+    dayProfilesOf(path),
   ]);
   const base = `/panel/pacientes/${patientId}/entrenamiento/programas`;
   if (!patient.ok) return null;
@@ -53,6 +68,7 @@ export default async function ProgramPage({
       members={members.data.members}
       archived={patient.data.status === 'ARCHIVED'}
       base={base}
+      dayProfiles={dayProfiles}
     />
   );
 }

@@ -1,6 +1,7 @@
 import type { ExchangeNutritionPlan } from '@nutricoach/contracts';
 import { enterStyle, formatNumber } from '@nutricoach/ui';
 import type { ReactNode } from 'react';
+import { DayProfilesTable } from './day-profiles-table';
 import { AdequacyTable, ExchangeTable, SplitTable } from './plan-tables';
 
 const ML = new Intl.NumberFormat('es-PE');
@@ -44,6 +45,7 @@ export function PlanView({ plan }: { plan: ExchangeNutritionPlan }) {
     <div className="flex flex-col gap-8">
       <Block id="plan-adecuacion" title="Metas y adecuación" order={0}>
         <AdequacyTable calculation={plan} />
+        <DayProfilesTable training={plan.targets} profiles={plan.dayProfiles} />
       </Block>
 
       <Block id="plan-intercambios" title="Intercambios del día" order={1}>

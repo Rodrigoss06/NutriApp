@@ -27,7 +27,7 @@ import { ProgramMacrocycle } from './program-macrocycle';
 import { ProgramPublishPanel, WeekSaveBar } from './program-publish';
 import { DuplicateWeek, MesocycleManager, WeekNav } from './program-structure';
 import { ProgramWeekView, WeekMuscleSets, WeekPlan } from './program-week-view';
-import { WeekEditor } from './program-week-editor';
+import { WeekEditor, type DayProfileOption } from './program-week-editor';
 import { ProposalBlocks } from './proposal-blocks';
 import { useEditsRecord } from './use-edits-record';
 import { useProgram } from './use-program';
@@ -45,6 +45,7 @@ export function ProgramEditor({
   members,
   archived,
   base,
+  dayProfiles,
 }: {
   initial: ProgramDetail;
   patientId: string;
@@ -55,6 +56,8 @@ export function ProgramEditor({
   members: readonly MemberResponse[];
   archived: boolean;
   base: string;
+  /** Los perfiles de día del plan nutricional del paciente, para la sesión (P-20.4). */
+  dayProfiles: readonly DayProfileOption[];
 }) {
   const router = useRouter();
   const { program, write } = useProgram(initial);
@@ -187,6 +190,7 @@ export function ProgramEditor({
                 draft={draft}
                 origin={program.origin}
                 saving={save.isPending}
+                profiles={dayProfiles}
                 onChange={(next) => {
                   setEdited(saved && sameDraft(next, saved) ? null : next);
                 }}
@@ -222,7 +226,7 @@ export function ProgramEditor({
               />
             </>
           ) : (
-            <ProgramWeekView week={week} document={document} />
+            <ProgramWeekView week={week} document={document} profiles={dayProfiles} />
           )}
         </div>
       ) : null}

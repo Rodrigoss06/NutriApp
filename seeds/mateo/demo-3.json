@@ -117,5 +117,63 @@
         { "date": "2026-10-31", "reps": 10, "loadKg": 40 }
       ]
     }
-  ]
+  ],
+  "nutrition": {
+    "_comment": "La hoja piloto con las respuestas de Jeremy a P-20 (2026-11-08): mandan los gramos. Entrenamiento es la prescripción, 160/310/70 g (2,510 kcal); Descanso, 160/240/70 g (2,230 kcal). La composición son alimentos de la TPCA con todos sus datos, cerca de la meta de Entrenamiento; el mismo plan los dos días hasta el PR 1b (P-20.5).",
+    "training": { "kcal": 2510, "choG": 310, "proteinG": 160, "fatG": 70 },
+    "restProfile": { "code": "REST", "name": "Descanso", "choG": 240, "proteinG": 160, "fatG": 70 },
+    "prescription": {
+      "rmrMethodCode": "RMR_MIFFLIN1990",
+      "strategy": "ADDITIVE",
+      "pal": 1.55,
+      "activities": [],
+      "goal": "LOSE_FAT"
+    },
+    "hydrationTargetMl": 3000,
+    "meals": [
+      {
+        "slotCode": "BREAKFAST",
+        "name": "Desayuno",
+        "timeOfDay": "07:30",
+        "sharePct": 25,
+        "items": [
+          { "food": "Avena, hojuela cruda", "grams": 100 },
+          { "food": "Leche fresca de vaca", "grams": 300 },
+          { "food": "Plátano de seda", "grams": 120 }
+        ]
+      },
+      {
+        "slotCode": "LUNCH",
+        "name": "Almuerzo",
+        "timeOfDay": "13:00",
+        "sharePct": 35,
+        "items": [
+          { "food": "Arroz pilado o pulido cocido", "grams": 350 },
+          { "food": "Pescado bonito, pulpa asada", "grams": 250 },
+          { "food": "Aceite vegetal de olivo", "grams": 15 }
+        ]
+      },
+      {
+        "slotCode": "AFTERNOON",
+        "name": "Media tarde",
+        "timeOfDay": "16:30",
+        "sharePct": 15,
+        "items": [
+          { "food": "Pan francés fortificado con hierro", "grams": 100 },
+          { "food": "Leche fresca de vaca", "grams": 200 }
+        ]
+      },
+      {
+        "slotCode": "DINNER",
+        "name": "Cena",
+        "timeOfDay": "20:00",
+        "sharePct": 25,
+        "items": [
+          { "food": "Papa blanca", "grams": 200 },
+          { "food": "Pescado cojinova", "grams": 250 },
+          { "food": "Aceite vegetal de olivo", "grams": 15 }
+        ]
+      }
+    ]
+  }
 }

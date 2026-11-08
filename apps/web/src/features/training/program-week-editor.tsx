@@ -296,16 +296,39 @@ function ExerciseEditor({
   );
 }
 
+/** Un perfil de día del plan nutricional del paciente (P-20.4): su código y su nombre. */
+export interface DayProfileOption {
+  readonly code: string;
+  readonly name: string;
+}
+
+/**
+ * Las opciones del perfil de una sesión: Entrenamiento (sin perfil) y los del plan. Un código guardado que el plan ya no tiene
+ * sigue en la lista, para que no se pierda al guardar: ese día lleva la meta de la prescripción.
+ */
+function profileOptions(profiles: readonly DayProfileOption[], current: string | null) {
+  const options = [
+    { value: NONE, label: 'Entrenamiento (la prescripción)' },
+    ...profiles.map((profile) => ({ value: profile.code, label: profile.name })),
+  ];
+  if (current && !profiles.some((profile) => profile.code === current)) {
+    options.push({ value: current, label: `${current} (no está en el plan)` });
+  }
+  return options;
+}
+
 function SessionEditor({
   session,
   position,
   showApproval,
+  profiles,
   onChange,
   onRemove,
 }: {
   session: SessionDraft;
   position: number;
   showApproval: boolean;
+  profiles: readonly DayProfileOption[];
   onChange: (session: SessionDraft) => void;
   onRemove: () => void;
 }) {
@@ -337,7 +360,7 @@ function SessionEditor({
           </span>
         </summary>
         <div className="flex flex-col gap-3 pt-2">
-          <div className="grid items-start gap-3 sm:grid-cols-[minmax(0,1fr)_14rem]">
+          <div className="grid items-start gap-3 sm:grid-cols-2 lg:grid-cols-[minmax(0,1fr)_14rem_14rem]">
             <TextField
               label="Nombre de la sesión"
               maxLength={120}
@@ -354,6 +377,15 @@ function SessionEditor({
               value={session.dayOfWeek}
               onValueChange={(dayOfWeek) => {
                 onChange({ ...session, dayOfWeek });
+              }}
+            />
+            <Select
+              label="Perfil del día"
+              hint="La meta de alimentación de ese día (07 §2). Sin perfil, Entrenamiento."
+              options={profileOptions(profiles, session.dayProfileCode)}
+              value={session.dayProfileCode ?? NONE}
+              onValueChange={(code) => {
+                onChange({ ...session, dayProfileCode: code === NONE ? null : code });
               }}
             />
           </div>
@@ -504,12 +536,15 @@ export function WeekEditor({
   draft,
   origin,
   saving,
+  profiles,
   onChange,
 }: {
   weekNo: number;
   draft: WeekDraft;
   origin: ProgramOrigin;
   saving: boolean;
+  /** Los perfiles de día del plan nutricional del paciente (P-20.4), para elegir el de cada sesión. */
+  profiles: readonly DayProfileOption[];
   onChange: (draft: WeekDraft) => void;
 }) {
   const { sessions } = draft;
@@ -523,6 +558,7 @@ export function WeekEditor({
           session={session}
           position={index + 1}
           showApproval={origin === 'PROPOSAL'}
+          profiles={profiles}
           onChange={(next) => {
             onChange({ ...draft, sessions: replaceAt(sessions, index, next) });
           }}

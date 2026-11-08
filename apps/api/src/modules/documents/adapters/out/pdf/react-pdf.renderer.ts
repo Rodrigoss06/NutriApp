@@ -9,10 +9,10 @@ import type { ExchangeDietSheet, SheetContent } from '../../../application/sheet
 import type { TrainingSheet } from '../../../application/sheets/training-sheet.js';
 import { anthropometryTitles, anthropometryV1, anthropometryV101 } from './anthropometry.v1.js';
 import { evolutionTitles, evolutionV1 } from './evolution.v1.js';
-import { exchangeDietTitles, exchangeDietV1 } from './exchange-diet.v1.js';
+import { exchangeDietTitles, exchangeDietV1, exchangeDietV110 } from './exchange-diet.v1.js';
 import { sheetColors, type SheetFrame } from './sheet-kit.js';
 import { trainingTitles, trainingV1 } from './training.v1.js';
-import { weeklyMenuTitles, weeklyMenuV1 } from './weekly-menu.v1.js';
+import { weeklyMenuTitles, weeklyMenuV1, weeklyMenuV110 } from './weekly-menu.v1.js';
 
 type Template = (content: SheetContent, input: SheetRender) => ReactElement<DocumentProps>;
 
@@ -50,7 +50,13 @@ const TEMPLATES: Readonly<Record<string, Template>> = {
     exchangeDietV1,
     exchangeDietTitles,
   ),
+  'EXCHANGE_DIET@1.1.0': template<ExchangeDietSheet>(
+    'EXCHANGE_DIET',
+    exchangeDietV110,
+    exchangeDietTitles,
+  ),
   'WEEKLY_MENU@1.0.0': template<MenuSheet>('WEEKLY_MENU', weeklyMenuV1, weeklyMenuTitles),
+  'WEEKLY_MENU@1.1.0': template<MenuSheet>('WEEKLY_MENU', weeklyMenuV110, weeklyMenuTitles),
   'ANTHROPOMETRY@1.0.0': template<AnthropometrySheet>(
     'ANTHROPOMETRY',
     anthropometryV1,

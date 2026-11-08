@@ -47,7 +47,7 @@
 | Consultorio Demo | La organización de las demos 1 y 2. Toma los umbrales de la V3 (07 §11) desde el 05/10, para que el mes de Mateo tenga control |
 | Dueña Demo | Dueña, nutricionista y coach: atiende a Luis y a Mateo |
 | Luis | Lo de la Demo 2, más: su perfil de entrenamiento, «Fuerza base» (4 semanas desde el lunes de la semana pasada), su semana G-20 registrada y su control |
-| Mateo Prueba | Dos evaluaciones básicas con bioimpedancia (05/10 y 31/10). «Full Body» con las fases de pérdida de grasa de la V3, semanas 1 a 8 desde el 06/10. 11 entrenos y 1 ausencia, 28 registros diarios y los controles de sus 4 semanas |
+| Mateo Prueba | Dos evaluaciones básicas con bioimpedancia (05/10 y 31/10). Su plan por composición con dos perfiles de día: Entrenamiento, 2,510 kcal (160/310/70 g, su prescripción), y Descanso, 2,230 kcal (160/240/70 g). «Full Body» con las fases de pérdida de grasa de la V3, semanas 1 a 8 desde el 06/10. 11 entrenos y 1 ausencia, 28 registros diarios y los controles de sus 4 semanas |
 | Paciente de prueba | Su semana registrada desde el celular |
 | Catálogos | 169 ejercicios base, la tabla patrón × nivel de la V3 y 560 actividades del Compendium 2024 |
 
@@ -172,7 +172,8 @@ del evaluador (RN-C06).
 
 | Coincide | Difiere o falta (P14.5) |
 |---|---|
-| El macrociclo V3 de las semanas 1 a 8 | Metas de alimentación por tipo de día (2,500 y 2,250 kcal): la app usa una por plan |
+| Las metas por tipo de día, con las respuestas de Jeremy a P-20: mandan los gramos, así que son 2,510 y 2,230 kcal. Cada día de octubre lleva la de su perfil: Entrenamiento si tiene sesión y Descanso si no | Las comidas por tipo de día: hoy el plan es el mismo los dos días (PR 1b) |
+| El macrociclo V3 de las semanas 1 a 8 | «No entreno hoy» y «mover a mañana» (PR 1e) |
 | El control de las 4 semanas | El panel de fatiga y recuperación, y el volumen ajustado por RIR y descanso |
 | El 1RM de Epley y el porcentaje | La fatiga por grupo muscular: faltan los coeficientes de cada ejercicio |
 | Las sesiones (11 de 12), el sueño, el rendimiento y la alimentación por semana | El informe mensual, las fotos y la cadera en Progreso de la app |
@@ -185,6 +186,12 @@ Dos diferencias de datos de la hoja:
   y sábado. La app sigue las fechas.
 
 Las dos están en las preguntas para Jeremy (`docs/preguntas/hoja-piloto-mateo.md`).
+
+**Qué decir de los perfiles de día:**
+- Jeremy respondió P-20: los gramos mandan y hay más tipos de día que entrenamiento y descanso.
+- En el plan de Mateo, Descanso trae la proteína y la grasa de Entrenamiento ya puestas.
+- El programa elige el perfil de cada día. La ausencia del 22/10 no cambia su meta, porque nadie reprogramó la sesión
+  (P-20.3).
 
 ## 10 · Rendimiento (RNF-01, criterio 4 de P14) · 1 min
 

@@ -137,9 +137,12 @@ function SetsTable({ exercise }: { exercise: Exercise }) {
 export function ProgramWeekView({
   week,
   document,
+  profiles,
 }: {
   week: ProgramWeek;
   document: ProgramDocument;
+  /** Los perfiles de día del plan nutricional del paciente, para nombrar el de cada sesión (P-20.4). */
+  profiles: readonly { readonly code: string; readonly name: string }[];
 }) {
   const phase = phaseSummary(week);
   return (
@@ -162,6 +165,13 @@ export function ProgramWeekView({
           <h4 className="font-medium">
             {session.name} · {sessionDay(session)}
           </h4>
+          {session.dayProfileCode ? (
+            <p className="text-sm text-muted-foreground">
+              Perfil del día:{' '}
+              {profiles.find((profile) => profile.code === session.dayProfileCode)?.name ??
+                `${session.dayProfileCode} (no está en el plan)`}
+            </p>
+          ) : null}
           {session.notes ? <p className="text-sm whitespace-pre-wrap">{session.notes}</p> : null}
           {session.exercises.map((exercise) => (
             <div key={exercise.id} className="flex flex-col gap-2">

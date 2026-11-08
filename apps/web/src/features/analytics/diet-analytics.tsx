@@ -294,6 +294,12 @@ function DaysTable({ analytics, patientId }: { analytics: DietAnalytics; patient
           cell: (day) => `${kcal(day.targetKcal)} kcal`,
         },
         {
+          // El perfil de día de la meta (07 §2, P-20): la adecuación del día es contra él.
+          key: 'profile',
+          header: 'Perfil del día',
+          cell: (day) => day.dayProfile?.name ?? '—',
+        },
+        {
           key: 'adequacy',
           header: 'Adecuación',
           numeric: true,
