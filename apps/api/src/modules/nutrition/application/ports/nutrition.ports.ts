@@ -111,11 +111,12 @@ export interface NewNutritionPlan {
   readonly now: Date;
 }
 
-/** Lo que se guarda de un borrador ya validado, según su modalidad. */
-export type PlanContent =
+/** Lo que se guarda de un borrador ya validado, según su modalidad, con las kcal del día de descanso (07 §2). */
+export type PlanContent = (
   | { readonly modality: 'EXCHANGES'; readonly plan: ExchangePlan }
   | { readonly modality: 'COMPOSITION'; readonly plan: CompositionDraft }
-  | { readonly modality: 'WEEKLY_MENU'; readonly plan: WeeklyMenuDraft };
+  | { readonly modality: 'WEEKLY_MENU'; readonly plan: WeeklyMenuDraft }
+) & { readonly restDayKcal: number | null };
 
 export interface NutritionPlanStore {
   insert(plan: NewNutritionPlan, content: PlanContent): Promise<void>;

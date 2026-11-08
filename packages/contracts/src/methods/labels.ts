@@ -32,6 +32,7 @@ export const METHOD_LABELS = {
   EE_MET_COMPENDIUM2024: 'METs (Compendio 2024)',
   TEE_PAL: 'Gasto energético total (TMR × PAL + ejercicio)',
   MACROS_PROTEIN_FIRST: 'Reparto de macronutrientes',
+  MACROS_REST_DAY: 'Metas del día de descanso',
   EXCHANGES_CLASSIC: 'Intercambios (método clásico)',
   MEAL_SPLIT_LARGEST_REMAINDER: 'Reparto por tiempos de comida',
   RECIPE_NUTRIENTS: 'Composición de receta',

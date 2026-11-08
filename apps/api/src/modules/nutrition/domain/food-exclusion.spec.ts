@@ -45,6 +45,7 @@ const composition = (lunch: readonly string[], dinner: readonly string[] = []): 
     })),
     hydrationTargetMl: null,
     instructions: null,
+    restDayKcal: null,
   };
   return { modality: 'COMPOSITION', ...draft };
 };
@@ -60,6 +61,7 @@ const menu = (items: Readonly<Record<string, readonly MenuItem[]>>): PlanDraft =
     })),
     hydrationTargetMl: null,
     instructions: null,
+    restDayKcal: null,
   };
   return { modality: 'WEEKLY_MENU', ...draft };
 };
@@ -71,6 +73,7 @@ const exchanges = (foodId: string): PlanDraft => ({
   splitOverrides: {},
   hydrationTargetMl: null,
   instructions: null,
+  restDayKcal: null,
   meals: DEFAULT_MEALS.map((meal) =>
     meal.slotCode === 'BREAKFAST'
       ? {

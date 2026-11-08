@@ -26,6 +26,8 @@ export type NutrientsMissing = z.infer<typeof nutrientsMissingSchema>;
  */
 export const dietDaySchema = z.object({
   localDate: isoDate,
+  /** El tipo del día según el programa vigente (07 §8): su meta es la de ese tipo (07 §2). Sin programa, null. */
+  dayKind: z.enum(['TRAINING', 'REST']).nullable(),
   kcal: amount,
   choG: amount,
   proteinG: amount,

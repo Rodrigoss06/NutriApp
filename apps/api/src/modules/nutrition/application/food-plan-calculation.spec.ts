@@ -32,6 +32,7 @@ const COMPOSITION: CompositionDraft = {
   ],
   hydrationTargetMl: 2000,
   instructions: null,
+  restDayKcal: null,
 };
 
 const composition = (draft = COMPOSITION) => {

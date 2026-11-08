@@ -111,6 +111,7 @@ describe('RN-G09 · los días del rango', () => {
           waterMl: 2500,
           plannedSessions: 1,
           plannedSets: { QUADRICEPS: 3 },
+          dayKind: 'TRAINING',
         },
       ],
       foods: [food('f-1')],
@@ -119,6 +120,7 @@ describe('RN-G09 · los días del rango', () => {
     expect(facts.map((day) => day.localDate)).toEqual([DAY, NEXT]);
     expect(facts[0]?.target).toBeNull();
     expect(facts[1]?.target?.kcal).toBe(1835);
+    expect(facts[1]?.target?.dayKind).toBe('TRAINING');
     expect(facts[1]?.foods).toEqual([]);
   });
 

@@ -51,6 +51,7 @@ interface PlanRow {
   target_kcal: number;
   hydration_target_ml: number | null;
   instructions: string | null;
+  rest_day_kcal: number | null;
   created_by: string;
   created_at: Date;
   updated_at: Date;
@@ -127,6 +128,7 @@ const isFixed = (code: ExchangeGroupCode): code is FixedGroup =>
 const columnsOf = (content: PlanContent) => ({
   hydrationTargetMl: content.plan.hydrationTargetMl,
   instructions: content.plan.instructions,
+  restDayKcal: content.restDayKcal,
 });
 
 /**
@@ -144,17 +146,17 @@ export class PrismaNutritionPlanStore implements NutritionPlanStore {
 
   async insert(plan: NewNutritionPlan, content: PlanContent): Promise<void> {
     const { targets } = plan;
-    const { hydrationTargetMl, instructions } = columnsOf(content);
+    const { hydrationTargetMl, instructions, restDayKcal } = columnsOf(content);
     await this.db.tx.$executeRaw`
       INSERT INTO nutrition.plan (id, organization_id, patient_id, lineage_id, version_no, modality, status,
                                   energy_prescription_id, exchange_list_id, exchange_list_version, target_kcal,
                                   target_cho_g, target_protein_g, target_fat_g, hydration_target_ml, instructions,
-                                  created_by, created_at, updated_at)
+                                  rest_day_kcal, created_by, created_at, updated_at)
       VALUES (${plan.id}::uuid, ${plan.organizationId}::uuid, ${plan.patientId}::uuid, ${plan.lineageId}::uuid,
               ${plan.versionNo}, ${content.modality}, 'DRAFT', ${plan.energyPrescriptionId}::uuid,
               ${plan.exchangeListId}::uuid, ${plan.exchangeListVersion}, round(${targets.kcal}::numeric, 1),
               round(${targets.choG}::numeric, 1), round(${targets.proteinG}::numeric, 1),
-              round(${targets.fatG}::numeric, 1), ${hydrationTargetMl}, ${instructions},
+              round(${targets.fatG}::numeric, 1), ${hydrationTargetMl}, ${instructions}, ${restDayKcal},
               ${plan.createdBy}::uuid, ${plan.now}, ${plan.now})`;
     await this.#children(plan.id, plan.organizationId, content);
   }
@@ -165,10 +167,10 @@ export class PrismaNutritionPlanStore implements NutritionPlanStore {
     content: PlanContent,
     now: Date,
   ): Promise<boolean> {
-    const { hydrationTargetMl, instructions } = columnsOf(content);
+    const { hydrationTargetMl, instructions, restDayKcal } = columnsOf(content);
     const [row] = await this.db.tx.$queryRaw<{ organization_id: string }[]>`
       UPDATE nutrition.plan
-      SET hydration_target_ml = ${hydrationTargetMl}, instructions = ${instructions},
+      SET hydration_target_ml = ${hydrationTargetMl}, instructions = ${instructions}, rest_day_kcal = ${restDayKcal},
           version = version + 1, updated_at = ${now}
       WHERE id = ${id}::uuid AND version = ${version} AND status = 'DRAFT' AND modality = ${content.modality}
       RETURNING organization_id`;
@@ -184,7 +186,7 @@ export class PrismaNutritionPlanStore implements NutritionPlanStore {
     const [plan] = await this.db.tx.$queryRaw<PlanRow[]>`
       SELECT id, organization_id, patient_id, lineage_id, version_no, modality, status, energy_prescription_id,
              exchange_list_id, exchange_list_version, target_kcal::float8 AS target_kcal, hydration_target_ml,
-             instructions, created_by, created_at, updated_at, published_at,
+             instructions, rest_day_kcal::float8 AS rest_day_kcal, created_by, created_at, updated_at, published_at,
              to_char(valid_from, 'YYYY-MM-DD') AS valid_from, version
       FROM nutrition.plan WHERE id = ${id}::uuid`;
     if (!plan) return null;
@@ -211,7 +213,7 @@ export class PrismaNutritionPlanStore implements NutritionPlanStore {
     const rows = await this.db.tx.$queryRaw<PlanRow[]>`
       SELECT id, organization_id, patient_id, lineage_id, version_no, modality, status, energy_prescription_id,
              exchange_list_id, exchange_list_version, target_kcal::float8 AS target_kcal, hydration_target_ml,
-             instructions, created_by, created_at, updated_at, published_at,
+             instructions, rest_day_kcal::float8 AS rest_day_kcal, created_by, created_at, updated_at, published_at,
              to_char(valid_from, 'YYYY-MM-DD') AS valid_from, version
       FROM nutrition.plan WHERE patient_id = ${patientId}::uuid
       ORDER BY created_at DESC, id DESC`;
@@ -348,6 +350,7 @@ export class PrismaNutritionPlanStore implements NutritionPlanStore {
       splitOverrides,
       hydrationTargetMl: plan.hydration_target_ml,
       instructions: plan.instructions,
+      restDayKcal: plan.rest_day_kcal,
     };
     return { modality: 'EXCHANGES', ...draft };
   }
@@ -364,6 +367,7 @@ export class PrismaNutritionPlanStore implements NutritionPlanStore {
     const common = {
       hydrationTargetMl: plan.hydration_target_ml,
       instructions: plan.instructions,
+      restDayKcal: plan.rest_day_kcal,
     };
     if (plan.modality === 'COMPOSITION') {
       const draft: CompositionDraft = {

@@ -300,9 +300,20 @@ export function planDrafts(plan: LoggablePlan, pick: PlanPick): readonly FoodLog
 export type AppPlan = {
   readonly versionNo: number;
   readonly validFrom: string;
+  /** Las de la prescripción: las del día de entrenamiento si el plan tiene metas de descanso (07 §2). */
+  readonly targets: PlanMacros;
+  /** Las del día de descanso; null o ausente (snapshot de la versión 1): una sola meta. */
+  readonly restDayTargets?: PlanMacros | null;
   readonly hydrationTargetMl: number | null;
   readonly instructions: string | null;
 } & PlanOf<{ readonly timeOfDay: string | null }>;
+
+export interface PlanMacros {
+  readonly kcal: number;
+  readonly choG: number;
+  readonly proteinG: number;
+  readonly fatG: number;
+}
 
 export interface PlanViewMenuItem {
   readonly name: string;
@@ -350,6 +361,8 @@ export interface PlanView {
   readonly versionNo: number;
   readonly modality: LoggablePlan['modality'];
   readonly validFrom: string;
+  readonly targets: PlanMacros;
+  readonly restDayTargets: PlanMacros | null;
   readonly hydrationTargetMl: number | null;
   readonly instructions: string | null;
   readonly meals: readonly PlanViewMeal[];
@@ -363,6 +376,13 @@ const menuItem = (item: PlanFoodItem | PlanRecipeItem): PlanViewMenuItem =>
     ? { name: item.foodName, grams: item.grams, servings: null, householdText: item.householdText }
     : { name: item.recipeName, grams: null, servings: item.servings, householdText: null };
 
+const macrosOf = ({ kcal, choG, proteinG, fatG }: PlanMacros): PlanMacros => ({
+  kcal,
+  choG,
+  proteinG,
+  fatG,
+});
+
 /**
  * El plan por tiempos de comida, listo para registrar desde él (RF-28, RN-G06): en intercambios, cada grupo del tiempo con sus
  * porciones y sus alimentos permitidos; en composición, cada alimento; en el menú, las opciones del día de la semana pedido.
@@ -373,6 +393,8 @@ export function planView(plan: AppPlan, localDate: string): PlanView {
     versionNo: plan.versionNo,
     modality: plan.modality,
     validFrom: plan.validFrom,
+    targets: macrosOf(plan.targets),
+    restDayTargets: plan.restDayTargets ? macrosOf(plan.restDayTargets) : null,
     hydrationTargetMl: plan.hydrationTargetMl,
     instructions: plan.instructions,
   };

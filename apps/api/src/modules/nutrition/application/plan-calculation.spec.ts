@@ -37,6 +37,7 @@ const G18: PlanDraftInput = {
   splitOverrides: {},
   hydrationTargetMl: null,
   instructions: null,
+  restDayKcal: null,
 };
 
 const calculated = (input = G18, rangePct: readonly [number, number] = [90, 110]) => {

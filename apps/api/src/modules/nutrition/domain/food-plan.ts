@@ -42,6 +42,8 @@ export interface CompositionDraft {
   readonly meals: readonly CompositionMeal[];
   readonly hydrationTargetMl: number | null;
   readonly instructions: string | null;
+  /** Las kcal del día de descanso (07 §2); null: una sola meta, la de la prescripción. */
+  readonly restDayKcal: number | null;
 }
 
 /** Un tiempo en un día del menú: la opción A y, si se quiere, una B para cambiarla. */
@@ -62,6 +64,8 @@ export interface WeeklyMenuDraft {
   readonly days: readonly MenuDay[];
   readonly hydrationTargetMl: number | null;
   readonly instructions: string | null;
+  /** Las kcal del día de descanso (07 §2); null: una sola meta, la de la prescripción. */
+  readonly restDayKcal: number | null;
 }
 
 /** El borrador de cualquier modalidad, tal como lo escribe el profesional. */
@@ -153,6 +157,7 @@ export function compositionPlan(draft: CompositionDraft): Result<CompositionDraf
   if (problems.length > 0) return err(invalidPlan(problems));
   return ok({
     meals,
+    restDayKcal: draft.restDayKcal,
     hydrationTargetMl: draft.hydrationTargetMl,
     instructions: draft.instructions,
   });
@@ -195,6 +200,7 @@ export function weeklyMenuPlan(draft: WeeklyMenuDraft): Result<WeeklyMenuDraft, 
   return ok({
     meals: draft.meals.map(header),
     days,
+    restDayKcal: draft.restDayKcal,
     hydrationTargetMl: draft.hydrationTargetMl,
     instructions: draft.instructions,
   });

@@ -259,6 +259,8 @@ export interface DayTargetRow {
   readonly proteinG: number;
   readonly fatG: number;
   readonly waterMl: number | null;
+  /** El tipo del día según el programa vigente (07 §8); sin programa, null. */
+  readonly dayKind: 'TRAINING' | 'REST' | null;
 }
 
 /**

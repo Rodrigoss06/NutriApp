@@ -28,7 +28,15 @@ const SET = {
 
 const DAY: SummaryDay = {
   localDate: '2026-11-02',
-  target: { kcal: 1835, choG: 184, proteinG: 160, fatG: 51, waterMl: 2500, plannedSessions: 1 },
+  target: {
+    kcal: 1835,
+    choG: 184,
+    proteinG: 160,
+    fatG: 51,
+    waterMl: 2500,
+    plannedSessions: 1,
+    dayKind: 'TRAINING',
+  },
   foods: [],
   hydrationLogs: 0,
   waterMl: 0,
@@ -95,12 +103,36 @@ describe('RN-E10 · la adecuación del día contra su meta (RN-G03)', () => {
     expect(summary.adequacyChoPct).toBeCloseTo((50 * 100) / 184, 10);
   });
 
+  it('07 §2 · un día de descanso se compara con su meta de descanso y guarda su tipo', () => {
+    // La hoja piloto de JV Fitness: el día de descanso de Mateo, 2,250 kcal; comer el plan entero (2,500) da 111 %.
+    const rest = {
+      kcal: 2250,
+      choG: 245,
+      proteinG: 160,
+      fatG: 70,
+      waterMl: 3000,
+      plannedSessions: 0,
+      dayKind: 'REST' as const,
+    };
+    const summary = dailySummary(
+      { ...DAY, target: rest, foods: [food({ kcal: 2500 })] },
+      null,
+      rule,
+    );
+
+    expect(summary.dayKind).toBe('REST');
+    expect(summary.targetKcal).toBe(2250);
+    expect(summary.adequacyKcalPct).toBeCloseTo((2500 * 100) / 2250, 10);
+    expect(summary.kcalInRange).toBe(false);
+  });
+
   it('sin meta ese día no hay adecuación', () => {
     const summary = dailySummary({ ...DAY, target: null, foods: [food()] }, null, rule);
 
     expect(summary.kcal).toBe(400);
     expect(summary.adequacyKcalPct).toBeNull();
     expect(summary.mealsPlanned).toBeNull();
+    expect(summary.dayKind).toBeNull();
   });
 });
 

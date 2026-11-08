@@ -41,6 +41,7 @@ const DRAFT: PlanDraftInput = {
   splitOverrides: {},
   hydrationTargetMl: null,
   instructions: null,
+  restDayKcal: null,
 };
 
 /** Un tiempo de los de G-19, por su posición. */
