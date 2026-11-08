@@ -64,6 +64,8 @@ model PatientDailySummary {
   srpeLoad           Decimal? @map("srpe_load") @db.Decimal(7, 1)
   cardioMinutes      Decimal? @map("cardio_minutes") @db.Decimal(6, 1)
   dayKind            String?  @map("day_kind")
+  dayProfileCode     String?  @map("day_profile_code")
+  dayProfileName     String?  @map("day_profile_name")
 
   @@id([patientId, localDate])
   @@index([organizationId, localDate], map: "daily_summary_org")
@@ -1087,8 +1089,8 @@ model NutritionPlan {
   createdAt             DateTime            @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt             DateTime            @default(now()) @map("updated_at") @db.Timestamptz(6)
   version               Int                 @default(0)
-  restDayKcal           Decimal?            @map("rest_day_kcal") @db.Decimal(7, 1)
   energyPrescription    EnergyPrescription? @relation(fields: [energyPrescriptionId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  planDayProfiles       PlanDayProfile[]
   planExchanges         PlanExchange[]
   planMeals             PlanMeal[]
 
@@ -1570,6 +1572,8 @@ model DailyTarget {
   plannedSessions Int?     @map("planned_sessions") @db.SmallInt
   plannedSets     Json?    @map("planned_sets")
   dayKind         String?  @map("day_kind")
+  dayProfileCode  String?  @map("day_profile_code")
+  dayProfileName  String?  @map("day_profile_name")
 
   @@id([patientId, localDate])
   @@map("daily_target")
@@ -1949,6 +1953,7 @@ model TrainingSession {
   name                String
   dayOfWeek           Int?                 @map("day_of_week") @db.SmallInt
   notes               String?
+  dayProfileCode      String?              @map("day_profile_code")
   prescribedExercises PrescribedExercise[]
   programWeek         ProgramWeek          @relation(fields: [weekId], references: [id], onDelete: Cascade, onUpdate: NoAction)
 
@@ -2295,4 +2300,22 @@ model WeeklyReview {
   @@index([organizationId, patientId, weekStart(sort: Desc)], map: "weekly_review_by_patient")
   @@map("weekly_review")
   @@schema("training")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model PlanDayProfile {
+  planId         String        @map("plan_id") @db.Uuid
+  code           String
+  organizationId String        @map("organization_id") @db.Uuid
+  name           String
+  choG           Decimal       @map("cho_g") @db.Decimal(6, 1)
+  proteinG       Decimal       @map("protein_g") @db.Decimal(6, 1)
+  fatG           Decimal       @map("fat_g") @db.Decimal(6, 1)
+  position       Int           @db.SmallInt
+  nutritionPlan  NutritionPlan @relation(fields: [planId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@id([planId, code])
+  @@map("plan_day_profile")
+  @@schema("nutrition")
 }

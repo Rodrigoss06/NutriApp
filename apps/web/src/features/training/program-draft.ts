@@ -50,6 +50,8 @@ export interface SessionDraft {
   readonly key: string;
   readonly name: string;
   readonly dayOfWeek: string;
+  /** El perfil de día de la sesión (P-20.4), tal como se guardó; null, Entrenamiento. */
+  readonly dayProfileCode: string | null;
   readonly notes: string;
   readonly exercises: readonly ExerciseDraft[];
 }
@@ -102,6 +104,7 @@ export const weekDraftOf = (week: ProgramWeek): WeekDraft => ({
     key: `sesion-${String(session.position)}`,
     name: session.name,
     dayOfWeek: session.dayOfWeek === null ? NONE : String(session.dayOfWeek),
+    dayProfileCode: session.dayProfileCode,
     notes: session.notes ?? '',
     exercises: session.exercises.map((exercise) => ({
       key: exercise.id,
@@ -155,6 +158,7 @@ export const newSessionDraft = (position: number): SessionDraft => ({
   key: newKey(),
   name: `Sesión ${String(position)}`,
   dayOfWeek: NONE,
+  dayProfileCode: null,
   notes: '',
   exercises: [],
 });
@@ -234,6 +238,7 @@ export function weekBodyOf(
     sessions: draft.sessions.map((session) => ({
       name: session.name,
       dayOfWeek: session.dayOfWeek === NONE ? null : Number(session.dayOfWeek),
+      dayProfileCode: session.dayProfileCode,
       notes: session.notes,
       exercises: session.exercises.map((exercise) => ({
         id: exercise.id,

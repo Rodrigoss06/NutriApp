@@ -14,7 +14,7 @@ import type {
   CalculatedPlan,
   CalculatedWeeklyMenu,
 } from './plan-calculator.js';
-import type { RestDayTargets } from './rest-day.js';
+import type { DayProfileTargets } from './day-profiles.js';
 
 export interface PlanDocumentFood {
   readonly groupCode: ExchangeGroupCode;
@@ -39,10 +39,13 @@ export interface PlanDocumentMeal {
 /** Un plan por intercambios entero, como lo calcula el motor: lo que muestra un borrador y lo que congela un snapshot. */
 export interface ExchangePlanDocument {
   readonly modality: 'EXCHANGES';
-  /** Las metas de la prescripción: las del día de entrenamiento si el plan tiene metas de descanso (07 §2). */
+  /** Las metas de la prescripción: las de Entrenamiento (07 §2). */
   readonly targets: PlanTargets;
-  /** Las del día de descanso con su método; null: una sola meta. Los snapshots de la versión 1 no lo traen. */
-  readonly restDayTargets?: RestDayTargets | null;
+  /**
+   * Los demás perfiles de día con sus metas y su método (P-20); vacío, una sola meta. Los snapshots de las versiones 1 y 2
+   * no lo traen.
+   */
+  readonly dayProfiles?: readonly DayProfileTargets[];
   readonly exchangeList: PlanList;
   readonly exchanges: readonly DailyExchange[];
   readonly manualSplit: readonly ExchangeGroupCode[];
@@ -71,10 +74,13 @@ export interface DocumentRecipe {
  * snapshot lo congela: lo que el paciente registre desde su plan sale de aquí (RN-E15).
  */
 interface FoodPlanDocumentBase {
-  /** Las metas de la prescripción: las del día de entrenamiento si el plan tiene metas de descanso (07 §2). */
+  /** Las metas de la prescripción: las de Entrenamiento (07 §2). */
   readonly targets: PlanTargets;
-  /** Las del día de descanso con su método; null: una sola meta. Los snapshots de la versión 1 no lo traen. */
-  readonly restDayTargets?: RestDayTargets | null;
+  /**
+   * Los demás perfiles de día con sus metas y su método (P-20); vacío, una sola meta. Los snapshots de las versiones 1 y 2
+   * no lo traen.
+   */
+  readonly dayProfiles?: readonly DayProfileTargets[];
   readonly nutrients: readonly PlanNutrient[];
   readonly foods: Readonly<Record<string, PlanFoodData>>;
   readonly adequacy: FoodAdequacyBlock;
@@ -274,14 +280,15 @@ export function weeklyMenuDocument(
 }
 
 /**
- * Versión del esquema del snapshot: la app y las fichas la leen antes de leer lo demás (05 §2). La 2 agrega las metas del
- * día de descanso (`restDayTargets`, P14.5); un snapshot de la 1 no las trae y tiene una sola meta.
+ * Versión del esquema del snapshot: la app y las fichas la leen antes de leer lo demás (05 §2). La 3 trae los perfiles de
+ * día (`dayProfiles`, P14.5, ADR-100). La 2 traía las metas de descanso en kcal (ADR-099), que no llegaron a staging; un
+ * snapshot de la 1 o la 2 se lee con una sola meta.
  */
-export const PLAN_SNAPSHOT_SCHEMA_VERSION = 2;
+export const PLAN_SNAPSHOT_SCHEMA_VERSION = 3;
 
 /** Quién publicó, cuándo y desde qué día vale. */
 export interface PlanSnapshotMeta {
-  readonly schemaVersion: 1 | typeof PLAN_SNAPSHOT_SCHEMA_VERSION;
+  readonly schemaVersion: 1 | 2 | typeof PLAN_SNAPSHOT_SCHEMA_VERSION;
   readonly planId: string;
   readonly lineageId: string;
   readonly versionNo: number;

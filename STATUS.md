@@ -22,7 +22,7 @@ Próxima demo: Demo 3 · Entrenamiento y app del paciente · semana 6
 | P12 Ejercicios y rutinas | ✅ | Rodrigo | #39 a #42 y #44 a #47 | 5 criterios en verde (integración y E2E en escritorio y celular): motor (ADR-070), biblioteca (ADR-071), anamnesis V2 (ADR-072), alergias (ADR-074), seguridad (ADR-075), programa por la API y en la web (ADR-077, ADR-078) y ficha de rutina (ADR-079) |
 | P13 App del paciente | ✅ | Rodrigo | #50 a #55 | 6 criterios en verde (integración y E2E en escritorio y celular): recuperación del día en el motor (ADR-080), registros por /me (ADR-081), Hoy y el plan (ADR-082), registro diario y entreno (ADR-083, ADR-084) y el profesional con los registros (ADR-085). Lighthouse móvil 97 en Hoy (local). La cola sin conexión (RF-31, deseable) queda fuera. /notion-sync aplicado (30 cambios en 11 páginas) |
 | P14 Analítica y evolución, Demo 3 | ✅ | Rodrigo | #57 a #68 | Plan aprobado (2026-11-05, ADR-086): 7 PR. PR 1 (motor, #57), PR 2a (dieta, #58), PR 2b (rutina, #59) y PR 3 (control semanal, #60) por la API; PR 4 (web de la analítica y del control semanal, #61, ADR-090) con E2E en escritorio y celular; PR 5a (evolución, tendencia por mes y ficha por la API, #62, ADR-091) y PR 5b (sus pantallas, #63, ADR-092); PR 6a (panel con alertas por la API y en Inicio, #64, ADR-093), PR 6b (material educativo, #65, ADR-094) y PR 6c (fichas en la app, #66, ADR-095); PR 7a (`seed:load` y p95, #67, ADR-096) y PR 7b (`demo:3` con Luis y Mateo, y guion, #68, ADR-097). Criterios 1 a 5 en verde: el 4, con el p95 de docs/demos/demo-3-p95.md. Etiqueta v0.3.0 (39f5b64); staging, pendiente de P4. /notion-sync aplicado (51 cambios en 14 páginas) |
-| P14.5 Hoja piloto de JV Fitness | 🟨 | Rodrigo | | Aprobado por Rodrigo (2026-11-08, ADR-098); prompt en Notion. Fase A en curso: PR 1a (metas por tipo de día; la API, ADR-099, y después sus pantallas), PR 2 (volumen ajustado) y PR 6a (cadera, comparativa y estrés). La B espera las respuestas a P-20 a P-37; la C, el acuerdo y la cotización por la cláusula 12 |
+| P14.5 Hoja piloto de JV Fitness | 🟨 | Rodrigo | | Aprobado por Rodrigo (2026-11-08, ADR-098); prompt en Notion. PR 1a fusionado (#70, ADR-099). Jeremy respondió P-20 (ADR-100): perfiles de día en curso, PR 1c por la API; después el 1d (pantallas), el 1b (comidas por perfil) y el 1e (reprogramar), y luego el PR 2 (volumen ajustado) y el 6a (cadera, comparativa y estrés). La B espera las demás respuestas (P-21 a P-37); la C, el acuerdo y la cotización por la cláusula 12 |
 | P15 Marca, calendario, admin y migración | ⬜ | Rodrigo | | |
 | P16 Producción y entrega, Demo 4 | ⬜ | Rodrigo | | |
 
@@ -36,7 +36,13 @@ Leyenda: ⬜ pendiente · 🟨 en curso · ✅ terminado · ⛔ bloqueado
   - PR 1a por la API (ADR-099): `MACROS_REST_DAY` (motor 1.7.0), las kcal del día de descanso en el plan y su snapshot
     (versión 2), el tipo de cada día según el programa vigente en `daily_target` y en el resumen diario, la meta de ese tipo
     (sin programa, la de la prescripción), Hoy y Mi plan por /me, y la analítica de dieta. El editor de la web conserva las
-    kcal de descanso al guardar; sus pantallas, las fichas y Mateo en `demo:3` van en el PR 1a-web.
+    kcal de descanso al guardar. Fusionado (#70).
+  - Jeremy respondió P-20 el 2026-11-08 (ADR-100): mandan los gramos y hay perfiles de día propios. El PR 1c, por la API, reemplaza
+    las kcal de descanso:
+    - `MACROS_DAY_PROFILE` (motor 1.8.0) y `nutrition.plan_day_profile`;
+    - el perfil de cada sesión del programa;
+    - la meta de cada día según el perfil que pide el programa;
+    - el perfil en `daily_target`, en el resumen diario, en /me y en la analítica.
 - P14 terminado (#57 a #68, etiqueta v0.3.0 en 39f5b64; plan aprobado el 2026-11-05, ADR-086), en 7 PR contra main. Plan de Rodrigo: completar la Demo 3 y, en ella, corregir
   cada punto faltante, como P4, para llevar bien la Demo 4 y cerrar el proyecto:
   - PR 1, motor: `WEEKLY_REVIEW_JV` 3.0.0 con los agregados, el semáforo, el factor ajustado y la decisión sugerida (RN-G16); G-39 en
@@ -165,12 +171,19 @@ Leyenda: ⬜ pendiente · 🟨 en curso · ✅ terminado · ⛔ bloqueado
 ## Siguiente paso
 - Antes de la Demo 3: la matriz manual de navegadores (RNF-19: Chrome, Edge, Safari y Firefox; la E2E cubre Chromium
   y WebKit), que no quedó registrada en las demos 1 y 2
-- P14.5, fase A, uno por vez contra main: PR 1a (la API, ADR-099); después el 1a-web (editor, Hoy, Mi plan, analítica,
-  fichas con las dos metas y Mateo en `demo:3`), el PR 2 y el PR 6a
+- P14.5, uno por vez contra main: PR 1c (perfiles de día por la API, ADR-100). Después:
+  - el 1d: el editor de perfiles, el perfil de cada sesión, Hoy, Mi plan, la analítica, las fichas y Mateo con 2,510 y
+    2,230 kcal en `demo:3`;
+  - el 1b: las porciones del alimento fuente por perfil (P-20.5);
+  - el 1e: «no entreno hoy», «mover a mañana» y el perfil por fecha (P-20.3);
+  - el PR 2 y el 6a.
+- /notion-sync de P14.5 con ADR-099 y ADR-100: P-20 resuelta en 07 §15, los perfiles en 07 §2 y §8, RN-E07 y RN-G03 y el
+  caso dorado G-41
 - Demo 3: lista con v0.3.0 y `pnpm demo:3` (guion en docs/demos/demo-3.md). Falta la semana del paciente de prueba desde su
   celular (la evidencia de 04)
 - Hoja piloto de Jeremy (2026-11-07, interna: no se comparte hasta que la valide):
-  - mandarle las preguntas de `docs/preguntas/hoja-piloto-mateo.md` (P-20 a P-37, ya en 07 §15);
+  - las preguntas de `docs/preguntas/hoja-piloto-mateo.md` (P-20 a P-37, en 07 §15). P-20 está respondida (2026-11-08) y Jeremy
+    manda las demás;
   - P14.5 aprobado (ADR-098): la fase B espera sus respuestas; la C (informe mensual, fotos y expediente), el acuerdo y la
     cotización por la cláusula 12
 - Para la Demo 3 y la Demo 4, según el plan de Rodrigo (2026-11-05): resolver lo que falta del Notion maestro, empezando por P4
@@ -185,7 +198,8 @@ Leyenda: ⬜ pendiente · 🟨 en curso · ✅ terminado · ⛔ bloqueado
 
 ## Bloqueos y preguntas al cliente
 - [ ] Cuenta de Hetzner y dominio a nombre de Jeremy: bloquea P4
-- [ ] Hoja piloto «JV Fitness · Mi plan»: P-20 a P-37 (`docs/preguntas/hoja-piloto-mateo.md`).
+- [ ] Hoja piloto «JV Fitness · Mi plan»: P-21 a P-37 (`docs/preguntas/hoja-piloto-mateo.md`). P-20 se respondió el 2026-11-08
+  (ADR-100).
   - Bloquean P14.5: los umbrales de ámbar del panel de fatiga, las tablas de factores del volumen ajustado, los coeficientes
     de fatiga por ejercicio, el check-in semanal o diario y la plantilla de la prescripción.
   - Por acordar, porque no están en el contrato: el informe mensual (sería la sexta ficha), las fotos y el expediente.
@@ -231,6 +245,9 @@ Leyenda: ⬜ pendiente · 🟨 en curso · ✅ terminado · ⛔ bloqueado
   registrar quién es el tutor (ADR-042). Pendiente de confirmar con el abogado
 
 ## Deuda técnica
+- La unidad del repositorio (/mnt/Datos2, NTFS con ntfs3) quedó con una entrada dañada tras un reinicio (2026-11-08): está
+  apartada en `.git/refs-remotes-origin-danado-2026-11-08` y git funciona. Hay que correr `chkdsk /f` desde Windows, o
+  `ntfsfix` con la unidad desmontada, y después borrar esa carpeta
 - Consultas en paralelo dentro de una transacción (`Promise.all` en `me.queries.ts` y `patient-self-service.ts`): `pg` avisa que `pg@9` lo quitará.
   Antes de subir a esa versión, pasarlas a secuencia (ADR-083)
 - P16, antes de la entrega: revisar y quitar los mensajes de «Provisional» (ejercicios base, lista DEMO, textos legales) o
@@ -295,7 +312,8 @@ Leyenda: ⬜ pendiente · 🟨 en curso · ✅ terminado · ⛔ bloqueado
 ## Registro de sesiones (solo las 5 últimas)
 - 2026-11-08 · Cierre de P14 · #66, #67 y #68 fusionados (fichas en la app, carga y p95, `demo:3`), etiqueta v0.3.0 en 39f5b64 y
   /notion-sync aplicado (51 cambios en 14 páginas, con P-20 a P-37 en 07 §15). P14.5 aprobado (ADR-098) y en Notion; su
-  PR 1a por la API (ADR-099): metas de día de entrenamiento y de descanso, motor 1.7.0
+  PR 1a por la API (#70, ADR-099). Jeremy respondió P-20: PR 1c con los perfiles de día por la API (ADR-100, motor 1.8.0). La
+  unidad NTFS dejó dañada la ref `origin/main` tras un reinicio: quedó apartada en `.git/refs-remotes-origin-danado-2026-11-08`
 - 2026-11-07 · P14 (PR 5a a PR 7b) · #61 a #64 fusionados y #65 abierto; 6c, 7a y 7b listos en local. Evolución y sus pantallas,
   panel con alertas, material educativo, fichas en la app, `seed:load` con el p95 (102 ms) y `demo:3` con Luis y Mateo. Hoja piloto
   de Jeremy revisada: Mateo en la demo, preguntas P-20 a P-37 y P14.5 propuesto

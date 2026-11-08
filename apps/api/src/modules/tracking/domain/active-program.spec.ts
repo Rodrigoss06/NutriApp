@@ -1,5 +1,10 @@
 import { describe, expect, it } from 'vitest';
-import { dayKindOf, sessionsOn, trainingTargetOf, type ProgramCalendar } from './active-program.js';
+import {
+  dayProfileOf,
+  sessionsOn,
+  trainingTargetOf,
+  type ProgramCalendar,
+} from './active-program.js';
 
 const SESSION_1 = { position: 1, dayOfWeek: null, setsByMuscle: { QUADRICEPS: 3, GLUTES: 1.5 } };
 const SESSION_2 = { position: 2, dayOfWeek: null, setsByMuscle: { QUADRICEPS: 1, CHEST: 3 } };
@@ -121,18 +126,28 @@ describe('07 §8 · las sesiones de un día, con lo que cada una lleva', () => {
   });
 });
 
-describe('07 §8 · el tipo de cada día: entrenamiento o descanso', () => {
-  it('un día con sesiones programadas es de entrenamiento y uno sin sesiones, de descanso', () => {
-    expect(dayKindOf(CALENDAR, '2026-11-02')).toBe('TRAINING');
-    expect(dayKindOf(CALENDAR, '2026-11-03')).toBe('TRAINING');
-    expect(dayKindOf(CALENDAR, '2026-11-04')).toBe('REST');
-    // Semana 2: su única sesión es la 2, así que va el segundo día.
-    expect(dayKindOf(CALENDAR, '2026-11-09')).toBe('REST');
-    expect(dayKindOf(CALENDAR, '2026-11-10')).toBe('TRAINING');
+describe('07 §8 · P-20.4 · el perfil de día que pide el programa', () => {
+  const LEG = {
+    position: 1,
+    dayOfWeek: null,
+    dayProfileCode: 'ALTO',
+    setsByMuscle: { QUADRICEPS: 3 },
+  };
+  const UPPER = { position: 2, dayOfWeek: null, dayProfileCode: null, setsByMuscle: { CHEST: 3 } };
+  const PROFILED: ProgramCalendar = {
+    startDate: '2026-11-02',
+    weeks: [{ weekNo: 1, sessions: [LEG, UPPER] }],
+  };
+
+  it('la sesión con su perfil propio, la sesión sin perfil Entrenamiento y el día sin sesión Descanso', () => {
+    expect(dayProfileOf(PROFILED, '2026-11-02')).toBe('ALTO');
+    expect(dayProfileOf(PROFILED, '2026-11-03')).toBe('TRAINING');
+    expect(dayProfileOf(PROFILED, '2026-11-04')).toBe('REST');
   });
 
-  it('fuera del programa el día no tiene tipo', () => {
-    expect(dayKindOf(CALENDAR, '2026-11-01')).toBeNull();
-    expect(dayKindOf(CALENDAR, '2026-11-16')).toBeNull();
+  it('un snapshot sin perfiles en sus sesiones (versión 1) es Entrenamiento; fuera del programa, ninguno', () => {
+    expect(dayProfileOf(CALENDAR, '2026-11-02')).toBe('TRAINING');
+    expect(dayProfileOf(PROFILED, '2026-11-01')).toBeNull();
+    expect(dayProfileOf(PROFILED, '2026-11-09')).toBeNull();
   });
 });

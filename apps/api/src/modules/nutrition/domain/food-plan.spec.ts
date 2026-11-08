@@ -47,7 +47,7 @@ const COMPOSITION: CompositionDraft = {
   meals: MEALS.map((meal, index) => ({ ...meal, items: [food(RICE, 100 + index)] })),
   hydrationTargetMl: 2000,
   instructions: null,
-  restDayKcal: null,
+  dayProfiles: [],
 };
 
 const cell = (optionA: MenuCell['optionA'], optionB: MenuCell['optionB'] = []): MenuCell => ({
@@ -67,7 +67,7 @@ const MENU: WeeklyMenuDraft = {
   })),
   hydrationTargetMl: 2000,
   instructions: null,
-  restDayKcal: null,
+  dayProfiles: [],
 };
 
 const problems = (

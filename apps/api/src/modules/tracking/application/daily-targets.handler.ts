@@ -10,7 +10,7 @@ import {
 import { ClinicalApi } from '../../clinical/index.js';
 import { TenancyApi } from '../../tenancy/index.js';
 import { dailyTargetOf, localDate } from '../domain/active-plan.js';
-import { dayKindOf, trainingTargetOf } from '../domain/active-program.js';
+import { dayProfileOf, trainingTargetOf } from '../domain/active-program.js';
 import { TRACKING_STORE, type TrackingStore } from './ports/tracking.ports.js';
 
 /** Contexto de plataforma para listar las organizaciones: la RLS de tenancy se lo permite a PLATFORM_ADMIN. */
@@ -23,8 +23,8 @@ const platformContext: SecurityContext = {
 
 /**
  * Cada hora en el worker: a cada paciente con un plan o un programa vigente le crea la meta de su día local si aún no la tiene
- * (RN-G03, RN-G04). Nunca reescribe un día que ya tiene meta. Idempotente. La meta de alimentación es la del tipo del día
- * según el programa vigente (07 §2, §8).
+ * (RN-G03, RN-G04). Nunca reescribe un día que ya tiene meta. Idempotente. La meta de alimentación es la del perfil de día
+ * que pide el programa vigente (07 §2, §8; P-20.4).
  */
 @Injectable()
 export class DailyTargetsHandler {
@@ -58,7 +58,7 @@ export class DailyTargetsHandler {
               organizationId,
               localDate: today,
               planId: plan.planId,
-              target: dailyTargetOf(plan.targets, calendar ? dayKindOf(calendar, today) : null),
+              target: dailyTargetOf(plan.targets, calendar ? dayProfileOf(calendar, today) : null),
             },
             'KEEP',
           );

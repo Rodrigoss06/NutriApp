@@ -1,3 +1,4 @@
+import type { DayProfileDraft } from './day-profiles.js';
 import { domainError, err, ok, type DomainError, type Result } from '@nutricoach/shared-kernel';
 
 /** Grupos del método clásico (RN-E08), en el orden de la lista. */
@@ -38,8 +39,8 @@ export interface PlanDraftInput {
   readonly splitOverrides: Readonly<Partial<Record<ExchangeGroupCode, readonly number[]>>>;
   readonly hydrationTargetMl: number | null;
   readonly instructions: string | null;
-  /** Las kcal del día de descanso (07 §2); null: una sola meta, la de la prescripción. */
-  readonly restDayKcal: number | null;
+  /** Los perfiles de día además de Entrenamiento (07 §2, P-20); vacío: una sola meta, la de la prescripción. */
+  readonly dayProfiles: readonly DayProfileDraft[];
 }
 
 /** Lo que el dominio toma del motor; lo calcula la aplicación. */

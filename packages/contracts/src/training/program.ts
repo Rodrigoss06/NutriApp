@@ -1,6 +1,7 @@
 import { z } from 'zod';
 import { upToDecimals } from '../decimals.js';
 import { MOVEMENT_PATTERNS, TRAINING_LEVELS } from '../exercise/library.js';
+import { dayProfileCodeSchema } from '../nutrition/plan.js';
 import { TRAINING_OBJECTIVE_CODES } from './athlete-profile.js';
 
 /** Los códigos del programa de entrenamiento (RF-26, 02 §7): el motor y la tabla de 05.2 hablan con estos. */
@@ -127,6 +128,8 @@ const prescribedExerciseSchema = z.strictObject({
 const programSessionSchema = z.strictObject({
   name: z.string().trim().min(1).max(120),
   dayOfWeek: z.number().int().min(1).max(7).nullable().default(null),
+  /** El perfil de día del plan nutricional que lleva el día de la sesión (P-20.4); null, Entrenamiento. */
+  dayProfileCode: dayProfileCodeSchema.nullable().default(null),
   notes: optionalText(500),
   exercises: z.array(prescribedExerciseSchema).max(30),
 });
@@ -249,6 +252,7 @@ const programDocumentSessionSchema = z.object({
   position: z.number().int(),
   name: z.string(),
   dayOfWeek: z.number().int().nullable(),
+  dayProfileCode: z.string().nullable(),
   notes: z.string().nullable(),
   /** Series efectivas por grupo muscular, con conteo fraccional (RN-F06). */
   setsByMuscle: z.record(z.string(), z.number()),

@@ -59,6 +59,8 @@ export interface ProgramSession {
   readonly position: number;
   readonly name: string;
   readonly dayOfWeek: number | null;
+  /** El perfil de día del plan nutricional que lleva el día de esta sesión (P-20.4); null, Entrenamiento. */
+  readonly dayProfileCode: string | null;
   readonly notes: string | null;
   readonly exercises: readonly PrescribedExercise[];
 }
@@ -311,6 +313,7 @@ export function copyMesocycles(
 export interface SessionInput {
   readonly name: string;
   readonly dayOfWeek: number | null;
+  readonly dayProfileCode: string | null;
   readonly notes: string | null;
   readonly exercises: readonly {
     readonly id: string | null;
@@ -338,6 +341,7 @@ export function sessionsFrom(
     position: sessionIndex + 1,
     name: session.name,
     dayOfWeek: session.dayOfWeek,
+    dayProfileCode: session.dayProfileCode,
     notes: session.notes,
     exercises: session.exercises.map((exercise, exerciseIndex) => {
       const previous = exercise.id ? known.get(exercise.id) : undefined;

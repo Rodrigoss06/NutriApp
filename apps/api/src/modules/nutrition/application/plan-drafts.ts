@@ -25,23 +25,22 @@ import type {
   CalculatedWeeklyMenu,
   PlanCalculator,
 } from './plan-calculator.js';
-import { targetsOf } from './plan-calculator.js';
 import type { EnergyPrescriptionRecord, PlanContent } from './ports/nutrition.ports.js';
-import { restDayTargetsOf, type RestDayTargets } from './rest-day.js';
+import { dayProfileTargetsOf, type DayProfileTargets } from './day-profiles.js';
 
-/** Un borrador calculado por el motor, de su modalidad, con las metas del día de descanso si las tiene (07 §2). */
+/** Un borrador calculado por el motor, de su modalidad, con las metas de sus perfiles de día (07 §2). */
 export type CalculatedDraft = (
   | { readonly modality: 'EXCHANGES'; readonly value: CalculatedPlan }
   | { readonly modality: 'COMPOSITION'; readonly value: CalculatedComposition }
   | { readonly modality: 'WEEKLY_MENU'; readonly value: CalculatedWeeklyMenu }
-) & { readonly restDay: RestDayTargets | null };
+) & { readonly dayProfiles: readonly DayProfileTargets[] };
 
 /**
  * Cómo empieza un plan: con los tiempos de G-19 y sin alimentos ni hidratación. Por intercambios, sin grupos fijos;
  * el menú, con sus siete días vacíos.
  */
 export function newDraft(modality: PlanModality): PlanDraft {
-  const empty = { hydrationTargetMl: null, instructions: null, restDayKcal: null };
+  const empty = { hydrationTargetMl: null, instructions: null, dayProfiles: [] };
   switch (modality) {
     case 'EXCHANGES':
       return {
@@ -65,8 +64,8 @@ export function newDraft(modality: PlanModality): PlanDraft {
 }
 
 /**
- * Calcula un borrador de cualquier modalidad; solo los intercambios usan lista (RN-E11). Las metas del día de descanso
- * salen de las de la prescripción, que son las del día de entrenamiento (07 §2).
+ * Calcula un borrador de cualquier modalidad; solo los intercambios usan lista (RN-E11). Las metas de la prescripción son las
+ * de Entrenamiento; las de los demás perfiles salen de sus gramos (07 §2, P-20).
  */
 export async function calculateDraft(
   calculator: PlanCalculator,
@@ -75,26 +74,26 @@ export async function calculateDraft(
   exchangeListId: string | null,
   draft: PlanDraft,
 ): Promise<Result<CalculatedDraft, DomainError>> {
-  const restDay = restDayTargetsOf(targetsOf(prescription), draft.restDayKcal);
-  if (!restDay.ok) return restDay;
+  const profiles = dayProfileTargetsOf(draft.dayProfiles);
+  if (!profiles.ok) return profiles;
   switch (draft.modality) {
     case 'EXCHANGES': {
       if (!exchangeListId) throw new Error('Un plan por intercambios sin lista.');
       const value = await calculator.calculate(organizationId, prescription, exchangeListId, draft);
       return value.ok
-        ? ok({ modality: draft.modality, value: value.value, restDay: restDay.value })
+        ? ok({ modality: draft.modality, value: value.value, dayProfiles: profiles.value })
         : err(value.error);
     }
     case 'COMPOSITION': {
       const value = await calculator.composition(organizationId, prescription, draft);
       return value.ok
-        ? ok({ modality: draft.modality, value: value.value, restDay: restDay.value })
+        ? ok({ modality: draft.modality, value: value.value, dayProfiles: profiles.value })
         : err(value.error);
     }
     case 'WEEKLY_MENU': {
       const value = await calculator.weeklyMenu(organizationId, prescription, draft);
       return value.ok
-        ? ok({ modality: draft.modality, value: value.value, restDay: restDay.value })
+        ? ok({ modality: draft.modality, value: value.value, dayProfiles: profiles.value })
         : err(value.error);
     }
   }
@@ -102,30 +101,36 @@ export async function calculateDraft(
 
 /** Lo que se guarda: el borrador validado por el dominio. */
 export function contentOf(calculated: CalculatedDraft): PlanContent {
-  const restDayKcal = calculated.restDay?.kcal ?? null;
+  const dayProfiles = calculated.dayProfiles.map(({ code, name, choG, proteinG, fatG }) => ({
+    code,
+    name,
+    choG,
+    proteinG,
+    fatG,
+  }));
   switch (calculated.modality) {
     case 'EXCHANGES':
-      return { modality: 'EXCHANGES', plan: calculated.value.calculation.plan, restDayKcal };
+      return { modality: 'EXCHANGES', plan: calculated.value.calculation.plan, dayProfiles };
     case 'COMPOSITION':
-      return { modality: 'COMPOSITION', plan: calculated.value.calculation.plan, restDayKcal };
+      return { modality: 'COMPOSITION', plan: calculated.value.calculation.plan, dayProfiles };
     case 'WEEKLY_MENU':
-      return { modality: 'WEEKLY_MENU', plan: calculated.value.calculation.plan, restDayKcal };
+      return { modality: 'WEEKLY_MENU', plan: calculated.value.calculation.plan, dayProfiles };
   }
 }
 
 /**
- * El plan entero como lo calcula el motor, con las metas del día de descanso; los id de sus tiempos (o celdas) en su
- * orden, vacíos en una vista previa.
+ * El plan entero como lo calcula el motor, con sus perfiles de día; los id de sus tiempos (o celdas) en su orden, vacíos en
+ * una vista previa.
  */
 export function documentOf(calculated: CalculatedDraft, mealIds: readonly string[]): PlanDocument {
-  const restDayTargets = calculated.restDay;
+  const { dayProfiles } = calculated;
   switch (calculated.modality) {
     case 'EXCHANGES':
-      return { ...planDocument(calculated.value, mealIds), restDayTargets };
+      return { ...planDocument(calculated.value, mealIds), dayProfiles };
     case 'COMPOSITION':
-      return { ...compositionDocument(calculated.value, mealIds), restDayTargets };
+      return { ...compositionDocument(calculated.value, mealIds), dayProfiles };
     case 'WEEKLY_MENU':
-      return { ...weeklyMenuDocument(calculated.value, mealIds), restDayTargets };
+      return { ...weeklyMenuDocument(calculated.value, mealIds), dayProfiles };
   }
 }
 
@@ -158,7 +163,9 @@ export function changedFields(before: PlanDraft, after: PlanDraft): readonly str
   const columns = [
     ...(before.hydrationTargetMl === after.hydrationTargetMl ? [] : ['hydration_target_ml']),
     ...(before.instructions === after.instructions ? [] : ['instructions']),
-    ...(before.restDayKcal === after.restDayKcal ? [] : ['rest_day_kcal']),
+    ...(JSON.stringify(before.dayProfiles) === JSON.stringify(after.dayProfiles)
+      ? []
+      : ['plan_day_profile']),
   ];
   const meals = same(headers(before), headers(after)) ? [] : ['plan_meal'];
   if (before.modality === 'EXCHANGES' && after.modality === 'EXCHANGES') {

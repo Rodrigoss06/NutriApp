@@ -1,5 +1,6 @@
 import type {
   CompositionNutritionPlan,
+  DayProfileInput,
   FoodDetail,
   FoodState,
   MealSlot,
@@ -13,9 +14,8 @@ import { parseDecimal } from '@nutricoach/ui';
 import {
   hydrationOf,
   isTimeOfDay,
+  dayProfileInputsOf,
   MAX_MEALS,
-  restDayKcalOf,
-  restDayKcalText,
   sharePctOf,
 } from '@/features/nutrition-plan/draft';
 import { GRAMS, type MeasureOption } from '@/features/recipe/draft';
@@ -81,8 +81,8 @@ export interface CompositionDraft {
   readonly meals: readonly CompositionMealRow[];
   readonly hydrationMl: string;
   readonly instructions: string;
-  /** Las kcal del día de descanso (07 §2); vacío: una sola meta, la de la prescripción. */
-  readonly restDayKcal: string;
+  /** Los perfiles de día además de Entrenamiento (07 §2, P-20), tal como se guardan; vacío, una sola meta. */
+  readonly dayProfiles: readonly DayProfileInput[];
 }
 
 export type MenuOption = 'optionA' | 'optionB';
@@ -95,8 +95,8 @@ export interface MenuDraft {
   readonly days: readonly { readonly cells: readonly MenuCellRow[] }[];
   readonly hydrationMl: string;
   readonly instructions: string;
-  /** Las kcal del día de descanso (07 §2); vacío: una sola meta, la de la prescripción. */
-  readonly restDayKcal: string;
+  /** Los perfiles de día además de Entrenamiento (07 §2, P-20), tal como se guardan; vacío, una sola meta. */
+  readonly dayProfiles: readonly DayProfileInput[];
 }
 
 /** Las medidas caseras de cada alimento del plan, por su id. */
@@ -246,22 +246,19 @@ function headerBodyOf(meal: MealHeaderRow): HeaderBody | null {
   };
 }
 
-/** Hidratación, indicaciones y las kcal del día de descanso, o null si no sirven. */
-function columnsOf(draft: Pick<CompositionDraft, 'hydrationMl' | 'instructions' | 'restDayKcal'>): {
+/** Hidratación, indicaciones y los perfiles de día, o null si no sirven. */
+function columnsOf(draft: Pick<CompositionDraft, 'hydrationMl' | 'instructions' | 'dayProfiles'>): {
   hydrationTargetMl: number | null;
   instructions: string | null;
-  restDayKcal: number | null;
+  dayProfiles: DayProfileInput[];
 } | null {
   const hydrationTargetMl = hydrationOf(draft.hydrationMl);
   const instructions = draft.instructions.trim();
-  const restDayKcal = restDayKcalOf(draft.restDayKcal);
-  if (hydrationTargetMl === undefined || restDayKcal === undefined || instructions.length > 2_000) {
-    return null;
-  }
+  if (hydrationTargetMl === undefined || instructions.length > 2_000) return null;
   return {
     hydrationTargetMl,
     instructions: instructions === '' ? null : instructions,
-    restDayKcal,
+    dayProfiles: [...draft.dayProfiles],
   };
 }
 
@@ -269,7 +266,7 @@ function columnsOf(draft: Pick<CompositionDraft, 'hydrationMl' | 'instructions' 
 export function compositionDraftOf(
   plan: Pick<
     CompositionNutritionPlan,
-    'meals' | 'hydrationTargetMl' | 'instructions' | 'restDayKcal'
+    'meals' | 'hydrationTargetMl' | 'instructions' | 'dayProfiles'
   >,
   measures: Measures = {},
 ): CompositionDraft {
@@ -280,7 +277,7 @@ export function compositionDraftOf(
     })),
     hydrationMl: plan.hydrationTargetMl === null ? '' : String(plan.hydrationTargetMl),
     instructions: plan.instructions ?? '',
-    restDayKcal: restDayKcalText(plan.restDayKcal),
+    dayProfiles: dayProfileInputsOf(plan.dayProfiles),
   };
 }
 
@@ -302,7 +299,7 @@ export function compositionBody(draft: CompositionDraft): UpdateCompositionPlan 
 export function menuDraftOf(
   plan: Pick<
     WeeklyMenuNutritionPlan,
-    'meals' | 'days' | 'hydrationTargetMl' | 'instructions' | 'restDayKcal'
+    'meals' | 'days' | 'hydrationTargetMl' | 'instructions' | 'dayProfiles'
   >,
   measures: Measures = {},
 ): MenuDraft {
@@ -320,7 +317,7 @@ export function menuDraftOf(
     })),
     hydrationMl: plan.hydrationTargetMl === null ? '' : String(plan.hydrationTargetMl),
     instructions: plan.instructions ?? '',
-    restDayKcal: restDayKcalText(plan.restDayKcal),
+    dayProfiles: dayProfileInputsOf(plan.dayProfiles),
   };
 }
 

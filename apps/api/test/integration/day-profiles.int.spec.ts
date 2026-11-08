@@ -5,20 +5,22 @@ import { pool } from './support/database.js';
 import { luisWithPrescription } from './support/luis.js';
 
 /**
- * P14.5 (PR 1a) · metas de día de entrenamiento y de descanso por HTTP contra PostgreSQL como app_user (07 §2, P-20;
- * RN-E07, RN-G03, RN-E15; ADR-099). La meta de la prescripción es la del día de entrenamiento; el profesional escribe las
- * kcal del día de descanso y la proteína y la grasa no cambian. La meta de cada día sale del tipo del día en el programa
- * vigente (07 §8); sin programa, la de la prescripción.
+ * P14.5 (PR 1c) · perfiles de día del plan por HTTP contra PostgreSQL como app_user (07 §2 y §8; P-20, respuestas de Jeremy;
+ * RN-E07, RN-G03, RN-E15; ADR-100). Entrenamiento es la meta de la prescripción; Descanso y los perfiles propios llevan sus
+ * gramos y las kcal salen de ellos (P-20.2). La meta de cada día es la del perfil que pide el programa vigente: el de la
+ * sesión, Descanso sin sesión y la prescripción sin programa.
  */
 
 const DEMO = '01926200-0000-7000-8000-000000000001';
 const GROUPS = ['VEG', 'FRU', 'MILK', 'STA', 'MEAT', 'FAT'] as const;
-/** G-17: las metas exactas de Luis (≈ 1834.54 kcal, 160 g de proteína y 25 % de grasa, ≈ 50.96 g). */
+/** G-17: la meta exacta de Luis, la de Entrenamiento (≈ 1834.54 kcal). */
 const LUIS_KCAL = 1834.5357142857142;
-const LUIS_FAT_G = 50.95932539682539;
-/** Su día de descanso: 300 kcal menos, con la misma proteína y la misma grasa. */
-const REST_KCAL = 1535;
-const REST_CHO_G = (REST_KCAL - 160 * 4 - LUIS_FAT_G * 9) / 4;
+/** Su descanso y un día alto, con 160 g de proteína y 51 g de grasa (lo de la prescripción, como sugiere P-20.1). */
+const REST = { code: 'REST', name: 'Descanso', choG: 120, proteinG: 160, fatG: 51 };
+const HIGH = { code: 'ALTO', name: 'Alto', choG: 250, proteinG: 160, fatG: 51 };
+/** Atwater con los gramos: mandan los gramos (P-20.2). */
+const REST_KCAL = 120 * 4 + 160 * 4 + 51 * 9;
+const HIGH_KCAL = 250 * 4 + 160 * 4 + 51 * 9;
 
 const harness = new ApiHarness();
 let org: StaffOrganization;
@@ -28,16 +30,16 @@ let prescriptionId: string;
 let exerciseId: string;
 const foods: Record<string, string> = {};
 
-interface Macros {
+interface Profile {
+  code: string;
+  name: string;
   kcal: number;
   choG: number;
-  proteinG: number;
-  fatG: number;
+  method: { methodCode: string; methodVersion: string };
 }
 
 interface Plan {
   id: string;
-  status: string;
   version: number;
   meals: {
     slotCode: string;
@@ -46,15 +48,21 @@ interface Plan {
     sharePct: number;
     servings: Record<string, number>;
   }[];
-  targets: Macros;
-  restDayKcal: number | null;
-  restDayTargets: (Macros & { method: { methodCode: string; methodVersion: string } }) | null;
+  targets: { kcal: number };
+  dayProfiles: Profile[];
 }
 
 interface Program {
   id: string;
   version: number;
   document: { mesocycles: { weeks: { id: string }[] }[] };
+}
+
+interface Target {
+  kcal: number;
+  kind: string | null;
+  code: string | null;
+  name: string | null;
 }
 
 const owner = async <T>(sql: string, params: unknown[] = []): Promise<T[]> =>
@@ -70,7 +78,7 @@ const day = (offset = 0): string =>
   }).format(new Date(Date.now() + offset * 86_400_000));
 
 /** G-18 con un alimento permitido de cada grupo en cada tiempo donde tiene intercambios (RN-G05). */
-const readyBody = (plan: Plan, restDayKcal: number | null) => ({
+const readyBody = (plan: Plan, dayProfiles: object[]) => ({
   modality: 'EXCHANGES',
   fixedServings: { VEG: 4, FRU: 3, MILK: 3 },
   overrides: {},
@@ -89,23 +97,24 @@ const readyBody = (plan: Plan, restDayKcal: number | null) => ({
   splitOverrides: {},
   hydrationTargetMl: 2_500,
   instructions: null,
-  restDayKcal,
+  dayProfiles,
 });
 
 const put = (plan: Plan, body: object) =>
   harness.put(`/nutrition-plans/${plan.id}`, body, cookie).set('If-Match', String(plan.version));
 
-/** La meta guardada de hoy: la de alimentación y el tipo del día. */
-async function todayTarget(): Promise<{ kcal: number; cho: number; kind: string | null }[]> {
-  return owner(
-    `SELECT kcal::float8 AS kcal, cho_g::float8 AS cho, day_kind AS kind
+/** La meta guardada de hoy: la de alimentación, el tipo del día y el perfil con que se fijó. */
+async function todayTarget(): Promise<Target | undefined> {
+  const [row] = await owner<Target>(
+    `SELECT kcal::float8 AS kcal, day_kind AS kind, day_profile_code AS code, day_profile_name AS name
      FROM tracking.daily_target WHERE patient_id = $1 AND local_date = $2::date`,
     [patientId, day()],
   );
+  return row;
 }
 
-/** Un programa a mano de una semana con una sola sesión, que va el primer día (07 §8). */
-async function publishProgram(startDate: string): Promise<void> {
+/** Un programa a mano de una semana con una sola sesión, que va el primer día (07 §8), con su perfil de día (P-20.4). */
+async function publishProgram(startDate: string, dayProfileCode: string | null): Promise<void> {
   const created = await harness.post(
     `/patients/${patientId}/training-programs`,
     { name: `Una sesión desde ${startDate}`, startDate },
@@ -125,7 +134,11 @@ async function publishProgram(startDate: string): Promise<void> {
   const saved = await harness
     .put(
       `/training-programs/${program.id}/weeks/${weekId}`,
-      { sessions: [{ name: 'Sesión 1', exercises: [{ exerciseId, sets: [set, set] }] }] },
+      {
+        sessions: [
+          { name: 'Sesión 1', dayProfileCode, exercises: [{ exerciseId, sets: [set, set] }] },
+        ],
+      },
       cookie,
     )
     .set('If-Match', String(program.version));
@@ -148,7 +161,7 @@ beforeAll(async () => {
     const created = await harness.post(
       '/foods',
       {
-        name: `Alimento ${group} (descanso)`,
+        name: `Alimento ${group} (perfiles)`,
         state: 'READY',
         nutrients: { ENERC_KCAL: 150, PROCNT: 10, FAT: 5, CHOCDF: 15 },
       },
@@ -159,7 +172,7 @@ beforeAll(async () => {
   const exercise = await harness.post(
     '/exercises',
     {
-      name: 'Sentadilla con barra (descanso)',
+      name: 'Sentadilla con barra (perfiles)',
       pattern: 'SQUAT',
       level: 'INTERMEDIATE',
       modality: 'STRENGTH',
@@ -175,8 +188,8 @@ afterAll(async () => {
   await harness.stop();
 });
 
-describe('RN-E07 · 07 §2 · las kcal del día de descanso en el borrador', () => {
-  it('el borrador las guarda y calcula sus metas con su método: la proteína y la grasa no cambian', async () => {
+describe('RN-E07 · 07 §2 · los perfiles de día en el borrador', () => {
+  it('el borrador los guarda y calcula sus kcal desde los gramos, con su método; Entrenamiento es la prescripción', async () => {
     const created = await harness.post(
       `/patients/${patientId}/nutrition-plans`,
       { modality: 'EXCHANGES', energyPrescriptionId: prescriptionId, exchangeListId: DEMO },
@@ -184,89 +197,97 @@ describe('RN-E07 · 07 §2 · las kcal del día de descanso en el borrador', () 
     );
     expect(created.status, JSON.stringify(created.body)).toBe(201);
     const draft = created.body as Plan;
-    expect(draft).toMatchObject({ restDayKcal: null, restDayTargets: null });
-    const reparto = (await put(draft, readyBody(draft, null))).body as Plan;
+    expect(draft.dayProfiles).toEqual([]);
+    const reparto = (await put(draft, readyBody(draft, []))).body as Plan;
 
-    const saved = await put(reparto, readyBody(reparto, REST_KCAL));
+    const saved = await put(reparto, readyBody(reparto, [REST, HIGH]));
     expect(saved.status, JSON.stringify(saved.body)).toBe(200);
     plan = saved.body as Plan;
 
     expect(plan.targets.kcal).toBeCloseTo(LUIS_KCAL, 6);
-    expect(plan.restDayKcal).toBe(REST_KCAL);
-    expect(plan.restDayTargets).toMatchObject({
-      kcal: REST_KCAL,
-      proteinG: 160,
-      method: { methodCode: 'MACROS_REST_DAY', methodVersion: '1.0.0' },
+    expect(plan.dayProfiles).toMatchObject([
+      { code: 'REST', name: 'Descanso', kcal: REST_KCAL, choG: 120 },
+      { code: 'ALTO', name: 'Alto', kcal: HIGH_KCAL, choG: 250 },
+    ]);
+    expect(plan.dayProfiles[0]?.method).toMatchObject({
+      methodCode: 'MACROS_DAY_PROFILE',
+      methodVersion: '1.0.0',
     });
-    expect(plan.restDayTargets?.fatG).toBeCloseTo(LUIS_FAT_G, 6);
-    expect(plan.restDayTargets?.choG).toBeCloseTo(REST_CHO_G, 6);
   });
 
-  it('la vista previa del editor trae las metas de descanso del cuerpo, sin guardarlas', async () => {
+  it('la vista previa del editor calcula los perfiles del cuerpo, sin guardarlos', async () => {
     const preview = await harness.post(
       `/nutrition-plans/${plan.id}/preview`,
-      readyBody(plan, 1700),
+      readyBody(plan, [{ ...REST, choG: 150 }]),
       cookie,
     );
     expect(preview.status, JSON.stringify(preview.body)).toBe(200);
-    expect((preview.body as Plan).restDayTargets?.kcal).toBe(1700);
-    expect((await harness.get(`/nutrition-plans/${plan.id}`, cookie)).body).toMatchObject({
-      restDayKcal: REST_KCAL,
-    });
+    expect((preview.body as Plan).dayProfiles).toMatchObject([{ code: 'REST', choG: 150 }]);
+    const read = (await harness.get(`/nutrition-plans/${plan.id}`, cookie)).body as Plan;
+    expect(read.dayProfiles.map((p) => p.code)).toEqual(['REST', 'ALTO']);
   });
 
-  it('con carbohidratos negativos el borrador no se guarda: 422 con la regla', async () => {
-    const rejected = await put(plan, readyBody(plan, 900));
-    expect(rejected.status).toBe(422);
-    expect(rejected.body).toMatchObject({ code: 'NC-NUT-018', rule: 'RN-E07' });
+  it('un código repetido o Entrenamiento como perfil no se guardan: 422 con cada problema', async () => {
+    const repeated = await put(plan, readyBody(plan, [REST, { ...HIGH, code: 'REST' }]));
+    expect(repeated.status).toBe(422);
+    expect(repeated.body).toMatchObject({
+      code: 'NC-NUT-010',
+      details: { problems: ['Dos perfiles no pueden tener el mismo código (REST).'] },
+    });
+    const training = await put(plan, readyBody(plan, [{ ...HIGH, code: 'TRAINING' }]));
+    expect(training.status).toBe(422);
+    const lowercase = await put(plan, readyBody(plan, [{ ...HIGH, code: 'alto' }]));
+    expect(lowercase.status).toBe(400);
   });
 });
 
-describe('RN-E15 · publicar congela las metas de descanso', () => {
-  it('el snapshot de la versión 2 las trae con su método, y una versión nueva las copia', async () => {
+describe('RN-E15 · publicar congela los perfiles de día', () => {
+  it('el snapshot de la versión 3 los trae con su método, y una versión nueva los copia', async () => {
     const published = await harness
       .post(`/nutrition-plans/${plan.id}/publish`, undefined, cookie)
       .set('If-Match', String(plan.version));
     expect(published.status, JSON.stringify(published.body)).toBe(200);
     plan = published.body as Plan;
 
-    const [row] = await owner<{ version: number; rest: Macros & { method: object } }>(
-      `SELECT snapshot_schema_version AS version, snapshot->'restDayTargets' AS rest
+    const [row] = await owner<{ version: number; profiles: Profile[] }>(
+      `SELECT snapshot_schema_version AS version, snapshot->'dayProfiles' AS profiles
        FROM nutrition.plan WHERE id = $1`,
       [plan.id],
     );
-    expect(row?.version).toBe(2);
-    expect(row?.rest).toMatchObject({
-      kcal: REST_KCAL,
-      method: { methodCode: 'MACROS_REST_DAY' },
-    });
+    expect(row?.version).toBe(3);
+    expect(row?.profiles).toMatchObject([
+      { code: 'REST', kcal: REST_KCAL, method: { methodCode: 'MACROS_DAY_PROFILE' } },
+      { code: 'ALTO', kcal: HIGH_KCAL },
+    ]);
 
     const revision = await harness.post(`/nutrition-plans/${plan.id}/revisions`, undefined, cookie);
     expect(revision.status, JSON.stringify(revision.body)).toBe(201);
-    expect(revision.body).toMatchObject({ restDayKcal: REST_KCAL });
+    expect((revision.body as Plan).dayProfiles.map((p) => p.code)).toEqual(['REST', 'ALTO']);
   });
 });
 
-describe('RN-G03 · 07 §8 · la meta de cada día según su tipo', () => {
-  it('sin programa, hoy vale la meta de la prescripción y el día no tiene tipo', async () => {
+describe('RN-G03 · 07 §8 · P-20.4 · la meta de cada día según su perfil', () => {
+  it('sin programa, hoy vale la meta de la prescripción: Entrenamiento, sin tipo de día', async () => {
     await harness.deliver('tracking.plans');
 
-    const [target] = await todayTarget();
+    const target = await todayTarget();
+    expect(target).toMatchObject({ kind: null, code: 'TRAINING', name: 'Entrenamiento' });
     expect(target?.kcal).toBeCloseTo(1834.5, 1);
-    expect(target?.kind).toBeNull();
   });
 
-  it('al publicarse un programa en el que hoy es descanso, la meta de hoy pasa a la de descanso', async () => {
+  it('al publicarse un programa en el que hoy no hay sesión, la meta de hoy pasa a Descanso', async () => {
     // La sesión 1 fue ayer: hoy es el segundo día de la semana, sin sesión.
-    await publishProgram(day(-1));
+    await publishProgram(day(-1), null);
 
-    const [target] = await todayTarget();
-    expect(target?.kind).toBe('REST');
-    expect(target?.kcal).toBe(REST_KCAL);
-    expect(target?.cho).toBeCloseTo(REST_CHO_G, 1);
+    expect(await todayTarget()).toEqual({
+      kcal: REST_KCAL,
+      kind: 'REST',
+      code: 'REST',
+      name: 'Descanso',
+    });
   });
 
-  it('el trabajo de cada hora crea la meta que falta con el tipo del día', async () => {
+  it('el trabajo de cada hora crea la meta que falta con el perfil del día', async () => {
     await owner(
       `DELETE FROM tracking.daily_target WHERE patient_id = $1 AND local_date = $2::date`,
       [patientId, day()],
@@ -278,12 +299,10 @@ describe('RN-G03 · 07 §8 · la meta de cada día según su tipo', () => {
     if (!job) throw new Error('Falta el trabajo tracking.daily-targets.');
     await job.run();
 
-    const [target] = await todayTarget();
-    expect(target).toMatchObject({ kind: 'REST', kcal: REST_KCAL });
+    expect(await todayTarget()).toMatchObject({ code: 'REST', kcal: REST_KCAL });
   });
 
-  it('RF-32 · el resumen diario y la analítica de dieta comparan el día con la meta de su tipo', async () => {
-    await harness.deliver('analytics.daily-summary');
+  it('RF-32 · el resumen diario y la analítica de dieta comparan el día con la meta de su perfil', async () => {
     const job = harness.app
       .get(JobRegistry)
       .all()
@@ -297,16 +316,30 @@ describe('RN-G03 · 07 §8 · la meta de cada día según su tipo', () => {
     );
     expect(diet.status, JSON.stringify(diet.body)).toBe(200);
     const [today] = (
-      diet.body as { days: { localDate: string; dayKind: string; targetKcal: number }[] }
+      diet.body as {
+        days: { localDate: string; dayKind: string; dayProfile: object; targetKcal: number }[];
+      }
     ).days;
-    expect(today).toMatchObject({ localDate: day(), dayKind: 'REST', targetKcal: REST_KCAL });
+    expect(today).toMatchObject({
+      localDate: day(),
+      dayKind: 'REST',
+      dayProfile: { code: 'REST', name: 'Descanso' },
+      targetKcal: REST_KCAL,
+    });
   });
 
-  it('con un programa en el que hoy hay sesión, la meta de hoy es la de la prescripción', async () => {
-    await publishProgram(day());
+  it('una sesión de hoy con su perfil propio lleva ese perfil; una sin perfil, Entrenamiento', async () => {
+    await publishProgram(day(), 'ALTO');
+    expect(await todayTarget()).toEqual({
+      kcal: HIGH_KCAL,
+      kind: 'TRAINING',
+      code: 'ALTO',
+      name: 'Alto',
+    });
 
-    const [target] = await todayTarget();
-    expect(target?.kind).toBe('TRAINING');
+    await publishProgram(day(), null);
+    const target = await todayTarget();
+    expect(target).toMatchObject({ kind: 'TRAINING', code: 'TRAINING', name: 'Entrenamiento' });
     expect(target?.kcal).toBeCloseTo(1834.5, 1);
   });
 });

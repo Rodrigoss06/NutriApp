@@ -965,7 +965,8 @@ describe('RN-F12 · publicar', () => {
        FROM training.program WHERE id = $1`,
       [program.id],
     );
-    expect(row?.snapshot_schema_version).toBe(1);
+    // Versión 2 desde P14.5: cada sesión lleva su perfil de día en el calendario (ADR-100).
+    expect(row?.snapshot_schema_version).toBe(2);
     expect(row?.hash).toMatch(/^[0-9a-f]{64}$/);
     expect(row?.snapshot.programId).toBe(program.id);
     expect(row?.snapshot.engineVersion).toEqual(expect.any(String));

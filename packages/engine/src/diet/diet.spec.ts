@@ -7,52 +7,53 @@ import {
   ATWATER_KCAL_PER_G,
   DEMO_EXCHANGE_LIST,
   EXCHANGES_CLASSIC,
+  MACROS_DAY_PROFILE,
   MACROS_PROTEIN_FIRST,
-  MACROS_REST_DAY,
   MEAL_SPLIT_LARGEST_REMAINDER,
   RECIPE_NUTRIENTS,
-  kcalOfMacros,
 } from './index.js';
 
 const codes = (run: ReturnType<typeof runMethod>) =>
   run.ok ? run.result.warnings.map((w) => w.code) : ['no calculó'];
 
-describe('RN-E07 · metas del día de descanso (07 §2, P-20)', () => {
-  // La hoja piloto de Jeremy: Mateo, 160 g de proteína y 70 g de grasa los dos días; 2,250 kcal el día de descanso.
-  const restDay = (targetKcal: number, proteinG = 160, fatG = 70) =>
-    runMethod(MACROS_REST_DAY, { targetKcal, proteinG, fatG });
+describe('RN-E07 · los perfiles de día: mandan los gramos (07 §2, P-20)', () => {
+  // P-20.2, respuesta de Jeremy (2026-11-08): mandan los gramos y las kcal salen de ellos. La hoja piloto da a Mateo
+  // 160 g de proteína y 70 g de grasa los dos días, y 310 g de carbohidratos el día de entrenamiento y 240 g el de descanso.
+  const profile = (choG: number, proteinG = 160, fatG = 70) =>
+    runMethod(MACROS_DAY_PROFILE, { choG, proteinG, fatG });
 
-  it('la proteína y la grasa no cambian y los carbohidratos van por diferencia, con Atwater', () => {
-    const result = expectOk(restDay(2250));
-    expect(result.outputs).toEqual({ choG: 245, proteinG: 160, fatG: 70 });
-    expect(kcalOfMacros(result.outputs)).toBe(2250);
+  it('las kcal salen de los gramos con Atwater: 2,230 el día de descanso y 2,510 el de entrenamiento', () => {
+    expect(expectOk(profile(240)).outputs).toEqual({
+      kcal: 2230,
+      choG: 240,
+      proteinG: 160,
+      fatG: 70,
+    });
+    expect(expectOk(profile(310)).outputs.kcal).toBe(2510);
   });
 
   it('lleva su método y su versión, con el hash de los insumos (RN-D01)', () => {
-    const result = expectOk(restDay(2250));
-    expect(result.methodCode).toBe('MACROS_REST_DAY');
+    const result = expectOk(profile(240));
+    expect(result.methodCode).toBe('MACROS_DAY_PROFILE');
     expect(result.methodVersion).toBe('1.0.0');
-    expect(result.inputs).toEqual({ targetKcal: 2250, proteinG: 160, fatG: 70 });
+    expect(result.inputs).toEqual({ choG: 240, proteinG: 160, fatG: 70 });
     expect(result.inputsHash).toMatch(/^[0-9a-f]{64}$/);
   });
 
-  it('no se puede guardar con carbohidratos negativos', () => {
-    expect(expectErrors(restDay(1200))).toEqual([
-      { rule: 'RN-E07', code: 'NC-ENG-310', severity: 'ERROR' },
-    ]);
-  });
-
   it.each([
-    [0, 160, 70],
-    [-100, 160, 70],
+    [-1, 160, 70],
+    [240, -1, 70],
+    [240, 160, -1],
     [Number.NaN, 160, 70],
-    [2250, -1, 70],
-    [2250, 160, -1],
-  ])('kcal %s, proteína %s g y grasa %s g: insumos fuera de rango', (kcal, proteinG, fatG) => {
-    expect(expectErrors(restDay(kcal, proteinG, fatG))).toEqual([
-      { rule: 'RN-E07', code: 'NC-ENG-311', severity: 'ERROR' },
-    ]);
-  });
+    [0, 0, 0],
+  ])(
+    '%s g de carbohidratos, %s de proteína y %s de grasa: insumos fuera de rango',
+    (choG, proteinG, fatG) => {
+      expect(expectErrors(profile(choG, proteinG, fatG))).toEqual([
+        { rule: 'RN-E07', code: 'NC-ENG-312', severity: 'ERROR' },
+      ]);
+    },
+  );
 });
 
 describe('RN-E07 · macronutrientes', () => {

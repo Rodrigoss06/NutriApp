@@ -414,6 +414,7 @@ function trainingWeek(weekNo: number): ProgramWeek {
         position: 1,
         name: 'Cuerpo completo A',
         dayOfWeek: null,
+        dayProfileCode: null,
         notes: 'Calienta 10 minutos antes de empezar.',
         setsByMuscle: { QUADRICEPS: sets, GLUTES: sets / 2, CHEST: sets, TRICEPS: sets / 2 },
         exercises: [
@@ -469,6 +470,7 @@ function trainingWeek(weekNo: number): ProgramWeek {
         position: 2,
         name: 'Cuerpo completo B',
         dayOfWeek: null,
+        dayProfileCode: null,
         notes: null,
         setsByMuscle: { HAMSTRINGS: sets, GLUTES: sets / 2, CARDIO: 1 },
         exercises: [

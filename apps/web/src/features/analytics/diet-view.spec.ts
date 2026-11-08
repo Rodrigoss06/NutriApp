@@ -13,6 +13,7 @@ const missing = { items: 0, kcal: 0, choG: 0, proteinG: 0, fatG: 0, fiberG: 0 };
 const day = (localDate: string, changes: Partial<DietDay> = {}): DietDay => ({
   localDate,
   dayKind: null,
+  dayProfile: null,
   kcal: null,
   choG: null,
   proteinG: null,

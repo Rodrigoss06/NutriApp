@@ -1,5 +1,3 @@
-import type { DayKind } from './active-plan.js';
-
 /** La meta de entrenamiento de un día (05.2, tracking.daily_target): la del programa vigente ese día (RN-G03). */
 export interface TrainingDayTarget {
   readonly plannedSessions: number;
@@ -16,6 +14,8 @@ export interface ProgramCalendar {
     readonly sessions: readonly {
       readonly position: number;
       readonly dayOfWeek: number | null;
+      /** El perfil de día de la sesión (P-20.4); null o ausente (snapshot de la versión 1), Entrenamiento. */
+      readonly dayProfileCode?: string | null;
       readonly setsByMuscle: Readonly<Record<string, number>>;
     }[];
   }[];
@@ -54,11 +54,16 @@ export function sessionsOn<
   };
 }
 
-/** El tipo de un día del programa (07 §8): con sesiones, de entrenamiento; sin ellas, de descanso. Fuera del programa, null. */
-export function dayKindOf(calendar: ProgramCalendar, localDate: string): DayKind | null {
+/**
+ * El perfil de día que pide el programa (07 §8, P-20.4): el de su sesión (sin perfil, Entrenamiento; con dos sesiones, el de la
+ * primera); un día sin sesión, Descanso. Fuera del programa, null: vale la meta de la prescripción.
+ */
+export function dayProfileOf(calendar: ProgramCalendar, localDate: string): string | null {
   const day = sessionsOn(calendar, localDate);
   if (!day) return null;
-  return day.sessions.length > 0 ? 'TRAINING' : 'REST';
+  const [first] = day.sessions;
+  if (!first) return 'REST';
+  return first.dayProfileCode ?? 'TRAINING';
 }
 
 /** La meta de un día del programa (07 §8): sus sesiones y las series por grupo muscular. Fuera del programa no hay meta: null. */

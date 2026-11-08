@@ -1,3 +1,4 @@
+import type { DayProfileDraft } from '../../domain/day-profiles.js';
 import type { OrganizationId, UserId } from '@nutricoach/shared-kernel';
 import type { TimelineCursor, TimelineEntry } from '../../../clinical/index.js';
 import type { EnergyGoal, EnergyStrategy } from '../../domain/energy-rules.js';
@@ -111,12 +112,12 @@ export interface NewNutritionPlan {
   readonly now: Date;
 }
 
-/** Lo que se guarda de un borrador ya validado, según su modalidad, con las kcal del día de descanso (07 §2). */
+/** Lo que se guarda de un borrador ya validado, según su modalidad, con sus perfiles de día (07 §2). */
 export type PlanContent = (
   | { readonly modality: 'EXCHANGES'; readonly plan: ExchangePlan }
   | { readonly modality: 'COMPOSITION'; readonly plan: CompositionDraft }
   | { readonly modality: 'WEEKLY_MENU'; readonly plan: WeeklyMenuDraft }
-) & { readonly restDayKcal: number | null };
+) & { readonly dayProfiles: readonly DayProfileDraft[] };
 
 export interface NutritionPlanStore {
   insert(plan: NewNutritionPlan, content: PlanContent): Promise<void>;

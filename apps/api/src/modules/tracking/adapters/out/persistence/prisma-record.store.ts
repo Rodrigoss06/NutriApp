@@ -941,7 +941,16 @@ export class PrismaRecordStore implements RecordStore {
   async dayTarget(patientId: string, localDate: string): Promise<DayTargetRow | null> {
     const row = await this.db.tx.dailyTarget.findUnique({
       where: { patientId_localDate: { patientId, localDate: asDate(localDate) } },
-      select: { kcal: true, choG: true, proteinG: true, fatG: true, waterMl: true, dayKind: true },
+      select: {
+        kcal: true,
+        choG: true,
+        proteinG: true,
+        fatG: true,
+        waterMl: true,
+        dayKind: true,
+        dayProfileCode: true,
+        dayProfileName: true,
+      },
     });
     if (
       !row ||
@@ -959,6 +968,10 @@ export class PrismaRecordStore implements RecordStore {
       fatG: Number(row.fatG),
       waterMl: row.waterMl,
       dayKind: row.dayKind === 'TRAINING' || row.dayKind === 'REST' ? row.dayKind : null,
+      profile:
+        row.dayProfileCode && row.dayProfileName
+          ? { code: row.dayProfileCode, name: row.dayProfileName }
+          : null,
     };
   }
 }

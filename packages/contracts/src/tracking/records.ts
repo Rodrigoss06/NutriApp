@@ -429,8 +429,10 @@ export const meTodaySchema = z.object({
       proteinG: z.number(),
       fatG: z.number(),
       waterMl: z.number().int().nullable(),
-      /** El tipo del día según el programa vigente (07 §8): su meta es la de ese tipo (07 §2). Sin programa, null. */
+      /** El tipo del día según el programa vigente (07 §8). Sin programa, null. */
       dayKind: z.enum(['TRAINING', 'REST']).nullable(),
+      /** El perfil de día con que se fijó la meta (07 §2, P-20): Entrenamiento, Descanso o uno propio. Sin perfiles, null. */
+      profile: z.object({ code: z.string(), name: z.string() }).nullable(),
     })
     .nullable(),
   consumed: dayTotalsSchema,
@@ -498,10 +500,10 @@ export const mePlanSchema = z.object({
       versionNo: z.number().int(),
       modality: z.enum(PLAN_MODALITIES),
       validFrom: isoDate,
-      /** Las del plan: las del día de entrenamiento si tiene metas de descanso (07 §2). */
+      /** Las de la prescripción: las de Entrenamiento (07 §2). */
       targets: planMacrosSchema,
-      /** Las del día de descanso; null: una sola meta. */
-      restDayTargets: planMacrosSchema.nullable(),
+      /** Los demás perfiles de día, en su orden; vacío, una sola meta (P-20). */
+      dayProfiles: z.array(planMacrosSchema.extend({ code: z.string(), name: z.string() })),
       hydrationTargetMl: z.number().int().nullable(),
       instructions: z.string().nullable(),
       meals: z.array(

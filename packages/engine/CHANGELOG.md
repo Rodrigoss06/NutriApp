@@ -3,6 +3,15 @@
 Cambiar una fórmula o una constante sube la versión del método afectado y la del motor (02 §9).
 Los resultados guardados conservan la versión con que se calcularon (RN-D01, RN-D08).
 
+## 1.8.0 — 2026-11-08
+
+- Nuevo método `MACROS_DAY_PROFILE` 1.0.0: un perfil de día del plan (07 §2, P14.5). El coach escribe los gramos de
+  carbohidratos, proteína y grasa, y las kcal salen de ellos con Atwater (RN-E07): mandan los gramos (P-20.2, respuesta de
+  Jeremy). Gramos negativos o todos en 0: NC-ENG-312.
+- Se retira `MACROS_REST_DAY` 1.0.0 (1.7.0), con NC-ENG-310 y NC-ENG-311: partía de las kcal del día de descanso y Jeremy
+  respondió que mandan los gramos. No llegó a staging ni a producción, así que ningún resultado guardado lo cita (ADR-100).
+- Ningún otro método cambia: G-01 a G-40 siguen igual.
+
 ## 1.7.0 — 2026-11-08
 
 - Nuevo método `MACROS_REST_DAY` 1.0.0: metas del día de descanso (07 §2, P14.5). La proteína y la grasa en gramos son

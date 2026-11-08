@@ -26,7 +26,7 @@ const meal = (id: string, name: string, sharePct: number, sta: number, meat: num
 /** G-18 y G-19 con el ajuste de carnes a 15, el reparto de lácteos a mano y arroz en el almuerzo. */
 const plan: Pick<
   ExchangeNutritionPlan,
-  'exchanges' | 'manualSplit' | 'meals' | 'hydrationTargetMl' | 'instructions' | 'restDayKcal'
+  'exchanges' | 'manualSplit' | 'meals' | 'hydrationTargetMl' | 'instructions' | 'dayProfiles'
 > = {
   exchanges: [
     { groupCode: 'VEG', servings: 4, automatic: 4, manual: false },
@@ -60,7 +60,7 @@ const plan: Pick<
   ],
   hydrationTargetMl: null,
   instructions: null,
-  restDayKcal: null,
+  dayProfiles: [],
 };
 
 const valid = (draft: PlanDraft) => {
@@ -87,17 +87,28 @@ describe('RF-19 · el editor arma el borrador entero para PUT', () => {
     ]);
     expect(body.hydrationTargetMl).toBeNull();
     expect(body.instructions).toBeNull();
-    expect(body.restDayKcal).toBeNull();
+    expect(body.dayProfiles).toEqual([]);
   });
 
-  it('07 §2 · las kcal del día de descanso vuelven igual; sin un entero de 1 a 10 000 no hay cuerpo', () => {
-    // Guardar desde el editor no borra las metas de descanso que ya tiene el plan (P14.5).
-    expect(valid(draftOf({ ...plan, restDayKcal: 2250 })).restDayKcal).toBe(2250);
-    const draft = draftOf(plan);
-    expect(valid({ ...draft, restDayKcal: ' 2250 ' }).restDayKcal).toBe(2250);
-    for (const text of ['0', '2250.5', '10001', 'x']) {
-      expect(planBody({ ...draft, restDayKcal: text })).toBeNull();
-    }
+  it('07 §2 · los perfiles de día del plan vuelven igual: guardar desde el editor no los borra', () => {
+    // El perfil Descanso de Mateo (P-20): la API calcula sus kcal y su método; el cuerpo lleva solo los gramos.
+    const rest = {
+      code: 'REST',
+      name: 'Descanso',
+      kcal: 2230,
+      choG: 240,
+      proteinG: 160,
+      fatG: 70,
+      method: {
+        methodCode: 'MACROS_DAY_PROFILE',
+        methodVersion: '1.0.0',
+        inputsHash: 'x',
+        warnings: [],
+      },
+    };
+    expect(valid(draftOf({ ...plan, dayProfiles: [rest] })).dayProfiles).toEqual([
+      { code: 'REST', name: 'Descanso', choG: 240, proteinG: 160, fatG: 70 },
+    ]);
   });
 
   it('RN-E08 · almidones, carnes y grasas sin ajuste los da el método: no van en overrides', () => {

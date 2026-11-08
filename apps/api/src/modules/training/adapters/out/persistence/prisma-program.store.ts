@@ -201,6 +201,7 @@ export class PrismaProgramStore implements ProgramStore {
             position: session.position,
             name: session.name,
             dayOfWeek: session.dayOfWeek,
+            dayProfileCode: session.dayProfileCode,
             notes: session.notes,
             exercises: session.prescribedExercises.map((exercise) => ({
               id: exercise.id,
@@ -496,6 +497,7 @@ export class PrismaProgramStore implements ProgramStore {
         position: session.position,
         name: session.name,
         dayOfWeek: session.dayOfWeek,
+        dayProfileCode: session.dayProfileCode,
         notes: session.notes,
       })),
     });

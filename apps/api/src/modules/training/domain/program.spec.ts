@@ -46,6 +46,7 @@ const session = (changes: Partial<ProgramSession> = {}): ProgramSession => ({
   position: 1,
   name: 'Sesión 1',
   dayOfWeek: null,
+  dayProfileCode: null,
   notes: null,
   exercises: [exercise()],
   ...changes,
@@ -215,6 +216,7 @@ describe('RN-F14 · lo que manda el coach sobre lo que había', () => {
   const inputOf = (changes: object = {}) => ({
     name: 'Día 1',
     dayOfWeek: 2,
+    dayProfileCode: null,
     notes: null,
     exercises: [
       {
@@ -279,6 +281,7 @@ describe('RN-F14 · lo que manda el coach sobre lo que había', () => {
         {
           name: 'Día 1',
           dayOfWeek: null,
+          dayProfileCode: null,
           notes: null,
           exercises: [...inputOf().exercises, ...inputOf().exercises],
         },

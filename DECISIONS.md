@@ -2444,3 +2444,68 @@ Consecuencias:
 - PR 1a-web: el editor, Hoy, Mi plan, la analítica, las fichas con las dos metas (plantillas nuevas) y Mateo en `demo:3`.
 - Para Notion (/notion-sync de P14.5): 02 §9 (`MACROS_REST_DAY`) y §3; 03 RN-E07 y RN-G03; 05.2 (`rest_day_kcal`,
   `day_kind`) y 05.3 (`day_kind`); 07 §2 y §8; 04 RF-18 o RF-23.
+
+## ADR-100 · Perfiles de día del plan: las respuestas de Jeremy a P-20 — aceptada (2026-11-08)
+Contexto: P14.5. Jeremy respondió P-20 el 2026-11-08 (`docs/preguntas/hoja-piloto-mateo.md`) y Rodrigo pidió seguir sus
+respuestas:
+- la proteína, los carbohidratos y la grasa se editan en cada tipo de día;
+- mandan los gramos;
+- el día pasa a descanso solo si se reprograma la sesión a tiempo, nunca a medianoche;
+- hay perfiles de día propios además de Entrenamiento y Descanso;
+- en descanso cambian solo las porciones del alimento fuente, en algunas comidas.
+
+El PR 1a (#70, ADR-099) partía de las kcal del día de descanso. Rodrigo decidió el 2026-11-08:
+- Entrenamiento sigue siendo la prescripción;
+- los perfiles se asignan por sesión del programa y por fecha;
+- reprogramar lo hacen el paciente y el coach, solo hoy y mañana;
+- el orden de los PR: perfiles por la API (este, PR 1c), sus pantallas (1d), comidas por perfil (1b) y reprogramar (1e,
+  con el perfil por fecha). Después, el PR 2 y el 6a.
+Decisión:
+- Reemplaza a ADR-099 en lo que la respuesta contradice. Se retiran `MACROS_REST_DAY` y `nutrition.plan.rest_day_kcal`, que no
+  llegaron a staging ni a producción. Sigue lo demás: la meta de cada día la da el programa vigente, solo se fija la de hoy
+  (RN-G03) y sin programa vale la prescripción.
+- Motor 1.8.0, método `MACROS_DAY_PROFILE` 1.0.0: con los gramos de carbohidratos, proteína y grasa da las kcal con Atwater
+  (RN-E07). Gramos negativos o todos en 0: NC-ENG-312. Con la respuesta a P-20.2 ya hay caso dorado: 240, 160 y 70 g dan
+  2,230 kcal, y 310, 160 y 70 g, 2,510. Se propone como G-41 en el /notion-sync.
+- Migración `202611080100_nutrition_day_profiles`:
+  - `nutrition.plan_day_profile`: código, nombre, gramos y posición. Solo cambia en borrador; tiene la RLS de los hijos del
+    plan;
+  - `training.session.day_profile_code`;
+  - `day_profile_code` y `day_profile_name` en `tracking.daily_target` y en `analytics.patient_daily_summary`;
+  - sale `rest_day_kcal`.
+- nutrition:
+  - el borrador de las tres modalidades lleva `dayProfiles`: hasta 6, con códigos únicos en mayúsculas, REST para el descanso
+    y nunca TRAINING. Lo que no cuadra da 422 NC-NUT-010 con cada problema;
+  - el snapshot pasa a la versión 3, con los perfiles, sus kcal y su método.
+- training:
+  - cada sesión puede llevar `dayProfileCode`; null es Entrenamiento;
+  - el snapshot del programa pasa a la versión 2, con el perfil de cada sesión en el calendario de tracking. Una versión 1
+    se lee con todas las sesiones de Entrenamiento.
+- tracking:
+  - el perfil del día es el de su sesión (con dos sesiones, el de la primera); REST si no hay sesión; ninguno fuera del
+    programa;
+  - la meta del día es la de ese perfil del plan. Entrenamiento, un día sin programa o un código que el plan no tiene llevan
+    la prescripción;
+  - un plan sin perfiles tiene una sola meta y ningún perfil;
+  - la meta guarda el perfil con que se fijó, y Hoy, Mi plan y la analítica de dieta lo muestran.
+- La web todavía no edita perfiles, pero conserva los del plan y los de las sesiones al guardar.
+Consecuencias:
+- Integración `day-profiles.int.spec.ts`, 9 casos como app_user:
+  - el borrador con sus perfiles, la vista previa, los 422 y el 400;
+  - el snapshot de la versión 3 y la versión nueva;
+  - la meta de hoy sin programa, en un día sin sesión, con el trabajo de cada hora, con una sesión con perfil propio y con
+    una sin perfil;
+  - la analítica de dieta.
+- PR 1d:
+  - el editor de perfiles, que autocompleta la proteína y la grasa de Entrenamiento (P-20.1);
+  - el perfil de cada sesión en el programa;
+  - Hoy, Mi plan, la analítica y las fichas;
+  - Mateo con 2,510 y 2,230 kcal en `demo:3`.
+- PR 1b: las porciones del alimento fuente por perfil (P-20.5). PR 1e: «no entreno hoy», «mover a mañana» y el perfil por
+  fecha (P-20.3), que nunca se aplican solos a medianoche.
+- Para Notion (/notion-sync de P14.5):
+  - 07 §2 y §8, y §15 con P-20 resuelta;
+  - 03: RN-E07 (los perfiles de día), RN-G03 (la meta del perfil del día) y G-41;
+  - 02 §9 (`MACROS_DAY_PROFILE`);
+  - 05.2 (`plan_day_profile`, `session.day_profile_code`, `daily_target`) y 05.3 (el resumen diario);
+  - el prompt de P14.5 con estos PR.

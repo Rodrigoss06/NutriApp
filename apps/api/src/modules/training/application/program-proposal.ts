@@ -85,6 +85,7 @@ export function proposedProgram(input: ProposalInput): Result<ProposedProgram, D
       position: day.day,
       name: day.name,
       dayOfWeek: null,
+      dayProfileCode: null,
       notes: null,
       exercises: day.blocks.map((block) => ({
         id: newId(),

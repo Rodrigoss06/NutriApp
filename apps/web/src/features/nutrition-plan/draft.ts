@@ -1,5 +1,7 @@
 import {
   SOLVED_GROUPS,
+  type DayProfile,
+  type DayProfileInput,
   type FIXED_GROUPS,
   type ExchangeGroupCode,
   type MealSlot,
@@ -44,13 +46,13 @@ export interface PlanDraft {
   readonly meals: readonly MealRow[];
   readonly hydrationMl: string;
   readonly instructions: string;
-  /** Las kcal del día de descanso (07 §2); vacío: una sola meta, la de la prescripción. */
-  readonly restDayKcal: string;
+  /** Los perfiles de día además de Entrenamiento (07 §2, P-20), tal como se guardan; vacío, una sola meta. */
+  readonly dayProfiles: readonly DayProfileInput[];
 }
 
 type PlanFields = Pick<
   ExchangeNutritionPlan,
-  'exchanges' | 'manualSplit' | 'meals' | 'hydrationTargetMl' | 'instructions' | 'restDayKcal'
+  'exchanges' | 'manualSplit' | 'meals' | 'hydrationTargetMl' | 'instructions' | 'dayProfiles'
 >;
 
 /** El borrador guardado, listo para editarse. */
@@ -90,12 +92,13 @@ export function draftOf(plan: PlanFields): PlanDraft {
     })),
     hydrationMl: plan.hydrationTargetMl === null ? '' : String(plan.hydrationTargetMl),
     instructions: plan.instructions ?? '',
-    restDayKcal: restDayKcalText(plan.restDayKcal),
+    dayProfiles: dayProfileInputsOf(plan.dayProfiles),
   };
 }
 
-/** Las kcal del día de descanso como texto del borrador: vacío si el plan tiene una sola meta. */
-export const restDayKcalText = (kcal: number | null): string => (kcal === null ? '' : String(kcal));
+/** Los perfiles de día del plan como se guardan (07 §2): sin las kcal ni el método, que calcula la API (P-20.2). */
+export const dayProfileInputsOf = (profiles: readonly DayProfile[]): readonly DayProfileInput[] =>
+  profiles.map(({ code, name, choG, proteinG, fatG }) => ({ code, name, choG, proteinG, fatG }));
 
 const INTEGER = /^\d+$/;
 const TIME = /^([01]\d|2[0-3]):[0-5]\d$/;
@@ -126,15 +129,6 @@ export function hydrationOf(text: string): number | null | undefined {
 }
 
 export const isTimeOfDay = (text: string): boolean => text === '' || TIME.test(text);
-
-/** Las kcal del día de descanso: vacío es null (una sola meta); un entero de 1 a 10 000, su valor; si no, undefined. */
-export function restDayKcalOf(text: string): number | null | undefined {
-  const value = text.trim();
-  if (value === '') return null;
-  return INTEGER.test(value) && Number(value) >= 1 && Number(value) <= 10_000
-    ? Number(value)
-    : undefined;
-}
 
 /**
  * El cuerpo de PUT y de la vista previa a partir del borrador, o null mientras algo falte o no sea un número válido:
@@ -189,10 +183,7 @@ export function planBody(draft: PlanDraft): UpdateExchangePlan | null {
   }
   const hydrationTargetMl = hydrationOf(draft.hydrationMl);
   const instructions = draft.instructions.trim();
-  const restDayKcal = restDayKcalOf(draft.restDayKcal);
-  if (hydrationTargetMl === undefined || restDayKcal === undefined || instructions.length > 2_000) {
-    return null;
-  }
+  if (hydrationTargetMl === undefined || instructions.length > 2_000) return null;
   return {
     modality: 'EXCHANGES',
     fixedServings: { VEG, FRU, MILK },
@@ -201,7 +192,7 @@ export function planBody(draft: PlanDraft): UpdateExchangePlan | null {
     splitOverrides,
     hydrationTargetMl,
     instructions: instructions === '' ? null : instructions,
-    restDayKcal,
+    dayProfiles: [...draft.dayProfiles],
   };
 }
 
