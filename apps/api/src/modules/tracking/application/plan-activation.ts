@@ -3,12 +3,13 @@ import { CLOCK, type Clock } from '@nutricoach/shared-kernel';
 import { ClinicalApi } from '../../clinical/index.js';
 import { NutritionApi } from '../../nutrition/index.js';
 import { dailyTargetOf, localDate, replacesActivePlan } from '../domain/active-plan.js';
+import { dayKindOf } from '../domain/active-program.js';
 import { TRACKING_STORE, type TrackingStore } from './ports/tracking.ports.js';
 
 /**
  * Al publicarse un plan (02 §8), tracking guarda su copia (active_plan_view) para validar registros y fija la meta de
- * hoy, en la fecha local del paciente (RN-G03, RN-G04). Los días anteriores no se tocan. Corre en la transacción del
- * consumidor, con el contexto SYSTEM de la organización.
+ * hoy, en la fecha local del paciente (RN-G03, RN-G04), la del tipo del día según el programa vigente (07 §2). Los días
+ * anteriores no se tocan. Corre en la transacción del consumidor, con el contexto SYSTEM de la organización.
  */
 @Injectable()
 export class PlanActivation {
@@ -34,13 +35,15 @@ export class PlanActivation {
       snapshot: plan.snapshot,
       effectiveFrom: plan.snapshot.validFrom,
     });
+    const today = localDate(this.clock.now(), patient.timezone);
+    const program = await this.store.activeProgram(plan.patientId);
     await this.store.setDailyTarget(
       {
         patientId: plan.patientId,
         organizationId,
-        localDate: localDate(this.clock.now(), patient.timezone),
+        localDate: today,
         planId,
-        target: dailyTargetOf(plan.snapshot),
+        target: dailyTargetOf(plan.snapshot, program ? dayKindOf(program.calendar, today) : null),
       },
       'REPLACE',
     );

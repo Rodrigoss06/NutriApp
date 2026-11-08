@@ -9,8 +9,8 @@ import {
 } from '@nutricoach/shared-kernel';
 import { ClinicalApi } from '../../clinical/index.js';
 import { TenancyApi } from '../../tenancy/index.js';
-import { localDate } from '../domain/active-plan.js';
-import { trainingTargetOf } from '../domain/active-program.js';
+import { dailyTargetOf, localDate } from '../domain/active-plan.js';
+import { dayKindOf, trainingTargetOf } from '../domain/active-program.js';
 import { TRACKING_STORE, type TrackingStore } from './ports/tracking.ports.js';
 
 /** Contexto de plataforma para listar las organizaciones: la RLS de tenancy se lo permite a PLATFORM_ADMIN. */
@@ -23,7 +23,8 @@ const platformContext: SecurityContext = {
 
 /**
  * Cada hora en el worker: a cada paciente con un plan o un programa vigente le crea la meta de su día local si aún no la tiene
- * (RN-G03, RN-G04). Nunca reescribe un día que ya tiene meta. Idempotente.
+ * (RN-G03, RN-G04). Nunca reescribe un día que ya tiene meta. Idempotente. La meta de alimentación es la del tipo del día
+ * según el programa vigente (07 §2, §8).
  */
 @Injectable()
 export class DailyTargetsHandler {
@@ -44,22 +45,26 @@ export class DailyTargetsHandler {
     for (const organizationId of organizations) {
       created += await this.uow.run(systemContext(organizationId), async () => {
         let count = 0;
+        const programs = await this.store.activePrograms();
+        const calendars = new Map(programs.map((p) => [p.patientId, p.calendar]));
         for (const plan of await this.store.activeNutritionPlans()) {
           const patient = await this.clinical.patientRef(plan.patientId);
           if (!patient || patient.status === 'ARCHIVED') continue;
+          const today = localDate(now, patient.timezone);
+          const calendar = calendars.get(plan.patientId);
           const written = await this.store.setDailyTarget(
             {
               patientId: plan.patientId,
               organizationId,
-              localDate: localDate(now, patient.timezone),
+              localDate: today,
               planId: plan.planId,
-              target: plan.target,
+              target: dailyTargetOf(plan.targets, calendar ? dayKindOf(calendar, today) : null),
             },
             'KEEP',
           );
           if (written) count += 1;
         }
-        for (const program of await this.store.activePrograms()) {
+        for (const program of programs) {
           const patient = await this.clinical.patientRef(program.patientId);
           if (!patient || patient.status === 'ARCHIVED') continue;
           const today = localDate(now, patient.timezone);

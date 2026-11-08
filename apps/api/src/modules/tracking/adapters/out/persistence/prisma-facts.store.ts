@@ -123,6 +123,7 @@ export class PrismaFactsStore implements FactsStore {
         fatG: num(t.fatG),
         waterMl: t.waterMl,
         plannedSessions: t.plannedSessions,
+        dayKind: t.dayKind === 'TRAINING' || t.dayKind === 'REST' ? t.dayKind : null,
         plannedSets: numberRecord(t.plannedSets),
       })),
       foods: foods.map((f) => ({

@@ -1,4 +1,4 @@
-import type { DailyTarget } from '../../domain/active-plan.js';
+import type { DailyTarget, PlanTargets } from '../../domain/active-plan.js';
 import type { ProgramCalendar, TrainingDayTarget } from '../../domain/active-program.js';
 
 export interface ActiveNutritionPlan {
@@ -6,7 +6,8 @@ export interface ActiveNutritionPlan {
   readonly planId: string;
   /** ISO 8601: cuándo se publicó, para que la copia solo avance (RN-E14). */
   readonly publishedAt: string;
-  readonly target: DailyTarget;
+  /** Las metas del snapshot: la de la prescripción y, si las tiene, la del día de descanso (07 §2). */
+  readonly targets: PlanTargets;
 }
 
 export interface ActiveProgram {
@@ -59,8 +60,8 @@ export interface TrackingStore {
   /** Los programas vigentes de la organización del contexto. */
   activePrograms(): Promise<readonly ActiveProgram[]>;
   /**
-   * La meta de entrenamiento de un día. REPLACE la cambia si ya existía (el programa de hoy cambió); KEEP no toca la que el día ya
-   * tiene.
+   * La meta de entrenamiento de un día, con su tipo (07 §8): de entrenamiento si tiene sesiones; si no, de descanso. REPLACE la
+   * cambia si ya existía (el programa de hoy cambió); KEEP no toca la que el día ya tiene.
    */
   setTrainingTarget(
     row: {

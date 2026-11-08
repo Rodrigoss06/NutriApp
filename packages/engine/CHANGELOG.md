@@ -3,6 +3,14 @@
 Cambiar una fórmula o una constante sube la versión del método afectado y la del motor (02 §9).
 Los resultados guardados conservan la versión con que se calcularon (RN-D01, RN-D08).
 
+## 1.7.0 — 2026-11-08
+
+- Nuevo método `MACROS_REST_DAY` 1.0.0: metas del día de descanso (07 §2, P14.5). La proteína y la grasa en gramos son
+  las del día de entrenamiento y los carbohidratos van por diferencia con los factores de Atwater (RN-E07), como en la
+  hoja piloto de JV Fitness; Jeremy lo confirma en P-20. Carbohidratos negativos: NC-ENG-310. Kcal no positivas o gramos
+  negativos: NC-ENG-311.
+- Ningún método existente cambia: G-01 a G-40 siguen igual.
+
 ## 1.6.0 — 2026-11-05
 
 - Nuevo método `WEEKLY_REVIEW_JV` 3.0.0: control semanal de JV Fitness (RN-G16, 07 §10). Da los agregados de la semana

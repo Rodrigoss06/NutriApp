@@ -26,7 +26,7 @@ const meal = (id: string, name: string, sharePct: number, sta: number, meat: num
 /** G-18 y G-19 con el ajuste de carnes a 15, el reparto de lácteos a mano y arroz en el almuerzo. */
 const plan: Pick<
   ExchangeNutritionPlan,
-  'exchanges' | 'manualSplit' | 'meals' | 'hydrationTargetMl' | 'instructions'
+  'exchanges' | 'manualSplit' | 'meals' | 'hydrationTargetMl' | 'instructions' | 'restDayKcal'
 > = {
   exchanges: [
     { groupCode: 'VEG', servings: 4, automatic: 4, manual: false },
@@ -60,6 +60,7 @@ const plan: Pick<
   ],
   hydrationTargetMl: null,
   instructions: null,
+  restDayKcal: null,
 };
 
 const valid = (draft: PlanDraft) => {
@@ -86,6 +87,17 @@ describe('RF-19 · el editor arma el borrador entero para PUT', () => {
     ]);
     expect(body.hydrationTargetMl).toBeNull();
     expect(body.instructions).toBeNull();
+    expect(body.restDayKcal).toBeNull();
+  });
+
+  it('07 §2 · las kcal del día de descanso vuelven igual; sin un entero de 1 a 10 000 no hay cuerpo', () => {
+    // Guardar desde el editor no borra las metas de descanso que ya tiene el plan (P14.5).
+    expect(valid(draftOf({ ...plan, restDayKcal: 2250 })).restDayKcal).toBe(2250);
+    const draft = draftOf(plan);
+    expect(valid({ ...draft, restDayKcal: ' 2250 ' }).restDayKcal).toBe(2250);
+    for (const text of ['0', '2250.5', '10001', 'x']) {
+      expect(planBody({ ...draft, restDayKcal: text })).toBeNull();
+    }
   });
 
   it('RN-E08 · almidones, carnes y grasas sin ajuste los da el método: no van en overrides', () => {

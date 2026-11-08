@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { sessionsOn, trainingTargetOf, type ProgramCalendar } from './active-program.js';
+import { dayKindOf, sessionsOn, trainingTargetOf, type ProgramCalendar } from './active-program.js';
 
 const SESSION_1 = { position: 1, dayOfWeek: null, setsByMuscle: { QUADRICEPS: 3, GLUTES: 1.5 } };
 const SESSION_2 = { position: 2, dayOfWeek: null, setsByMuscle: { QUADRICEPS: 1, CHEST: 3 } };
@@ -118,5 +118,21 @@ describe('07 §8 · las sesiones de un día, con lo que cada una lleva', () => {
     expect(sessionsOn({ startDate: '2026-11-02', weeks }, '2026-11-05')?.sessions).toEqual([]);
     expect(sessionsOn({ startDate: '2026-11-02', weeks }, '2026-11-01')).toBeNull();
     expect(sessionsOn({ startDate: '2026-11-02', weeks }, '2026-11-16')).toBeNull();
+  });
+});
+
+describe('07 §8 · el tipo de cada día: entrenamiento o descanso', () => {
+  it('un día con sesiones programadas es de entrenamiento y uno sin sesiones, de descanso', () => {
+    expect(dayKindOf(CALENDAR, '2026-11-02')).toBe('TRAINING');
+    expect(dayKindOf(CALENDAR, '2026-11-03')).toBe('TRAINING');
+    expect(dayKindOf(CALENDAR, '2026-11-04')).toBe('REST');
+    // Semana 2: su única sesión es la 2, así que va el segundo día.
+    expect(dayKindOf(CALENDAR, '2026-11-09')).toBe('REST');
+    expect(dayKindOf(CALENDAR, '2026-11-10')).toBe('TRAINING');
+  });
+
+  it('fuera del programa el día no tiene tipo', () => {
+    expect(dayKindOf(CALENDAR, '2026-11-01')).toBeNull();
+    expect(dayKindOf(CALENDAR, '2026-11-16')).toBeNull();
   });
 });

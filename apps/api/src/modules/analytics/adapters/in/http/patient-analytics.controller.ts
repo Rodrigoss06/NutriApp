@@ -85,6 +85,7 @@ export class PatientAnalyticsController {
         proteinG: day.proteinG,
         fatG: day.fatG,
         fiberG: day.fiberG,
+        dayKind: day.dayKind,
         targetKcal: day.targetKcal,
         targetChoG: day.targetChoG,
         targetProteinG: day.targetProteinG,

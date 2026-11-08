@@ -25,20 +25,23 @@ import type {
   CalculatedWeeklyMenu,
   PlanCalculator,
 } from './plan-calculator.js';
+import { targetsOf } from './plan-calculator.js';
 import type { EnergyPrescriptionRecord, PlanContent } from './ports/nutrition.ports.js';
+import { restDayTargetsOf, type RestDayTargets } from './rest-day.js';
 
-/** Un borrador calculado por el motor, de su modalidad. */
-export type CalculatedDraft =
+/** Un borrador calculado por el motor, de su modalidad, con las metas del día de descanso si las tiene (07 §2). */
+export type CalculatedDraft = (
   | { readonly modality: 'EXCHANGES'; readonly value: CalculatedPlan }
   | { readonly modality: 'COMPOSITION'; readonly value: CalculatedComposition }
-  | { readonly modality: 'WEEKLY_MENU'; readonly value: CalculatedWeeklyMenu };
+  | { readonly modality: 'WEEKLY_MENU'; readonly value: CalculatedWeeklyMenu }
+) & { readonly restDay: RestDayTargets | null };
 
 /**
  * Cómo empieza un plan: con los tiempos de G-19 y sin alimentos ni hidratación. Por intercambios, sin grupos fijos;
  * el menú, con sus siete días vacíos.
  */
 export function newDraft(modality: PlanModality): PlanDraft {
-  const empty = { hydrationTargetMl: null, instructions: null };
+  const empty = { hydrationTargetMl: null, instructions: null, restDayKcal: null };
   switch (modality) {
     case 'EXCHANGES':
       return {
@@ -61,7 +64,10 @@ export function newDraft(modality: PlanModality): PlanDraft {
   }
 }
 
-/** Calcula un borrador de cualquier modalidad; solo los intercambios usan lista (RN-E11). */
+/**
+ * Calcula un borrador de cualquier modalidad; solo los intercambios usan lista (RN-E11). Las metas del día de descanso
+ * salen de las de la prescripción, que son las del día de entrenamiento (07 §2).
+ */
 export async function calculateDraft(
   calculator: PlanCalculator,
   organizationId: OrganizationId,
@@ -69,44 +75,57 @@ export async function calculateDraft(
   exchangeListId: string | null,
   draft: PlanDraft,
 ): Promise<Result<CalculatedDraft, DomainError>> {
+  const restDay = restDayTargetsOf(targetsOf(prescription), draft.restDayKcal);
+  if (!restDay.ok) return restDay;
   switch (draft.modality) {
     case 'EXCHANGES': {
       if (!exchangeListId) throw new Error('Un plan por intercambios sin lista.');
       const value = await calculator.calculate(organizationId, prescription, exchangeListId, draft);
-      return value.ok ? ok({ modality: draft.modality, value: value.value }) : err(value.error);
+      return value.ok
+        ? ok({ modality: draft.modality, value: value.value, restDay: restDay.value })
+        : err(value.error);
     }
     case 'COMPOSITION': {
       const value = await calculator.composition(organizationId, prescription, draft);
-      return value.ok ? ok({ modality: draft.modality, value: value.value }) : err(value.error);
+      return value.ok
+        ? ok({ modality: draft.modality, value: value.value, restDay: restDay.value })
+        : err(value.error);
     }
     case 'WEEKLY_MENU': {
       const value = await calculator.weeklyMenu(organizationId, prescription, draft);
-      return value.ok ? ok({ modality: draft.modality, value: value.value }) : err(value.error);
+      return value.ok
+        ? ok({ modality: draft.modality, value: value.value, restDay: restDay.value })
+        : err(value.error);
     }
   }
 }
 
 /** Lo que se guarda: el borrador validado por el dominio. */
 export function contentOf(calculated: CalculatedDraft): PlanContent {
+  const restDayKcal = calculated.restDay?.kcal ?? null;
   switch (calculated.modality) {
     case 'EXCHANGES':
-      return { modality: 'EXCHANGES', plan: calculated.value.calculation.plan };
+      return { modality: 'EXCHANGES', plan: calculated.value.calculation.plan, restDayKcal };
     case 'COMPOSITION':
-      return { modality: 'COMPOSITION', plan: calculated.value.calculation.plan };
+      return { modality: 'COMPOSITION', plan: calculated.value.calculation.plan, restDayKcal };
     case 'WEEKLY_MENU':
-      return { modality: 'WEEKLY_MENU', plan: calculated.value.calculation.plan };
+      return { modality: 'WEEKLY_MENU', plan: calculated.value.calculation.plan, restDayKcal };
   }
 }
 
-/** El plan entero como lo calcula el motor; los id de sus tiempos (o celdas) en su orden, vacíos en una vista previa. */
+/**
+ * El plan entero como lo calcula el motor, con las metas del día de descanso; los id de sus tiempos (o celdas) en su
+ * orden, vacíos en una vista previa.
+ */
 export function documentOf(calculated: CalculatedDraft, mealIds: readonly string[]): PlanDocument {
+  const restDayTargets = calculated.restDay;
   switch (calculated.modality) {
     case 'EXCHANGES':
-      return planDocument(calculated.value, mealIds);
+      return { ...planDocument(calculated.value, mealIds), restDayTargets };
     case 'COMPOSITION':
-      return compositionDocument(calculated.value, mealIds);
+      return { ...compositionDocument(calculated.value, mealIds), restDayTargets };
     case 'WEEKLY_MENU':
-      return weeklyMenuDocument(calculated.value, mealIds);
+      return { ...weeklyMenuDocument(calculated.value, mealIds), restDayTargets };
   }
 }
 
@@ -139,6 +158,7 @@ export function changedFields(before: PlanDraft, after: PlanDraft): readonly str
   const columns = [
     ...(before.hydrationTargetMl === after.hydrationTargetMl ? [] : ['hydration_target_ml']),
     ...(before.instructions === after.instructions ? [] : ['instructions']),
+    ...(before.restDayKcal === after.restDayKcal ? [] : ['rest_day_kcal']),
   ];
   const meals = same(headers(before), headers(after)) ? [] : ['plan_meal'];
   if (before.modality === 'EXCHANGES' && after.modality === 'EXCHANGES') {

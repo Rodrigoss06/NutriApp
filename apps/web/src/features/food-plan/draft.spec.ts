@@ -85,6 +85,7 @@ describe('RF-20 · borrador por composición', () => {
     ],
     hydrationTargetMl: 2000,
     instructions: null,
+    restDayKcal: 2250,
   };
 
   it('lo guardado vuelve igual en el cuerpo', () => {
@@ -101,6 +102,7 @@ describe('RF-20 · borrador por composición', () => {
       ],
       hydrationTargetMl: 2000,
       instructions: null,
+      restDayKcal: 2250,
     });
   });
 
@@ -129,6 +131,7 @@ const emptyMenu = (): MenuDraft => ({
   })),
   hydrationMl: '',
   instructions: '',
+  restDayKcal: '',
 });
 
 describe('RF-21 · RN-E16 · borrador del menú semanal', () => {
@@ -158,6 +161,7 @@ describe('RF-21 · RN-E16 · borrador del menú semanal', () => {
       })),
       hydrationTargetMl: null,
       instructions: 'Variar las frutas.',
+      restDayKcal: null,
     };
     const body = menuBody(menuDraftOf(plan));
     expect(body?.days).toHaveLength(7);
@@ -166,6 +170,7 @@ describe('RF-21 · RN-E16 · borrador del menú semanal', () => {
       optionB: [{ itemType: 'FOOD', foodId: RICE, grams: 150, householdText: '1 taza' }],
     });
     expect(body?.instructions).toBe('Variar las frutas.');
+    expect(body?.restDayKcal).toBeNull();
   });
 
   it('un tiempo nuevo agrega una celda a cada día; quitarlo quita la suya de cada día', () => {

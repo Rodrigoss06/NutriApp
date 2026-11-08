@@ -10,7 +10,14 @@ import type {
   WeeklyMenuNutritionPlan,
 } from '@nutricoach/contracts';
 import { parseDecimal } from '@nutricoach/ui';
-import { hydrationOf, isTimeOfDay, MAX_MEALS, sharePctOf } from '@/features/nutrition-plan/draft';
+import {
+  hydrationOf,
+  isTimeOfDay,
+  MAX_MEALS,
+  restDayKcalOf,
+  restDayKcalText,
+  sharePctOf,
+} from '@/features/nutrition-plan/draft';
 import { GRAMS, type MeasureOption } from '@/features/recipe/draft';
 
 export { MAX_MEALS };
@@ -74,6 +81,8 @@ export interface CompositionDraft {
   readonly meals: readonly CompositionMealRow[];
   readonly hydrationMl: string;
   readonly instructions: string;
+  /** Las kcal del día de descanso (07 §2); vacío: una sola meta, la de la prescripción. */
+  readonly restDayKcal: string;
 }
 
 export type MenuOption = 'optionA' | 'optionB';
@@ -86,6 +95,8 @@ export interface MenuDraft {
   readonly days: readonly { readonly cells: readonly MenuCellRow[] }[];
   readonly hydrationMl: string;
   readonly instructions: string;
+  /** Las kcal del día de descanso (07 §2); vacío: una sola meta, la de la prescripción. */
+  readonly restDayKcal: string;
 }
 
 /** Las medidas caseras de cada alimento del plan, por su id. */
@@ -235,19 +246,31 @@ function headerBodyOf(meal: MealHeaderRow): HeaderBody | null {
   };
 }
 
-/** Hidratación e indicaciones, o null si no sirven. */
-function columnsOf(
-  draft: Pick<CompositionDraft, 'hydrationMl' | 'instructions'>,
-): { hydrationTargetMl: number | null; instructions: string | null } | null {
+/** Hidratación, indicaciones y las kcal del día de descanso, o null si no sirven. */
+function columnsOf(draft: Pick<CompositionDraft, 'hydrationMl' | 'instructions' | 'restDayKcal'>): {
+  hydrationTargetMl: number | null;
+  instructions: string | null;
+  restDayKcal: number | null;
+} | null {
   const hydrationTargetMl = hydrationOf(draft.hydrationMl);
   const instructions = draft.instructions.trim();
-  if (hydrationTargetMl === undefined || instructions.length > 2_000) return null;
-  return { hydrationTargetMl, instructions: instructions === '' ? null : instructions };
+  const restDayKcal = restDayKcalOf(draft.restDayKcal);
+  if (hydrationTargetMl === undefined || restDayKcal === undefined || instructions.length > 2_000) {
+    return null;
+  }
+  return {
+    hydrationTargetMl,
+    instructions: instructions === '' ? null : instructions,
+    restDayKcal,
+  };
 }
 
 /** La composición guardada, lista para editarse; measures trae las medidas caseras de cada alimento. */
 export function compositionDraftOf(
-  plan: Pick<CompositionNutritionPlan, 'meals' | 'hydrationTargetMl' | 'instructions'>,
+  plan: Pick<
+    CompositionNutritionPlan,
+    'meals' | 'hydrationTargetMl' | 'instructions' | 'restDayKcal'
+  >,
   measures: Measures = {},
 ): CompositionDraft {
   return {
@@ -257,6 +280,7 @@ export function compositionDraftOf(
     })),
     hydrationMl: plan.hydrationTargetMl === null ? '' : String(plan.hydrationTargetMl),
     instructions: plan.instructions ?? '',
+    restDayKcal: restDayKcalText(plan.restDayKcal),
   };
 }
 
@@ -276,7 +300,10 @@ export function compositionBody(draft: CompositionDraft): UpdateCompositionPlan 
 
 /** El menú guardado, listo para editarse. */
 export function menuDraftOf(
-  plan: Pick<WeeklyMenuNutritionPlan, 'meals' | 'days' | 'hydrationTargetMl' | 'instructions'>,
+  plan: Pick<
+    WeeklyMenuNutritionPlan,
+    'meals' | 'days' | 'hydrationTargetMl' | 'instructions' | 'restDayKcal'
+  >,
   measures: Measures = {},
 ): MenuDraft {
   return {
@@ -293,6 +320,7 @@ export function menuDraftOf(
     })),
     hydrationMl: plan.hydrationTargetMl === null ? '' : String(plan.hydrationTargetMl),
     instructions: plan.instructions ?? '',
+    restDayKcal: restDayKcalText(plan.restDayKcal),
   };
 }
 

@@ -101,4 +101,5 @@ export const MENU: WeeklyMenuDraft = {
   })),
   hydrationTargetMl: 2000,
   instructions: null,
+  restDayKcal: null,
 };

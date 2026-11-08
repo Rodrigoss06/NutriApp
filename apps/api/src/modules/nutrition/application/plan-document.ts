@@ -14,6 +14,7 @@ import type {
   CalculatedPlan,
   CalculatedWeeklyMenu,
 } from './plan-calculator.js';
+import type { RestDayTargets } from './rest-day.js';
 
 export interface PlanDocumentFood {
   readonly groupCode: ExchangeGroupCode;
@@ -38,7 +39,10 @@ export interface PlanDocumentMeal {
 /** Un plan por intercambios entero, como lo calcula el motor: lo que muestra un borrador y lo que congela un snapshot. */
 export interface ExchangePlanDocument {
   readonly modality: 'EXCHANGES';
+  /** Las metas de la prescripción: las del día de entrenamiento si el plan tiene metas de descanso (07 §2). */
   readonly targets: PlanTargets;
+  /** Las del día de descanso con su método; null: una sola meta. Los snapshots de la versión 1 no lo traen. */
+  readonly restDayTargets?: RestDayTargets | null;
   readonly exchangeList: PlanList;
   readonly exchanges: readonly DailyExchange[];
   readonly manualSplit: readonly ExchangeGroupCode[];
@@ -67,7 +71,10 @@ export interface DocumentRecipe {
  * snapshot lo congela: lo que el paciente registre desde su plan sale de aquí (RN-E15).
  */
 interface FoodPlanDocumentBase {
+  /** Las metas de la prescripción: las del día de entrenamiento si el plan tiene metas de descanso (07 §2). */
   readonly targets: PlanTargets;
+  /** Las del día de descanso con su método; null: una sola meta. Los snapshots de la versión 1 no lo traen. */
+  readonly restDayTargets?: RestDayTargets | null;
   readonly nutrients: readonly PlanNutrient[];
   readonly foods: Readonly<Record<string, PlanFoodData>>;
   readonly adequacy: FoodAdequacyBlock;
@@ -266,12 +273,15 @@ export function weeklyMenuDocument(
   };
 }
 
-/** Versión del esquema del snapshot: la app y las fichas la leen antes de leer lo demás (05 §2). */
-export const PLAN_SNAPSHOT_SCHEMA_VERSION = 1;
+/**
+ * Versión del esquema del snapshot: la app y las fichas la leen antes de leer lo demás (05 §2). La 2 agrega las metas del
+ * día de descanso (`restDayTargets`, P14.5); un snapshot de la 1 no las trae y tiene una sola meta.
+ */
+export const PLAN_SNAPSHOT_SCHEMA_VERSION = 2;
 
 /** Quién publicó, cuándo y desde qué día vale. */
 export interface PlanSnapshotMeta {
-  readonly schemaVersion: typeof PLAN_SNAPSHOT_SCHEMA_VERSION;
+  readonly schemaVersion: 1 | typeof PLAN_SNAPSHOT_SCHEMA_VERSION;
   readonly planId: string;
   readonly lineageId: string;
   readonly versionNo: number;

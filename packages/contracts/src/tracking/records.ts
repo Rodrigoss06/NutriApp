@@ -429,6 +429,8 @@ export const meTodaySchema = z.object({
       proteinG: z.number(),
       fatG: z.number(),
       waterMl: z.number().int().nullable(),
+      /** El tipo del día según el programa vigente (07 §8): su meta es la de ese tipo (07 §2). Sin programa, null. */
+      dayKind: z.enum(['TRAINING', 'REST']).nullable(),
     })
     .nullable(),
   consumed: dayTotalsSchema,
@@ -481,6 +483,13 @@ export const planOptionSchema = z.discriminatedUnion('kind', [
 ]);
 export type PlanOption = z.infer<typeof planOptionSchema>;
 
+const planMacrosSchema = z.object({
+  kcal: z.number(),
+  choG: z.number(),
+  proteinG: z.number(),
+  fatG: z.number(),
+});
+
 /** GET /api/v1/me/plan?date=: el plan vigente por tiempos de comida, listo para registrar (RF-28). En el menú, el día pedido. */
 export const mePlanSchema = z.object({
   plan: z
@@ -489,6 +498,10 @@ export const mePlanSchema = z.object({
       versionNo: z.number().int(),
       modality: z.enum(PLAN_MODALITIES),
       validFrom: isoDate,
+      /** Las del plan: las del día de entrenamiento si tiene metas de descanso (07 §2). */
+      targets: planMacrosSchema,
+      /** Las del día de descanso; null: una sola meta. */
+      restDayTargets: planMacrosSchema.nullable(),
       hydrationTargetMl: z.number().int().nullable(),
       instructions: z.string().nullable(),
       meals: z.array(

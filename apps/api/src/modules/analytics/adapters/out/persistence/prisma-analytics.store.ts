@@ -71,6 +71,7 @@ export class PrismaAnalyticsStore implements AnalyticsStore {
         patientId,
         organizationId,
         localDate: asDate(row.localDate),
+        dayKind: row.dayKind,
         kcal: row.kcal,
         choG: row.choG,
         proteinG: row.proteinG,
@@ -131,6 +132,7 @@ export class PrismaAnalyticsStore implements AnalyticsStore {
     });
     return rows.map((row) => ({
       localDate: isoDate(row.localDate),
+      dayKind: row.dayKind === 'TRAINING' || row.dayKind === 'REST' ? row.dayKind : null,
       kcal: num(row.kcal),
       choG: num(row.choG),
       proteinG: num(row.proteinG),

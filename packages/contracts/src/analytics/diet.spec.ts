@@ -3,6 +3,7 @@ import { dietAnalyticsSchema, dietDaySchema } from './diet.js';
 
 const DAY = {
   localDate: '2026-11-02',
+  dayKind: 'TRAINING',
   kcal: 1790,
   choG: 200,
   proteinG: 150,

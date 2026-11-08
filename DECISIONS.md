@@ -2403,3 +2403,44 @@ Decisión:
 Consecuencias:
 - El prompt P14.5 está en Notion (Prompts P9 a P16), con su fila en el orden de prompts (semana 7) y el riesgo R9 en Proyecto.
 - Si el proyecto empezó el 24-09, la Demo 4 cae el 25-11: lo que no entre se acuerda con Jeremy antes de mover la fecha.
+
+## ADR-099 · Metas de día de entrenamiento y de descanso por la API — aceptada (2026-11-08)
+Contexto: P14.5, PR 1a (07 §2 y §8, P-20; RN-E07, RN-G03, RN-E15; ADR-098). La hoja piloto da a Mateo 2,500 kcal los días de
+entrenamiento y 2,250 los de descanso, con la misma proteína (160 g) y la misma grasa (70 g). Rodrigo decidió el 2026-11-08:
+- la meta de la prescripción es la del día de entrenamiento; el profesional escribe las kcal del día de descanso;
+- un día sin programa lleva la meta de la prescripción;
+- hasta la respuesta a P-20.5, las comidas del plan son las mismas los dos días y el paciente ajusta las porciones: un día de
+  descanso, comer el plan entero puede pasar de 110 % (Mateo: 2,500 ÷ 2,250 = 111 %);
+- el PR 1a se parte en dos: la API y, después, las pantallas, las fichas y Mateo en `demo:3`.
+Decisión:
+- Motor 1.7.0, método `MACROS_REST_DAY` 1.0.0: la proteína y la grasa en gramos del día de entrenamiento, y los
+  carbohidratos por diferencia con Atwater (RN-E07). Carbohidratos negativos: NC-ENG-310; kcal no positivas o gramos
+  negativos: NC-ENG-311. No hay caso dorado hasta P-20.2: con 2,250 kcal el método da 245 g de carbohidratos y la hoja,
+  240 g (2,230 kcal); Jeremy dirá si mandan las kcal o los gramos.
+- Migración `202611080000_nutrition_rest_day_targets`:
+  - `nutrition.plan.rest_day_kcal`, mayor que 0. El disparador del plan publicado ya compara la fila entera;
+  - `day_kind` (`TRAINING` o `REST`) en `tracking.daily_target` y en `analytics.patient_daily_summary`.
+- nutrition:
+  - el borrador de las tres modalidades lleva `restDayKcal` (opcional en el PUT, null por defecto);
+  - el cálculo da `restDayTargets` con su método; si los carbohidratos salen negativos, 422 NC-NUT-018 (RN-E07);
+  - el snapshot pasa a la versión 2 con `restDayTargets`. Uno de la versión 1 no lo trae: una sola meta;
+  - una versión nueva copia las kcal de descanso.
+- tracking:
+  - el tipo de un día sale del calendario del programa vigente: con sesiones, `TRAINING`; sin ellas, `REST`; fuera del
+    programa, null. La meta de entrenamiento lo guarda en `day_kind`;
+  - la meta de alimentación de un día `REST` es la de descanso del plan; la de un día `TRAINING` o sin tipo, la de la
+    prescripción;
+  - publicar un plan o un programa fija solo la meta de hoy (RN-G03). Un programa nuevo cambia la de alimentación de hoy si
+    el plan tiene metas de descanso. El trabajo de cada hora calcula el tipo antes de crear la meta que falta;
+  - una ausencia no cambia el tipo del día, que ya tenía su meta (P-20.3 sigue abierta).
+- /me: Hoy trae el tipo del día junto a la meta; Mi plan, las dos metas.
+- analytics: el resumen diario guarda el tipo del día y la analítica de dieta lo devuelve por día. La adecuación del día es
+  contra la meta de su tipo; el promedio de la semana sigue siendo el de los días con registros y meta (G-20 no cambia).
+Consecuencias:
+- Integración `rest-day-targets.int.spec.ts` (9 casos, como app_user): el borrador con sus metas de descanso y su método, la
+  vista previa, el 422, el snapshot de la versión 2, la versión nueva, la meta de hoy sin programa, en un día de descanso,
+  con el trabajo de cada hora y en un día de entrenamiento, y la analítica de dieta del día.
+- Unitarias del motor (RN-E07), del dominio de tracking (el tipo del día y su meta) y del resumen diario.
+- PR 1a-web: el editor, Hoy, Mi plan, la analítica, las fichas con las dos metas (plantillas nuevas) y Mateo en `demo:3`.
+- Para Notion (/notion-sync de P14.5): 02 §9 (`MACROS_REST_DAY`) y §3; 03 RN-E07 y RN-G03; 05.2 (`rest_day_kcal`,
+  `day_kind`) y 05.3 (`day_kind`); 07 §2 y §8; 04 RF-18 o RF-23.

@@ -30,6 +30,11 @@ export type PlanModality = (typeof PLAN_MODALITIES)[number];
 const servings = z.number().int().min(0).max(99);
 const householdText = z.string().trim().min(1).max(120).nullable();
 const hydrationTargetMl = z.number().int().min(1).max(10_000).nullable();
+/**
+ * Las kcal del día de descanso (07 §2, P14.5): la meta de la prescripción es la del día de entrenamiento; la proteína y la
+ * grasa no cambian y los carbohidratos van por diferencia. Sin valor, el plan tiene una sola meta.
+ */
+const restDayKcal = z.number().int().min(1).max(10_000).nullable().default(null);
 const instructions = z.string().trim().max(2_000).nullable();
 
 /**
@@ -108,6 +113,7 @@ export const updateExchangePlanSchema = z.object({
   splitOverrides: z.partialRecord(z.enum(EXCHANGE_GROUPS), z.array(servings).max(8)),
   hydrationTargetMl,
   instructions,
+  restDayKcal,
 });
 export type UpdateExchangePlan = z.infer<typeof updateExchangePlanSchema>;
 
@@ -120,6 +126,7 @@ export const updateCompositionPlanSchema = z.object({
     .max(8),
   hydrationTargetMl,
   instructions,
+  restDayKcal,
 });
 export type UpdateCompositionPlan = z.infer<typeof updateCompositionPlanSchema>;
 
@@ -140,6 +147,7 @@ export const updateWeeklyMenuPlanSchema = z.object({
   days: z.array(z.object({ meals: z.array(menuCellInputSchema).max(8) })).length(7),
   hydrationTargetMl,
   instructions,
+  restDayKcal,
 });
 export type UpdateWeeklyMenuPlan = z.infer<typeof updateWeeklyMenuPlanSchema>;
 
@@ -171,6 +179,9 @@ const targetsSchema = z.object({
   fatG: z.number(),
 });
 
+/** Las del día de descanso, con su método (MACROS_REST_DAY; 07 §2, RN-D02). */
+const restDayTargetsSchema = targetsSchema.extend({ method: methodSchema });
+
 /** Lo que tiene todo plan, de cualquier modalidad. */
 const planBaseSchema = z.object({
   id: z.uuid(),
@@ -179,7 +190,11 @@ const planBaseSchema = z.object({
   versionNo: z.number().int(),
   status: z.enum(PLAN_STATUSES),
   energyPrescriptionId: z.uuid(),
+  /** Las de la prescripción; con metas de descanso, las del día de entrenamiento. */
   targets: targetsSchema,
+  /** Las kcal del día de descanso que escribió el profesional; null: una sola meta. */
+  restDayKcal: z.number().nullable(),
+  restDayTargets: restDayTargetsSchema.nullable(),
   /** Cada cálculo con su método (RN-D01, RN-D02). */
   methods: z.array(methodSchema),
   hydrationTargetMl: z.number().int().nullable(),
@@ -334,6 +349,7 @@ const compositionMealSchema = mealHeaderSchema.extend({
 const compositionCalculation = {
   modality: z.literal('COMPOSITION'),
   targets: targetsSchema,
+  restDayTargets: restDayTargetsSchema.nullable(),
   nutrients: z.array(planNutrientSchema),
   /** Lo del día. */
   totals: itemTotalsSchema,
@@ -367,6 +383,7 @@ const weeklyAverageSchema = z.object({
 const weeklyMenuCalculation = {
   modality: z.literal('WEEKLY_MENU'),
   targets: targetsSchema,
+  restDayTargets: restDayTargetsSchema.nullable(),
   nutrients: z.array(planNutrientSchema),
   /** Por nutriente, con la opción A de cada tiempo. */
   weeklyAverage: z.record(z.string(), weeklyAverageSchema),
@@ -417,6 +434,7 @@ export const exchangePlanPreviewSchema = exchangeNutritionPlanSchema
   .pick({
     modality: true,
     targets: true,
+    restDayTargets: true,
     exchanges: true,
     manualSplit: true,
     totals: true,

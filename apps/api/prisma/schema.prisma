@@ -63,6 +63,7 @@ model PatientDailySummary {
   nutrientsMissing   Json     @default("{}") @map("nutrients_missing")
   srpeLoad           Decimal? @map("srpe_load") @db.Decimal(7, 1)
   cardioMinutes      Decimal? @map("cardio_minutes") @db.Decimal(6, 1)
+  dayKind            String?  @map("day_kind")
 
   @@id([patientId, localDate])
   @@index([organizationId, localDate], map: "daily_summary_org")
@@ -1086,6 +1087,7 @@ model NutritionPlan {
   createdAt             DateTime            @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt             DateTime            @default(now()) @map("updated_at") @db.Timestamptz(6)
   version               Int                 @default(0)
+  restDayKcal           Decimal?            @map("rest_day_kcal") @db.Decimal(7, 1)
   energyPrescription    EnergyPrescription? @relation(fields: [energyPrescriptionId], references: [id], onDelete: NoAction, onUpdate: NoAction)
   planExchanges         PlanExchange[]
   planMeals             PlanMeal[]
@@ -1567,6 +1569,7 @@ model DailyTarget {
   waterMl         Int?     @map("water_ml")
   plannedSessions Int?     @map("planned_sessions") @db.SmallInt
   plannedSets     Json?    @map("planned_sets")
+  dayKind         String?  @map("day_kind")
 
   @@id([patientId, localDate])
   @@map("daily_target")

@@ -22,6 +22,8 @@ export interface FactTarget {
   readonly waterMl: number | null;
   readonly plannedSessions: number | null;
   readonly plannedSets: Readonly<Record<string, number>>;
+  /** El tipo del día según el programa vigente (07 §8); sin programa, null. */
+  readonly dayKind: 'TRAINING' | 'REST' | null;
 }
 
 export interface FactFood {
@@ -293,6 +295,7 @@ function targetFields(target: FactTarget): Omit<FactTarget, 'localDate'> {
     waterMl: target.waterMl,
     plannedSessions: target.plannedSessions,
     plannedSets: target.plannedSets,
+    dayKind: target.dayKind,
   };
 }
 

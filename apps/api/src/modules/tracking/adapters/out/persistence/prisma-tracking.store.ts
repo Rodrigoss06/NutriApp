@@ -6,14 +6,16 @@ import type {
   ActiveProgram,
   TrackingStore,
 } from '../../../application/ports/tracking.ports.js';
-import type { DailyTarget } from '../../../domain/active-plan.js';
+import type { DailyTarget, PlanTargets } from '../../../domain/active-plan.js';
 import type { ProgramCalendar, TrainingDayTarget } from '../../../domain/active-program.js';
 
 interface ActiveRow {
   patient_id: string;
   plan_id: string;
   published_at: string;
-  targets: { kcal: number; choG: number; proteinG: number; fatG: number };
+  targets: PlanTargets['targets'];
+  /** Ausente en los snapshots de la versión 1 (07 §2). */
+  rest_day_targets: PlanTargets['targets'] | null;
   water_ml: number | null;
 }
 
@@ -21,7 +23,11 @@ const activeOf = (row: ActiveRow): ActiveNutritionPlan => ({
   patientId: row.patient_id,
   planId: row.plan_id,
   publishedAt: row.published_at,
-  target: { ...row.targets, waterMl: row.water_ml },
+  targets: {
+    targets: row.targets,
+    restDayTargets: row.rest_day_targets,
+    hydrationTargetMl: row.water_ml,
+  },
 });
 
 interface ActiveProgramRow {
@@ -48,6 +54,7 @@ export class PrismaTrackingStore implements TrackingStore {
     const [row] = await this.db.tx.$queryRaw<ActiveRow[]>`
       SELECT patient_id, nutrition_plan_id AS plan_id, nutrition_snapshot->>'publishedAt' AS published_at,
              nutrition_snapshot->'targets' AS targets,
+             nullif(nutrition_snapshot->'restDayTargets', 'null'::jsonb) AS rest_day_targets,
              (nutrition_snapshot->>'hydrationTargetMl')::int AS water_ml
       FROM tracking.active_plan_view
       WHERE patient_id = ${patientId}::uuid AND nutrition_plan_id IS NOT NULL
@@ -76,6 +83,7 @@ export class PrismaTrackingStore implements TrackingStore {
     const rows = await this.db.tx.$queryRaw<ActiveRow[]>`
       SELECT patient_id, nutrition_plan_id AS plan_id, nutrition_snapshot->>'publishedAt' AS published_at,
              nutrition_snapshot->'targets' AS targets,
+             nullif(nutrition_snapshot->'restDayTargets', 'null'::jsonb) AS rest_day_targets,
              (nutrition_snapshot->>'hydrationTargetMl')::int AS water_ml
       FROM tracking.active_plan_view WHERE nutrition_plan_id IS NOT NULL
       ORDER BY patient_id`;
@@ -164,20 +172,25 @@ export class PrismaTrackingStore implements TrackingStore {
   ): Promise<boolean> {
     const { plannedSessions, plannedSets } = row.target;
     const sets = JSON.stringify(plannedSets);
+    const dayKind = plannedSessions > 0 ? 'TRAINING' : 'REST';
     const written =
       mode === 'REPLACE'
         ? await this.db.tx.$executeRaw`
-            INSERT INTO tracking.daily_target (patient_id, local_date, organization_id, planned_sessions, planned_sets)
+            INSERT INTO tracking.daily_target (patient_id, local_date, organization_id, planned_sessions, planned_sets,
+                                               day_kind)
             VALUES (${row.patientId}::uuid, ${row.localDate}::date, ${row.organizationId}::uuid, ${plannedSessions},
-                    ${sets}::jsonb)
+                    ${sets}::jsonb, ${dayKind})
             ON CONFLICT (patient_id, local_date) DO UPDATE
-              SET planned_sessions = excluded.planned_sessions, planned_sets = excluded.planned_sets`
+              SET planned_sessions = excluded.planned_sessions, planned_sets = excluded.planned_sets,
+                  day_kind = excluded.day_kind`
         : await this.db.tx.$executeRaw`
-            INSERT INTO tracking.daily_target (patient_id, local_date, organization_id, planned_sessions, planned_sets)
+            INSERT INTO tracking.daily_target (patient_id, local_date, organization_id, planned_sessions, planned_sets,
+                                               day_kind)
             VALUES (${row.patientId}::uuid, ${row.localDate}::date, ${row.organizationId}::uuid, ${plannedSessions},
-                    ${sets}::jsonb)
+                    ${sets}::jsonb, ${dayKind})
             ON CONFLICT (patient_id, local_date) DO UPDATE
-              SET planned_sessions = excluded.planned_sessions, planned_sets = excluded.planned_sets
+              SET planned_sessions = excluded.planned_sessions, planned_sets = excluded.planned_sets,
+                  day_kind = excluded.day_kind
               WHERE tracking.daily_target.planned_sessions IS NULL`;
     return written === 1;
   }

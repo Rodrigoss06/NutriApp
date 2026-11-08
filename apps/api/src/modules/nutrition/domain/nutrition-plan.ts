@@ -38,6 +38,8 @@ export interface PlanDraftInput {
   readonly splitOverrides: Readonly<Partial<Record<ExchangeGroupCode, readonly number[]>>>;
   readonly hydrationTargetMl: number | null;
   readonly instructions: string | null;
+  /** Las kcal del día de descanso (07 §2); null: una sola meta, la de la prescripción. */
+  readonly restDayKcal: number | null;
 }
 
 /** Lo que el dominio toma del motor; lo calcula la aplicación. */
