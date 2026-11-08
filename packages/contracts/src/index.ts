@@ -28,6 +28,7 @@ export * from './food/catalog.js';
 export * from './food/exchange.js';
 export * from './food/recipe.js';
 export * from './documents/document.js';
+export * from './documents/my-sheets.js';
 export * from './presentation/format-number.js';
 export * from './presentation/brand-tokens.js';
 export * from './training/athlete-profile.js';

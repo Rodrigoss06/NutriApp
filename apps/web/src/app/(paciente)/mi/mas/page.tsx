@@ -1,7 +1,15 @@
-import type { MeApp, MeConsents, MeScreening, MeToday } from '@nutricoach/contracts';
+import type {
+  MeApp,
+  MeConsents,
+  MeScreening,
+  MeToday,
+  MySheets as MySheetsResponse,
+} from '@nutricoach/contracts';
 import { Notice } from '@nutricoach/ui';
 import type { Metadata } from 'next';
 import Link from 'next/link';
+import { MySheets } from '@/features/documents/my-sheets';
+import { visibleSheets } from '@/features/documents/my-sheets-view';
 import { InstallApp } from '@/features/patient-app/install-app';
 import { MenstrualConsent } from '@/features/patient-app/menstrual-consent';
 import { MyScreening } from '@/features/patient-app/my-screening';
@@ -13,21 +21,30 @@ import { serverApi } from '@/lib/api/server';
 export const metadata: Metadata = { title: 'Más' };
 
 /**
- * Más: escribir a tu equipo (RN-G13), el material que te asignó (RF-30), tu peso si está habilitado, el seguimiento del ciclo menstrual (RN-G17) y el cribado de
+ * Más: escribir a tu equipo (RN-G13), el material que te asignó (RF-30), tus fichas vigentes en PDF (ADR-095), tu peso si está
+ * habilitado, el seguimiento del ciclo menstrual (RN-G17) y el cribado de
  * seguridad (07 §3.2) si su sección está a la vista, instalar la app (RF-27) y salir.
  */
 export default async function Page() {
-  const [today, app, consents, screening] = await Promise.all([
+  const [today, app, consents, screening, sheets] = await Promise.all([
     serverApi<MeToday>('/me/today'),
     serverApi<MeApp>('/me/app'),
     serverApi<MeConsents>('/me/consents'),
     serverApi<MeScreening>('/me/screening'),
+    serverApi<MySheetsResponse>('/me/documents'),
   ]);
   if (!today.ok || !app.ok || !consents.ok || !screening.ok) {
     return <Notice tone="danger" title="No pudimos cargar esta sección" />;
   }
   const sections = new Set(app.data.enabledSections);
   const menstrual = new Map(consents.data.consents.map((consent) => [consent.purpose, consent]));
+  // Las fichas son un extra: si no cargan, el resto de Más sigue.
+  const pdfs = sheets.ok
+    ? visibleSheets(
+        sheets.data.sheets.map((sheet) => sheet.item),
+        app.data.enabledSections,
+      )
+    : [];
   return (
     <div className="flex flex-col gap-6">
       <h1 className="text-2xl font-semibold">Más</h1>
@@ -50,6 +67,17 @@ export default async function Page() {
           >
             Guías, artículos y videos de tu equipo
           </Link>
+        </section>
+      ) : null}
+      {pdfs.length > 0 ? (
+        <section aria-labelledby="fichas" className="flex flex-col gap-2">
+          <h2 id="fichas" className="text-lg font-semibold">
+            Fichas en PDF
+          </h2>
+          <p className="text-sm text-muted-foreground">
+            Las vigentes, con la marca de tu profesional, para guardarlas o imprimirlas.
+          </p>
+          <MySheets items={pdfs} />
         </section>
       ) : null}
       {app.data.allowWeightLog ? (

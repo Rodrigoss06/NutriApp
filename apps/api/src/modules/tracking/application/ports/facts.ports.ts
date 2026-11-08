@@ -1,5 +1,11 @@
 import type { RawFacts } from '../../domain/day-facts.js';
 
+/** El plan de alimentación y el programa vigentes del paciente, según la copia de tracking (active_plan_view). */
+export interface ActivePlans {
+  readonly nutritionPlanId: string | null;
+  readonly trainingProgramId: string | null;
+}
+
 /** Lo que el panel del profesional necesita de tracking para las alertas de un paciente (RF-34, ADR-093). */
 export interface OverviewFacts {
   /** El último día con algún registro vigente: comida, agua, peso, registro diario, entreno o nota. */
@@ -27,6 +33,8 @@ export interface FactsStore {
   programIds(patientId: string, from: string, to: string): Promise<readonly string[]>;
   /** El programa de la copia vigente (active_plan_view), sin bloquear la fila: sirve también en una lectura. */
   activeProgramId(patientId: string): Promise<string | null>;
+  /** El plan y el programa de la copia vigente: lo que el paciente ve en su app. */
+  activePlans(patientId: string): Promise<ActivePlans>;
   /** Lo del paciente que usa el panel del profesional (RF-34). */
   overview(patientId: string): Promise<OverviewFacts>;
 }

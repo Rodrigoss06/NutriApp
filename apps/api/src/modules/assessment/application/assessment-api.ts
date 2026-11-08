@@ -105,6 +105,13 @@ export class AssessmentApi {
     return this.evolution.sheetSource(evaluationId);
   }
 
+  /** Las evaluaciones cerradas vigentes del paciente (antropometría y bioimpedancia), de la más reciente a la más antigua. */
+  async closedEvaluationIds(patientId: string): Promise<readonly string[]> {
+    return (await this.evaluations.listByPatient(patientId))
+      .filter((evaluation) => evaluation.status === 'CLOSED')
+      .map((evaluation) => evaluation.id);
+  }
+
   /** Cuándo se midió la última evaluación cerrada vigente del paciente (05.3 `patient_overview`); null si no tiene ninguna. */
   async lastClosedEvaluationAt(patientId: string): Promise<Date | null> {
     const closed = (await this.evaluations.listByPatient(patientId)).find(

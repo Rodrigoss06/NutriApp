@@ -16,6 +16,7 @@ import {
   type Outbox,
   type PatientId,
   type Result,
+  systemContext,
   type SecurityContext,
   type UnitOfWork,
 } from '@nutricoach/shared-kernel';
@@ -68,14 +69,44 @@ export class DocumentRequests {
     patientId: string,
     source: SheetSource,
   ): Promise<Result<DocumentStatus, DomainError>> {
-    return this.uow.run(context, async () => {
-      const current = await this.#current(context, patientId, source);
+    return this.#request(context, context, patientId, source);
+  }
+
+  /**
+   * La ficha vigente que el paciente pide desde su app (ADR-095). Su RLS no le deja leer las plantillas ni todo lo que la ficha
+   * muestra, así que se arma como SYSTEM de su organización, con su id de la sesión y un origen que eligió la API; el pedido queda a
+   * su nombre. La descarga sí va con su RLS (`file`).
+   */
+  requestForPatient(
+    context: SecurityContext,
+    source: SheetSource,
+  ): Promise<Result<DocumentStatus, DomainError>> {
+    return this.#request(this.#system(context), context, this.#patient(context), source);
+  }
+
+  /** Si la ficha vigente que pidió el paciente ya está. */
+  statusForPatient(
+    context: SecurityContext,
+    source: SheetSource,
+  ): Promise<Result<DocumentStatus, DomainError>> {
+    const system = this.#system(context);
+    return this.uow.query(system, () => this.#current(system, this.#patient(context), source));
+  }
+
+  #request(
+    runAs: SecurityContext,
+    actor: SecurityContext,
+    patientId: string,
+    source: SheetSource,
+  ): Promise<Result<DocumentStatus, DomainError>> {
+    return this.uow.run(runAs, async () => {
+      const current = await this.#current(runAs, patientId, source);
       if (!current.ok || current.value.status === 'READY') return current;
       await this.outbox.append(
         [
           documentsEvent(
             'documents.document.requested',
-            this.#organization(context),
+            this.#organization(runAs),
             source.id,
             {
               patientId,
@@ -86,7 +117,7 @@ export class DocumentRequests {
             { clock: this.clock, ids: this.ids },
           ),
         ],
-        { actorUserId: context.userId, actorRole: context.role },
+        { actorUserId: actor.userId, actorRole: actor.role },
       );
       return current;
     });
@@ -133,6 +164,17 @@ export class DocumentRequests {
     if (!templateVersion) throw new Error(`No hay una plantilla activa de ${prepared.sheet.kind}.`);
     const document = await this.store.findByKey(documentKey(prepared.sheet, templateVersion));
     return ok(document ? { status: 'READY', document } : { status: 'PENDING' });
+  }
+
+  #system(context: SecurityContext): SecurityContext {
+    return systemContext(this.#organization(context));
+  }
+
+  #patient(context: SecurityContext): string {
+    if (context.role !== 'PATIENT' || !context.patientId) {
+      throw new Error('Una ficha de la app necesita la sesión del paciente.');
+    }
+    return context.patientId;
   }
 
   #organization(context: SecurityContext): OrganizationId {
