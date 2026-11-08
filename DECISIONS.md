@@ -2291,3 +2291,45 @@ Consecuencias:
   `actor_role` PATIENT, y el equipo fuera de /me.
 - E2E `e2e/fichas-app.spec.ts` en escritorio y celular, con axe: Luis descarga la ficha de su plan y la de sus resultados.
 - Para Notion (/notion-sync de P14): 04 (las fichas vigentes en la app, RF-24 o RF-30) y 02 §10 (las rutas /me de documents).
+
+## ADR-096 · Generador de carga, p95 de la analítica y rendimiento a escala — aceptada (2026-11-07)
+Contexto: P14, PR 7a (criterio 4 de P14; RNF-01, RNF-05; 01 §9; ADR-086). Rodrigo decidió el 2026-11-07:
+- generar en SQL y reconstruir con `analytics:rebuild`;
+- medir con un script HTTP local;
+- partir el PR 7 en 7a (carga y p95) y 7b (demo:3, guion y v0.3.0).
+Decisión:
+- `pnpm seed:load [--patients 500] [--years 2]`, solo en local y staging, en una organización de carga aparte («Consultorio Carga»):
+  - por SQL, la organización, una suscripción con cupo para todos, la dueña y 15 profesionales con la contraseña demo;
+  - por la API, una plantilla: un paciente con la evaluación ISAK 2 de Luis, su prescripción, un plan por intercambios y un programa
+    de 12 semanas publicados, para que los snapshots sean los de la aplicación;
+  - por SQL, los pacientes, cada uno con su responsable, HEALTH_DATA, una copia del plan y un programa por cada bloque de 12 semanas
+    (solo la fila con su snapshot; sus tablas hijas quedan vacías, porque la analítica y la app leen el snapshot);
+  - cada día de su historia, con source IMPORT: meta, comidas por tiempo, agua, peso de los lunes, registro diario, entrenos con sus
+    series y alguna nota. La adherencia, el registro y el entrenamiento varían por paciente con una semilla fija;
+  - las particiones se crean desde el mes más antiguo y al final corre `analytics:rebuild --all --concurrency 4`. Si la organización
+    ya existe, se detiene sin tocar nada.
+- `pnpm analytics:p95 [--requests 200]` pide cada consulta de analítica una tras otra sobre pacientes al azar: dieta de 4 semanas y de
+  1 año, tendencia de 24 meses, rutina del programa vigente y panel. Mide como la dueña y como una profesional (la RLS del equipo de
+  atención) y escribe `docs/demos/demo-3-p95.md`. Es la medición del criterio 4; k6 sobre un servidor idéntico, con carga sostenida,
+  y el generador de 3 000 pacientes siguen en P16.
+- Rendimiento a escala, lo que el generador destapó:
+  - buscar «pacientes con meta o registros desde un día» recorría las tablas de registros con la RLS fila por fila
+    (`app.can_see_patient`). Con 500 pacientes, la ventana de 35 días del trabajo del panel tardaba 5.85 s (más que los 5 s de la
+    transacción) y la búsqueda sin día de `analytics:rebuild --all`, 131 s;
+  - ahora el resumen de cada hora elige a los pacientes con meta desde ayer, leyendo solo `daily_target` (44 ms); los días con
+    registros los recalcula su evento;
+  - el panel y la reconstrucción recorren los pacientes de clinical (`ClinicalApi.patientIds`), cada uno en su transacción;
+  - la reconstrucción de un paciente va por tramos de 120 días, cada uno en su transacción: con dos años de historia, una sola
+    transacción se acercaba a los 5 s. Los números no cambian, pero ya no es atómica: si se corta, se vuelve a correr;
+  - `analytics:rebuild --all --concurrency N` (1 a 8) reconstruye varios pacientes a la vez.
+Consecuencias:
+- Medido en local (Intel i5-7400, 4 hilos):
+  - 500 pacientes y 730 días: unos 5.8 millones de filas y una base de 2.97 GB; la historia tarda 286 s y la reconstrucción de todo,
+    21 min con 4 a la vez, limitada por la CPU de Node;
+  - el peor p95 es 102 ms (tendencia de 24 meses como profesional) y no hubo errores en 2 000 pedidos. El criterio 4 pasa.
+- La medición de care_team_scope que STATUS tenía pendiente queda hecha: la profesional ve solo a sus 34 pacientes y sus p95 son como los de
+  la dueña.
+- Integración `seed-load.int.spec.ts` (3 pacientes y 13 semanas: la plantilla, los códigos, los bloques, source IMPORT, la
+  analítica reconstruida, el equipo de atención y que no se repite) y unitarias de los scripts.
+- Para Notion (/notion-sync de P14): 01 §9 (cómo se generan los datos y la medición local del criterio 4), 06 (`analytics:p95` y
+  `--concurrency`) y 02 §8 (los trabajos de cada hora eligen a los pacientes sin leer los registros).

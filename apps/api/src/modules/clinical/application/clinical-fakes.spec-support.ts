@@ -108,6 +108,9 @@ export class MemoryPatients implements PatientStore {
   countActivePatients() {
     return Promise.resolve([...this.rows.values()].filter((p) => p.status === 'ACTIVE').length);
   }
+  ids() {
+    return Promise.resolve([...this.rows.keys()].sort());
+  }
   documentTaken(bidx: Uint8Array, except: string | null) {
     return Promise.resolve(
       [...this.rows.values()].some(

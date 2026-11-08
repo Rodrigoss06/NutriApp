@@ -103,6 +103,14 @@ export class PrismaPatientStore implements PatientStore {
     return row?.n ?? 0;
   }
 
+  async ids(): Promise<readonly string[]> {
+    const rows = await this.db.tx.patient.findMany({
+      select: { id: true },
+      orderBy: { id: 'asc' },
+    });
+    return rows.map((row) => row.id);
+  }
+
   async documentTaken(bidx: Uint8Array, exceptPatientId: string | null): Promise<boolean> {
     const [row] = await this.db.tx.$queryRaw<{ taken: boolean }[]>`
       SELECT app.patient_document_taken(${bytes(bidx)}, ${exceptPatientId}::uuid) AS taken`;

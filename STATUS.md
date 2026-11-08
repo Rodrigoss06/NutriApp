@@ -21,7 +21,7 @@ Próxima demo: Demo 3 · Entrenamiento y app del paciente · semana 6
 | P11 Fichas PDF, Demo 2 | ✅ | Rodrigo | #32 a #37 | 4 criterios en verde (integración y E2E en escritorio y celular): contexto documents y ficha de intercambios (ADR-064), fichas del menú y de resultados (ADR-065; 1.0.1 en ADR-069), marca mínima (ADR-066), descargas (ADR-067), semilla, guion y acta de la Demo 2 (ADR-068). Etiqueta v0.2.0 (e05f8de); staging, pendiente de P4. /notion-sync aplicado (17 cambios en 02, 03, 04, 05, 05.1, 05.3 y 06) |
 | P12 Ejercicios y rutinas | ✅ | Rodrigo | #39 a #42 y #44 a #47 | 5 criterios en verde (integración y E2E en escritorio y celular): motor (ADR-070), biblioteca (ADR-071), anamnesis V2 (ADR-072), alergias (ADR-074), seguridad (ADR-075), programa por la API y en la web (ADR-077, ADR-078) y ficha de rutina (ADR-079) |
 | P13 App del paciente | ✅ | Rodrigo | #50 a #55 | 6 criterios en verde (integración y E2E en escritorio y celular): recuperación del día en el motor (ADR-080), registros por /me (ADR-081), Hoy y el plan (ADR-082), registro diario y entreno (ADR-083, ADR-084) y el profesional con los registros (ADR-085). Lighthouse móvil 97 en Hoy (local). La cola sin conexión (RF-31, deseable) queda fuera. /notion-sync aplicado (30 cambios en 11 páginas) |
-| P14 Analítica y evolución, Demo 3 | 🟨 | Rodrigo | #57 a #64 | Plan aprobado (2026-11-05, ADR-086): 7 PR. PR 1 (motor, #57), PR 2a (dieta, #58), PR 2b (rutina, #59) y PR 3 (control semanal, #60) por la API; PR 4 (web de la analítica y del control semanal, #61, ADR-090) con E2E en escritorio y celular; PR 5a (evolución, tendencia por mes y ficha por la API, #62, ADR-091) y PR 5b (sus pantallas, #63, ADR-092); PR 6a (panel con alertas por la API y en Inicio, #64, ADR-093), PR 6b (material educativo, ADR-094) y PR 6c (fichas en la app, ADR-095). Criterios 1, 2, 3 y 5 en verde |
+| P14 Analítica y evolución, Demo 3 | 🟨 | Rodrigo | #57 a #64 | Plan aprobado (2026-11-05, ADR-086): 7 PR. PR 1 (motor, #57), PR 2a (dieta, #58), PR 2b (rutina, #59) y PR 3 (control semanal, #60) por la API; PR 4 (web de la analítica y del control semanal, #61, ADR-090) con E2E en escritorio y celular; PR 5a (evolución, tendencia por mes y ficha por la API, #62, ADR-091) y PR 5b (sus pantallas, #63, ADR-092); PR 6a (panel con alertas por la API y en Inicio, #64, ADR-093), PR 6b (material educativo, ADR-094) y PR 6c (fichas en la app, ADR-095); PR 7a (`seed:load` y p95, ADR-096). Criterios 1 a 5 en verde: el 4, con el p95 de docs/demos/demo-3-p95.md |
 | P15 Marca, calendario, admin y migración | ⬜ | Rodrigo | | |
 | P16 Producción y entrega, Demo 4 | ⬜ | Rodrigo | | |
 
@@ -53,7 +53,9 @@ Leyenda: ⬜ pendiente · 🟨 en curso · ✅ terminado · ⛔ bloqueado
     paciente y Más › Material en la app, con la primera hora en que lo abrió. E2E en escritorio y celular;
   - PR 6c, fichas en la app (ADR-095): Más › Fichas en PDF con las vigentes (plan, rutina, resultados y evolución); el paciente pide
     por el nombre y la API elige el origen. E2E en escritorio y celular;
-  - sigue: la Demo 3 con `seed:load` (PR 7).
+  - PR 7a, carga y p95 (ADR-096): `pnpm seed:load` (500 pacientes, dos años, 2.97 GB) y `pnpm analytics:p95`, con el peor p95 en
+    102 ms (criterio 4). Los trabajos de cada hora y la reconstrucción ya no recorren los registros con la RLS fila por fila;
+  - sigue: la Demo 3 (PR 7b: `pnpm demo:3`, guion y v0.3.0).
 - P13 terminado (#50 a #55; plan aprobado el 2026-11-01, ADR-080), en 6 PR contra main:
   - PR 1, motor: `READINESS_JV` 3.0.0 con la carga sRPE, el rendimiento, la recuperación y la indicación del día (RN-G14, RN-G15);
     G-36 a G-38 en verde. Motor 1.5.0;
@@ -147,7 +149,7 @@ Leyenda: ⬜ pendiente · 🟨 en curso · ✅ terminado · ⛔ bloqueado
 ## Siguiente paso
 - Antes de la Demo 3: la matriz manual de navegadores (RNF-19: Chrome, Edge, Safari y Firefox; la E2E cubre Chromium
   y WebKit), que no quedó registrada en las demos 1 y 2
-- P14: #64 (PR 6a) abierto; después se suben el 6b y el 6c, uno por vez. Luego, el PR 7 (Demo 3). El generador de `pnpm seed:load` de 500 pacientes llega en el PR 7 (ADR-086)
+- P14: #64 (PR 6a) abierto; después se suben el 6b, el 6c y el 7a, uno por vez. En curso, el PR 7b (demo:3, guion y v0.3.0)
 - Para la Demo 3 y la Demo 4, según el plan de Rodrigo (2026-11-05): resolver lo que falta del Notion maestro, empezando por P4
   (staging) en cuanto llegue la cuenta de Hetzner
 - Confirmar la fecha de inicio: si fue el 24-09, el 2026-11-05 es el primer día de la semana 7 y la Demo 4 cae el 25-11
@@ -208,18 +210,15 @@ Leyenda: ⬜ pendiente · 🟨 en curso · ✅ terminado · ⛔ bloqueado
   dejar marcado lo que siga sin confirmar (pedido de Rodrigo, 2026-10-30)
 - Al terminar la Demo 3 (recordatorio que pidió Rodrigo, 2026-11-01):
   - activar en GitHub el borrado automático de la rama al fusionar y borrar las ramas ya fusionadas, remotas (47 el
-    2026-11-01) y locales: con la rama vieja viva, un PR apilado se fusiona contra ella, como pasó con #43;
-  - decidir si el generador de `pnpm seed:load` se adelanta para medir care_team_scope o si esa medición pasa a P16
-- Medir care_team_scope con seed:load: estaba en P14, pero el generador llega en P16 (se decide al terminar la Demo 3).
-  Si el costo por fila pesa en tracking, pasar a patient_id = ANY((SELECT app.visible_patient_ids())), que se evalúa
-  una vez por consulta (ADR-037)
+    2026-11-01) y locales: con la rama vieja viva, un PR apilado se fusiona contra ella, como pasó con #43
+- care_team_scope medido con `seed:load` (ADR-096): la función por fila solo pesó al recorrer los registros de todos los
+  pacientes (ya no se hace); las consultas de un paciente quedan con p95 de 102 ms o menos. Si con 3 000 pacientes pesa
+  (P16), pasar a patient_id = ANY((SELECT app.visible_patient_ids())), que se evalúa una vez por consulta (ADR-037)
 - P5 sin desplegar a staging (06 §9): queda pendiente de P4. Al desplegar: APP_URL con https,
   SESSION_COOKIE_NAME=__Host-nc_session, API_INTERNAL_URL al compilar, SEED_DEMO_PASSWORD y la CLI
   create-platform-admin para el primer PLATFORM_ADMIN
 - Para P4: Caddy sin trusted_proxies, para que reescriba X-Forwarded-For con la IP real; en el Sentry de la web,
   quitar el fragmento de las URL (beforeSend y beforeBreadcrumb): ahí viajan los tokens de invitación y recuperación
-- P14: las fichas en la app del paciente (ADR-080) y la analítica con los ajustes del profesional (ADR-085: el ajuste más reciente de
-  cada registro vale y trae lo derivado en corrected_values)
 - RF-31, cola sin conexión (deseable): fuera de P13 por decisión de Rodrigo (ADR-085); hoy cada registro lleva clientId e
   Idempotency-Key, así que un reintento no duplica
 - La alternativa y las variantes de un ejercicio todavía no se registran en la app: el snapshot no trae sus músculos (ADR-083)
@@ -227,8 +226,8 @@ Leyenda: ⬜ pendiente · 🟨 en curso · ✅ terminado · ⛔ bloqueado
 - CSP del despliegue: style-src con 'unsafe-inline' por BrandStyle (ADR-027)
 - La marca es provisional hasta la personalización (módulo 19, RF-36), que se hace en P15; la organización activa ya
   sale de la sesión (P5)
-- `pnpm seed:load` todavía falla: el generador de 500 y 3 000 pacientes con dos años de historia llega en P16 (carga,
-  RNF-01 y RNF-02)
+- `pnpm seed:load` genera 500 pacientes con dos años (ADR-096); el de 3 000 y los escenarios k6 sobre un servidor idéntico
+  llegan en P16 (RNF-01 y RNF-02). Reconstruir todo tarda 21 min en local, limitado por la CPU de Node
 - Planes TRAMO_5 y TRAMO_50 con límites y precio provisionales (N9): corregir con migración de datos al cerrarse
 - La imagen de la API debe copiar apps/api/prisma/migrations: /api/health/ready las compara (ADR-026)
 - TypeScript fijado en 6.0 hasta que typescript-eslint soporte TypeScript 7 (ADR-018)
