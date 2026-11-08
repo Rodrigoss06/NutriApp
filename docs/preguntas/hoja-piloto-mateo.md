@@ -30,6 +30,20 @@ descanso, 2,250 kcal (160 g, 240 g, 70 g). Solo cambian los carbohidratos.
    - b) Son dos planes de comidas distintos, uno por tipo de día.
    - c) Cambia solo la meta, y el alumno ajusta las porciones.
 
+> **Respuesta de Jeremy (2026-11-08).** La app la sigue desde P14.5 (ADR-100).
+> 1. La proteína, los carbohidratos y la grasa se editan en cada tipo de día. Al crear el día de descanso se
+>    autocompletan la proteína y la grasa del día de entrenamiento.
+> 2. b) Mandan los gramos. Mateo: 2,510 kcal el día de entrenamiento y 2,230 el de descanso.
+> 3. b) El día pasa a descanso, pero solo cuando el alumno o el coach reprograman la sesión a tiempo:
+>    - «no entreno hoy» baja la meta de hoy;
+>    - «mover a mañana» cambia hoy a 2,230 kcal y mañana a 2,510;
+>    - nunca de forma automática a medianoche, porque quien iba a entrenar de noche ya comió para entrenar.
+> 4. Hay más tipos de día: perfiles personalizables, con Entrenamiento y Descanso por defecto, y los que cree el
+>    coach con sus gramos (ciclado alto, medio y bajo; refeed; competencia).
+> 5. a) Es el mismo plan. En descanso hay menos porciones de almidones o cereales en las comidas de antes y después
+>    de entrenar, o entre el almuerzo y la cena. Solo cambia la cantidad del alimento fuente; la proteína y la grasa
+>    no cambian.
+
 ## Check-in y registro
 
 **P-21 · Check-in semanal o registro diario** (portada: «completa tu check-in semanal en aproximadamente 2 minutos»)

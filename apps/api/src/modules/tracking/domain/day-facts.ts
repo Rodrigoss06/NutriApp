@@ -24,6 +24,9 @@ export interface FactTarget {
   readonly plannedSets: Readonly<Record<string, number>>;
   /** El tipo del día según el programa vigente (07 §8); sin programa, null. */
   readonly dayKind: 'TRAINING' | 'REST' | null;
+  /** El perfil de día con que se fijó la meta (07 §2); sin perfiles en el plan, null. */
+  readonly dayProfileCode: string | null;
+  readonly dayProfileName: string | null;
 }
 
 export interface FactFood {
@@ -296,6 +299,8 @@ function targetFields(target: FactTarget): Omit<FactTarget, 'localDate'> {
     plannedSessions: target.plannedSessions,
     plannedSets: target.plannedSets,
     dayKind: target.dayKind,
+    dayProfileCode: target.dayProfileCode,
+    dayProfileName: target.dayProfileName,
   };
 }
 

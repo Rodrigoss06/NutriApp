@@ -167,8 +167,8 @@ describe('RF-23 · RN-E14 · RN-E15 · publicar y reemplazar', () => {
        FROM nutrition.plan WHERE id = $1`,
       [first.id],
     );
-    // Versión 2 del snapshot desde P14.5: trae las metas del día de descanso (ADR-099).
-    expect(row).toEqual({ schema: 2, hash_bytes: 32, kcal: 150, by: org.staff.responsible.userId });
+    // Versión 3 del snapshot desde P14.5: trae los perfiles de día (ADR-100).
+    expect(row).toEqual({ schema: 3, hash_bytes: 32, kcal: 150, by: org.staff.responsible.userId });
 
     const edit = await harness
       .put(`/nutrition-plans/${first.id}`, readyBody(first), cookie)

@@ -1,3 +1,4 @@
+import type { DayProfileDraft } from './day-profiles.js';
 import { err, ok, type DomainError, type Result } from '@nutricoach/shared-kernel';
 import {
   DEFAULT_MEALS,
@@ -42,8 +43,8 @@ export interface CompositionDraft {
   readonly meals: readonly CompositionMeal[];
   readonly hydrationTargetMl: number | null;
   readonly instructions: string | null;
-  /** Las kcal del día de descanso (07 §2); null: una sola meta, la de la prescripción. */
-  readonly restDayKcal: number | null;
+  /** Los perfiles de día además de Entrenamiento (07 §2, P-20); vacío: una sola meta, la de la prescripción. */
+  readonly dayProfiles: readonly DayProfileDraft[];
 }
 
 /** Un tiempo en un día del menú: la opción A y, si se quiere, una B para cambiarla. */
@@ -64,8 +65,8 @@ export interface WeeklyMenuDraft {
   readonly days: readonly MenuDay[];
   readonly hydrationTargetMl: number | null;
   readonly instructions: string | null;
-  /** Las kcal del día de descanso (07 §2); null: una sola meta, la de la prescripción. */
-  readonly restDayKcal: number | null;
+  /** Los perfiles de día además de Entrenamiento (07 §2, P-20); vacío: una sola meta, la de la prescripción. */
+  readonly dayProfiles: readonly DayProfileDraft[];
 }
 
 /** El borrador de cualquier modalidad, tal como lo escribe el profesional. */
@@ -157,7 +158,7 @@ export function compositionPlan(draft: CompositionDraft): Result<CompositionDraf
   if (problems.length > 0) return err(invalidPlan(problems));
   return ok({
     meals,
-    restDayKcal: draft.restDayKcal,
+    dayProfiles: draft.dayProfiles,
     hydrationTargetMl: draft.hydrationTargetMl,
     instructions: draft.instructions,
   });
@@ -200,7 +201,7 @@ export function weeklyMenuPlan(draft: WeeklyMenuDraft): Result<WeeklyMenuDraft, 
   return ok({
     meals: draft.meals.map(header),
     days,
-    restDayKcal: draft.restDayKcal,
+    dayProfiles: draft.dayProfiles,
     hydrationTargetMl: draft.hydrationTargetMl,
     instructions: draft.instructions,
   });

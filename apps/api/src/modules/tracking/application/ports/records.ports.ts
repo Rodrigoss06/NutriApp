@@ -261,6 +261,8 @@ export interface DayTargetRow {
   readonly waterMl: number | null;
   /** El tipo del día según el programa vigente (07 §8); sin programa, null. */
   readonly dayKind: 'TRAINING' | 'REST' | null;
+  /** El perfil de día con que se fijó la meta (07 §2); sin perfiles en el plan, null. */
+  readonly profile: { readonly code: string; readonly name: string } | null;
 }
 
 /**

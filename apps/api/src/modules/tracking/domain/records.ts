@@ -300,10 +300,10 @@ export function planDrafts(plan: LoggablePlan, pick: PlanPick): readonly FoodLog
 export type AppPlan = {
   readonly versionNo: number;
   readonly validFrom: string;
-  /** Las de la prescripción: las del día de entrenamiento si el plan tiene metas de descanso (07 §2). */
+  /** Las de la prescripción: las de Entrenamiento (07 §2). */
   readonly targets: PlanMacros;
-  /** Las del día de descanso; null o ausente (snapshot de la versión 1): una sola meta. */
-  readonly restDayTargets?: PlanMacros | null;
+  /** Los demás perfiles de día (P-20); ausente en los snapshots anteriores a la versión 3: una sola meta. */
+  readonly dayProfiles?: readonly PlanDayProfile[];
   readonly hydrationTargetMl: number | null;
   readonly instructions: string | null;
 } & PlanOf<{ readonly timeOfDay: string | null }>;
@@ -313,6 +313,11 @@ export interface PlanMacros {
   readonly choG: number;
   readonly proteinG: number;
   readonly fatG: number;
+}
+
+export interface PlanDayProfile extends PlanMacros {
+  readonly code: string;
+  readonly name: string;
 }
 
 export interface PlanViewMenuItem {
@@ -362,7 +367,7 @@ export interface PlanView {
   readonly modality: LoggablePlan['modality'];
   readonly validFrom: string;
   readonly targets: PlanMacros;
-  readonly restDayTargets: PlanMacros | null;
+  readonly dayProfiles: readonly PlanDayProfile[];
   readonly hydrationTargetMl: number | null;
   readonly instructions: string | null;
   readonly meals: readonly PlanViewMeal[];
@@ -394,7 +399,11 @@ export function planView(plan: AppPlan, localDate: string): PlanView {
     modality: plan.modality,
     validFrom: plan.validFrom,
     targets: macrosOf(plan.targets),
-    restDayTargets: plan.restDayTargets ? macrosOf(plan.restDayTargets) : null,
+    dayProfiles: (plan.dayProfiles ?? []).map((profile) => ({
+      code: profile.code,
+      name: profile.name,
+      ...macrosOf(profile),
+    })),
     hydrationTargetMl: plan.hydrationTargetMl,
     instructions: plan.instructions,
   };

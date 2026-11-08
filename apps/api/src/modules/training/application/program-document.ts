@@ -124,11 +124,14 @@ export function programDocument(
   };
 }
 
-/** Versión del esquema del snapshot: la app y las fichas la leen antes de leer lo demás (05 §2). */
-export const PROGRAM_SNAPSHOT_SCHEMA_VERSION = 1;
+/**
+ * Versión del esquema del snapshot: la app y las fichas la leen antes de leer lo demás (05 §2). La 2 trae el perfil de día
+ * de cada sesión (`dayProfileCode`, P14.5, ADR-100); en una de la 1, todas las sesiones son de Entrenamiento.
+ */
+export const PROGRAM_SNAPSHOT_SCHEMA_VERSION = 2;
 
 export interface ProgramSnapshotMeta extends ProgramPrescription {
-  readonly schemaVersion: typeof PROGRAM_SNAPSHOT_SCHEMA_VERSION;
+  readonly schemaVersion: 1 | typeof PROGRAM_SNAPSHOT_SCHEMA_VERSION;
   readonly engineVersion: string;
   readonly programId: string;
   readonly lineageId: string;
@@ -152,6 +155,8 @@ export interface ProgramSchedule {
     readonly sessions: readonly {
       readonly position: number;
       readonly dayOfWeek: number | null;
+      /** El perfil de día de la sesión (P-20.4); null o ausente (versión 1), Entrenamiento. */
+      readonly dayProfileCode?: string | null;
       readonly setsByMuscle: Readonly<Record<string, number>>;
     }[];
   }[];
@@ -175,9 +180,10 @@ export function programSnapshot(
       weeks: document.mesocycles.flatMap((mesocycle) =>
         mesocycle.weeks.map((week) => ({
           weekNo: week.weekNo,
-          sessions: week.sessions.map(({ position, dayOfWeek, setsByMuscle }) => ({
+          sessions: week.sessions.map(({ position, dayOfWeek, dayProfileCode, setsByMuscle }) => ({
             position,
             dayOfWeek,
+            dayProfileCode,
             setsByMuscle,
           })),
         })),

@@ -23,19 +23,17 @@ import type {
 const methodsOf = (document: PlanDocument) =>
   document.methods.map((m) => ({ ...m, warnings: m.warnings.map((w) => ({ ...w })) }));
 
-/** Las metas del día de descanso con su método (07 §2); un snapshot de la versión 1 no las trae: una sola meta. */
-const restDayOf = (document: PlanDocument) => {
-  const rest = document.restDayTargets ?? null;
-  return (
-    rest && {
-      kcal: rest.kcal,
-      choG: rest.choG,
-      proteinG: rest.proteinG,
-      fatG: rest.fatG,
-      method: { ...rest.method, warnings: rest.method.warnings.map((w) => ({ ...w })) },
-    }
-  );
-};
+/** Los perfiles de día con sus metas y su método (07 §2); un snapshot de la versión 1 o 2 no los trae: una sola meta. */
+const dayProfilesOf = (document: PlanDocument) =>
+  (document.dayProfiles ?? []).map((profile) => ({
+    code: profile.code,
+    name: profile.name,
+    kcal: profile.kcal,
+    choG: profile.choG,
+    proteinG: profile.proteinG,
+    fatG: profile.fatG,
+    method: { ...profile.method, warnings: profile.method.warnings.map((w) => ({ ...w })) },
+  }));
 
 const totalsOf = (totals: CalculatedTotals): ItemTotals => ({
   ingredientCount: totals.ingredientCount,
@@ -60,7 +58,7 @@ function exchangeCalculation(
   return {
     modality: 'EXCHANGES',
     targets: { ...document.targets },
-    restDayTargets: restDayOf(document),
+    dayProfiles: dayProfilesOf(document),
     exchanges: document.exchanges.map((e) => ({ ...e })),
     manualSplit: [...document.manualSplit],
     totals: { ...document.totals },
@@ -120,7 +118,7 @@ function compositionCalculation(
   return {
     modality: 'COMPOSITION',
     targets: { ...document.targets },
-    restDayTargets: restDayOf(document),
+    dayProfiles: dayProfilesOf(document),
     nutrients: document.nutrients.map((n) => ({ ...n })),
     meals: document.meals.map((meal) => ({
       slotCode: meal.slotCode,
@@ -148,7 +146,7 @@ function weeklyMenuCalculation(
   return {
     modality: 'WEEKLY_MENU',
     targets: { ...document.targets },
-    restDayTargets: restDayOf(document),
+    dayProfiles: dayProfilesOf(document),
     nutrients: document.nutrients.map((n) => ({ ...n })),
     meals: document.meals.map((meal) => ({ ...meal })),
     days: document.days.map((day) => ({
@@ -198,7 +196,6 @@ export function planOf(view: NutritionPlanView): NutritionPlan {
     energyPrescriptionId: record.energyPrescriptionId,
     hydrationTargetMl: document.hydrationTargetMl,
     instructions: document.instructions,
-    restDayKcal: record.draft.restDayKcal,
     createdAt: record.createdAt.toISOString(),
     updatedAt: record.updatedAt.toISOString(),
     publishedAt: record.publishedAt?.toISOString() ?? null,

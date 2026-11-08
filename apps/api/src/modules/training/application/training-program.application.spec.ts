@@ -349,6 +349,7 @@ const manual = async () =>
 const sessionInput = (exerciseId = 'sentadilla', set: object = SET) => ({
   name: 'Sesión 1',
   dayOfWeek: null,
+  dayProfileCode: null,
   notes: null,
   exercises: [
     { id: null, exerciseId, supersetGroup: null, notes: null, sets: [set as typeof SET] },

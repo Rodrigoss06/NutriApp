@@ -8,46 +8,65 @@ describe('RN-G03 · la meta de cada día sale del plan vigente', () => {
         targets: { kcal: 1834.5357, choG: 183.9754, proteinG: 160, fatG: 50.9593 },
         hydrationTargetMl: 2_500,
       }),
-    ).toEqual({ kcal: 1834.5357, choG: 183.9754, proteinG: 160, fatG: 50.9593, waterMl: 2_500 });
+    ).toEqual({
+      kcal: 1834.5357,
+      choG: 183.9754,
+      proteinG: 160,
+      fatG: 50.9593,
+      waterMl: 2_500,
+      profileCode: null,
+      profileName: null,
+    });
   });
 });
 
-describe('RN-G03 · 07 §2 · la meta de alimentación de un día de entrenamiento o de descanso', () => {
-  // La hoja piloto de JV Fitness (Mateo Prueba): 2,500 kcal el día de entrenamiento y 2,250 el de descanso.
+describe('RN-G03 · 07 §2 · P-20.4 · la meta de alimentación de cada día según su perfil', () => {
+  // La hoja piloto de JV Fitness con las respuestas de Jeremy: mandan los gramos (P-20.2), así que Mateo tiene 2,510 kcal
+  // el día de entrenamiento y 2,230 el de descanso; «Alto» es un perfil propio para el día de pierna (P-20.4).
   const MATEO = {
-    targets: { kcal: 2500, choG: 307.5, proteinG: 160, fatG: 70 },
-    restDayTargets: { kcal: 2250, choG: 245, proteinG: 160, fatG: 70 },
+    targets: { kcal: 2510, choG: 310, proteinG: 160, fatG: 70 },
+    dayProfiles: [
+      { code: 'REST', name: 'Descanso', kcal: 2230, choG: 240, proteinG: 160, fatG: 70 },
+      { code: 'ALTO', name: 'Alto', kcal: 2590, choG: 330, proteinG: 160, fatG: 70 },
+    ],
     hydrationTargetMl: 3_000,
   };
 
-  it('un día de descanso lleva la meta de descanso del plan, con la misma agua', () => {
+  it('un día de descanso lleva el perfil Descanso, con la misma agua', () => {
     expect(dailyTargetOf(MATEO, 'REST')).toEqual({
-      kcal: 2250,
-      choG: 245,
+      kcal: 2230,
+      choG: 240,
       proteinG: 160,
       fatG: 70,
       waterMl: 3_000,
+      profileCode: 'REST',
+      profileName: 'Descanso',
     });
   });
 
-  it('un día de entrenamiento lleva la de la prescripción', () => {
-    expect(dailyTargetOf(MATEO, 'TRAINING')).toEqual({
-      kcal: 2500,
-      choG: 307.5,
-      proteinG: 160,
-      fatG: 70,
-      waterMl: 3_000,
+  it('una sesión con su perfil propio lleva ese perfil', () => {
+    expect(dailyTargetOf(MATEO, 'ALTO')).toMatchObject({
+      kcal: 2590,
+      profileCode: 'ALTO',
+      profileName: 'Alto',
     });
   });
 
-  it('sin programa (un día sin tipo) vale la de la prescripción', () => {
-    expect(dailyTargetOf(MATEO, null).kcal).toBe(2500);
+  it('Entrenamiento, un día sin programa o un perfil que el plan no tiene llevan la meta de la prescripción', () => {
+    const training = { kcal: 2510, profileCode: 'TRAINING', profileName: 'Entrenamiento' };
+    expect(dailyTargetOf(MATEO, 'TRAINING')).toMatchObject(training);
+    expect(dailyTargetOf(MATEO, null)).toMatchObject(training);
+    expect(dailyTargetOf(MATEO, 'MEDIO')).toMatchObject(training);
   });
 
-  it('un plan sin metas de descanso, o un snapshot de la versión 1, tiene una sola meta', () => {
+  it('un plan sin perfiles, o un snapshot anterior a la versión 3, tiene una sola meta y ningún perfil', () => {
     const single = { targets: MATEO.targets, hydrationTargetMl: MATEO.hydrationTargetMl };
-    expect(dailyTargetOf(single, 'REST').kcal).toBe(2500);
-    expect(dailyTargetOf({ ...single, restDayTargets: null }, 'REST').kcal).toBe(2500);
+    expect(dailyTargetOf(single, 'REST')).toMatchObject({
+      kcal: 2510,
+      profileCode: null,
+      profileName: null,
+    });
+    expect(dailyTargetOf({ ...single, dayProfiles: [] }, 'ALTO').profileCode).toBeNull();
   });
 });
 

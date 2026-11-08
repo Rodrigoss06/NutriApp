@@ -112,6 +112,8 @@ describe('RN-G09 · los días del rango', () => {
           plannedSessions: 1,
           plannedSets: { QUADRICEPS: 3 },
           dayKind: 'TRAINING',
+          dayProfileCode: 'TRAINING',
+          dayProfileName: 'Entrenamiento',
         },
       ],
       foods: [food('f-1')],

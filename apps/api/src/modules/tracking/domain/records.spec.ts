@@ -317,9 +317,11 @@ describe('RF-28 · RN-G06 · el plan en la app, listo para registrar', () => {
   const meta = {
     versionNo: 2,
     validFrom: '2026-10-30',
-    // 07 §2: la meta del día de entrenamiento y la de descanso (la hoja piloto de JV Fitness).
-    targets: { kcal: 2500, choG: 307.5, proteinG: 160, fatG: 70 },
-    restDayTargets: { kcal: 2250, choG: 245, proteinG: 160, fatG: 70 },
+    // 07 §2: la meta de Entrenamiento y el perfil Descanso (la hoja piloto de JV Fitness; mandan los gramos, P-20.2).
+    targets: { kcal: 2510, choG: 310, proteinG: 160, fatG: 70 },
+    dayProfiles: [
+      { code: 'REST', name: 'Descanso', kcal: 2230, choG: 240, proteinG: 160, fatG: 70 },
+    ],
     hydrationTargetMl: 2_000,
     instructions: 'Toma agua entre comidas.',
   };

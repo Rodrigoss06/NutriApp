@@ -24,8 +24,11 @@ export interface SummaryDay {
     readonly fatG: number | null;
     readonly waterMl: number | null;
     readonly plannedSessions: number | null;
-    /** El tipo del día (07 §8): su meta de alimentación es la de ese tipo (07 §2). */
+    /** El tipo del día (07 §8). */
     readonly dayKind: 'TRAINING' | 'REST' | null;
+    /** El perfil de día de la meta (07 §2, P-20). */
+    readonly dayProfileCode: string | null;
+    readonly dayProfileName: string | null;
   } | null;
   readonly foods: readonly SummaryFood[];
   readonly hydrationLogs: number;
@@ -78,6 +81,9 @@ export interface DailySummary {
   readonly localDate: string;
   /** El tipo del día según el programa vigente (07 §8); sin programa o sin meta, null. */
   readonly dayKind: 'TRAINING' | 'REST' | null;
+  /** El perfil de día de su meta (07 §2, P-20); sin perfiles en el plan o sin meta, null. */
+  readonly dayProfileCode: string | null;
+  readonly dayProfileName: string | null;
   readonly kcal: number | null;
   readonly choG: number | null;
   readonly proteinG: number | null;
@@ -163,6 +169,8 @@ export function dailySummary(
     fatG: totals.fatG.known,
     fiberG: totals.fiberG.known,
     dayKind: target?.dayKind ?? null,
+    dayProfileCode: target?.dayProfileCode ?? null,
+    dayProfileName: target?.dayProfileName ?? null,
     targetKcal: target?.kcal ?? null,
     targetChoG: target?.choG ?? null,
     targetProteinG: target?.proteinG ?? null,

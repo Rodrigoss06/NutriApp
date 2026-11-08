@@ -15,12 +15,13 @@ export {
 export {
   ATWATER_KCAL_PER_G,
   FAT_PCT_KCAL_RANGE,
+  MACROS_DAY_PROFILE,
   MACROS_PROTEIN_FIRST,
-  MACROS_REST_DAY,
   kcalOfMacros,
+  type DayProfileMacros,
+  type DayProfileMacrosInput,
   type Macros,
   type MacrosInput,
-  type RestDayMacrosInput,
 } from './macros.js';
 export {
   ADEQUACY,

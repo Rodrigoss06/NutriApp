@@ -72,6 +72,7 @@ const session = (changes: Partial<Session> = {}): Session => ({
   position: 1,
   name: 'Sesión 1',
   dayOfWeek: null,
+  dayProfileCode: null,
   notes: null,
   setsByMuscle: {},
   exercises: [exercise()],
@@ -114,6 +115,7 @@ describe('RF-26 · la semana mientras se escribe', () => {
         week([
           session({
             dayOfWeek: 3,
+            dayProfileCode: 'ALTO',
             notes: 'Nota',
             exercises: [
               exercise({
@@ -129,6 +131,8 @@ describe('RF-26 · la semana mientras se escribe', () => {
     expect(parsed.ok && parsed.body.sessions[0]).toEqual({
       name: 'Sesión 1',
       dayOfWeek: 3,
+      // El perfil de día de la sesión vuelve igual (P-20.4): guardar la semana no lo borra.
+      dayProfileCode: 'ALTO',
       notes: 'Nota',
       exercises: [
         {

@@ -77,6 +77,7 @@ const mesocycles: readonly Mesocycle[] = [
             position: 1,
             name: 'Sesión 1',
             dayOfWeek: 2,
+            dayProfileCode: null,
             notes: null,
             exercises: [
               {
@@ -180,7 +181,7 @@ describe('RN-F12 · lo que congela publicar', () => {
     const { snapshot } = programSnapshot(document, meta);
 
     expect(snapshot).toMatchObject({
-      schemaVersion: 1,
+      schemaVersion: 2,
       engineVersion: ENGINE_VERSION,
       programId: 'programa',
       totalWeeks: 1,
@@ -188,7 +189,10 @@ describe('RN-F12 · lo que congela publicar', () => {
         weeks: [
           {
             weekNo: 1,
-            sessions: [{ position: 1, dayOfWeek: 2, setsByMuscle: { CHEST: 2 } }],
+            // El perfil de día de la sesión (P-20.4): null, Entrenamiento.
+            sessions: [
+              { position: 1, dayOfWeek: 2, dayProfileCode: null, setsByMuscle: { CHEST: 2 } },
+            ],
           },
         ],
       },

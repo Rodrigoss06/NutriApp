@@ -14,8 +14,8 @@ interface ActiveRow {
   plan_id: string;
   published_at: string;
   targets: PlanTargets['targets'];
-  /** Ausente en los snapshots de la versión 1 (07 §2). */
-  rest_day_targets: PlanTargets['targets'] | null;
+  /** Vacío en un plan sin perfiles y en los snapshots anteriores a la versión 3 (07 §2). */
+  day_profiles: NonNullable<PlanTargets['dayProfiles']>;
   water_ml: number | null;
 }
 
@@ -25,7 +25,7 @@ const activeOf = (row: ActiveRow): ActiveNutritionPlan => ({
   publishedAt: row.published_at,
   targets: {
     targets: row.targets,
-    restDayTargets: row.rest_day_targets,
+    dayProfiles: row.day_profiles,
     hydrationTargetMl: row.water_ml,
   },
 });
@@ -54,7 +54,7 @@ export class PrismaTrackingStore implements TrackingStore {
     const [row] = await this.db.tx.$queryRaw<ActiveRow[]>`
       SELECT patient_id, nutrition_plan_id AS plan_id, nutrition_snapshot->>'publishedAt' AS published_at,
              nutrition_snapshot->'targets' AS targets,
-             nullif(nutrition_snapshot->'restDayTargets', 'null'::jsonb) AS rest_day_targets,
+             coalesce(nutrition_snapshot->'dayProfiles', '[]'::jsonb) AS day_profiles,
              (nutrition_snapshot->>'hydrationTargetMl')::int AS water_ml
       FROM tracking.active_plan_view
       WHERE patient_id = ${patientId}::uuid AND nutrition_plan_id IS NOT NULL
@@ -83,7 +83,7 @@ export class PrismaTrackingStore implements TrackingStore {
     const rows = await this.db.tx.$queryRaw<ActiveRow[]>`
       SELECT patient_id, nutrition_plan_id AS plan_id, nutrition_snapshot->>'publishedAt' AS published_at,
              nutrition_snapshot->'targets' AS targets,
-             nullif(nutrition_snapshot->'restDayTargets', 'null'::jsonb) AS rest_day_targets,
+             coalesce(nutrition_snapshot->'dayProfiles', '[]'::jsonb) AS day_profiles,
              (nutrition_snapshot->>'hydrationTargetMl')::int AS water_ml
       FROM tracking.active_plan_view WHERE nutrition_plan_id IS NOT NULL
       ORDER BY patient_id`;
@@ -105,22 +105,24 @@ export class PrismaTrackingStore implements TrackingStore {
       mode === 'REPLACE'
         ? await this.db.tx.$executeRaw`
             INSERT INTO tracking.daily_target (patient_id, local_date, organization_id, nutrition_plan_id, kcal,
-                                               cho_g, protein_g, fat_g, water_ml)
+                                               cho_g, protein_g, fat_g, water_ml, day_profile_code, day_profile_name)
             VALUES (${row.patientId}::uuid, ${row.localDate}::date, ${row.organizationId}::uuid,
                     ${row.planId}::uuid, ${target.kcal}, ${target.choG}, ${target.proteinG}, ${target.fatG},
-                    ${target.waterMl})
+                    ${target.waterMl}, ${target.profileCode}, ${target.profileName})
             ON CONFLICT (patient_id, local_date) DO UPDATE
               SET nutrition_plan_id = excluded.nutrition_plan_id, kcal = excluded.kcal, cho_g = excluded.cho_g,
-                  protein_g = excluded.protein_g, fat_g = excluded.fat_g, water_ml = excluded.water_ml`
+                  protein_g = excluded.protein_g, fat_g = excluded.fat_g, water_ml = excluded.water_ml,
+                  day_profile_code = excluded.day_profile_code, day_profile_name = excluded.day_profile_name`
         : await this.db.tx.$executeRaw`
             INSERT INTO tracking.daily_target (patient_id, local_date, organization_id, nutrition_plan_id, kcal,
-                                               cho_g, protein_g, fat_g, water_ml)
+                                               cho_g, protein_g, fat_g, water_ml, day_profile_code, day_profile_name)
             VALUES (${row.patientId}::uuid, ${row.localDate}::date, ${row.organizationId}::uuid,
                     ${row.planId}::uuid, ${target.kcal}, ${target.choG}, ${target.proteinG}, ${target.fatG},
-                    ${target.waterMl})
+                    ${target.waterMl}, ${target.profileCode}, ${target.profileName})
             ON CONFLICT (patient_id, local_date) DO UPDATE
               SET nutrition_plan_id = excluded.nutrition_plan_id, kcal = excluded.kcal, cho_g = excluded.cho_g,
-                  protein_g = excluded.protein_g, fat_g = excluded.fat_g, water_ml = excluded.water_ml
+                  protein_g = excluded.protein_g, fat_g = excluded.fat_g, water_ml = excluded.water_ml,
+                  day_profile_code = excluded.day_profile_code, day_profile_name = excluded.day_profile_name
               WHERE tracking.daily_target.nutrition_plan_id IS NULL`;
     return written === 1;
   }
