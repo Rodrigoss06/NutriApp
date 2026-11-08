@@ -18,6 +18,7 @@
     "db:pull": "prisma db pull && node scripts/prisma-naming.ts && prisma format && prisma generate",
     "seed": "node scripts/seed.ts",
     "demo:2": "node scripts/demo-2.ts",
+    "demo:3": "node scripts/demo-3.ts",
     "seed:load": "node scripts/seed-load.ts",
     "analytics:p95": "node scripts/analytics-p95.ts",
     "platform-admin:create": "node dist/cli/create-platform-admin.js",

@@ -1,6 +1,6 @@
 # STATUS — NutriCoach v1.0
 
-Actualizado: 2026-11-06 · Por: Rodrigo, con Claude Code
+Actualizado: 2026-11-07 · Por: Rodrigo, con Claude Code
 Inicio del proyecto: POR CONFIRMAR (día siguiente al Pago 1) · Semana actual: por confirmar
 Próxima demo: Demo 3 · Entrenamiento y app del paciente · semana 6
 
@@ -21,7 +21,7 @@ Próxima demo: Demo 3 · Entrenamiento y app del paciente · semana 6
 | P11 Fichas PDF, Demo 2 | ✅ | Rodrigo | #32 a #37 | 4 criterios en verde (integración y E2E en escritorio y celular): contexto documents y ficha de intercambios (ADR-064), fichas del menú y de resultados (ADR-065; 1.0.1 en ADR-069), marca mínima (ADR-066), descargas (ADR-067), semilla, guion y acta de la Demo 2 (ADR-068). Etiqueta v0.2.0 (e05f8de); staging, pendiente de P4. /notion-sync aplicado (17 cambios en 02, 03, 04, 05, 05.1, 05.3 y 06) |
 | P12 Ejercicios y rutinas | ✅ | Rodrigo | #39 a #42 y #44 a #47 | 5 criterios en verde (integración y E2E en escritorio y celular): motor (ADR-070), biblioteca (ADR-071), anamnesis V2 (ADR-072), alergias (ADR-074), seguridad (ADR-075), programa por la API y en la web (ADR-077, ADR-078) y ficha de rutina (ADR-079) |
 | P13 App del paciente | ✅ | Rodrigo | #50 a #55 | 6 criterios en verde (integración y E2E en escritorio y celular): recuperación del día en el motor (ADR-080), registros por /me (ADR-081), Hoy y el plan (ADR-082), registro diario y entreno (ADR-083, ADR-084) y el profesional con los registros (ADR-085). Lighthouse móvil 97 en Hoy (local). La cola sin conexión (RF-31, deseable) queda fuera. /notion-sync aplicado (30 cambios en 11 páginas) |
-| P14 Analítica y evolución, Demo 3 | 🟨 | Rodrigo | #57 a #64 | Plan aprobado (2026-11-05, ADR-086): 7 PR. PR 1 (motor, #57), PR 2a (dieta, #58), PR 2b (rutina, #59) y PR 3 (control semanal, #60) por la API; PR 4 (web de la analítica y del control semanal, #61, ADR-090) con E2E en escritorio y celular; PR 5a (evolución, tendencia por mes y ficha por la API, #62, ADR-091) y PR 5b (sus pantallas, #63, ADR-092); PR 6a (panel con alertas por la API y en Inicio, #64, ADR-093), PR 6b (material educativo, ADR-094) y PR 6c (fichas en la app, ADR-095); PR 7a (`seed:load` y p95, ADR-096). Criterios 1 a 5 en verde: el 4, con el p95 de docs/demos/demo-3-p95.md |
+| P14 Analítica y evolución, Demo 3 | 🟨 | Rodrigo | #57 a #64 | Plan aprobado (2026-11-05, ADR-086): 7 PR. PR 1 (motor, #57), PR 2a (dieta, #58), PR 2b (rutina, #59) y PR 3 (control semanal, #60) por la API; PR 4 (web de la analítica y del control semanal, #61, ADR-090) con E2E en escritorio y celular; PR 5a (evolución, tendencia por mes y ficha por la API, #62, ADR-091) y PR 5b (sus pantallas, #63, ADR-092); PR 6a (panel con alertas por la API y en Inicio, #64, ADR-093), PR 6b (material educativo, #65, ADR-094) y PR 6c (fichas en la app, ADR-095); PR 7a (`seed:load` y p95, ADR-096) y PR 7b (`demo:3` con Luis y Mateo, y guion, ADR-097). Criterios 1 a 5 en verde: el 4, con el p95 de docs/demos/demo-3-p95.md. Falta la etiqueta v0.3.0 |
 | P15 Marca, calendario, admin y migración | ⬜ | Rodrigo | | |
 | P16 Producción y entrega, Demo 4 | ⬜ | Rodrigo | | |
 
@@ -55,7 +55,12 @@ Leyenda: ⬜ pendiente · 🟨 en curso · ✅ terminado · ⛔ bloqueado
     por el nombre y la API elige el origen. E2E en escritorio y celular;
   - PR 7a, carga y p95 (ADR-096): `pnpm seed:load` (500 pacientes, dos años, 2.97 GB) y `pnpm analytics:p95`, con el peor p95 en
     102 ms (criterio 4). Los trabajos de cada hora y la reconstrucción ya no recorren los registros con la RLS fila por fila;
-  - sigue: la Demo 3 (PR 7b: `pnpm demo:3`, guion y v0.3.0).
+  - PR 7b, Demo 3 (ADR-097):
+    - `pnpm demo:3` deja dos casos. Luis, con «Fuerza base» y su semana G-20. Mateo Prueba, el alumno ficticio de la hoja
+      piloto de Jeremy, con su mes de octubre: el control de sus 4 semanas da lo que da la hoja (descarga, descarga,
+      continuar, continuar);
+    - el guion `docs/demos/demo-3.md` y las preguntas para Jeremy, P-20 a P-37;
+    - falta la etiqueta v0.3.0, al fusionarse.
 - P13 terminado (#50 a #55; plan aprobado el 2026-11-01, ADR-080), en 6 PR contra main:
   - PR 1, motor: `READINESS_JV` 3.0.0 con la carga sRPE, el rendimiento, la recuperación y la indicación del día (RN-G14, RN-G15);
     G-36 a G-38 en verde. Motor 1.5.0;
@@ -149,7 +154,12 @@ Leyenda: ⬜ pendiente · 🟨 en curso · ✅ terminado · ⛔ bloqueado
 ## Siguiente paso
 - Antes de la Demo 3: la matriz manual de navegadores (RNF-19: Chrome, Edge, Safari y Firefox; la E2E cubre Chromium
   y WebKit), que no quedó registrada en las demos 1 y 2
-- P14: #64 (PR 6a) abierto; después se suben el 6b, el 6c y el 7a, uno por vez. En curso, el PR 7b (demo:3, guion y v0.3.0)
+- P14: #65 (PR 6b), #66 (PR 6c) y #67 (PR 7a) fusionados. Falta el 7b (`demo:3` con Luis y Mateo, y el guion,
+  ADR-097); al fusionarse va la etiqueta v0.3.0
+- Hoja piloto de Jeremy (2026-11-07, interna: no se comparte hasta que la valide):
+  - mandarle las preguntas de `docs/preguntas/hoja-piloto-mateo.md` (P-20 a P-37) y llevarlas a 07 §15 con /notion-sync;
+  - P14.5 propuesto, a la espera de la aprobación de Rodrigo, con lo que la hoja trae y la app no tiene: metas por tipo de
+    día, panel de fatiga, volumen ajustado, fatiga por músculo, informe mensual con fotos, expediente y check-in semanal
 - Para la Demo 3 y la Demo 4, según el plan de Rodrigo (2026-11-05): resolver lo que falta del Notion maestro, empezando por P4
   (staging) en cuanto llegue la cuenta de Hetzner
 - Confirmar la fecha de inicio: si fue el 24-09, el 2026-11-05 es el primer día de la semana 7 y la Demo 4 cae el 25-11
@@ -162,6 +172,10 @@ Leyenda: ⬜ pendiente · 🟨 en curso · ✅ terminado · ⛔ bloqueado
 
 ## Bloqueos y preguntas al cliente
 - [ ] Cuenta de Hetzner y dominio a nombre de Jeremy: bloquea P4
+- [ ] Hoja piloto «JV Fitness · Mi plan»: P-20 a P-37 (`docs/preguntas/hoja-piloto-mateo.md`).
+  - Bloquean P14.5: los umbrales de ámbar del panel de fatiga, las tablas de factores del volumen ajustado, los coeficientes
+    de fatiga por ejercicio, el check-in semanal o diario y la plantilla de la prescripción.
+  - Por acordar, porque no están en el contrato: el informe mensual (sería la sexta ficha), las fotos y el expediente.
 - [ ] N9: límites y precio de los tramos de membresía; qué pasa al superar el límite
 - [x] Ficha de anamnesis de Jeremy recibida (2026-10-20): será la versión 2 de la historia clínica (RF-43, P12)
 - [ ] Antes de P16: cargar en producción los valores definitivos de TRAMO_5 y TRAMO_50 (la semilla no corre en
@@ -266,6 +280,9 @@ Leyenda: ⬜ pendiente · 🟨 en curso · ✅ terminado · ⛔ bloqueado
   reintentar (#35, 2026-10-27)
 
 ## Registro de sesiones (solo las 5 últimas)
+- 2026-11-07 · P14 (PR 5a a PR 7b) · #61 a #64 fusionados y #65 abierto; 6c, 7a y 7b listos en local. Evolución y sus pantallas,
+  panel con alertas, material educativo, fichas en la app, `seed:load` con el p95 (102 ms) y `demo:3` con Luis y Mateo. Hoja piloto
+  de Jeremy revisada: Mateo en la demo, preguntas P-20 a P-37 y P14.5 propuesto
 - 2026-11-06 · P14 (PR 1 a PR 4) · #56 a #59 fusionados y #60 abierto. Cierre de P13 con el /notion-sync; motor del control semanal (#57),
   analítica de dieta y de rutina por la API (#58, #59), control semanal por la API (#60, ADR-089) y su web con la analítica y los umbrales
   (ADR-090), con E2E en escritorio y celular
@@ -277,5 +294,3 @@ Leyenda: ⬜ pendiente · 🟨 en curso · ✅ terminado · ⛔ bloqueado
 - 2026-11-01 · Pendientes de P12 · #48 fusionado, con el CI de main en verde. STATUS al día (demos 1 y 2 presentadas, la
   próxima es la Demo 3; P19 era el módulo 19, que se hace en P15; seed:load llega en P16); backoffice usa atomically de
   platform y axe espera el título de la página. Recordatorio para después de la Demo 3: borrado de ramas y seed:load
-- 2026-10-31 · P12 (PR 7 y cierre) · #46 fusionado. Ficha de la rutina (ADR-079): generada al publicar y a pedido, con las semanas
-  iguales juntas (12 semanas en 8 páginas y 1 s). P12 terminado: los 5 criterios en verde y el /notion-sync aplicado (35 cambios)
