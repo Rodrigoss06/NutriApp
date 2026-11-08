@@ -224,6 +224,27 @@ crea por la API con la API y el worker corriendo, después de `pnpm db:seed` y `
 Los nombres son los de la TPCA y la TAFERA tal cual: si un catálogo cambia, la semilla avisa qué alimento o medida no
 encontró. test/integration/demo-2.int.spec.ts la corre dos veces sobre la TPCA cargada.
 
+## luis/demo-3.json y mateo/demo-3.json
+
+Lo que la Demo 3 encuentra cargado (ADR-097). Lo usa `pnpm demo:3` (apps/api/scripts/demo-3.ts) después de `pnpm demo:2`,
+con la API y el worker corriendo:
+
+- **Luis** (`luis/demo-3.json`):
+  - su perfil de entrenamiento;
+  - «Fuerza base»: 4 semanas con 3 sesiones de cuerpo completo y carga en kg;
+  - su semana G-20: las kcal de cada día (1,910 de promedio contra 1,835, 104.1 % y 4 de 7 días en rango), el entreno
+    y siete registros diarios.
+- **Mateo Prueba** (`mateo/demo-3.json`), el alumno ficticio de la hoja piloto de Jeremy, con sus números de octubre:
+  - dos evaluaciones: peso, cintura, cadera y grasa por bioimpedancia;
+  - su perfil;
+  - «Full Body» con el ejercicio de cada día del registro de cargas;
+  - sus 4 semanas: sueño, estrés, fatiga, rendimiento y alimentación por semana, y las cargas de cada sesión, con la
+    ausencia del 22/10.
+
+  Lo que la hoja no trae está en `_demo`.
+
+Los ejercicios se buscan por su nombre exacto en la biblioteca. test/integration/demo-3.int.spec.ts la corre dos veces.
+
 ## ana/ana.json
 
 La paciente de la captura en vivo del guion, para que los números de Luis no cambien:

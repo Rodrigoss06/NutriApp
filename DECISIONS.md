@@ -2333,3 +2333,53 @@ Consecuencias:
   analítica reconstruida, el equipo de atención y que no se repite) y unitarias de los scripts.
 - Para Notion (/notion-sync de P14): 01 §9 (cómo se generan los datos y la medición local del criterio 4), 06 (`analytics:p95` y
   `--concurrency`) y 02 §8 (los trabajos de cada hora eligen a los pacientes sin leer los registros).
+
+## ADR-097 · Demo 3: la semilla con Luis y Mateo, y el guion — aceptada (2026-11-07)
+Contexto: P14, PR 7b (ADR-086, ADR-096). Jeremy mandó el 2026-11-07 su hoja piloto «JV Fitness · Mi plan» con un alumno ficticio,
+Mateo Prueba, durante octubre. Es interna: no se comparte hasta que él la valide. Rodrigo decidió:
+- sumar a Mateo a la Demo 3, con los números de la hoja, para que Jeremy compare la app con su hoja;
+- preparar preguntas concretas para Jeremy;
+- proponer un P14.5 con lo que la hoja trae y la app no tiene.
+Decisión:
+- `pnpm demo:3` (apps/api/scripts/demo-3.ts) corre después de demo:2, con la API y el worker, y deja dos casos. Lo que ya está no
+  se toca.
+  - **Luis (seeds/luis/demo-3.json):** perfil, «Fuerza base» publicada por la API y su semana G-20 por SQL (source IMPORT).
+  - **Mateo (seeds/mateo/demo-3.json):**
+    - por SQL, como Luis en db:seed: ficha, HEALTH_DATA e historia el 05/10, y dos evaluaciones básicas con bioimpedancia, el
+      05/10 y el 31/10. Son de octubre y la API las fecharía hoy;
+    - por la API: su perfil y «Full Body» a mano (Full Body A, B y C con el ejercicio de cada día del registro de cargas, 3 series
+      de 10 a 12 por RIR), con las fases de pérdida de grasa de la V3 en las semanas 1 a 8;
+    - por SQL: sus 4 semanas.
+- Lo registrado lleva su recuperación como al registrarlo: el script corre `READINESS_JV` con la línea base del perfil y el umbral
+  vigente ese día, y guarda método, versión e insumos con su hash (RN-D01). Las dos rutinas prescriben un rango de repeticiones y no un
+  tonelaje fijo, así que el rendimiento del día es el que escribe el paciente (P-09, ADR-080).
+- Cómo se leyó la hoja de Mateo:
+  - el programa es a mano y no una propuesta, porque la propuesta trae 8 bloques por sesión y no deja cambiar su estructura;
+  - las sesiones caen martes, jueves y sábado, como las fechas de asistencia, aunque la hoja las rotula lunes, miércoles y viernes;
+  - el 22/10 fue una ausencia: el entreno queda como no hecho, con su motivo, aunque el registro de cargas traiga la sentadilla;
+  - «Sentadilla» es «Sentadilla trasera» de la biblioteca;
+  - la hoja da un valor por semana y el registro diario lo repite cada día;
+  - el rendimiento escrito es 80 o 100 sobre 100;
+  - sin plan de alimentación: las metas por tipo de día llegan en P14.5;
+  - la fecha de nacimiento, la talla y la marca de la bioimpedancia son datos de la demo.
+- El umbral global de la V3 vale desde el 21/10/2026, cuando entró en la app, y el mes de Mateo empieza antes. Si la organización no tiene
+  un umbral vigente el 05/10, la semilla le pone los mismos valores de la V3 desde esa fecha (07 §11: una fila propia y versionada).
+- Guion `docs/demos/demo-3.md`, con la comparación entre la hoja y la app, y preguntas para Jeremy en `docs/preguntas/hoja-piloto-mateo.md`
+  (P-20 a P-37).
+Consecuencias:
+- El control de Mateo da lo que da la hoja:
+  - semanas 1 y 2: rojo, «Descarga 20–30 % y revisar», por rendimiento y sueño (6.4 h) en la 1 y por rendimiento en la 2;
+  - semanas 3 y 4: verde, «Continuar plan».
+- Los demás números de la hoja también salen:
+  - sesiones 3, 3, 2 y 3; sueño 6.4, 6.8, 7.1 y 7.4 h;
+  - tonelaje 5,220, 5,490, 3,420 y 3,750 kg;
+  - 1RM de Epley 56.0, 59.5, 63.0 y 46.7 kg;
+  - peso 80 → 79 kg, cintura 88 → 85 cm, cadera 100 → 99 cm y grasa por bioimpedancia 22 → 20.8 %.
+- Luis queda en ámbar por fatiga, para decidir en vivo.
+- Integración `demo-3.int.spec.ts`:
+  - G-20 por HTTP;
+  - los controles y promedios de Mateo, su analítica de rutina y su evolución;
+  - un registro de recuperación por cada registro diario;
+  - correrla otra vez no duplica nada.
+- Corrido contra la API y el worker locales: el worker calculó las dos evaluaciones de Mateo y no dejó eventos pendientes.
+- Para Notion (/notion-sync de P14): 07 §15, las preguntas P-20 a P-37. Ninguna regla cambia.

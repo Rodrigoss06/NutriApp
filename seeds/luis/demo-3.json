@@ -1,0 +1,120 @@
+{
+  "_comment": "Demo 3 (P14, ADR-097): la rutina de Luis y su semana G-20. Datos sintéticos.",
+  "athleteProfile": {
+    "objective": "HYPERTROPHY",
+    "level": "BEGINNER",
+    "daysPerWeek": 3,
+    "equipmentCodes": ["FULL_GYM"],
+    "medicalClearance": "CLEARED",
+    "baselineRestingHrBpm": 58,
+    "baselineHrvMs": 62,
+    "sleepTargetHours": 8
+  },
+  "program": {
+    "name": "Fuerza base",
+    "mesocycle": { "name": "Base", "weeks": 4 },
+    "sets": { "count": 3, "repsMin": 8, "repsMax": 12, "restSeconds": 90 },
+    "sessions": [
+      {
+        "name": "Cuerpo completo A",
+        "dayOfWeek": 1,
+        "exercises": [
+          { "name": "Sentadilla goblet", "loadKg": 16 },
+          { "name": "Press en máquina", "loadKg": 30 },
+          { "name": "Remo sentado", "loadKg": 30 },
+          { "name": "Puente de glúteo", "loadKg": 20 }
+        ]
+      },
+      {
+        "name": "Cuerpo completo B",
+        "dayOfWeek": 3,
+        "exercises": [
+          { "name": "Peso muerto rumano con mancuernas", "loadKg": 20 },
+          { "name": "Press de hombros en máquina", "loadKg": 15 },
+          { "name": "Remo con apoyo", "loadKg": 25 },
+          { "name": "Sentadilla goblet", "loadKg": 16 }
+        ]
+      },
+      {
+        "name": "Cuerpo completo C",
+        "dayOfWeek": 5,
+        "exercises": [
+          { "name": "Sentadilla goblet", "loadKg": 18 },
+          { "name": "Press inclinado con agarre neutro", "loadKg": 25 },
+          { "name": "Remo sentado", "loadKg": 32 },
+          { "name": "Peso muerto rumano con mancuernas", "loadKg": 20 }
+        ]
+      }
+    ]
+  },
+  "week": {
+    "_comment": "G-20: la semana de lunes a domingo; 1910 kcal de promedio, 104.1 % de adecuación y 4 de 7 días en rango.",
+    "kcal": [1790, 1950, 1600, 2100, 1830, 2400, 1700],
+    "workout": { "reps": 10, "rir": 2, "sessionRpe": 7, "minutes": 60 },
+    "checkins": [
+      {
+        "sleepHours": 7.5,
+        "fatigue": 4,
+        "soreness": 3,
+        "stress": 2,
+        "motivation": 4,
+        "energy": 4,
+        "nutritionCompliancePct": 90
+      },
+      {
+        "sleepHours": 6.5,
+        "fatigue": 5,
+        "soreness": 4,
+        "stress": 3,
+        "motivation": 3,
+        "energy": 3,
+        "nutritionCompliancePct": 85
+      },
+      {
+        "sleepHours": 7.0,
+        "fatigue": 5,
+        "soreness": 4,
+        "stress": 3,
+        "motivation": 4,
+        "energy": 3,
+        "nutritionCompliancePct": 80
+      },
+      {
+        "sleepHours": 6.0,
+        "fatigue": 4,
+        "soreness": 4,
+        "stress": 4,
+        "motivation": 3,
+        "energy": 3,
+        "nutritionCompliancePct": 75
+      },
+      {
+        "sleepHours": 7.0,
+        "fatigue": 5,
+        "soreness": 4,
+        "stress": 3,
+        "motivation": 4,
+        "energy": 3,
+        "nutritionCompliancePct": 90
+      },
+      {
+        "sleepHours": 8.0,
+        "fatigue": 4,
+        "soreness": 3,
+        "stress": 2,
+        "motivation": 4,
+        "energy": 4,
+        "nutritionCompliancePct": 70
+      },
+      {
+        "sleepHours": 8.5,
+        "fatigue": 4,
+        "soreness": 2,
+        "stress": 2,
+        "motivation": 5,
+        "energy": 4,
+        "nutritionCompliancePct": 85
+      }
+    ]
+  }
+}

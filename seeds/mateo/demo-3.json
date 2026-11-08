@@ -1,0 +1,121 @@
+{
+  "_comment": "Demo 3 (P14, ADR-097): Mateo Prueba, el alumno ficticio de la hoja piloto de Jeremy («JV Fitness · Mi plan», octubre de 2026), para comparar la app con la hoja. Los números son los de la hoja; lo que la hoja no trae está en _demo.",
+  "_demo": "La fecha de nacimiento, la talla y la marca de la bioimpedancia no están en la hoja: son datos de la demo. Las semanas de la hoja tienen un valor por semana; el registro diario lo repite cada día para que el promedio sea el de la hoja.",
+  "patient": {
+    "firstName": "Mateo",
+    "lastName": "Prueba",
+    "sex": "M",
+    "population": "ADULT"
+  },
+  "birthDate": "1995-06-15",
+  "registeredAt": "2026-10-05T08:00:00-05:00",
+  "clinicalHistory": {
+    "answers": {
+      "goals": "Pérdida de grasa y recomposición."
+    }
+  },
+  "heightCm": 178,
+  "evaluations": [
+    {
+      "measuredAt": "2026-10-05T08:30:00-05:00",
+      "weightKg": 80,
+      "waistCm": 88,
+      "hipCm": 100,
+      "fatPct": 22
+    },
+    {
+      "measuredAt": "2026-10-31T08:30:00-05:00",
+      "weightKg": 79,
+      "waistCm": 85,
+      "hipCm": 99,
+      "fatPct": 20.8
+    }
+  ],
+  "athleteProfile": {
+    "objective": "FAT_LOSS",
+    "level": "INTERMEDIATE",
+    "daysPerWeek": 3,
+    "minutesPerSession": 75,
+    "equipmentCodes": ["FULL_GYM"],
+    "startDate": "2026-10-06",
+    "macrocycleWeeks": 12,
+    "medicalClearance": "CLEARED",
+    "injuriesNote": "Sin lesiones ni dolor actual.",
+    "restrictionsNote": "Sin restricciones."
+  },
+  "program": {
+    "_comment": "El microciclo de la hoja: Full Body A, B y C con las fases de pérdida de grasa de la V3 (07 §7), semanas 1 a 8. Las fechas de asistencia son martes, jueves y sábado; la hoja los rotula lunes, miércoles y viernes.",
+    "name": "Full Body",
+    "startDate": "2026-10-06",
+    "mesocycles": [
+      { "name": "Mesociclo 1", "weeks": 4 },
+      { "name": "Mesociclo 2", "weeks": 4 }
+    ],
+    "set": { "count": 3, "repsMin": 10, "repsMax": 12, "restSeconds": 120, "tempo": "3-1-1" },
+    "sessions": [
+      { "name": "Full Body A", "dayOfWeek": 2, "exercise": "Press banca" },
+      { "name": "Full Body B", "dayOfWeek": 4, "exercise": "Sentadilla trasera" },
+      { "name": "Full Body C", "dayOfWeek": 6, "exercise": "Jalón al pecho" }
+    ]
+  },
+  "workout": { "startTime": "18:00", "minutes": 75 },
+  "weeks": [
+    {
+      "weekNo": 1,
+      "sleepHours": 6.4,
+      "stress": 3,
+      "fatigue": 3,
+      "performancePct": 80,
+      "nutritionCompliancePct": 78,
+      "rir": 3,
+      "sessions": [
+        { "date": "2026-10-06", "reps": 12, "loadKg": 40 },
+        { "date": "2026-10-08", "reps": 12, "loadKg": 60 },
+        { "date": "2026-10-10", "reps": 12, "loadKg": 45 }
+      ]
+    },
+    {
+      "weekNo": 2,
+      "sleepHours": 6.8,
+      "stress": 4,
+      "fatigue": 4,
+      "performancePct": 80,
+      "nutritionCompliancePct": 82,
+      "rir": 3,
+      "sessions": [
+        { "date": "2026-10-13", "reps": 12, "loadKg": 42.5 },
+        { "date": "2026-10-15", "reps": 12, "loadKg": 62.5 },
+        { "date": "2026-10-17", "reps": 12, "loadKg": 47.5 }
+      ]
+    },
+    {
+      "_comment": "La hoja registra también la sentadilla del 22/10 (3 × 12 × 65 kg), pero en asistencias ese día es una ausencia y el informe cuenta 2 sesiones: aquí manda la asistencia (pregunta a Jeremy).",
+      "weekNo": 3,
+      "sleepHours": 7.1,
+      "stress": 3,
+      "fatigue": 3,
+      "performancePct": 100,
+      "nutritionCompliancePct": 88,
+      "rir": 2,
+      "sessions": [
+        { "date": "2026-10-20", "reps": 12, "loadKg": 45 },
+        { "date": "2026-10-22", "absence": "Ausencia por carga laboral" },
+        { "date": "2026-10-24", "reps": 12, "loadKg": 50 }
+      ]
+    },
+    {
+      "weekNo": 4,
+      "sleepHours": 7.4,
+      "stress": 2,
+      "fatigue": 2,
+      "performancePct": 100,
+      "nutritionCompliancePct": 92,
+      "rir": 4,
+      "sessions": [
+        { "date": "2026-10-27", "reps": 10, "loadKg": 35 },
+        { "date": "2026-10-29", "reps": 10, "loadKg": 50 },
+        { "date": "2026-10-31", "reps": 10, "loadKg": 40 }
+      ]
+    }
+  ]
+}
