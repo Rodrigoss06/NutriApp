@@ -23,9 +23,10 @@ const platformContext: SecurityContext = {
 };
 
 /**
- * Cada hora en el worker: el resumen de ayer y de hoy de cada paciente con actividad reciente, en su fecha local (RN-G04), y las
+ * Cada hora en el worker: el resumen de ayer y de hoy de cada paciente con meta en esos días, en su fecha local (RN-G04), y las
  * semanas de su programa vigente. Así un día con meta y sin registros también tiene su fila (cuenta como un día con meta para la
- * adherencia) y una semana sin entrenos queda con lo programado y nada hecho. Idempotente.
+ * adherencia) y una semana sin entrenos queda con lo programado y nada hecho; los días con registros los recalcula su evento. Lee
+ * solo las metas para elegir a quién recalcular (ADR-096). Idempotente.
  */
 @Injectable()
 export class DailyRefresh {
@@ -48,8 +49,8 @@ export class DailyRefresh {
     );
     let refreshed = 0;
     for (const organizationId of organizations) {
-      const ids = await this.uow.run(systemContext(organizationId), () =>
-        this.tracking.patientIds(since),
+      const ids = await this.uow.query(systemContext(organizationId), () =>
+        this.tracking.patientIdsWithTargets(since),
       );
       for (const patientId of ids) {
         const done = await this.uow.run(systemContext(organizationId), async () => {

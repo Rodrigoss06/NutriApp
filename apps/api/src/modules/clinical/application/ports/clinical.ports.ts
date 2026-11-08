@@ -79,6 +79,8 @@ export interface PatientStore {
   nextPatientNumber(organizationId: OrganizationId): Promise<number>;
   /** Activos de toda la organización (RN-A03), no solo los visibles: app.count_active_patients(). */
   countActivePatients(): Promise<number>;
+  /** Los ids de los pacientes que ve el contexto, en cualquier estado. */
+  ids(): Promise<readonly string[]>;
   documentTaken(bidx: Uint8Array, exceptPatientId: string | null): Promise<boolean>;
   insert(patient: PatientRecord & { createdBy: UserId }): Promise<void>;
   find(patientId: string): Promise<PatientRecord | null>;

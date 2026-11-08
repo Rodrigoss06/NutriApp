@@ -257,18 +257,10 @@ export class PrismaFactsStore implements FactsStore {
     };
   }
 
-  async patientIds(since: string | null): Promise<readonly string[]> {
-    const from = since === null ? null : asDate(since);
+  async patientIdsWithTargets(since: string): Promise<readonly string[]> {
     const rows = await this.db.tx.$queryRaw<{ patient_id: string }[]>`
-      SELECT DISTINCT patient_id FROM (
-        SELECT patient_id, local_date FROM tracking.daily_target
-        UNION ALL SELECT patient_id, local_date FROM tracking.food_log
-        UNION ALL SELECT patient_id, local_date FROM tracking.hydration_log
-        UNION ALL SELECT patient_id, local_date FROM tracking.metric_log
-        UNION ALL SELECT patient_id, local_date FROM tracking.daily_checkin
-        UNION ALL SELECT patient_id, local_date FROM tracking.workout_log
-      ) AS days
-      WHERE ${from}::date IS NULL OR local_date >= ${from}::date
+      SELECT DISTINCT patient_id FROM tracking.daily_target
+      WHERE local_date >= ${asDate(since)}::date
       ORDER BY patient_id`;
     return rows.map((row) => row.patient_id);
   }

@@ -46,8 +46,11 @@ export class TrackingApi {
     return this.facts.overview(patientId);
   }
 
-  /** Los pacientes de la organización del contexto con meta o con algún registro desde ese día (o desde siempre). */
-  patientIds(since: string | null): Promise<readonly string[]> {
-    return this.facts.patientIds(since);
+  /**
+   * Los pacientes de la organización del contexto con meta desde ese día: los que el trabajo de cada hora completa con sus días sin
+   * registros; los días con registros los recalcula su evento.
+   */
+  patientIdsWithTargets(since: string): Promise<readonly string[]> {
+    return this.facts.patientIdsWithTargets(since);
   }
 }

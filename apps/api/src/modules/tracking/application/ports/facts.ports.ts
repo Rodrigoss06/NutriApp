@@ -27,8 +27,11 @@ export interface FactsStore {
   between(patientId: string, from: string, to: string): Promise<RawFacts>;
   /** El primer y el último día con meta o con algún registro del paciente; null si no tiene nada. */
   span(patientId: string): Promise<{ readonly from: string; readonly to: string } | null>;
-  /** Los pacientes con meta o con algún registro desde ese día; sin día, todos los que tienen alguno. */
-  patientIds(since: string | null): Promise<readonly string[]>;
+  /**
+   * Los pacientes con meta desde ese día. Solo lee las metas (una fila por paciente y día): recorrer los registros con la RLS fila
+   * por fila tardaba segundos con 500 pacientes (ADR-096).
+   */
+  patientIdsWithTargets(since: string): Promise<readonly string[]>;
   /** Los programas de los entrenos del rango, también de los anulados: anular uno cambia su semana (RN-G12). */
   programIds(patientId: string, from: string, to: string): Promise<readonly string[]>;
   /** El programa de la copia vigente (active_plan_view), sin bloquear la fila: sirve también en una lectura. */

@@ -212,4 +212,12 @@ export class ClinicalApi {
   countActivePatients(): Promise<number> {
     return this.patients.countActivePatients();
   }
+
+  /**
+   * Los ids de los pacientes que ve el contexto, en cualquier estado: como SYSTEM, todos los de la organización. Para recorrerlos en
+   * los trabajos de analytics sin leer los registros (ADR-096).
+   */
+  patientIds(): Promise<readonly string[]> {
+    return this.patients.ids();
+  }
 }
