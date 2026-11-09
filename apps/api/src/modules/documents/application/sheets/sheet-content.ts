@@ -91,6 +91,21 @@ export interface ExchangeDietSheet {
   readonly methods: readonly SheetMethod[];
 }
 
+/** Lo que un perfil del snapshot trae de sus porciones; solo se leen los almidones de intercambios. */
+interface SnapshotDayProfile extends Omit<SheetDayProfile, 'starchByMeal'> {
+  readonly portions?: object;
+}
+
+/** Los almidones de un perfil en intercambios, si el snapshot los trae (versión 4). */
+function starchOf(portions: object | undefined): readonly number[] | undefined {
+  if (!portions || !('starchByMeal' in portions)) return undefined;
+  const { starchByMeal } = portions;
+  return Array.isArray(starchByMeal) &&
+    starchByMeal.every((n: unknown): n is number => typeof n === 'number')
+    ? starchByMeal
+    : undefined;
+}
+
 export type SheetContent =
   ExchangeDietSheet | MenuSheet | AnthropometrySheet | EvolutionSheet | TrainingSheet;
 
@@ -111,20 +126,32 @@ export interface SheetDayProfile {
   readonly choG: number;
   readonly proteinG: number;
   readonly fatG: number;
+  /**
+   * Intercambios: los almidones de cada tiempo en este perfil, en su orden (P-20.5; plantilla 1.2.0). Falta en lo publicado antes
+   * de las porciones por perfil y en composición y menú, donde cada alimento trae lo suyo.
+   */
+  readonly starchByMeal?: readonly number[];
 }
 
-/** Los perfiles de día del snapshot; uno anterior a la versión 3 no los trae: una sola meta. */
+/**
+ * Los perfiles de día del snapshot; uno anterior a la versión 3 no los trae: una sola meta. En intercambios, con sus almidones
+ * por tiempo si los trae (versión 4); lo de antes queda igual y su ficha también (RN-H02).
+ */
 export function dayProfilesOf(
-  profiles: readonly SheetDayProfile[] | undefined,
+  profiles: readonly SnapshotDayProfile[] | undefined,
 ): readonly SheetDayProfile[] {
-  return (profiles ?? []).map(({ code, name, kcal, choG, proteinG, fatG }) => ({
-    code,
-    name,
-    kcal,
-    choG,
-    proteinG,
-    fatG,
-  }));
+  return (profiles ?? []).map(({ code, name, kcal, choG, proteinG, fatG, portions }) => {
+    const starchByMeal = starchOf(portions);
+    return {
+      code,
+      name,
+      kcal,
+      choG,
+      proteinG,
+      fatG,
+      ...(starchByMeal ? { starchByMeal } : {}),
+    };
+  });
 }
 
 /** La ficha de una dieta por intercambios publicada, desde su snapshot (RN-E15): lo que se publicó, nada más. */

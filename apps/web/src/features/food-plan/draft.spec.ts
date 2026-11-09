@@ -8,12 +8,15 @@ import {
   menuBody,
   menuDraftOf,
   pickedRecipeRow,
+  profileAmountError,
+  profileAmountText,
   withCellItems,
   withDayCopiedToAll,
   withHeaderChange,
   withItemChange,
   withMenuMeal,
   withoutMenuMeal,
+  withProfileAmount,
   type FoodItemRow,
   type ItemRow,
   type MenuDraft,
@@ -195,14 +198,9 @@ describe('RF-21 · RN-E16 · borrador del menú semanal', () => {
     expect(body?.days).toHaveLength(7);
     expect(body?.days[6]?.meals[0]).toEqual({
       optionA: [{ itemType: 'RECIPE', recipeId: STEW, servings: 1.5, byProfile: {} }],
+      // Este menú no tiene Descanso: su cantidad no viaja, la API no la aceptaría.
       optionB: [
-        {
-          itemType: 'FOOD',
-          foodId: RICE,
-          grams: 150,
-          householdText: '1 taza',
-          byProfile: { REST: { grams: 100, householdText: '⅔ taza' } },
-        },
+        { itemType: 'FOOD', foodId: RICE, grams: 150, householdText: '1 taza', byProfile: {} },
       ],
     });
     expect(body?.instructions).toBe('Variar las frutas.');
@@ -233,5 +231,27 @@ describe('RF-21 · RN-E16 · borrador del menú semanal', () => {
     expect(menuBody({ ...copied, hydrationMl: '2000' })?.days[5]?.meals[1]?.optionA).toEqual([
       { itemType: 'FOOD', foodId: RICE, grams: 150, householdText: null, byProfile: {} },
     ]);
+  });
+});
+
+describe('07 §2 · P-20.5 · la cantidad de cada alimento en un perfil de día', () => {
+  it('vacía es la del plan; cambiar los gramos deja de lado la medida guardada; 0 es «ese día no va»', () => {
+    const saved = rice({ byProfile: { REST: { grams: '100', householdText: '⅔ taza' } } });
+    expect(profileAmountText(saved, 'REST')).toBe('100');
+    expect(profileAmountText(saved, 'ALTO')).toBe('');
+    const [changed] = withProfileAmount([saved], 'arroz', 'REST', '80');
+    expect(changed?.byProfile).toEqual({ REST: { grams: '80', householdText: null } });
+    const [cleared] = withProfileAmount([saved], 'arroz', 'REST', ' ');
+    expect(cleared?.byProfile).toEqual({});
+    const [zero] = withProfileAmount([saved], 'arroz', 'REST', '0');
+    expect(zero && profileAmountError(zero, 'REST')).toBeUndefined();
+  });
+
+  it('una cantidad que no sirve dice por qué; en una receta, porciones', () => {
+    const [grams] = withProfileAmount([rice()], 'arroz', 'REST', '-1');
+    expect(grams && profileAmountError(grams, 'REST')).toBe('De 0 a 9999 g.');
+    const recipeRow = pickedRecipeRow({ id: STEW, name: 'Guiso' }, 'g');
+    const [servings] = withProfileAmount([recipeRow], 'g', 'REST', '100');
+    expect(servings && profileAmountError(servings, 'REST')).toBe('De 0 a 99.');
   });
 });

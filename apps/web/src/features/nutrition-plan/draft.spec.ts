@@ -8,6 +8,8 @@ import {
   withMeal,
   without,
   withoutMeal,
+  withProfileStarch,
+  withProfileStarchValue,
   type PlanDraft,
 } from './draft';
 
@@ -148,6 +150,27 @@ describe('RF-19 · el editor arma el borrador entero para PUT', () => {
     ).toEqual({});
     // Sin el perfil, su reparto no viaja.
     expect(valid({ ...manual, dayProfiles: [] }).starchByProfile).toEqual({});
+
+    // Un tiempo nuevo suma un 0 a su reparto; quitar uno quita su valor.
+    const added = withMeal(manual, 'nuevo');
+    expect(added.starchByProfile.REST).toEqual([...plan.meals.map(() => '1'), '0']);
+    expect(withoutMeal(added, 'nuevo').starchByProfile.REST).toHaveLength(plan.meals.length);
+  });
+
+  it('P-20.5 · ajustar parte de la sugerencia; un valor que no es entero no deja cuerpo; volver la quita', () => {
+    const rest = {
+      key: 'd',
+      code: 'REST',
+      name: 'Descanso',
+      choG: '240',
+      proteinG: '160',
+      fatG: '70',
+    };
+    const draft = withProfileStarch({ ...draftOf(plan), dayProfiles: [rest] }, 'REST', [2, 0]);
+    expect(draft.starchByProfile).toEqual({ REST: ['2', '0'] });
+    expect(withProfileStarchValue(draft, 'REST', 1, '1').starchByProfile.REST).toEqual(['2', '1']);
+    expect(planBody(withProfileStarchValue(draft, 'REST', 1, '1.5'))).toBeNull();
+    expect(withProfileStarch(draft, 'REST', null).starchByProfile).toEqual({});
   });
 
   it('RN-E08 · almidones, carnes y grasas sin ajuste los da el método: no van en overrides', () => {

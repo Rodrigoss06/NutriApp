@@ -24,18 +24,53 @@ function itemText(item: MenuItemView): string {
   return [item.foodName, grams, item.householdText].filter(Boolean).join(' · ');
 }
 
-function Items({ items, label }: { items: readonly MenuItemView[]; label: string }) {
+/** Los nombres de los perfiles de día del plan, por código. */
+type ProfileNames = Readonly<Record<string, string>>;
+
+/** La cantidad de un alimento o receta en cada perfil que la cambia (P-20.5): «Descanso: 100 g», «Descanso: no va». */
+function profileText(item: MenuItemView, names: ProfileNames): string | null {
+  const parts =
+    item.itemType === 'FOOD'
+      ? Object.entries(item.byProfile).map(
+          ([code, p]) =>
+            `${names[code] ?? code}: ${p.grams > 0 ? `${formatNumber(p.grams, 'grams')} g` : 'no va'}${p.grams > 0 && p.householdText ? ` · ${p.householdText}` : ''}`,
+        )
+      : Object.entries(item.byProfile).map(
+          ([code, p]) =>
+            `${names[code] ?? code}: ${p.servings > 0 ? formatServings(p.servings) : 'no va'}`,
+        );
+  return parts.length > 0 ? parts.join(' · ') : null;
+}
+
+function Items({
+  items,
+  label,
+  names = {},
+}: {
+  items: readonly MenuItemView[];
+  label: string;
+  names?: ProfileNames;
+}) {
   if (items.length === 0) return <p className="text-sm text-muted-foreground">—</p>;
   return (
     <ul aria-label={label} className="flex flex-col gap-0.5 pl-4 text-sm">
-      {items.map((item, i) => (
-        <li key={`${item.itemType}-${String(i)}`} className="list-disc">
-          {itemText(item)}
-        </li>
-      ))}
+      {items.map((item, i) => {
+        const byProfile = profileText(item, names);
+        return (
+          <li key={`${item.itemType}-${String(i)}`} className="list-disc">
+            {itemText(item)}
+            {byProfile ? (
+              <span className="block text-xs text-muted-foreground tabular-nums">{byProfile}</span>
+            ) : null}
+          </li>
+        );
+      })}
     </ul>
   );
 }
+
+const namesOf = (profiles: readonly { readonly code: string; readonly name: string }[]) =>
+  Object.fromEntries(profiles.map((profile) => [profile.code, profile.name]));
 
 function Hydration({
   plan,
@@ -76,6 +111,22 @@ export function CompositionView({ plan }: { plan: CompositionNutritionPlan }) {
           methods={plan.methods}
         />
         <DayProfilesTable training={plan.targets} profiles={plan.dayProfiles} />
+        {plan.dayProfiles.map((profile) =>
+          profile.portions ? (
+            <FoodAdequacyTable
+              key={profile.code}
+              label={`Adecuación de ${profile.name}`}
+              targets={profile}
+              adequacy={profile.portions.adequacy}
+              planned={(code) =>
+                profile.portions?.totals.nutrients[code] ?? { value: 0, known: 0, missing: 0 }
+              }
+              plannedLabel={profile.name}
+              of={profile.portions.totals.ingredientCount}
+              methods={plan.methods}
+            />
+          ) : null,
+        )}
       </Block>
 
       <Block id="plan-tiempos" title="Alimentos por tiempo" order={1}>
@@ -89,7 +140,11 @@ export function CompositionView({ plan }: { plan: CompositionNutritionPlan }) {
               <h4 id={`comida-${meal.id}`} className="font-semibold">
                 {mealName(meal)}
               </h4>
-              <Items items={meal.items} label={`Alimentos de ${meal.name}`} />
+              <Items
+                items={meal.items}
+                label={`Alimentos de ${meal.name}`}
+                names={namesOf(plan.dayProfiles)}
+              />
               <MacroSummary totals={meal.totals} label={`Lo que aporta ${meal.name}`} />
             </section>
           ))}
@@ -116,17 +171,19 @@ export function CompositionView({ plan }: { plan: CompositionNutritionPlan }) {
 function Cell({
   cell,
   label,
+  names,
 }: {
   cell: WeeklyMenuNutritionPlan['days'][number]['meals'][number];
   label: string;
+  names: ProfileNames;
 }) {
   return (
     <div className="flex flex-col gap-1">
-      <Items items={cell.optionA} label={`${label}, opción A`} />
+      <Items items={cell.optionA} label={`${label}, opción A`} names={names} />
       {cell.optionB.length > 0 ? (
         <>
           <p className="text-xs font-medium text-muted-foreground">Opción B</p>
-          <Items items={cell.optionB} label={`${label}, opción B`} />
+          <Items items={cell.optionB} label={`${label}, opción B`} names={names} />
         </>
       ) : null}
     </div>
@@ -141,6 +198,7 @@ export function MenuView({ plan }: { plan: WeeklyMenuNutritionPlan }) {
   const [day, setDay] = useState(0);
   const selected = plan.days[day];
   const dayName = DAY_NAMES[day] ?? '';
+  const names = namesOf(plan.dayProfiles);
   return (
     <div className="flex flex-col gap-8">
       <Block id="plan-adecuacion" title="Metas y adecuación del promedio semanal" order={0}>
@@ -158,6 +216,25 @@ export function MenuView({ plan }: { plan: WeeklyMenuNutritionPlan }) {
           methods={plan.methods}
         />
         <DayProfilesTable training={plan.targets} profiles={plan.dayProfiles} />
+        {plan.dayProfiles.map((profile) =>
+          profile.portions ? (
+            <FoodAdequacyTable
+              key={profile.code}
+              label={`Adecuación de ${profile.name}`}
+              targets={profile}
+              adequacy={profile.portions.adequacy}
+              planned={(code) => {
+                const average = profile.portions?.weeklyAverage[code];
+                return average
+                  ? { value: average.value, known: average.known, missing: average.missingDays }
+                  : { value: 0, known: 0, missing: 0 };
+              }}
+              plannedLabel={profile.name}
+              of={plan.days.length}
+              methods={plan.methods}
+            />
+          ) : null,
+        )}
       </Block>
 
       <Block id="plan-semana" title="Menú de la semana" order={1}>
@@ -194,6 +271,7 @@ export function MenuView({ plan }: { plan: WeeklyMenuNutritionPlan }) {
                             <Cell
                               cell={cell}
                               label={`${meal.name} del ${(DAY_NAMES[i] ?? '').toLowerCase()}`}
+                              names={names}
                             />
                           ) : null}
                         </td>
@@ -223,7 +301,11 @@ export function MenuView({ plan }: { plan: WeeklyMenuNutritionPlan }) {
                 >
                   <h4 className="font-semibold">{mealName(meal)}</h4>
                   {cell ? (
-                    <Cell cell={cell} label={`${meal.name} del ${dayName.toLowerCase()}`} />
+                    <Cell
+                      cell={cell}
+                      label={`${meal.name} del ${dayName.toLowerCase()}`}
+                      names={names}
+                    />
                   ) : null}
                 </section>
               );

@@ -243,7 +243,9 @@ con la API y el worker corriendo:
   - su plan (`nutrition`), con las respuestas de Jeremy a P-20:
     - la prescripción, que da los 160/310/70 g de Entrenamiento (2,510 kcal);
     - una composición de alimentos de la TPCA con todos sus datos;
-    - el perfil Descanso, 160/240/70 g (2,230 kcal), que lleva cada día de octubre sin sesión (ADR-101).
+    - el perfil Descanso, 160/240/70 g (2,230 kcal), que lleva cada día de octubre sin sesión (ADR-101);
+    - las porciones de Descanso (`restGrams`, P-20.5): 30 g de pan en la media tarde y 50 g de papa en la cena, unos 240 g
+      de carbohidratos. Son de ejemplo hasta que Jeremy dé los de Mateo (ADR-103).
 
   Lo que la hoja no trae está en `_demo`.
 

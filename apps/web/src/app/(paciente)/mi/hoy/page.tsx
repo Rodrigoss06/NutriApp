@@ -7,6 +7,7 @@ import { DayLog } from '@/features/patient-app/day-log';
 import { DaySummary } from '@/features/patient-app/day-summary';
 import { IndicationCard } from '@/features/patient-app/indication-card';
 import { MealLogger } from '@/features/patient-app/meal-logger';
+import { TodayPortions } from '@/features/patient-app/plan-day-profiles';
 import { SessionCard } from '@/features/patient-app/session-card';
 import { WaterCard } from '@/features/patient-app/water-card';
 import { serverApi } from '@/lib/api/server';
@@ -54,7 +55,10 @@ export default async function Page() {
             Registrar una comida
           </h2>
           {plan.data.plan ? (
-            <MealLogger meals={plan.data.plan.meals} localDate={today.data.localDate} editable />
+            <>
+              <TodayPortions plan={plan.data.plan} />
+              <MealLogger meals={plan.data.plan.meals} localDate={today.data.localDate} editable />
+            </>
           ) : (
             <EmptyState
               icon={UtensilsCrossed}

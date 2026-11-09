@@ -27,6 +27,7 @@ import {
   type Measures,
 } from './draft';
 import { AddItems, ItemList } from './item-list';
+import { profileOptionsOf, ProfileSwitch, type ProfileOption } from './profile-switch';
 import { mealLabel, MealHeadersTable } from './meal-headers';
 import { FoodAdequacyTable, MacroSummary, NutrientTables } from './plan-totals';
 
@@ -60,6 +61,14 @@ export function CompositionEditor({
   >(initial, body, compositionBody(compositionDraftOf(initial)));
   const { plan, dirty } = editor;
   const calculation: CompositionPlanPreview = editor.preview ?? plan;
+  // Las porciones de qué perfil se escriben (P-20.5); un perfil que ya no está vuelve al plan.
+  const [chosen, setChosen] = useState<ProfileOption | null>(null);
+  const options = profileOptionsOf(draft.dayProfiles);
+  const profile = options.find((option) => option.code === chosen?.code) ?? null;
+  const calculated = profile
+    ? calculation.dayProfiles.find((p) => p.code === profile.code)
+    : undefined;
+  const portions = calculated?.portions ?? null;
 
   return (
     <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_24rem]">
@@ -116,6 +125,7 @@ export function CompositionEditor({
               gramos de arroz cocido (RN-E12).
             </p>
           </div>
+          <ProfileSwitch options={options} value={profile} onChange={setChosen} />
           {draft.meals.map((meal, index) => {
             const name = mealLabel(meal, index);
             const share = sharePctOf(meal.sharePct);
@@ -140,22 +150,25 @@ export function CompositionEditor({
                 <ItemList<FoodItemRow>
                   items={meal.items}
                   context={name}
+                  profile={profile}
                   disabled={disabled}
                   onChange={(update) => {
                     change((d) => withCompositionItems(d, meal.key, update));
                   }}
                 />
-                <AddItems
-                  context={name}
-                  full={meal.items.length >= MAX_COMPOSITION_ITEMS}
-                  allowRecipes={false}
-                  disabled={disabled}
-                  onAdd={(row) => {
-                    if (row.kind !== 'FOOD') return;
-                    change((d) => withCompositionItems(d, meal.key, (items) => [...items, row]));
-                  }}
-                />
-                {totals && meal.items.length > 0 ? (
+                {profile ? null : (
+                  <AddItems
+                    context={name}
+                    full={meal.items.length >= MAX_COMPOSITION_ITEMS}
+                    allowRecipes={false}
+                    disabled={disabled}
+                    onAdd={(row) => {
+                      if (row.kind !== 'FOOD') return;
+                      change((d) => withCompositionItems(d, meal.key, (items) => [...items, row]));
+                    }}
+                  />
+                )}
+                {totals && meal.items.length > 0 && !profile ? (
                   <div aria-busy={!editor.upToDate}>
                     <MacroSummary totals={totals} label={`Lo que aporta ${name}`} />
                   </div>
@@ -167,14 +180,14 @@ export function CompositionEditor({
 
         <section aria-labelledby="dia-titulo" className="flex flex-col gap-3">
           <h3 id="dia-titulo" className="text-base font-semibold">
-            Lo que aporta el día
+            {profile ? `Lo que aporta un día de ${profile.name}` : 'Lo que aporta el día'}
           </h3>
           <div aria-busy={!editor.upToDate}>
             <NutrientTables
-              totals={calculation.totals}
+              totals={portions?.totals ?? calculation.totals}
               nutrients={calculation.nutrients}
-              valueLabel="Día"
-              caption="Día"
+              valueLabel={profile ? profile.name : 'Día'}
+              caption={profile ? profile.name : 'Día'}
             />
           </div>
         </section>
@@ -201,16 +214,30 @@ export function CompositionEditor({
             Adecuación
           </h3>
           <div aria-busy={!editor.upToDate}>
-            <FoodAdequacyTable
-              targets={calculation.targets}
-              adequacy={calculation.adequacy}
-              planned={(code) =>
-                calculation.totals.nutrients[code] ?? { value: 0, known: 0, missing: 0 }
-              }
-              plannedLabel="Plan"
-              of={calculation.totals.ingredientCount}
-              methods={calculation.methods}
-            />
+            {profile && calculated && portions ? (
+              <FoodAdequacyTable
+                label={`Adecuación de ${profile.name}`}
+                targets={calculated}
+                adequacy={portions.adequacy}
+                planned={(code) =>
+                  portions.totals.nutrients[code] ?? { value: 0, known: 0, missing: 0 }
+                }
+                plannedLabel={profile.name}
+                of={portions.totals.ingredientCount}
+                methods={calculation.methods}
+              />
+            ) : (
+              <FoodAdequacyTable
+                targets={calculation.targets}
+                adequacy={calculation.adequacy}
+                planned={(code) =>
+                  calculation.totals.nutrients[code] ?? { value: 0, known: 0, missing: 0 }
+                }
+                plannedLabel="Plan"
+                of={calculation.totals.ingredientCount}
+                methods={calculation.methods}
+              />
+            )}
           </div>
           {dirty && body === null ? (
             <Notice tone="warning" title="Revisa los campos marcados">

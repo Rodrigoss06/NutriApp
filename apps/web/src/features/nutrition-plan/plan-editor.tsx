@@ -16,6 +16,7 @@ import { CellInput } from './cell-input';
 import { draftOf, planBody, servingsOf, without, type PlanDraft } from './draft';
 import { MealsStep } from './editor-meals';
 import { DayProfilesCard } from './day-profiles-card';
+import { ProfileStarchCard } from './profile-starch-card';
 import { DraftPanel, HydrationCard, TargetsCard } from './plan-parts';
 import { AdequacyTable, ExchangeTable } from './plan-tables';
 import { usePlanDraft } from './use-plan-draft';
@@ -266,6 +267,16 @@ export function PlanEditor({
                 change={change}
                 groups={plan.exchangeList.groups}
                 calculation={calculation}
+                disabled={disabled}
+              />
+              <ProfileStarchCard
+                draft={draft}
+                change={change}
+                calculation={calculation}
+                starchName={
+                  plan.exchangeList.groups.find((group) => group.code === 'STA')?.name ??
+                  'Almidones'
+                }
                 disabled={disabled}
               />
               <TextAreaField

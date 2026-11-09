@@ -51,14 +51,21 @@ export function PlanMethod({ methods, code }: { methods: Calculation['methods'];
  * Adecuación del plan contra las metas exactas de la prescripción, con el rango de la organización (RN-E10). En rango,
  * por debajo o por encima: ícono y texto, nunca solo color.
  */
-export function AdequacyTable({ calculation }: { calculation: Calculation }) {
+export function AdequacyTable({
+  calculation,
+  label = 'Adecuación del plan',
+}: {
+  calculation: Pick<Calculation, 'targets' | 'totals' | 'adequacy' | 'methods'>;
+  /** El nombre de la tabla: la de un perfil de día dice cuál (P-20.5). */
+  label?: string;
+}) {
   const { targets, totals, adequacy } = calculation;
   const [min, max] = adequacy.rangePct;
   return (
     <div className="flex flex-col gap-2">
-      <TableScroll label="Adecuación del plan">
+      <TableScroll label={label}>
         <table className="w-full border-collapse text-sm">
-          <caption className="sr-only">Adecuación del plan</caption>
+          <caption className="sr-only">{label}</caption>
           <thead className="bg-surface text-left text-muted-foreground">
             <tr>
               <th scope="col" className="px-3 py-2 font-medium">

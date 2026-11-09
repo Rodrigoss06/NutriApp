@@ -31,6 +31,7 @@ import {
   type Measures,
 } from './draft';
 import { AddItems, ItemList } from './item-list';
+import { profileOptionsOf, ProfileSwitch, type ProfileOption } from './profile-switch';
 import { mealLabel, MealHeadersTable } from './meal-headers';
 import { FoodAdequacyTable, MacroSummary, NutrientTables, WeekTable } from './plan-totals';
 
@@ -70,6 +71,14 @@ export function MenuEditor({
   );
   const { plan, dirty } = editor;
   const calculation: WeeklyMenuPlanPreview = editor.preview ?? plan;
+  // Las porciones de qué perfil se escriben (P-20.5); un perfil que ya no está vuelve al plan.
+  const [chosen, setChosen] = useState<ProfileOption | null>(null);
+  const options = profileOptionsOf(draft.dayProfiles);
+  const profile = options.find((option) => option.code === chosen?.code) ?? null;
+  const calculated = profile
+    ? calculation.dayProfiles.find((p) => p.code === profile.code)
+    : undefined;
+  const portions = calculated?.portions ?? null;
   const dayName = DAY_NAMES[day] ?? '';
   const today = calculation.days[day];
   const cells = draft.days[day]?.cells ?? [];
@@ -132,6 +141,7 @@ export function MenuEditor({
               opción A; la B muestra lo suyo para comparar.
             </p>
           </div>
+          <ProfileSwitch options={options} value={profile} onChange={setChosen} />
           <DayTabs
             prefix="menu"
             label="Días del menú"
@@ -203,26 +213,29 @@ export function MenuEditor({
                           <ItemList
                             items={items}
                             context={context}
+                            profile={profile}
                             disabled={disabled}
                             onChange={(update) => {
                               change((d) => withCellItems(d, day, m, option.key, update));
                             }}
                           />
-                          <AddItems
-                            context={context}
-                            full={items.length >= MAX_OPTION_ITEMS}
-                            allowRecipes
-                            disabled={disabled}
-                            onAdd={(row) => {
-                              change((d) =>
-                                withCellItems(d, day, m, option.key, (current) => [
-                                  ...current,
-                                  row,
-                                ]),
-                              );
-                            }}
-                          />
-                          {optionTotals && items.length > 0 ? (
+                          {profile ? null : (
+                            <AddItems
+                              context={context}
+                              full={items.length >= MAX_OPTION_ITEMS}
+                              allowRecipes
+                              disabled={disabled}
+                              onAdd={(row) => {
+                                change((d) =>
+                                  withCellItems(d, day, m, option.key, (current) => [
+                                    ...current,
+                                    row,
+                                  ]),
+                                );
+                              }}
+                            />
+                          )}
+                          {optionTotals && items.length > 0 && !profile ? (
                             <div aria-busy={!editor.upToDate}>
                               <MacroSummary
                                 totals={optionTotals}
@@ -237,7 +250,7 @@ export function MenuEditor({
                 </section>
               );
             })}
-            {today ? (
+            {today && !profile ? (
               <section
                 aria-labelledby="dia-titulo"
                 className="flex flex-col gap-3 rounded-lg border border-border bg-card p-4"
@@ -297,19 +310,20 @@ export function MenuEditor({
       >
         <section aria-labelledby="adecuacion-titulo" className="flex flex-col gap-3">
           <h3 id="adecuacion-titulo" className="text-base font-semibold">
-            Adecuación del promedio semanal
+            {profile ? `Adecuación semanal de ${profile.name}` : 'Adecuación del promedio semanal'}
           </h3>
           <div aria-busy={!editor.upToDate}>
             <FoodAdequacyTable
-              targets={calculation.targets}
-              adequacy={calculation.adequacy}
+              label={profile ? `Adecuación de ${profile.name}` : undefined}
+              targets={calculated ?? calculation.targets}
+              adequacy={portions?.adequacy ?? calculation.adequacy}
               planned={(code) => {
-                const average = calculation.weeklyAverage[code];
+                const average = (portions?.weeklyAverage ?? calculation.weeklyAverage)[code];
                 return average
                   ? { value: average.value, known: average.known, missing: average.missingDays }
                   : { value: 0, known: 0, missing: 0 };
               }}
-              plannedLabel="Promedio"
+              plannedLabel={profile ? profile.name : 'Promedio'}
               of={calculation.days.length}
               methods={calculation.methods}
             />

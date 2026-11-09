@@ -33,8 +33,8 @@
    - con `pnpm dev` corriendo (API y worker): `pnpm demo:3`
 
    `pnpm demo:3` termina con los controles de Luis y de Mateo: Luis en ámbar y Mateo en rojo, rojo, verde y verde.
-2. La semana anterior, una persona del equipo usa la app en su celular como paciente de prueba. Esa es la evidencia de
-   04. Se le crea la ficha con datos sintéticos y se la invita desde el panel. Para el celular, la app local sale por el
+
+2. La semana anterior, una persona del equipo usa la app en su celular como paciente de prueba. Esa es la evidencia de 04. Se le crea la ficha con datos sintéticos y se la invita desde el panel. Para el celular, la app local sale por el
    túnel. Durante la semana registra comidas, agua, el registro diario y sus entrenos; al cerrar la semana, su control
    se calcula solo.
 3. El p95 ya está medido en `docs/demos/demo-3-p95.md` con `pnpm seed:load` y `pnpm analytics:p95` (criterio 4 de
@@ -42,14 +42,14 @@
 
 ## Qué trae la demo
 
-| Quién | Qué tiene |
-|---|---|
-| Consultorio Demo | La organización de las demos 1 y 2. Toma los umbrales de la V3 (07 §11) desde el 05/10, para que el mes de Mateo tenga control |
-| Dueña Demo | Dueña, nutricionista y coach: atiende a Luis y a Mateo |
-| Luis | Lo de la Demo 2, más: su perfil de entrenamiento, «Fuerza base» (4 semanas desde el lunes de la semana pasada), su semana G-20 registrada y su control |
-| Mateo Prueba | Dos evaluaciones básicas con bioimpedancia (05/10 y 31/10). Su plan por composición con dos perfiles de día: Entrenamiento, 2,510 kcal (160/310/70 g, su prescripción), y Descanso, 2,230 kcal (160/240/70 g). «Full Body» con las fases de pérdida de grasa de la V3, semanas 1 a 8 desde el 06/10. 11 entrenos y 1 ausencia, 28 registros diarios y los controles de sus 4 semanas |
-| Paciente de prueba | Su semana registrada desde el celular |
-| Catálogos | 169 ejercicios base, la tabla patrón × nivel de la V3 y 560 actividades del Compendium 2024 |
+| Quién              | Qué tiene                                                                                                                                                                                                                                                                                                                                                                                                                                     |
+| ------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Consultorio Demo   | La organización de las demos 1 y 2. Toma los umbrales de la V3 (07 §11) desde el 05/10, para que el mes de Mateo tenga control                                                                                                                                                                                                                                                                                                                |
+| Dueña Demo         | Dueña, nutricionista y coach: atiende a Luis y a Mateo                                                                                                                                                                                                                                                                                                                                                                                        |
+| Luis               | Lo de la Demo 2, más: su perfil de entrenamiento, «Fuerza base» (4 semanas desde el lunes de la semana pasada), su semana G-20 registrada y su control                                                                                                                                                                                                                                                                                        |
+| Mateo Prueba       | Dos evaluaciones básicas con bioimpedancia (05/10 y 31/10). Su plan por composición con dos perfiles de día: Entrenamiento, 2,510 kcal (160/310/70 g, su prescripción), y Descanso, 2,230 kcal (160/240/70 g), con menos pan en la media tarde y menos papa en la cena. «Full Body» con las fases de pérdida de grasa de la V3, semanas 1 a 8 desde el 06/10. 11 entrenos y 1 ausencia, 28 registros diarios y los controles de sus 4 semanas |
+| Paciente de prueba | Su semana registrada desde el celular                                                                                                                                                                                                                                                                                                                                                                                                         |
+| Catálogos          | 169 ejercicios base, la tabla patrón × nivel de la V3 y 560 actividades del Compendium 2024                                                                                                                                                                                                                                                                                                                                                   |
 
 ## 1 · Biblioteca de ejercicios y actividades (RF-25, RF-38) · 3 min
 
@@ -97,11 +97,11 @@ En el celular del paciente de prueba:
 
 **Qué debe aparecer**
 
-| En pantalla | Regla |
-|---|---|
+| En pantalla                                                                  | Regla        |
+| ---------------------------------------------------------------------------- | ------------ |
 | Promedio de la semana: 1,910 kcal frente a 1,835 kcal; adecuación de 104.1 % | G-20, RN-G09 |
-| 4 de 7 días en rango (90 a 110 %) | RN-E10 |
-| Adherencia por tiempo de comida | RF-32 |
+| 4 de 7 días en rango (90 a 110 %)                                            | RN-E10       |
+| Adherencia por tiempo de comida                                              | RF-32        |
 
 ## 5 · Analítica de rutina (RF-33) · Mateo · 4 min
 
@@ -109,12 +109,12 @@ En el celular del paciente de prueba:
 
 **Qué debe aparecer**
 
-| En pantalla | Hoja de Jeremy |
-|---|---|
-| Fases de las semanas 1 a 4: Adaptación, Base, Acumulación y Acumulación | Macrociclo, mesociclo 1 |
-| Sesiones hechas por semana: 3, 3, 2 y 3 | Informe mensual: 11 de 12 sesiones |
-| Tonelaje por semana: 5,220, 5,490, 3,420 y 3,750 kg | Volumen del registro de cargas. Ver la semana 3 en la sección 9 |
-| 1RM estimado de «Press banca» con Epley: 56.0, 59.5, 63.0 y 46.7 kg | Registro de cargas: «1RM estimado» |
+| En pantalla                                                             | Hoja de Jeremy                                                  |
+| ----------------------------------------------------------------------- | --------------------------------------------------------------- |
+| Fases de las semanas 1 a 4: Adaptación, Base, Acumulación y Acumulación | Macrociclo, mesociclo 1                                         |
+| Sesiones hechas por semana: 3, 3, 2 y 3                                 | Informe mensual: 11 de 12 sesiones                              |
+| Tonelaje por semana: 5,220, 5,490, 3,420 y 3,750 kg                     | Volumen del registro de cargas. Ver la semana 3 en la sección 9 |
+| 1RM estimado de «Press banca» con Epley: 56.0, 59.5, 63.0 y 46.7 kg     | Registro de cargas: «1RM estimado»                              |
 
 ## 6 · Control semanal (RF-42) · Mateo y Luis · 6 min
 
@@ -125,12 +125,12 @@ En el celular del paciente de prueba:
 
 **Qué debe aparecer**
 
-| Semana de Mateo | Promedios | Control | Hoja de Jeremy |
-|---|---|---|---|
-| 1 | Sueño 6.4 h, rendimiento 80 % | Rojo: «Rendimiento bajo el mínimo» y «Sueño bajo el mínimo semanal». «Descarga 20–30 % y revisar» | DESCARGA 20–30 % Y REVISAR |
-| 2 | Sueño 6.8 h, rendimiento 80 % | Rojo: «Rendimiento bajo el mínimo». «Descarga 20–30 % y revisar» | DESCARGA 20–30 % Y REVISAR |
-| 3 | Sueño 7.1 h, rendimiento 100 % | Verde: «Continuar plan» | CONTINUAR PLAN |
-| 4 | Sueño 7.4 h, rendimiento 100 % | Verde: «Continuar plan» | CONTINUAR PLAN |
+| Semana de Mateo | Promedios                      | Control                                                                                           | Hoja de Jeremy             |
+| --------------- | ------------------------------ | ------------------------------------------------------------------------------------------------- | -------------------------- |
+| 1               | Sueño 6.4 h, rendimiento 80 %  | Rojo: «Rendimiento bajo el mínimo» y «Sueño bajo el mínimo semanal». «Descarga 20–30 % y revisar» | DESCARGA 20–30 % Y REVISAR |
+| 2               | Sueño 6.8 h, rendimiento 80 %  | Rojo: «Rendimiento bajo el mínimo». «Descarga 20–30 % y revisar»                                  | DESCARGA 20–30 % Y REVISAR |
+| 3               | Sueño 7.1 h, rendimiento 100 % | Verde: «Continuar plan»                                                                           | CONTINUAR PLAN             |
+| 4               | Sueño 7.4 h, rendimiento 100 % | Verde: «Continuar plan»                                                                           | CONTINUAR PLAN             |
 
 **En vivo, con Luis:** su semana sale en ámbar, porque la fatiga promedio supera el umbral, y sugiere «Ajustar 5–15 %».
 El coach decide Mantener, Ajustar o Descargar y escribe una nota. Si ajusta o descarga, queda la versión siguiente del
@@ -144,6 +144,7 @@ Ajustes › Umbrales del entrenamiento (07 §11).
 **Qué se hace:** Inicio.
 
 **Qué debe aparecer:**
+
 - los pacientes sin registros en 3 días;
 - la adherencia baja;
 - el semáforo del día y de la semana;
@@ -153,16 +154,17 @@ Ajustes › Umbrales del entrenamiento (07 §11).
 ## 8 · Evolución (RF-35, RF-24, RF-30) · Mateo · 4 min
 
 **Qué se hace:**
+
 1. Ficha de Mateo › Evaluaciones › Evolución.
 2. La ficha PDF de evolución.
 3. En la app, Progreso.
 
 **Qué debe aparecer**
 
-| En pantalla | Hoja de Jeremy |
-|---|---|
-| Peso 80 → 79 kg (−1) | Comparativa física |
-| Cintura 88 → 85 cm (−3) y cadera 100 → 99 cm (−1) | Comparativa física |
+| En pantalla                                                         | Hoja de Jeremy     |
+| ------------------------------------------------------------------- | ------------------ |
+| Peso 80 → 79 kg (−1)                                                | Comparativa física |
+| Cintura 88 → 85 cm (−3) y cadera 100 → 99 cm (−1)                   | Comparativa física |
 | Grasa corporal por bioimpedancia, en su propia serie: 22.0 → 20.8 % | Comparativa física |
 
 **Qué decir:** la bioimpedancia nunca comparte serie con la antropometría (RN-C08). Cada cambio se compara con el CMD95
@@ -170,16 +172,17 @@ del evaluador (RN-C06).
 
 ## 9 · La hoja de Jeremy frente a la app · Mateo · 5 min
 
-| Coincide | Difiere o falta (P14.5) |
-|---|---|
-| Las metas por tipo de día, con las respuestas de Jeremy a P-20: mandan los gramos, así que son 2,510 y 2,230 kcal. Cada día de octubre lleva la de su perfil: Entrenamiento si tiene sesión y Descanso si no | Las comidas por tipo de día: hoy el plan es el mismo los dos días (PR 1b) |
-| El macrociclo V3 de las semanas 1 a 8 | «No entreno hoy» y «mover a mañana» (PR 1e) |
-| El control de las 4 semanas | El panel de fatiga y recuperación, y el volumen ajustado por RIR y descanso |
-| El 1RM de Epley y el porcentaje | La fatiga por grupo muscular: faltan los coeficientes de cada ejercicio |
-| Las sesiones (11 de 12), el sueño, el rendimiento y la alimentación por semana | El informe mensual, las fotos y la cadera en Progreso de la app |
-| Peso, cintura, cadera y grasa | El expediente de documentos y el check-in semanal |
+| Coincide                                                                                                                                                                                                                                                                          | Difiere o falta (P14.5)                                                     |
+| --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------- |
+| Las metas por tipo de día, con las respuestas de Jeremy a P-20: mandan los gramos, así que son 2,510 y 2,230 kcal. Cada día de octubre lleva la de su perfil: Entrenamiento si tiene sesión y Descanso si no. Las comidas de Descanso: el mismo plan con menos almidones (P-20.5) | Las porciones exactas de Descanso de Mateo: las de la demo son de ejemplo   |
+| El macrociclo V3 de las semanas 1 a 8                                                                                                                                                                                                                                             | «No entreno hoy» y «mover a mañana» (PR 1e)                                 |
+| El control de las 4 semanas                                                                                                                                                                                                                                                       | El panel de fatiga y recuperación, y el volumen ajustado por RIR y descanso |
+| El 1RM de Epley y el porcentaje                                                                                                                                                                                                                                                   | La fatiga por grupo muscular: faltan los coeficientes de cada ejercicio     |
+| Las sesiones (11 de 12), el sueño, el rendimiento y la alimentación por semana                                                                                                                                                                                                    | El informe mensual, las fotos y la cadera en Progreso de la app             |
+| Peso, cintura, cadera y grasa                                                                                                                                                                                                                                                     | El expediente de documentos y el check-in semanal                           |
 
 Dos diferencias de datos de la hoja:
+
 - **La semana 3:** el registro de cargas trae la sentadilla del 22/10 (3 × 12 × 65 kg), pero ese día es una ausencia y
   el informe cuenta 2 sesiones. La app sigue la asistencia, así que el tonelaje de la semana 3 es de 3,420 kg.
 - **Los días:** la hoja rotula las sesiones lunes, miércoles y viernes, pero las fechas de asistencia son martes, jueves
@@ -188,10 +191,17 @@ Dos diferencias de datos de la hoja:
 Las dos están en las preguntas para Jeremy (`docs/preguntas/hoja-piloto-mateo.md`).
 
 **Qué decir de los perfiles de día:**
+
 - Jeremy respondió P-20: los gramos mandan y hay más tipos de día que entrenamiento y descanso.
 - En el plan de Mateo, Descanso trae la proteína y la grasa de Entrenamiento ya puestas.
 - El programa elige el perfil de cada día. La ausencia del 22/10 no cambia su meta, porque nadie reprogramó la sesión
   (P-20.3).
+- Descanso es el mismo plan con menos almidones (P-20.5). En el editor, «Porciones de: Descanso» muestra los gramos de ese
+  día: 30 g de pan en la media tarde y 50 g de papa en la cena, unos 240 g de carbohidratos. Son de ejemplo y se pueden
+  cambiar ahí mismo.
+- En un plan por intercambios, la app sugiere qué almidones quitar, primero de la media tarde y luego de la cena, y el coach
+  lo ajusta.
+- La app del paciente dice de qué día son las porciones de hoy, y la ficha 1.2.0 las imprime.
 
 ## 10 · Rendimiento (RNF-01, criterio 4 de P14) · 1 min
 

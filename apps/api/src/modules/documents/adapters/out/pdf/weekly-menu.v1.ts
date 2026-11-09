@@ -213,17 +213,82 @@ function recipes(sheet: MenuSheet, frame: SheetFrame): ReactElement | null {
   );
 }
 
+/** La cantidad de un alimento o receta en un perfil: «200 g», «1 porción» o «no va»; «—» si es la del plan. */
+function profileAmount(item: SheetMenuItem, code: string): string {
+  if (item.kind === 'FOOD') {
+    const portion = item.byProfile?.[code];
+    if (!portion) return '—';
+    return portion.grams > 0 ? `${num(portion.grams, 'grams')} g` : 'no va';
+  }
+  const portion = item.byProfile?.[code];
+  if (!portion) return '—';
+  return portion.servings > 0
+    ? `${plain(portion.servings)} ${portion.servings === 1 ? 'porción' : 'porciones'}`
+    : 'no va';
+}
+
+const planAmount = (item: SheetMenuItem): string =>
+  item.kind === 'FOOD'
+    ? `${num(item.grams, 'grams')} g`
+    : `${plain(item.servings)} ${item.servings === 1 ? 'porción' : 'porciones'}`;
+
+/**
+ * Lo que cambia en cada perfil de día (07 §2, P-20.5; plantilla 1.2.0): cada alimento o receta con su cantidad en el plan y en
+ * cada perfil que la cambia. Lo que no aparece es igual que el plan. Sin cambios por perfil, nada.
+ */
+function profilePortions(sheet: MenuSheet, frame: SheetFrame): ReactElement | null {
+  if (sheet.dayProfiles.length === 0) return null;
+  const menu = sheet.modality === 'WEEKLY_MENU';
+  const rows = sheet.days.flatMap((day) =>
+    day.cells.flatMap((cell, m) =>
+      [...cell.optionA, ...cell.optionB].flatMap((item) => {
+        if (!item.byProfile || Object.keys(item.byProfile).length === 0) return [];
+        const meal = sheet.meals[m]?.name ?? '';
+        const where =
+          menu && day.dayOfWeek !== null ? `${DAYS[day.dayOfWeek - 1] ?? ''} · ${meal}` : meal;
+        return [
+          [
+            where,
+            item.name,
+            planAmount(item),
+            ...sheet.dayProfiles.map((profile) => profileAmount(item, profile.code)),
+          ],
+        ];
+      }),
+    ),
+  );
+  if (rows.length === 0) return null;
+  return section(
+    'Porciones por perfil de día',
+    frame.colors,
+    table(
+      [
+        { label: menu ? 'Día y tiempo' : 'Tiempo', flex: 2 },
+        { label: 'Alimento', flex: 2.4 },
+        { label: 'Entrenamiento', flex: 1.3, numeric: true },
+        ...sheet.dayProfiles.map((profile) => ({ label: profile.name, flex: 1.3, numeric: true })),
+      ],
+      rows,
+    ),
+    h(
+      Text,
+      { style: styles.note },
+      'En cada perfil cambia solo la cantidad del alimento fuente: lo que no aparece aquí es igual que el plan.',
+    ),
+  );
+}
+
 function weeklyMenu(
   sheet: MenuSheet,
   frame: SheetFrame,
-  withProfiles: boolean,
+  version: { readonly profiles: boolean; readonly portions: boolean },
 ): ReactElement<DocumentProps> {
   const menu = sheet.modality === 'WEEKLY_MENU';
   return sheetDocument(
     frame,
     patientLine(sheet.patient),
     targets(sheet, frame),
-    withProfiles ? dayProfilesSection(sheet.targets, sheet.dayProfiles, frame) : null,
+    version.profiles ? dayProfilesSection(sheet.targets, sheet.dayProfiles, frame) : null,
     sheet.hydrationMl === null
       ? null
       : section(
@@ -243,6 +308,7 @@ function weeklyMenu(
           h(Text, null, `${totalsLine(sheet.average, 'días')}.`),
         )
       : null,
+    version.portions ? profilePortions(sheet, frame) : null,
     recipes(sheet, frame),
     sheet.instructions
       ? section('Indicaciones', frame.colors, h(Text, null, sheet.instructions))
@@ -266,11 +332,15 @@ function weeklyMenu(
 /** El título y el subtítulo del encabezado: la composición se nombra como tal aunque use la ficha del menú. */
 /** Versión 1.0.0: la de P11, igual para volver a dibujar lo que ya se generó (RN-H02). */
 export const weeklyMenuV1 = (sheet: MenuSheet, frame: SheetFrame) =>
-  weeklyMenu(sheet, frame, false);
+  weeklyMenu(sheet, frame, { profiles: false, portions: false });
 
 /** Versión 1.1.0 (P14.5): además, la meta de cada perfil de día (07 §2). */
 export const weeklyMenuV110 = (sheet: MenuSheet, frame: SheetFrame) =>
-  weeklyMenu(sheet, frame, true);
+  weeklyMenu(sheet, frame, { profiles: true, portions: false });
+
+/** Versión 1.2.0 (P14.5): además, lo que cambia en cada perfil de día (P-20.5). */
+export const weeklyMenuV120 = (sheet: MenuSheet, frame: SheetFrame) =>
+  weeklyMenu(sheet, frame, { profiles: true, portions: true });
 
 export function weeklyMenuTitles(sheet: MenuSheet): { title: string; subtitle: string } {
   return {
