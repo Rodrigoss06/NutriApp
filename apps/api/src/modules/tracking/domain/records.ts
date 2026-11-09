@@ -48,12 +48,19 @@ interface FoodData {
   readonly nutrientsPer100g: NutrientValues;
 }
 
+/**
+ * byProfile: la cantidad en los perfiles de día que la cambian (07 §2, P-20.5); con 0, ese día no va. Falta en los snapshots
+ * anteriores a la versión 4: la del plan vale todos los días.
+ */
 interface PlanFoodItem {
   readonly itemType: 'FOOD';
   readonly foodId: string;
   readonly foodName: string;
   readonly grams: number;
   readonly householdText: string | null;
+  readonly byProfile?: Readonly<
+    Record<string, { readonly grams: number; readonly householdText: string | null }>
+  >;
 }
 
 interface PlanRecipeItem {
@@ -61,6 +68,7 @@ interface PlanRecipeItem {
   readonly recipeId: string;
   readonly recipeName: string;
   readonly servings: number;
+  readonly byProfile?: Readonly<Record<string, { readonly servings: number }>>;
 }
 
 interface ExchangeMeal {
@@ -89,8 +97,28 @@ interface MenuMeal {
   readonly name: string;
 }
 
-/** Cada modalidad con sus tiempos; TMeal agrega a cada tiempo lo que la vista necesita (su horario). */
-type PlanOf<TMeal> =
+export interface PlanMacros {
+  readonly kcal: number;
+  readonly choG: number;
+  readonly proteinG: number;
+  readonly fatG: number;
+}
+
+/**
+ * Un perfil de día del plan con sus metas (07 §2). portions trae lo que el perfil cambia (P-20.5): en intercambios, los almidones
+ * de cada tiempo (starchByMeal); falta en los snapshots anteriores a la versión 4.
+ */
+export interface PlanDayProfile extends PlanMacros {
+  readonly code: string;
+  readonly name: string;
+  readonly portions?: object;
+}
+
+/**
+ * Cada modalidad con sus tiempos; TMeal agrega a cada tiempo lo que la vista necesita (su horario). dayProfiles: los perfiles de
+ * día (P-20); ausente en los snapshots anteriores a la versión 3: una sola meta.
+ */
+type PlanOf<TMeal> = { readonly dayProfiles?: readonly PlanDayProfile[] } & (
   | {
       readonly planId: string;
       readonly modality: 'EXCHANGES';
@@ -127,7 +155,8 @@ type PlanOf<TMeal> =
           readonly optionB: readonly (PlanFoodItem | PlanRecipeItem)[];
         }[];
       }[];
-    };
+    }
+);
 
 /**
  * Lo que el registro toma del snapshot del plan publicado, por modalidad: estructural, como PlanTargets. El snapshot de
@@ -154,6 +183,65 @@ export type PlanPick =
       readonly grams: number | null;
     }
   | { readonly kind: 'MENU'; readonly mealId: string; readonly option: 'A' | 'B' };
+
+/** El perfil de día con cuyas porciones se muestra y se registra el plan (07 §2, P-20.5). */
+export interface DayPortions {
+  readonly code: string;
+  readonly name: string;
+  /** Intercambios: los almidones de cada tiempo, en su orden; null, los del plan. */
+  readonly starchByMeal: readonly number[] | null;
+}
+
+/** Los almidones de un perfil en intercambios, si el snapshot los trae como se espera (versión 4). */
+function starchOf(portions: object | undefined): readonly number[] | null {
+  if (!portions || !('starchByMeal' in portions)) return null;
+  const { starchByMeal } = portions;
+  return Array.isArray(starchByMeal) &&
+    starchByMeal.every((n: unknown): n is number => typeof n === 'number')
+    ? starchByMeal
+    : null;
+}
+
+/**
+ * Las porciones del perfil de ese día (el de su meta, RN-G03). Sin código, con Entrenamiento o con un perfil que el plan ya no
+ * tiene: null, las del plan.
+ */
+export function dayPortionsOf(plan: LoggablePlan, profileCode: string | null): DayPortions | null {
+  const profile = profileCode ? plan.dayProfiles?.find((p) => p.code === profileCode) : undefined;
+  return profile
+    ? { code: profile.code, name: profile.name, starchByMeal: starchOf(profile.portions) }
+    : null;
+}
+
+/** Las porciones de un tiempo por intercambios en ese perfil: las del plan con los almidones del perfil (P-20.5). */
+function servingsIn(
+  meal: ExchangeMeal,
+  index: number,
+  portions: DayPortions | null,
+): Readonly<Record<string, number>> {
+  const starch = portions?.starchByMeal?.[index];
+  return starch === undefined ? meal.servings : { ...meal.servings, STA: starch };
+}
+
+/** Cada alimento o receta con su cantidad en ese perfil, sin los que ese día no van (P-20.5). */
+function itemsIn<T extends PlanFoodItem | PlanRecipeItem>(
+  items: readonly T[],
+  portions: DayPortions | null,
+): T[] {
+  if (!portions) return [...items];
+  return items.flatMap((item): T[] => {
+    if (item.itemType === 'FOOD') {
+      const portion = item.byProfile?.[portions.code];
+      if (!portion) return [item];
+      return portion.grams > 0
+        ? [{ ...item, grams: portion.grams, householdText: portion.householdText }]
+        : [];
+    }
+    const portion = item.byProfile?.[portions.code];
+    if (!portion) return [item];
+    return portion.servings > 0 ? [{ ...item, servings: portion.servings }] : [];
+  });
+}
 
 /** Hoy y hasta N días atrás; una fecha futura no se acepta (RN-G10). Las fechas son YYYY-MM-DD locales del paciente (RN-G04). */
 export type WindowVerdict = 'OPEN' | 'FUTURE' | 'CLOSED';
@@ -219,16 +307,22 @@ function foodDraft(
 
 /**
  * Los registros de lo que el paciente eligió de su plan (RN-G05), con los nutrientes congelados. En intercambios, cada porción
- * suma los valores de su grupo (guía de dominio §7.1). null si lo elegido no está en el plan.
+ * suma los valores de su grupo (guía de dominio §7.1). Lo del plan es lo del perfil de ese día (P-20.5): lo que ese día no va
+ * no está en el plan. null si lo elegido no está en el plan.
  */
-export function planDrafts(plan: LoggablePlan, pick: PlanPick): readonly FoodLogDraft[] | null {
+export function planDrafts(
+  plan: LoggablePlan,
+  pick: PlanPick,
+  portions: DayPortions | null = null,
+): readonly FoodLogDraft[] | null {
   if (plan.modality === 'EXCHANGES' && pick.kind === 'EXCHANGE') {
-    const meal = plan.meals.find((m) => m.id === pick.mealId);
+    const index = plan.meals.findIndex((m) => m.id === pick.mealId);
+    const meal = plan.meals[index];
     const food = meal?.allowedFoods.find(
       (f) => f.foodId === pick.foodId && f.groupCode === pick.groupCode,
     );
     const group = plan.exchangeList.groups.find((g) => g.code === pick.groupCode);
-    const planned = meal?.servings[pick.groupCode] ?? 0;
+    const planned = meal ? (servingsIn(meal, index, portions)[pick.groupCode] ?? 0) : 0;
     const servings = pick.servings ?? planned;
     if (!meal || !food || !group || servings <= 0) return null;
     return [
@@ -255,7 +349,7 @@ export function planDrafts(plan: LoggablePlan, pick: PlanPick): readonly FoodLog
   }
   if (plan.modality === 'COMPOSITION' && pick.kind === 'FOOD') {
     const meal = plan.meals.find((m) => m.id === pick.mealId);
-    const item = meal?.items.find((i) => i.foodId === pick.foodId);
+    const item = meal && itemsIn(meal.items, portions).find((i) => i.foodId === pick.foodId);
     if (!meal || !item) return null;
     const draft = foodDraft(meal, item, plan.foods[item.foodId], pick.grams ?? item.grams);
     return draft ? [draft] : null;
@@ -266,7 +360,7 @@ export function planDrafts(plan: LoggablePlan, pick: PlanPick): readonly FoodLog
       const cell = day.meals[index];
       const header = plan.meals[index];
       if (!cell || !header) continue;
-      const items = pick.option === 'A' ? cell.optionA : cell.optionB;
+      const items = itemsIn(pick.option === 'A' ? cell.optionA : cell.optionB, portions);
       const meal = { id: cell.id, slotCode: header.slotCode };
       const drafts = items.map((item): FoodLogDraft | null => {
         if (item.itemType === 'FOOD') {
@@ -302,23 +396,9 @@ export type AppPlan = {
   readonly validFrom: string;
   /** Las de la prescripción: las de Entrenamiento (07 §2). */
   readonly targets: PlanMacros;
-  /** Los demás perfiles de día (P-20); ausente en los snapshots anteriores a la versión 3: una sola meta. */
-  readonly dayProfiles?: readonly PlanDayProfile[];
   readonly hydrationTargetMl: number | null;
   readonly instructions: string | null;
 } & PlanOf<{ readonly timeOfDay: string | null }>;
-
-export interface PlanMacros {
-  readonly kcal: number;
-  readonly choG: number;
-  readonly proteinG: number;
-  readonly fatG: number;
-}
-
-export interface PlanDayProfile extends PlanMacros {
-  readonly code: string;
-  readonly name: string;
-}
 
 export interface PlanViewMenuItem {
   readonly name: string;
@@ -367,7 +447,9 @@ export interface PlanView {
   readonly modality: LoggablePlan['modality'];
   readonly validFrom: string;
   readonly targets: PlanMacros;
-  readonly dayProfiles: readonly PlanDayProfile[];
+  readonly dayProfiles: readonly (PlanMacros & { readonly code: string; readonly name: string })[];
+  /** El perfil de ese día, cuyas porciones son las de meals (P-20.5); null, las del plan. */
+  readonly profile: { readonly code: string; readonly name: string } | null;
   readonly hydrationTargetMl: number | null;
   readonly instructions: string | null;
   readonly meals: readonly PlanViewMeal[];
@@ -391,8 +473,13 @@ const macrosOf = ({ kcal, choG, proteinG, fatG }: PlanMacros): PlanMacros => ({
 /**
  * El plan por tiempos de comida, listo para registrar desde él (RF-28, RN-G06): en intercambios, cada grupo del tiempo con sus
  * porciones y sus alimentos permitidos; en composición, cada alimento; en el menú, las opciones del día de la semana pedido.
+ * Con las porciones del perfil de ese día (P-20.5): lo que ese día no va, no aparece.
  */
-export function planView(plan: AppPlan, localDate: string): PlanView {
+export function planView(
+  plan: AppPlan,
+  localDate: string,
+  portions: DayPortions | null = null,
+): PlanView {
   const base = {
     planId: plan.planId,
     versionNo: plan.versionNo,
@@ -404,19 +491,20 @@ export function planView(plan: AppPlan, localDate: string): PlanView {
       name: profile.name,
       ...macrosOf(profile),
     })),
+    profile: portions && { code: portions.code, name: portions.name },
     hydrationTargetMl: plan.hydrationTargetMl,
     instructions: plan.instructions,
   };
   if (plan.modality === 'EXCHANGES') {
     return {
       ...base,
-      meals: plan.meals.map((meal) => ({
+      meals: plan.meals.map((meal, index) => ({
         id: meal.id,
         slotCode: meal.slotCode,
         name: meal.name,
         timeOfDay: meal.timeOfDay,
         options: plan.exchangeList.groups.flatMap((group): PlanViewOption[] => {
-          const servings = meal.servings[group.code] ?? 0;
+          const servings = servingsIn(meal, index, portions)[group.code] ?? 0;
           const foods = meal.allowedFoods.filter((food) => food.groupCode === group.code);
           if (servings <= 0 || foods.length === 0) return [];
           return [
@@ -445,7 +533,7 @@ export function planView(plan: AppPlan, localDate: string): PlanView {
         slotCode: meal.slotCode,
         name: meal.name,
         timeOfDay: meal.timeOfDay,
-        options: meal.items.map((item) => ({
+        options: itemsIn(meal.items, portions).map((item) => ({
           kind: 'FOOD' as const,
           foodId: item.foodId,
           foodName: item.foodName,
@@ -462,11 +550,13 @@ export function planView(plan: AppPlan, localDate: string): PlanView {
       const header = plan.meals[index];
       if (!header) return [];
       const options: PlanViewOption[] = [];
-      if (cell.optionA.length > 0) {
-        options.push({ kind: 'MENU', option: 'A', items: cell.optionA.map(menuItem) });
+      const optionA = itemsIn(cell.optionA, portions);
+      const optionB = itemsIn(cell.optionB, portions);
+      if (optionA.length > 0) {
+        options.push({ kind: 'MENU', option: 'A', items: optionA.map(menuItem) });
       }
-      if (cell.optionB.length > 0) {
-        options.push({ kind: 'MENU', option: 'B', items: cell.optionB.map(menuItem) });
+      if (optionB.length > 0) {
+        options.push({ kind: 'MENU', option: 'B', items: optionB.map(menuItem) });
       }
       return [
         {

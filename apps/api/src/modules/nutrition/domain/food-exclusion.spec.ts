@@ -32,15 +32,27 @@ const food = (foodId: string): MenuItem => ({
   foodId,
   grams: 100,
   householdText: null,
+  byProfile: {},
 });
-const recipe = (recipeId: string): MenuItem => ({ itemType: 'RECIPE', recipeId, servings: 1 });
+const recipe = (recipeId: string): MenuItem => ({
+  itemType: 'RECIPE',
+  recipeId,
+  servings: 1,
+  byProfile: {},
+});
 
 const composition = (lunch: readonly string[], dinner: readonly string[] = []): PlanDraft => {
   const draft: CompositionDraft = {
     meals: DEFAULT_MEAL_HEADERS.map((header) => ({
       ...header,
       items: (header.slotCode === 'LUNCH' ? lunch : header.slotCode === 'DINNER' ? dinner : []).map(
-        (foodId) => ({ itemType: 'FOOD' as const, foodId, grams: 100, householdText: null }),
+        (foodId) => ({
+          itemType: 'FOOD' as const,
+          foodId,
+          grams: 100,
+          householdText: null,
+          byProfile: {},
+        }),
       ),
     })),
     hydrationTargetMl: null,
@@ -70,6 +82,7 @@ const exchanges = (foodId: string): PlanDraft => ({
   modality: 'EXCHANGES',
   fixedServings: { VEG: 0, FRU: 0, MILK: 0 },
   overrides: {},
+  starchByProfile: {},
   splitOverrides: {},
   hydrationTargetMl: null,
   instructions: null,

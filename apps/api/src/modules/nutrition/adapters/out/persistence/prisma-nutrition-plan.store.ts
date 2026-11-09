@@ -70,6 +70,7 @@ interface MealRow {
 }
 
 interface ItemRow {
+  id: string;
   plan_meal_id: string;
   item_type: 'FOOD' | 'RECIPE';
   item_id: string;
@@ -77,6 +78,15 @@ interface ItemRow {
   servings: number | null;
   household_text: string | null;
   option_label: 'A' | 'B' | null;
+}
+
+/** La cantidad de un alimento o receta a guardar en un perfil de día (P-20.5). */
+interface PortionToSave {
+  readonly itemId: string;
+  readonly code: string;
+  readonly grams: number | null;
+  readonly servings: number | null;
+  readonly household: string | null;
 }
 
 /** Un alimento o receta a guardar, con su tiempo, su opción y su orden. */
@@ -111,15 +121,39 @@ const headerOf = (meal: MealRow): MealHeader => ({
   sharePct: meal.share_pct,
 });
 
-const itemOf = (row: ItemRow): MenuItem =>
-  row.item_type === 'FOOD'
+/** La cantidad de un alimento o receta en un perfil de día (P-20.5). */
+interface ItemProfileRow {
+  plan_item_id: string;
+  profile_code: string;
+  grams: number | null;
+  servings: number | null;
+  household_text: string | null;
+}
+
+const itemOf = (row: ItemRow, portions: readonly ItemProfileRow[]): MenuItem => {
+  const mine = portions.filter((portion) => portion.plan_item_id === row.id);
+  return row.item_type === 'FOOD'
     ? {
         itemType: 'FOOD',
         foodId: row.item_id,
         grams: row.grams ?? 0,
         householdText: row.household_text,
+        byProfile: Object.fromEntries(
+          mine.map((p) => [
+            p.profile_code,
+            { grams: p.grams ?? 0, householdText: p.household_text },
+          ]),
+        ),
       }
-    : { itemType: 'RECIPE', recipeId: row.item_id, servings: row.servings ?? 0 };
+    : {
+        itemType: 'RECIPE',
+        recipeId: row.item_id,
+        servings: row.servings ?? 0,
+        byProfile: Object.fromEntries(
+          mine.map((p) => [p.profile_code, { servings: p.servings ?? 0 }]),
+        ),
+      };
+};
 
 const isFixed = (code: ExchangeGroupCode): code is FixedGroup =>
   code === 'VEG' || code === 'FRU' || code === 'MILK';
@@ -306,6 +340,11 @@ export class PrismaNutritionPlanStore implements NutritionPlanStore {
     >`
       SELECT plan_meal_id, group_code, servings, is_manual FROM nutrition.plan_meal_exchange
       WHERE plan_meal_id = ANY(${mealIds}::uuid[])`;
+    const starch = await this.db.tx.$queryRaw<
+      { plan_meal_id: string; profile_code: string; servings: number }[]
+    >`
+      SELECT plan_meal_id, profile_code, servings FROM nutrition.plan_meal_profile_exchange
+      WHERE plan_meal_id = ANY(${mealIds}::uuid[]) AND group_code = 'STA'`;
     const foods = await this.db.tx.$queryRaw<
       {
         plan_meal_id: string;
@@ -334,6 +373,15 @@ export class PrismaNutritionPlanStore implements NutritionPlanStore {
         );
       }
     }
+    // Un perfil con filas lleva el reparto del coach; sin filas, la sugerencia (P-20.5).
+    const starchByProfile: Record<string, number[]> = {};
+    for (const code of new Set(starch.map((row) => row.profile_code))) {
+      starchByProfile[code] = mealIds.map(
+        (mealId) =>
+          starch.find((row) => row.plan_meal_id === mealId && row.profile_code === code)
+            ?.servings ?? 0,
+      );
+    }
     const draft: PlanDraftInput = {
       fixedServings: { VEG: servingsOf('VEG'), FRU: servingsOf('FRU'), MILK: servingsOf('MILK') },
       overrides,
@@ -349,6 +397,7 @@ export class PrismaNutritionPlanStore implements NutritionPlanStore {
           })),
       })),
       splitOverrides,
+      starchByProfile,
       hydrationTargetMl: plan.hydration_target_ml,
       instructions: plan.instructions,
       dayProfiles: await this.#dayProfiles(plan.id),
@@ -359,12 +408,17 @@ export class PrismaNutritionPlanStore implements NutritionPlanStore {
   /** Composición o menú desde sus filas: los tiempos y, en cada uno, sus alimentos o recetas en orden. */
   async #itemDraft(plan: PlanRow, meals: readonly MealRow[]): Promise<PlanDraft> {
     const items = await this.db.tx.$queryRaw<ItemRow[]>`
-      SELECT plan_meal_id, item_type, item_id, grams::float8 AS grams, servings::float8 AS servings, household_text,
-             option_label
+      SELECT id, plan_meal_id, item_type, item_id, grams::float8 AS grams, servings::float8 AS servings,
+             household_text, option_label
       FROM nutrition.plan_item WHERE plan_meal_id = ANY(${meals.map((m) => m.id)}::uuid[])
       ORDER BY position`;
+    const portions = await this.db.tx.$queryRaw<ItemProfileRow[]>`
+      SELECT plan_item_id, profile_code, grams::float8 AS grams, servings::float8 AS servings, household_text
+      FROM nutrition.plan_item_profile WHERE plan_id = ${plan.id}::uuid`;
     const itemsOf = (mealId: string, option: 'A' | 'B' | null) =>
-      items.filter((i) => i.plan_meal_id === mealId && i.option_label === option).map(itemOf);
+      items
+        .filter((i) => i.plan_meal_id === mealId && i.option_label === option)
+        .map((i) => itemOf(i, portions));
     const common = {
       hydrationTargetMl: plan.hydration_target_ml,
       instructions: plan.instructions,
@@ -394,7 +448,6 @@ export class PrismaNutritionPlanStore implements NutritionPlanStore {
     return { modality: 'WEEKLY_MENU', ...draft };
   }
 
-  /** Los hijos del plan en sentencias con unnest, según su modalidad. */
   /** Los perfiles de día del plan en su orden (07 §2). */
   async #dayProfiles(planId: string): Promise<DayProfileDraft[]> {
     const rows = await this.db.tx.$queryRaw<
@@ -411,6 +464,7 @@ export class PrismaNutritionPlanStore implements NutritionPlanStore {
     }));
   }
 
+  /** Los hijos del plan en sentencias con unnest, según su modalidad. */
   async #children(planId: string, organizationId: string, content: PlanContent): Promise<void> {
     for (const [index, profile] of content.dayProfiles.entries()) {
       await this.db.tx.$executeRaw`
@@ -429,6 +483,7 @@ export class PrismaNutritionPlanStore implements NutritionPlanStore {
         content.plan.meals.map((meal) => ({ meal, day: null })),
       );
       await this.#items(
+        planId,
         organizationId,
         content.plan.meals.flatMap((meal, m) =>
           meal.items.map((item, position) => ({
@@ -448,6 +503,7 @@ export class PrismaNutritionPlanStore implements NutritionPlanStore {
       days.flatMap((_, d) => meals.map((meal) => ({ meal, day: d + 1 }))),
     );
     await this.#items(
+      planId,
       organizationId,
       days.flatMap((day, d) =>
         day.meals.flatMap((cell, m) => {
@@ -496,8 +552,10 @@ export class PrismaNutritionPlanStore implements NutritionPlanStore {
     return ids;
   }
 
-  async #items(organizationId: string, rows: readonly ItemToSave[]): Promise<void> {
+  /** Alimentos o recetas y, de cada uno, su cantidad en los perfiles de día que la cambian (P-20.5). */
+  async #items(planId: string, organizationId: string, rows: readonly ItemToSave[]): Promise<void> {
     if (rows.length === 0) return;
+    const ids = rows.map(() => this.ids.newId<'PlanItemId'>());
     const food = (row: ItemToSave) => (row.item.itemType === 'FOOD' ? row.item : null);
     const recipe = (row: ItemToSave) => (row.item.itemType === 'RECIPE' ? row.item : null);
     await this.db.tx.$executeRaw`
@@ -505,7 +563,7 @@ export class PrismaNutritionPlanStore implements NutritionPlanStore {
                                        household_text, option_label, position)
       SELECT i.id, i.meal, ${organizationId}::uuid, i.type, i.item, i.grams, i.servings, i.household, i.option,
              i.position
-      FROM unnest(${rows.map(() => this.ids.newId<'PlanItemId'>())}::uuid[], ${rows.map((r) => r.mealId)}::uuid[],
+      FROM unnest(${ids}::uuid[], ${rows.map((r) => r.mealId)}::uuid[],
                   ${rows.map((r) => r.item.itemType)}::text[],
                   ${rows.map((r) => food(r)?.foodId ?? recipe(r)?.recipeId ?? '')}::uuid[],
                   ${rows.map((r) => food(r)?.grams ?? null)}::numeric[],
@@ -513,6 +571,34 @@ export class PrismaNutritionPlanStore implements NutritionPlanStore {
                   ${rows.map((r) => food(r)?.householdText ?? null)}::text[], ${rows.map((r) => r.option)}::text[],
                   ${rows.map((r) => r.position)}::smallint[])
         AS i(id, meal, type, item, grams, servings, household, option, position)`;
+    const portions: PortionToSave[] = rows.flatMap((row, index): PortionToSave[] => {
+      const itemId = ids[index] ?? '';
+      const { item } = row;
+      if (item.itemType === 'FOOD') {
+        return Object.entries(item.byProfile).map(([code, portion]) => ({
+          itemId,
+          code,
+          grams: portion.grams,
+          servings: null,
+          household: portion.householdText,
+        }));
+      }
+      return Object.entries(item.byProfile).map(([code, portion]) => ({
+        itemId,
+        code,
+        grams: null,
+        servings: portion.servings,
+        household: null,
+      }));
+    });
+    if (portions.length === 0) return;
+    await this.db.tx.$executeRaw`
+      INSERT INTO nutrition.plan_item_profile (plan_item_id, profile_code, plan_id, organization_id, grams, servings,
+                                               household_text)
+      SELECT p.item, p.code, ${planId}::uuid, ${organizationId}::uuid, p.grams, p.servings, p.household
+      FROM unnest(${portions.map((p) => p.itemId)}::uuid[], ${portions.map((p) => p.code)}::text[],
+                  ${portions.map((p) => p.grams)}::numeric[], ${portions.map((p) => p.servings)}::numeric[],
+                  ${portions.map((p) => p.household)}::text[]) AS p(item, code, grams, servings, household)`;
   }
 
   /** Intercambios del día, tiempos, su reparto y sus alimentos permitidos. */
@@ -547,6 +633,24 @@ export class PrismaNutritionPlanStore implements NutritionPlanStore {
       FROM unnest(${cells.map((c) => c.mealId)}::uuid[], ${cells.map((c) => c.code)}::text[],
                   ${cells.map((c) => c.servings)}::int[], ${cells.map((c) => c.manual)}::boolean[])
         AS c(meal, code, servings, manual)`;
+    // Solo el reparto que cambió el coach; la sugerencia se recalcula y el snapshot la congela (P-20.5).
+    const starch = content.profiles
+      .filter((profile) => profile.manual)
+      .flatMap((profile) =>
+        profile.starchByMeal.map((servings, i) => ({
+          mealId: mealIds[i] ?? '',
+          code: profile.code,
+          servings,
+        })),
+      );
+    if (starch.length > 0) {
+      await this.db.tx.$executeRaw`
+        INSERT INTO nutrition.plan_meal_profile_exchange (plan_meal_id, profile_code, group_code, plan_id,
+                                                          organization_id, servings)
+        SELECT s.meal, s.code, 'STA', ${planId}::uuid, ${organizationId}::uuid, s.servings
+        FROM unnest(${starch.map((s) => s.mealId)}::uuid[], ${starch.map((s) => s.code)}::text[],
+                    ${starch.map((s) => s.servings)}::int[]) AS s(meal, code, servings)`;
+    }
     const foods = content.meals.flatMap((meal, i) =>
       meal.allowedFoods.map((food, position) => ({ ...food, mealId: mealIds[i] ?? '', position })),
     );

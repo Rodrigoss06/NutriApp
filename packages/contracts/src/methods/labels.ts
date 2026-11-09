@@ -35,6 +35,7 @@ export const METHOD_LABELS = {
   MACROS_DAY_PROFILE: 'Perfil de día (gramos y Atwater)',
   EXCHANGES_CLASSIC: 'Intercambios (método clásico)',
   MEAL_SPLIT_LARGEST_REMAINDER: 'Reparto por tiempos de comida',
+  STARCH_BY_DAY_PROFILE: 'Almidones del perfil de día',
   RECIPE_NUTRIENTS: 'Composición de receta',
   ADEQUACY: '% de adecuación',
   TONNAGE: 'Tonelaje',

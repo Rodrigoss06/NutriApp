@@ -22,7 +22,7 @@ Próxima demo: Demo 3 · Entrenamiento y app del paciente · semana 6
 | P12 Ejercicios y rutinas | ✅ | Rodrigo | #39 a #42 y #44 a #47 | 5 criterios en verde (integración y E2E en escritorio y celular): motor (ADR-070), biblioteca (ADR-071), anamnesis V2 (ADR-072), alergias (ADR-074), seguridad (ADR-075), programa por la API y en la web (ADR-077, ADR-078) y ficha de rutina (ADR-079) |
 | P13 App del paciente | ✅ | Rodrigo | #50 a #55 | 6 criterios en verde (integración y E2E en escritorio y celular): recuperación del día en el motor (ADR-080), registros por /me (ADR-081), Hoy y el plan (ADR-082), registro diario y entreno (ADR-083, ADR-084) y el profesional con los registros (ADR-085). Lighthouse móvil 97 en Hoy (local). La cola sin conexión (RF-31, deseable) queda fuera. /notion-sync aplicado (30 cambios en 11 páginas) |
 | P14 Analítica y evolución, Demo 3 | ✅ | Rodrigo | #57 a #68 | Plan aprobado (2026-11-05, ADR-086): 7 PR. PR 1 (motor, #57), PR 2a (dieta, #58), PR 2b (rutina, #59) y PR 3 (control semanal, #60) por la API; PR 4 (web de la analítica y del control semanal, #61, ADR-090) con E2E en escritorio y celular; PR 5a (evolución, tendencia por mes y ficha por la API, #62, ADR-091) y PR 5b (sus pantallas, #63, ADR-092); PR 6a (panel con alertas por la API y en Inicio, #64, ADR-093), PR 6b (material educativo, #65, ADR-094) y PR 6c (fichas en la app, #66, ADR-095); PR 7a (`seed:load` y p95, #67, ADR-096) y PR 7b (`demo:3` con Luis y Mateo, y guion, #68, ADR-097). Criterios 1 a 5 en verde: el 4, con el p95 de docs/demos/demo-3-p95.md. Etiqueta v0.3.0 (39f5b64); staging, pendiente de P4. /notion-sync aplicado (51 cambios en 14 páginas) |
-| P14.5 Hoja piloto de JV Fitness | 🟨 | Rodrigo | | Aprobado por Rodrigo (2026-11-08, ADR-098); prompt en Notion. PR 1a fusionado (#70, ADR-099). Jeremy respondió P-20 (ADR-100): perfiles de día por la API (PR 1c, #71) y sus pantallas, fichas 1.1.0 y Mateo en `demo:3` (PR 1d, ADR-101); después el 1b (comidas por perfil) y el 1e (reprogramar), y luego el PR 2 (volumen ajustado) y el 6a (cadera, comparativa y estrés). La B espera las demás respuestas (P-21 a P-37); la C, el acuerdo y la cotización por la cláusula 12 |
+| P14.5 Hoja piloto de JV Fitness | 🟨 | Rodrigo | | Aprobado por Rodrigo (2026-11-08, ADR-098); prompt en Notion. PR 1a fusionado (#70, ADR-099). Jeremy respondió P-20 (ADR-100): perfiles de día por la API (PR 1c, #71, fusionado) y sus pantallas, fichas 1.1.0 y Mateo en `demo:3` (PR 1d, #72, fusionado, ADR-101); las porciones de cada perfil por la API (PR 1b, ADR-102) y sus pantallas (PR 1f); después el 1e (reprogramar), y luego el PR 2 (volumen ajustado) y el 6a (cadera, comparativa y estrés). Jeremy respondió P-20.6 a P-27 y P-33 a P-37 (2026-11-09 y 2026-11-10): el PR 2 y la fase B (PR 3, 4, 5 y 9) ya tienen sus datos. La C, el acuerdo y la cotización por la cláusula 12 |
 | P15 Marca, calendario, admin y migración | ⬜ | Rodrigo | | |
 | P16 Producción y entrega, Demo 4 | ⬜ | Rodrigo | | |
 
@@ -49,6 +49,13 @@ Leyenda: ⬜ pendiente · 🟨 en curso · ✅ terminado · ⛔ bloqueado
     - Hoy, Mi plan y la analítica;
     - las fichas EXCHANGE_DIET y WEEKLY_MENU 1.1.0;
     - Mateo en `demo:3`, con 2,510 y 2,230 kcal y la meta de cada día de octubre.
+  - PR 1b, las porciones de cada perfil por la API (P-20.5, ADR-102):
+    - `STARCH_BY_DAY_PROFILE` (motor 1.9.0) sugiere los almidones de cada tiempo y el coach los cambia
+      (`nutrition.plan_meal_profile_exchange`);
+    - en composición y menú, la cantidad de cada alimento o receta por perfil (`nutrition.plan_item_profile`);
+    - la adecuación de cada perfil, el snapshot 4 y, en la app, las porciones del perfil del día al ver y registrar el plan.
+  - PR 1f, sus pantallas: editar las porciones de cada perfil, verlas en el plan publicado y en la app, las fichas y las
+    porciones de Descanso de Mateo en `demo:3`.
 - P14 terminado (#57 a #68, etiqueta v0.3.0 en 39f5b64; plan aprobado el 2026-11-05, ADR-086), en 7 PR contra main. Plan de Rodrigo: completar la Demo 3 y, en ella, corregir
   cada punto faltante, como P4, para llevar bien la Demo 4 y cerrar el proyecto:
   - PR 1, motor: `WEEKLY_REVIEW_JV` 3.0.0 con los agregados, el semáforo, el factor ajustado y la decisión sugerida (RN-G16); G-39 en
@@ -177,20 +184,23 @@ Leyenda: ⬜ pendiente · 🟨 en curso · ✅ terminado · ⛔ bloqueado
 ## Siguiente paso
 - Antes de la Demo 3: la matriz manual de navegadores (RNF-19: Chrome, Edge, Safari y Firefox; la E2E cubre Chromium
   y WebKit), que no quedó registrada en las demos 1 y 2
-- P14.5, uno por vez contra main: PR 1c (perfiles de día por la API, #71, ADR-100) y PR 1d (sus pantallas, fichas y Mateo,
-  ADR-101), que se sube al fusionarse el #71. Después:
-  - el 1b: las porciones del alimento fuente por perfil (P-20.5);
+- P14.5, uno por vez contra main: el #71 (PR 1c) y el #72 (PR 1d) están fusionados. Siguen, cada uno al fusionarse el anterior:
+  - el PR 1b (porciones de cada perfil por la API, ADR-102);
+  - el PR 1f (sus pantallas, fichas y Mateo);
   - el 1e: «no entreno hoy», «mover a mañana» y el perfil por fecha (P-20.3);
-  - el PR 2 y el 6a.
-- /notion-sync de P14.5 con ADR-099 y ADR-100: P-20 resuelta en 07 §15, los perfiles en 07 §2 y §8, RN-E07 y RN-G03 y el
-  caso dorado G-41
+  - el PR 2 y el 6a, y después la fase B: PR 3 (panel de fatiga), 4 (fatiga por grupo muscular), 5 (check-in) y 9
+    (prescripción de la hoja).
+- /notion-sync de P14.5 con ADR-099, ADR-100 y ADR-102: P-20 resuelta en 07 §15, los perfiles en 07 §2 y §8, RN-E07,
+  RN-E09, RN-G03 y RN-G05, el método nuevo en 02 §9, las tablas en 05.2 y el caso dorado G-41
 - Demo 3: lista con v0.3.0 y `pnpm demo:3` (guion en docs/demos/demo-3.md). Falta la semana del paciente de prueba desde su
   celular (la evidencia de 04)
 - Hoja piloto de Jeremy (2026-11-07, interna: no se comparte hasta que la valide):
-  - las preguntas de `docs/preguntas/hoja-piloto-mateo.md` (P-20 a P-37, en 07 §15). P-20 está respondida (2026-11-08) y Jeremy
-    manda las demás;
-  - P14.5 aprobado (ADR-098): la fase B espera sus respuestas; la C (informe mensual, fotos y expediente), el acuerdo y la
-    cotización por la cláusula 12
+  - las preguntas de `docs/preguntas/hoja-piloto-mateo.md` (P-20 a P-37, en 07 §15). Jeremy respondió P-20 (2026-11-08), P-20.6
+    a P-25 (2026-11-09) y P-26, P-27 y P-33 a P-37 (2026-11-10). P-20.6: los almidones de más van alternando la media tarde y
+    la cena, y el motor 1.9.0 ya lo sigue (PR 1b, ADR-102). P-33: para que la carga de la semana 3 de Mateo siga en ámbar, el
+    22/10 pasaría a «ASISTIÓ» en la semilla; con «AUSENTE», sale verde. Se decide con el PR 3;
+  - P14.5 aprobado (ADR-098): la fase B ya tiene sus respuestas; la C (informe mensual, fotos y expediente, P-28 a P-31), el
+    acuerdo y la cotización por la cláusula 12
 - Para la Demo 3 y la Demo 4, según el plan de Rodrigo (2026-11-05): resolver lo que falta del Notion maestro, empezando por P4
   (staging) en cuanto llegue la cuenta de Hetzner
 - Confirmar la fecha de inicio: si fue el 24-09, el 2026-11-05 es el primer día de la semana 7 y la Demo 4 cae el 25-11
@@ -203,11 +213,11 @@ Leyenda: ⬜ pendiente · 🟨 en curso · ✅ terminado · ⛔ bloqueado
 
 ## Bloqueos y preguntas al cliente
 - [ ] Cuenta de Hetzner y dominio a nombre de Jeremy: bloquea P4
-- [ ] Hoja piloto «JV Fitness · Mi plan»: P-21 a P-37 (`docs/preguntas/hoja-piloto-mateo.md`). P-20 se respondió el 2026-11-08
-  (ADR-100).
-  - Bloquean P14.5: los umbrales de ámbar del panel de fatiga, las tablas de factores del volumen ajustado, los coeficientes
-    de fatiga por ejercicio, el check-in semanal o diario y la plantilla de la prescripción.
-  - Por acordar, porque no están en el contrato: el informe mensual (sería la sexta ficha), las fotos y el expediente.
+- [ ] Hoja piloto «JV Fitness · Mi plan» (`docs/preguntas/hoja-piloto-mateo.md`): Jeremy respondió P-20 (2026-11-08), P-20.6 a
+  P-25 (2026-11-09) y P-26, P-27 y P-33 a P-37 (2026-11-10). Nada de la fase A ni de la B queda bloqueado.
+  - Falta P-32 (asistencias: si el «panel central» es esta plataforma y si necesita saldos, renovaciones y congelaciones).
+  - Por acordar, porque no están en el contrato: el informe mensual (sería la sexta ficha), las fotos y el expediente (P-28 a
+    P-31).
 - [ ] N9: límites y precio de los tramos de membresía; qué pasa al superar el límite
 - [x] Ficha de anamnesis de Jeremy recibida (2026-10-20): será la versión 2 de la historia clínica (RF-43, P12)
 - [ ] Antes de P16: cargar en producción los valores definitivos de TRAMO_5 y TRAMO_50 (la semilla no corre en

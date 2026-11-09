@@ -11,6 +11,7 @@ import {
   MACROS_PROTEIN_FIRST,
   MEAL_SPLIT_LARGEST_REMAINDER,
   RECIPE_NUTRIENTS,
+  STARCH_BY_DAY_PROFILE,
 } from './index.js';
 
 const codes = (run: ReturnType<typeof runMethod>) =>
@@ -159,6 +160,126 @@ describe('RN-E09 · reparto por tiempos de comida', () => {
       { meal: 'Almuerzo', servings: 1 },
       { meal: 'Cena', servings: 0 },
     ]);
+  });
+});
+
+describe('RN-E09 · los almidones de un perfil de día por tiempo (07 §2, P-20.5 y P-20.6)', () => {
+  // P-20.5, respuesta de Jeremy (2026-11-08): el día de descanso es el mismo plan con menos almidones, y solo cambia la cantidad
+  // del alimento fuente. El coach decidió quitarlos primero de la media tarde y luego de la cena (ADR-102). P-20.6 (2026-11-09):
+  // en un día alto se suman en las mismas comidas, alternando la media tarde y la cena. Tiempos de G-19.
+  const meals = (starch: readonly number[]) =>
+    (
+      [
+        ['Desayuno', 'BREAKFAST'],
+        ['Media mañana', 'MID_MORNING'],
+        ['Almuerzo', 'LUNCH'],
+        ['Media tarde', 'AFTERNOON'],
+        ['Cena', 'DINNER'],
+      ] as const
+    ).map(([meal, slotCode], index) => ({ meal, slotCode, starch: starch[index] ?? 0 }));
+  const run = (profileChoG: number, starch: readonly number[], baseChoG = 310) =>
+    runMethod(STARCH_BY_DAY_PROFILE, {
+      baseChoG,
+      profileChoG,
+      starchChoG: DEMO_EXCHANGE_LIST.groups.find((g) => g.code === 'STA')?.choG ?? 0,
+      meals: meals(starch),
+    });
+  const servings = (result: ReturnType<typeof run>) =>
+    expectOk(result).outputs.servingsByMeal.map((row) => row.servings);
+
+  it('de 310 a 240 g faltan 70 g, unos 5 intercambios: primero la media tarde, luego la cena y después el almuerzo', () => {
+    const result = expectOk(run(240, [3, 1, 3, 2, 2]));
+    expect(result.outputs.deltaServings).toBe(-5);
+    expect(result.outputs.servingsByMeal).toEqual([
+      { meal: 'Desayuno', servings: 3 },
+      { meal: 'Media mañana', servings: 1 },
+      { meal: 'Almuerzo', servings: 2 },
+      { meal: 'Media tarde', servings: 0 },
+      { meal: 'Cena', servings: 0 },
+    ]);
+    expect(result.methodCode).toBe('STARCH_BY_DAY_PROFILE');
+    expect(result.methodVersion).toBe('1.0.0');
+  });
+
+  it('pasada la media tarde y la cena, quita del último tiempo del día hacia el primero', () => {
+    expect(servings(run(220, [3, 1, 3, 1, 1]))).toEqual([3, 0, 0, 0, 0]);
+  });
+
+  it('si los almidones del plan no alcanzan, quedan en 0 y el perfil pide más de los que hay', () => {
+    const result = expectOk(run(200, [0, 0, 1, 1, 1]));
+    expect(result.outputs.deltaServings).toBe(-7);
+    expect(servings(run(200, [0, 0, 1, 1, 1]))).toEqual([0, 0, 0, 0, 0]);
+  });
+
+  it('el día alto de Mateo, de 310 a 370 g, suma 4 almidones alternando la media tarde y la cena (P-20.6)', () => {
+    const result = expectOk(run(370, [3, 1, 3, 2, 2]));
+    expect(result.outputs.deltaServings).toBe(4);
+    expect(servings(run(370, [3, 1, 3, 2, 2]))).toEqual([3, 1, 3, 4, 4]);
+  });
+
+  it('con un número impar de almidones, la media tarde lleva uno más que la cena (P-20.6)', () => {
+    expect(servings(run(325, [3, 1, 3, 2, 2]))).toEqual([3, 1, 3, 3, 2]);
+    expect(servings(run(385, [3, 1, 3, 0, 0]))).toEqual([3, 1, 3, 3, 2]);
+  });
+
+  it('un plan sin media tarde ni cena suma por turnos del último tiempo al primero', () => {
+    const result = expectOk(
+      runMethod(STARCH_BY_DAY_PROFILE, {
+        baseChoG: 300,
+        profileChoG: 360,
+        starchChoG: 15,
+        meals: [
+          { meal: 'Desayuno', slotCode: 'BREAKFAST', starch: 2 },
+          { meal: 'Almuerzo', slotCode: 'LUNCH', starch: 3 },
+          { meal: 'Refrigerio', slotCode: 'CUSTOM', starch: 1 },
+        ],
+      }),
+    );
+    expect(result.outputs.servingsByMeal.map((row) => row.servings)).toEqual([3, 4, 3]);
+  });
+
+  it('con los mismos carbohidratos no cambia nada; medio intercambio cuenta como uno, de más o de menos', () => {
+    expect(expectOk(run(310, [3, 1, 3, 2, 2])).outputs.deltaServings).toBe(0);
+    expect(servings(run(310, [3, 1, 3, 2, 2]))).toEqual([3, 1, 3, 2, 2]);
+    expect(expectOk(run(302.5, [3, 1, 3, 2, 2])).outputs.deltaServings).toBe(-1);
+    expect(expectOk(run(317.5, [3, 1, 3, 2, 2])).outputs.deltaServings).toBe(1);
+    expect(expectOk(run(305, [3, 1, 3, 2, 2])).outputs.deltaServings).toBe(0);
+  });
+
+  it('con dos medias tardes, quita primero de la más tarde y suma por turnos en las dos y en la cena', () => {
+    const twoAfternoons = (profileChoG: number) =>
+      expectOk(
+        runMethod(STARCH_BY_DAY_PROFILE, {
+          baseChoG: 300,
+          profileChoG,
+          starchChoG: 15,
+          meals: [
+            { meal: 'Desayuno', slotCode: 'BREAKFAST', starch: 2 },
+            { meal: 'Media tarde', slotCode: 'AFTERNOON', starch: 1 },
+            { meal: 'Postentreno', slotCode: 'AFTERNOON', starch: 1 },
+            { meal: 'Cena', slotCode: 'DINNER', starch: 1 },
+          ],
+        }),
+      ).outputs.servingsByMeal.map((row) => row.servings);
+    expect(twoAfternoons(285)).toEqual([2, 1, 0, 1]);
+    expect(twoAfternoons(360)).toEqual([2, 2, 3, 2]);
+  });
+
+  it('rechaza un intercambio sin carbohidratos, gramos negativos, almidones que no son enteros y un plan sin tiempos', () => {
+    const base = { baseChoG: 310, profileChoG: 240, starchChoG: 15, meals: meals([3, 1, 3, 2, 2]) };
+    const error = (code: string) => [{ rule: 'RN-E09', code, severity: 'ERROR' }];
+    expect(expectErrors(runMethod(STARCH_BY_DAY_PROFILE, { ...base, starchChoG: 0 }))).toEqual(
+      error('NC-ENG-313'),
+    );
+    expect(expectErrors(runMethod(STARCH_BY_DAY_PROFILE, { ...base, profileChoG: -1 }))).toEqual(
+      error('NC-ENG-313'),
+    );
+    expect(
+      expectErrors(runMethod(STARCH_BY_DAY_PROFILE, { ...base, meals: meals([3, 1, 2.5, 2, 2]) })),
+    ).toEqual(error('NC-ENG-314'));
+    expect(expectErrors(runMethod(STARCH_BY_DAY_PROFILE, { ...base, meals: [] }))).toEqual(
+      error('NC-ENG-314'),
+    );
   });
 });
 

@@ -105,10 +105,49 @@ describe('RF-19 · el editor arma el borrador entero para PUT', () => {
         inputsHash: 'x',
         warnings: [],
       },
+      portions: null,
     };
     expect(valid(draftOf({ ...plan, dayProfiles: [rest] })).dayProfiles).toEqual([
       { code: 'REST', name: 'Descanso', choG: 240, proteinG: 160, fatG: 70 },
     ]);
+  });
+
+  it('P-20.5 · el reparto de almidones que dio el coach vuelve al guardar; la sugerencia no se envía', () => {
+    const adequacy = { pct: 100, inRange: true };
+    const portions = (manual: boolean) => ({
+      starchByMeal: plan.meals.map(() => 1),
+      manual,
+      totals: { kcal: 2230, choG: 240, proteinG: 160, fatG: 70 },
+      adequacy: {
+        rangePct: [90, 110] as [number, number],
+        kcal: adequacy,
+        cho: adequacy,
+        protein: adequacy,
+        fat: adequacy,
+      },
+    });
+    const rest = {
+      code: 'REST',
+      name: 'Descanso',
+      kcal: 2230,
+      choG: 240,
+      proteinG: 160,
+      fatG: 70,
+      method: {
+        methodCode: 'MACROS_DAY_PROFILE',
+        methodVersion: '1.0.0',
+        inputsHash: 'x',
+        warnings: [],
+      },
+    };
+    const manual = draftOf({ ...plan, dayProfiles: [{ ...rest, portions: portions(true) }] });
+    expect(valid(manual).starchByProfile).toEqual({ REST: plan.meals.map(() => 1) });
+    expect(
+      valid(draftOf({ ...plan, dayProfiles: [{ ...rest, portions: portions(false) }] }))
+        .starchByProfile,
+    ).toEqual({});
+    // Sin el perfil, su reparto no viaja.
+    expect(valid({ ...manual, dayProfiles: [] }).starchByProfile).toEqual({});
   });
 
   it('RN-E08 · almidones, carnes y grasas sin ajuste los da el método: no van en overrides', () => {

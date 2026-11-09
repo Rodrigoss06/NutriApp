@@ -29,6 +29,7 @@ import {
   type PlanCalculation,
   type PlanList,
   type PlanTargets,
+  type ProfileTargets,
 } from './plan-calculation.js';
 import type { EnergyPrescriptionRecord } from './ports/nutrition.ports.js';
 
@@ -109,6 +110,7 @@ export class PlanCalculator {
     prescription: EnergyPrescriptionRecord,
     exchangeListId: string,
     input: PlanDraftInput,
+    profiles: readonly ProfileTargets[],
   ): Promise<Result<CalculatedPlan, DomainError>> {
     const list = await this.list(exchangeListId);
     if (!list.ok) return list;
@@ -136,6 +138,7 @@ export class PlanCalculator {
       targets,
       list.value,
       await this.tenancy.adequacyRangePct(organizationId),
+      profiles,
     );
     if (!calculation.ok) return calculation;
     return ok({ calculation: calculation.value, targets, list: list.value, foods });
@@ -146,6 +149,7 @@ export class PlanCalculator {
     organizationId: OrganizationId,
     prescription: EnergyPrescriptionRecord,
     draft: CompositionDraft,
+    profiles: readonly ProfileTargets[],
   ): Promise<Result<CalculatedComposition, DomainError>> {
     const sources = await this.#sources(draft.meals.flatMap((meal) => meal.items));
     if (!sources.ok) return sources;
@@ -155,6 +159,7 @@ export class PlanCalculator {
       targets,
       sources.value,
       await this.tenancy.adequacyRangePct(organizationId),
+      profiles,
     );
     if (!calculation.ok) return calculation;
     return ok({ calculation: calculation.value, targets, sources: sources.value });
@@ -165,6 +170,7 @@ export class PlanCalculator {
     organizationId: OrganizationId,
     prescription: EnergyPrescriptionRecord,
     draft: WeeklyMenuDraft,
+    profiles: readonly ProfileTargets[],
   ): Promise<Result<CalculatedWeeklyMenu, DomainError>> {
     const items = draft.days.flatMap((day) =>
       day.meals.flatMap((cell) => [...cell.optionA, ...cell.optionB]),
@@ -177,6 +183,7 @@ export class PlanCalculator {
       targets,
       sources.value,
       await this.tenancy.adequacyRangePct(organizationId),
+      profiles,
     );
     if (!calculation.ok) return calculation;
     return ok({ calculation: calculation.value, targets, sources: sources.value });

@@ -2,9 +2,11 @@ import type {
   CompositionNutritionPlan,
   DayProfileInput,
   FoodDetail,
+  FoodProfilePortion,
   FoodState,
   MealSlot,
   MenuItemView,
+  RecipeProfilePortion,
   RecipeSummary,
   UpdateCompositionPlan,
   UpdateWeeklyMenuPlan,
@@ -49,6 +51,8 @@ export interface FoodItemRow {
   readonly amount: string;
   /** La medida con que se guardó, mientras no se cambie la cantidad. */
   readonly savedHouseholdText: string | null;
+  /** Su cantidad en los perfiles de día que la cambian (P-20.5): vuelve tal cual al guardar. */
+  readonly byProfile: Readonly<Record<string, FoodProfilePortion>>;
 }
 
 /** Una receta del recetario, en porciones (RN-E16). */
@@ -58,6 +62,8 @@ export interface RecipeItemRow {
   readonly recipeId: string;
   readonly recipeName: string;
   readonly servings: string;
+  /** Sus porciones en los perfiles de día que las cambian (P-20.5): vuelven tal cual al guardar. */
+  readonly byProfile: Readonly<Record<string, RecipeProfilePortion>>;
 }
 
 export type ItemRow = FoodItemRow | RecipeItemRow;
@@ -131,6 +137,7 @@ function savedFoodRow(item: FoodItemView, key: string, measures: Measures): Food
     unit: GRAMS,
     amount: String(item.grams),
     savedHouseholdText: item.householdText,
+    byProfile: item.byProfile,
   };
 }
 
@@ -143,6 +150,7 @@ function savedItemRow(item: MenuItemView, key: string, measures: Measures): Item
         recipeId: item.recipeId,
         recipeName: item.recipeName,
         servings: String(item.servings),
+        byProfile: item.byProfile,
       };
 }
 
@@ -158,6 +166,7 @@ export function pickedFoodRow(food: FoodDetail, key: string): FoodItemRow {
     unit: GRAMS,
     amount: '100',
     savedHouseholdText: null,
+    byProfile: {},
   };
 }
 
@@ -166,7 +175,14 @@ export function pickedRecipeRow(
   recipe: Pick<RecipeSummary, 'id' | 'name'>,
   key: string,
 ): RecipeItemRow {
-  return { kind: 'RECIPE', key, recipeId: recipe.id, recipeName: recipe.name, servings: '1' };
+  return {
+    kind: 'RECIPE',
+    key,
+    recipeId: recipe.id,
+    recipeName: recipe.name,
+    servings: '1',
+    byProfile: {},
+  };
 }
 
 /**
@@ -209,13 +225,17 @@ type FoodBody = Extract<ItemBody, { itemType: 'FOOD' }>;
 
 function foodBodyOf(row: FoodItemRow): FoodBody | null {
   const amount = foodItemOf(row);
-  return amount ? { itemType: 'FOOD', foodId: row.foodId, ...amount } : null;
+  return amount
+    ? { itemType: 'FOOD', foodId: row.foodId, ...amount, byProfile: row.byProfile }
+    : null;
 }
 
 function itemBodyOf(row: ItemRow): ItemBody | null {
   if (row.kind === 'FOOD') return foodBodyOf(row);
   const servings = recipeServingsOf(row.servings);
-  return servings === null ? null : { itemType: 'RECIPE', recipeId: row.recipeId, servings };
+  return servings === null
+    ? null
+    : { itemType: 'RECIPE', recipeId: row.recipeId, servings, byProfile: row.byProfile };
 }
 
 /** Todos o null: basta uno que no sirva para no pedir la vista previa. */

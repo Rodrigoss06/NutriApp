@@ -91,20 +91,39 @@ export const planMealInputSchema = mealHeaderSchema.extend({
 });
 export type PlanMealInput = z.infer<typeof planMealInputSchema>;
 
-/** Un alimento con sus gramos de parte comestible en el estado indicado (RN-E12) y su medida casera, si se quiere. */
+/**
+ * La cantidad de un alimento en un perfil de día (07 §2, P-20.5): el perfil cambia solo la cantidad del alimento fuente. Sus
+ * gramos y su medida casera; con 0 g, ese día no va.
+ */
+export const foodProfilePortionSchema = z.object({
+  grams: z.number().min(0).max(9_999),
+  householdText,
+});
+export type FoodProfilePortion = z.infer<typeof foodProfilePortionSchema>;
+
+/** Las porciones de una receta en un perfil de día (P-20.5); con 0, ese día no va. */
+export const recipeProfilePortionSchema = z.object({ servings: z.number().min(0).max(99) });
+export type RecipeProfilePortion = z.infer<typeof recipeProfilePortionSchema>;
+
+/**
+ * Un alimento con sus gramos de parte comestible en el estado indicado (RN-E12) y su medida casera, si se quiere. byProfile:
+ * su cantidad en los perfiles de día que la cambian, por código; en los demás, la de arriba.
+ */
 export const foodItemSchema = z.object({
   itemType: z.literal('FOOD'),
   foodId: z.uuid(),
   grams: z.number().gt(0).max(9_999),
   householdText,
+  byProfile: z.record(dayProfileCodeSchema, foodProfilePortionSchema).default({}),
 });
 export type FoodItem = z.infer<typeof foodItemSchema>;
 
-/** Una receta del recetario, en porciones (RN-E16). */
+/** Una receta del recetario, en porciones (RN-E16); byProfile, como en un alimento. */
 export const recipeItemSchema = z.object({
   itemType: z.literal('RECIPE'),
   recipeId: z.uuid(),
   servings: z.number().gt(0).max(99),
+  byProfile: z.record(dayProfileCodeSchema, recipeProfilePortionSchema).default({}),
 });
 export type RecipeItem = z.infer<typeof recipeItemSchema>;
 
@@ -116,6 +135,8 @@ export type MenuItem = z.infer<typeof menuItemSchema>;
  * - fixedServings: verduras, frutas y lácteos del día; el motor despeja el resto (RN-E08).
  * - overrides: ajuste a mano de almidones, carnes o grasas.
  * - splitOverrides: el reparto a mano de un grupo, un valor por tiempo de comida y en su orden (RN-E09).
+ * - starchByProfile: los almidones de cada tiempo en un perfil de día, cuando el coach cambia la sugerencia (P-20.5). Un
+ *   perfil que no está lleva la sugerencia.
  */
 export const updateExchangePlanSchema = z.object({
   modality: z.literal('EXCHANGES'),
@@ -123,6 +144,7 @@ export const updateExchangePlanSchema = z.object({
   overrides: z.object({ STA: servings, MEAT: servings, FAT: servings }).partial(),
   meals: z.array(planMealInputSchema).min(1).max(8),
   splitOverrides: z.partialRecord(z.enum(EXCHANGE_GROUPS), z.array(servings).max(8)),
+  starchByProfile: z.record(dayProfileCodeSchema, z.array(servings).max(8)).default({}),
   hydrationTargetMl,
   instructions,
   dayProfiles,
@@ -199,6 +221,34 @@ const dayProfileSchema = targetsSchema.extend({
 });
 export type DayProfile = z.infer<typeof dayProfileSchema>;
 
+const macroTotalsSchema = z.object({
+  kcal: z.number(),
+  choG: z.number(),
+  proteinG: z.number(),
+  fatG: z.number(),
+});
+
+/** RN-E10 de un plan por intercambios: con el rango de la organización. */
+const exchangeAdequacySchema = z.object({
+  rangePct: z.tuple([z.number(), z.number()]),
+  kcal: adequacySchema,
+  cho: adequacySchema,
+  protein: adequacySchema,
+  fat: adequacySchema,
+});
+
+/**
+ * Las porciones de un perfil en un plan por intercambios (P-20.5): los almidones de cada tiempo, en su orden; los demás grupos
+ * son los del plan. Con sus totales y su adecuación frente a las metas del perfil (RN-E10).
+ */
+const exchangeProfilePortionsSchema = z.object({
+  starchByMeal: z.array(z.number().int()),
+  /** El coach cambió la sugerencia de STARCH_BY_DAY_PROFILE. */
+  manual: z.boolean(),
+  totals: macroTotalsSchema,
+  adequacy: exchangeAdequacySchema,
+});
+
 /** Lo que tiene todo plan, de cualquier modalidad. */
 const planBaseSchema = z.object({
   id: z.uuid(),
@@ -209,7 +259,7 @@ const planBaseSchema = z.object({
   energyPrescriptionId: z.uuid(),
   /** Las de la prescripción: las de Entrenamiento (07 §2). */
   targets: targetsSchema,
-  /** Los demás perfiles de día, en su orden; vacío, una sola meta. */
+  /** Los demás perfiles de día, en su orden; vacío, una sola meta. Cada modalidad suma sus porciones. */
   dayProfiles: z.array(dayProfileSchema),
   /** Cada cálculo con su método (RN-D01, RN-D02). */
   methods: z.array(methodSchema),
@@ -229,6 +279,10 @@ const planBaseSchema = z.object({
 /** GET /api/v1/nutrition-plans/:id de un plan por intercambios: lo que calcula el motor y lo que falta para publicarlo. */
 export const exchangeNutritionPlanSchema = planBaseSchema.extend({
   modality: z.literal('EXCHANGES'),
+  /** portions: null en lo publicado antes de las porciones por perfil (snapshot 3): las del plan. */
+  dayProfiles: z.array(
+    dayProfileSchema.extend({ portions: exchangeProfilePortionsSchema.nullable() }),
+  ),
   exchangeList: z.object({
     id: z.uuid(),
     code: z.string(),
@@ -273,15 +327,9 @@ export const exchangeNutritionPlanSchema = planBaseSchema.extend({
   ),
   /** Grupos con el reparto cambiado a mano (RN-E09). */
   manualSplit: z.array(z.enum(EXCHANGE_GROUPS)),
-  totals: z.object({ kcal: z.number(), choG: z.number(), proteinG: z.number(), fatG: z.number() }),
+  totals: macroTotalsSchema,
   /** RN-E10: con el rango de la organización. */
-  adequacy: z.object({
-    rangePct: z.tuple([z.number(), z.number()]),
-    kcal: adequacySchema,
-    cho: adequacySchema,
-    protein: adequacySchema,
-    fat: adequacySchema,
-  }),
+  adequacy: exchangeAdequacySchema,
 });
 export type ExchangeNutritionPlan = z.infer<typeof exchangeNutritionPlanSchema>;
 
@@ -334,6 +382,15 @@ const foodAdequacyBlockSchema = z.object({
   fat: foodAdequacySchema,
 });
 
+/**
+ * Lo de un perfil en composición (P-20.5): el día con la cantidad de cada alimento en ese perfil y su adecuación frente a las
+ * metas del perfil (RN-E10). null en lo publicado antes de las porciones por perfil (snapshot 3).
+ */
+const compositionProfilePortionsSchema = z.object({
+  totals: itemTotalsSchema,
+  adequacy: foodAdequacyBlockSchema,
+});
+
 /** Energía, macronutrientes y fibra, por código INFOODS; null es «sin dato» (RN-I03). */
 const coreValues = z.record(z.string(), z.number().nullable());
 
@@ -365,7 +422,9 @@ const compositionMealSchema = mealHeaderSchema.extend({
 const compositionCalculation = {
   modality: z.literal('COMPOSITION'),
   targets: targetsSchema,
-  dayProfiles: z.array(dayProfileSchema),
+  dayProfiles: z.array(
+    dayProfileSchema.extend({ portions: compositionProfilePortionsSchema.nullable() }),
+  ),
   nutrients: z.array(planNutrientSchema),
   /** Lo del día. */
   totals: itemTotalsSchema,
@@ -396,10 +455,16 @@ const weeklyAverageSchema = z.object({
   missingDays: z.number().int(),
 });
 
+/** Lo de un perfil en el menú: el promedio y la adecuación de los siete días con sus cantidades (RN-E10, P-20.5). */
+const menuProfilePortionsSchema = z.object({
+  weeklyAverage: z.record(z.string(), weeklyAverageSchema),
+  adequacy: foodAdequacyBlockSchema,
+});
+
 const weeklyMenuCalculation = {
   modality: z.literal('WEEKLY_MENU'),
   targets: targetsSchema,
-  dayProfiles: z.array(dayProfileSchema),
+  dayProfiles: z.array(dayProfileSchema.extend({ portions: menuProfilePortionsSchema.nullable() })),
   nutrients: z.array(planNutrientSchema),
   /** Por nutriente, con la opción A de cada tiempo. */
   weeklyAverage: z.record(z.string(), weeklyAverageSchema),

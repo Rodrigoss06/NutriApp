@@ -37,6 +37,11 @@ export interface PlanDraftInput {
   readonly meals: readonly MealDraft[];
   /** El reparto a mano de un grupo: un valor por tiempo de comida, en su orden. */
   readonly splitOverrides: Readonly<Partial<Record<ExchangeGroupCode, readonly number[]>>>;
+  /**
+   * Los almidones de cada tiempo en un perfil de día, por su código, cuando el coach cambia la sugerencia (P-20.5): un valor por
+   * tiempo, en su orden. Un perfil que no está lleva la sugerencia.
+   */
+  readonly starchByProfile: Readonly<Record<string, readonly number[]>>;
   readonly hydrationTargetMl: number | null;
   readonly instructions: string | null;
   /** Los perfiles de día además de Entrenamiento (07 §2, P-20); vacío: una sola meta, la de la prescripción. */
@@ -49,6 +54,11 @@ export interface PlanMethods {
   readonly automaticServings: Readonly<Record<ExchangeGroupCode, number>>;
   /** MEAL_SPLIT_LARGEST_REMAINDER de un total con los porcentajes de los tiempos, en su orden (RN-E09). */
   readonly split: (total: number) => readonly number[];
+  /** STARCH_BY_DAY_PROFILE: los almidones sugeridos de un perfil por tiempo, desde el plan ya repartido (P-20.5). */
+  readonly profileStarch: (
+    profile: DayProfileDraft,
+    meals: readonly PlannedMeal[],
+  ) => readonly number[];
 }
 
 export interface DailyExchange {
@@ -63,11 +73,24 @@ export interface PlannedMeal extends MealDraft {
   readonly servings: Readonly<Record<ExchangeGroupCode, number>>;
 }
 
+/**
+ * Los almidones de un perfil de día en cada tiempo, en su orden (07 §2, P-20.5): el perfil es el mismo plan y solo cambia la
+ * cantidad del alimento fuente.
+ */
+export interface ProfileStarch {
+  readonly code: string;
+  readonly starchByMeal: readonly number[];
+  /** El coach cambió la sugerencia. */
+  readonly manual: boolean;
+}
+
 /** Un plan por intercambios válido: intercambios del día, su reparto por tiempos y los alimentos permitidos. */
 export interface ExchangePlan {
   readonly exchanges: readonly DailyExchange[];
   readonly meals: readonly PlannedMeal[];
   readonly manualSplit: readonly ExchangeGroupCode[];
+  /** Los almidones de cada perfil de día, en el orden de los perfiles. */
+  readonly profiles: readonly ProfileStarch[];
   readonly hydrationTargetMl: number | null;
   readonly instructions: string | null;
 }
@@ -211,10 +234,37 @@ export function exchangePlan(
     manualSplit.push(groupCode);
   }
 
-  const meals = input.meals.map((meal, index): PlannedMeal => {
-    const servings = Object.fromEntries(
+  const meals = input.meals.map((meal, index): PlannedMeal => ({
+    ...meal,
+    sharePct: hundredths(meal.sharePct) / 100,
+    servings: Object.fromEntries(
       EXCHANGE_GROUP_CODES.map((code) => [code, grid.get(code)?.[index] ?? 0]),
-    ) as Record<ExchangeGroupCode, number>;
+    ) as Record<ExchangeGroupCode, number>,
+  }));
+
+  const profiles = input.dayProfiles.flatMap((profile): ProfileStarch[] => {
+    const manual = input.starchByProfile[profile.code];
+    if (manual === undefined) {
+      return [
+        { code: profile.code, starchByMeal: methods.profileStarch(profile, meals), manual: false },
+      ];
+    }
+    if (manual.length !== meals.length) {
+      problems.push(
+        `${profile.name}: el reparto de almidones necesita un valor por cada uno de los ${String(meals.length)} tiempos de comida (RN-E09).`,
+      );
+      return [];
+    }
+    return [{ code: profile.code, starchByMeal: manual, manual: true }];
+  });
+  const codes = new Set(input.dayProfiles.map((profile) => profile.code));
+  for (const code of Object.keys(input.starchByProfile)) {
+    if (!codes.has(code)) {
+      problems.push(`Hay un reparto de almidones para ${code}, que no es un perfil del plan.`);
+    }
+  }
+
+  meals.forEach((meal, index) => {
     const seen = new Set<string>();
     for (const food of meal.allowedFoods) {
       const key = `${food.groupCode}:${food.foodId}`;
@@ -224,13 +274,12 @@ export function exchangePlan(
       seen.add(key);
     }
     for (const groupCode of new Set(meal.allowedFoods.map((food) => food.groupCode))) {
-      if (grid.has(groupCode) && servings[groupCode] === 0) {
+      if (grid.has(groupCode) && !hasServings(meal, index, groupCode, profiles)) {
         problems.push(
           `${meal.name}: ${groupNames[groupCode]} no tiene intercambios en este tiempo; quita sus alimentos permitidos (RN-G05).`,
         );
       }
     }
-    return { ...meal, sharePct: hundredths(meal.sharePct) / 100, servings };
   });
 
   if (problems.length > 0) return err(invalidPlan(problems));
@@ -238,14 +287,29 @@ export function exchangePlan(
     exchanges,
     meals,
     manualSplit,
+    profiles,
     hydrationTargetMl: input.hydrationTargetMl,
     instructions: input.instructions,
   });
 }
 
+/** ¿Lleva el grupo intercambios en ese tiempo, en el plan o, los almidones, en algún perfil de día? (P-20.5) */
+function hasServings(
+  meal: PlannedMeal,
+  index: number,
+  groupCode: ExchangeGroupCode,
+  profiles: readonly ProfileStarch[],
+): boolean {
+  return (
+    meal.servings[groupCode] > 0 ||
+    (groupCode === 'STA' && profiles.some((profile) => (profile.starchByMeal[index] ?? 0) > 0))
+  );
+}
+
 /**
  * Lo que falta para publicar (RN-E13, RN-G05): la meta de hidratación y, en cada tiempo, al menos un alimento
- * permitido de cada grupo con intercambios. Sin alimentos, el paciente no puede registrar desde su plan.
+ * permitido de cada grupo con intercambios, en el plan o en algún perfil de día. Sin alimentos, el paciente no puede registrar
+ * desde su plan.
  */
 export function publishProblems(
   plan: ExchangePlan,
@@ -253,10 +317,10 @@ export function publishProblems(
 ): readonly string[] {
   const problems: string[] = [];
   if (plan.hydrationTargetMl === null) problems.push('Falta la meta de hidratación (RN-E13).');
-  for (const meal of plan.meals) {
+  for (const [index, meal] of plan.meals.entries()) {
     for (const groupCode of EXCHANGE_GROUP_CODES) {
       if (
-        meal.servings[groupCode] > 0 &&
+        hasServings(meal, index, groupCode, plan.profiles) &&
         !meal.allowedFoods.some((f) => f.groupCode === groupCode)
       ) {
         problems.push(

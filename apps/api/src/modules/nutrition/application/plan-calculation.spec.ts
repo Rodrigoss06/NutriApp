@@ -1,6 +1,11 @@
 import { describe, expect, it } from 'vitest';
 import { DEFAULT_MEALS, type PlanDraftInput } from '../domain/nutrition-plan.js';
-import { calculatePlan, type PlanList, type PlanTargets } from './plan-calculation.js';
+import {
+  calculatePlan,
+  type PlanList,
+  type PlanTargets,
+  type ProfileTargets,
+} from './plan-calculation.js';
 
 /**
  * G-17: las metas exactas de Luis, encadenadas desde su prescripción (≈ 1834.54 kcal, 2 g/kg y 25 % de grasa). Con
@@ -35,6 +40,7 @@ const G18: PlanDraftInput = {
   overrides: {},
   meals: DEFAULT_MEALS,
   splitOverrides: {},
+  starchByProfile: {},
   hydrationTargetMl: null,
   instructions: null,
   dayProfiles: [],
@@ -124,5 +130,61 @@ describe('RN-D01 · RN-D02 · cada cálculo con su método', () => {
       rule: 'RN-E08',
       details: { methodCode: 'EXCHANGES_CLASSIC', engineCode: 'NC-ENG-304' },
     });
+  });
+});
+
+describe('07 §2 · P-20.5 · RN-E10 · los almidones de un perfil de día', () => {
+  // Un Descanso para Luis con 30 g menos de carbohidratos: dos intercambios de almidones menos (15 g cada uno en la DEMO).
+  const REST_DRAFT = { code: 'REST', name: 'Descanso', choG: 161, proteinG: 160, fatG: 51 };
+  const REST: ProfileTargets = {
+    code: 'REST',
+    kcal: 4 * 161 + 4 * 160 + 9 * 51,
+    choG: 161,
+    proteinG: 160,
+    fatG: 51,
+  };
+  const withRest = (input: PlanDraftInput = G18) => {
+    const result = calculatePlan(
+      { ...input, dayProfiles: [REST_DRAFT] },
+      LUIS,
+      DEMO,
+      [90, 110],
+      [REST],
+    );
+    if (!result.ok) throw new Error(JSON.stringify(result.error));
+    return result.value;
+  };
+
+  it('la sugerencia quita los almidones de la media tarde y de la cena; lo demás es lo del plan', () => {
+    const [rest] = withRest().profiles;
+
+    expect(rest).toMatchObject({ code: 'REST', starchByMeal: [1, 1, 2, 0, 0], manual: false });
+    // 191 − 30 de carbohidratos, 162 − 6 de proteína y 53 − 2 de grasa.
+    expect(rest?.totals).toEqual({
+      choG: 161,
+      proteinG: 156,
+      fatG: 51,
+      kcal: 4 * 161 + 4 * 156 + 9 * 51,
+    });
+    expect(rest?.adequacy.cho).toEqual({ pct: 100, inRange: true });
+    expect(rest?.adequacy.protein.pct).toBeCloseTo((156 / 160) * 100, 9);
+  });
+
+  it('el reparto del coach manda y su adecuación lo dice', () => {
+    const [rest] = withRest({ ...G18, starchByProfile: { REST: [1, 1, 1, 1, 0] } }).profiles;
+
+    expect(rest).toMatchObject({ starchByMeal: [1, 1, 1, 1, 0], manual: true });
+    expect(rest?.totals.choG).toBe(191 - 15 * 2);
+  });
+
+  it('RN-D01 · la sugerencia lleva su método', () => {
+    const { methods } = withRest();
+
+    expect(methods.filter((m) => m.methodCode === 'STARCH_BY_DAY_PROFILE')).toHaveLength(1);
+    expect(methods.filter((m) => m.methodCode === 'ADEQUACY')).toHaveLength(8);
+  });
+
+  it('sin perfiles no hay porciones de perfil', () => {
+    expect(calculated().profiles).toEqual([]);
   });
 });

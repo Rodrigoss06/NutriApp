@@ -1118,17 +1118,18 @@ model PlanExchange {
 /// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
 /// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
 model PlanItem {
-  id             String   @id @db.Uuid
-  planMealId     String   @map("plan_meal_id") @db.Uuid
-  organizationId String   @map("organization_id") @db.Uuid
-  itemType       String   @map("item_type")
-  itemId         String   @map("item_id") @db.Uuid
-  grams          Decimal? @db.Decimal(8, 2)
-  servings       Decimal? @db.Decimal(6, 2)
-  householdText  String?  @map("household_text")
-  optionLabel    String?  @map("option_label")
-  position       Int      @db.SmallInt
-  planMeal       PlanMeal @relation(fields: [planMealId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  id               String            @id @db.Uuid
+  planMealId       String            @map("plan_meal_id") @db.Uuid
+  organizationId   String            @map("organization_id") @db.Uuid
+  itemType         String            @map("item_type")
+  itemId           String            @map("item_id") @db.Uuid
+  grams            Decimal?          @db.Decimal(8, 2)
+  servings         Decimal?          @db.Decimal(6, 2)
+  householdText    String?           @map("household_text")
+  optionLabel      String?           @map("option_label")
+  position         Int               @db.SmallInt
+  planMeal         PlanMeal          @relation(fields: [planMealId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  planItemProfiles PlanItemProfile[]
 
   @@unique([planMealId, optionLabel, position], map: "plan_item_position")
   @@map("plan_item")
@@ -1138,19 +1139,20 @@ model PlanItem {
 /// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
 /// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
 model PlanMeal {
-  id                   String                @id @db.Uuid
-  planId               String                @map("plan_id") @db.Uuid
-  organizationId       String                @map("organization_id") @db.Uuid
-  slotCode             String                @map("slot_code")
-  nameEs               String                @map("name_es")
-  timeOfDay            DateTime?             @map("time_of_day") @db.Time(6)
-  position             Int                   @db.SmallInt
-  sharePct             Decimal               @map("share_pct") @db.Decimal(5, 2)
-  dayOfWeek            Int?                  @map("day_of_week") @db.SmallInt
-  planItems            PlanItem[]
-  nutritionPlan        NutritionPlan         @relation(fields: [planId], references: [id], onDelete: Cascade, onUpdate: NoAction)
-  planMealAllowedFoods PlanMealAllowedFood[]
-  planMealExchanges    PlanMealExchange[]
+  id                       String                    @id @db.Uuid
+  planId                   String                    @map("plan_id") @db.Uuid
+  organizationId           String                    @map("organization_id") @db.Uuid
+  slotCode                 String                    @map("slot_code")
+  nameEs                   String                    @map("name_es")
+  timeOfDay                DateTime?                 @map("time_of_day") @db.Time(6)
+  position                 Int                       @db.SmallInt
+  sharePct                 Decimal                   @map("share_pct") @db.Decimal(5, 2)
+  dayOfWeek                Int?                      @map("day_of_week") @db.SmallInt
+  planItems                PlanItem[]
+  nutritionPlan            NutritionPlan             @relation(fields: [planId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  planMealAllowedFoods     PlanMealAllowedFood[]
+  planMealExchanges        PlanMealExchange[]
+  planMealProfileExchanges PlanMealProfileExchange[]
 
   @@unique([planId, dayOfWeek, position], map: "plan_meal_position")
   @@map("plan_meal")
@@ -2305,17 +2307,56 @@ model WeeklyReview {
 /// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
 /// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
 model PlanDayProfile {
-  planId         String        @map("plan_id") @db.Uuid
-  code           String
-  organizationId String        @map("organization_id") @db.Uuid
-  name           String
-  choG           Decimal       @map("cho_g") @db.Decimal(6, 1)
-  proteinG       Decimal       @map("protein_g") @db.Decimal(6, 1)
-  fatG           Decimal       @map("fat_g") @db.Decimal(6, 1)
-  position       Int           @db.SmallInt
-  nutritionPlan  NutritionPlan @relation(fields: [planId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  planId                   String                    @map("plan_id") @db.Uuid
+  code                     String
+  organizationId           String                    @map("organization_id") @db.Uuid
+  name                     String
+  choG                     Decimal                   @map("cho_g") @db.Decimal(6, 1)
+  proteinG                 Decimal                   @map("protein_g") @db.Decimal(6, 1)
+  fatG                     Decimal                   @map("fat_g") @db.Decimal(6, 1)
+  position                 Int                       @db.SmallInt
+  nutritionPlan            NutritionPlan             @relation(fields: [planId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  planItemProfiles         PlanItemProfile[]
+  planMealProfileExchanges PlanMealProfileExchange[]
 
   @@id([planId, code])
   @@map("plan_day_profile")
+  @@schema("nutrition")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model PlanItemProfile {
+  planItemId     String         @map("plan_item_id") @db.Uuid
+  profileCode    String         @map("profile_code")
+  planId         String         @map("plan_id") @db.Uuid
+  organizationId String         @map("organization_id") @db.Uuid
+  grams          Decimal?       @db.Decimal(8, 2)
+  servings       Decimal?       @db.Decimal(6, 2)
+  householdText  String?        @map("household_text")
+  planDayProfile PlanDayProfile @relation(fields: [planId, profileCode], references: [planId, code], onDelete: Cascade, onUpdate: NoAction)
+  planItem       PlanItem       @relation(fields: [planItemId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@id([planItemId, profileCode])
+  @@index([planId, profileCode], map: "plan_item_profile_by_profile")
+  @@map("plan_item_profile")
+  @@schema("nutrition")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model PlanMealProfileExchange {
+  planMealId     String         @map("plan_meal_id") @db.Uuid
+  profileCode    String         @map("profile_code")
+  groupCode      String         @map("group_code")
+  planId         String         @map("plan_id") @db.Uuid
+  organizationId String         @map("organization_id") @db.Uuid
+  servings       Int
+  planDayProfile PlanDayProfile @relation(fields: [planId, profileCode], references: [planId, code], onDelete: Cascade, onUpdate: NoAction)
+  planMeal       PlanMeal       @relation(fields: [planMealId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@id([planMealId, profileCode, groupCode])
+  @@index([planId, profileCode], map: "plan_meal_profile_exchange_by_profile")
+  @@map("plan_meal_profile_exchange")
   @@schema("nutrition")
 }

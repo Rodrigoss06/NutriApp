@@ -31,6 +31,7 @@ descanso, 2,250 kcal (160 g, 240 g, 70 g). Solo cambian los carbohidratos.
    - c) Cambia solo la meta, y el alumno ajusta las porciones.
 
 > **Respuesta de Jeremy (2026-11-08).** La app la sigue desde P14.5 (ADR-100).
+>
 > 1. La proteína, los carbohidratos y la grasa se editan en cada tipo de día. Al crear el día de descanso se
 >    autocompletan la proteína y la grasa del día de entrenamiento.
 > 2. b) Mandan los gramos. Mateo: 2,510 kcal el día de entrenamiento y 2,230 el de descanso.
@@ -44,6 +45,29 @@ descanso, 2,250 kcal (160 g, 240 g, 70 g). Solo cambian los carbohidratos.
 >    de entrenar, o entre el almuerzo y la cena. Solo cambia la cantidad del alimento fuente; la proteína y la grasa
 >    no cambian.
 
+**P-20.6 · Dónde van los almidones de más en un día alto** (sigue a P-20.4 y P-20.5)
+
+En un plan por intercambios, la app ya sugiere los almidones de cada perfil y el coach los cambia. Para el descanso de Mateo
+(240 g en vez de 310 g) faltan 70 g de carbohidratos, unos 5 intercambios de almidones de 15 g. La app los quita primero de
+la media tarde, luego de la cena y después del último tiempo del día hacia el primero, como respondiste en P-20.5.
+
+Un perfil alto, un refeed o una competencia pide lo contrario. Si Mateo tiene un día alto con 370 g, son 60 g más: unos 4
+intercambios. ¿Dónde los sugerimos?
+
+- a) Repartidos según el porcentaje de cada comida, como se reparte cualquier grupo. La app hace esto por ahora.
+- b) En las comidas de antes y después de entrenar: primero la media tarde y luego la cena, como al quitar.
+- c) Otra regla. Dinos cuál.
+
+> **Respuesta de Jeremy (2026-11-09).** La app la sigue desde P14.5 (ADR-102).
+>
+> b), con reparto alternado: +1 en la media tarde, +1 en la cena, y así. Mateo, con 370 g: 2 más en la media tarde y 2 en la
+> cena.
+>
+> - El desayuno, la media mañana y el almuerzo no cambian en toda la semana: solo cambian las comidas de la tarde y la noche.
+> - Los almidones de más quedan antes y después de entrenar, para rendir en la sesión y reponer el glucógeno.
+> - Al quitar, la media tarde llega a 0 y se pasa a la cena; al sumar no hay ese límite, por eso se alterna. Otra opción es un
+>   tope por tiempo (por ejemplo, +2) y el resto hacia atrás, hasta el almuerzo.
+
 ## Check-in y registro
 
 **P-21 · Check-in semanal o registro diario** (portada: «completa tu check-in semanal en aproximadamente 2 minutos»)
@@ -56,6 +80,13 @@ promedio. Tu hoja muestra un solo valor por semana: sueño 6.4 h, estrés 3, fat
 - b) El registro diario, como hoy. El valor semanal es el promedio.
 - c) Las dos cosas: el registro diario, más un check-in semanal con preguntas propias. Dinos cuáles.
 
+> **Respuesta de Jeremy (2026-11-09).** c) El registro diario corto, como hoy (sueño, fatiga, dolor, estrés y motivación), y un
+> check-in de 2 minutos el domingo solo con:
+>
+> - alimentación %, de 0 a 100 %;
+> - peso corporal;
+> - comentarios.
+
 **P-22 · De dónde sale el «Rendimiento %»** (informe mensual, «Evolución semanal»: 80, 80, 100 y 100)
 
 - a) Lo declara el alumno.
@@ -65,15 +96,25 @@ promedio. Tu hoja muestra un solo valor por semana: sueño 6.4 h, estrés 3, fat
 
 ¿Y el «Alimentación %» lo declara el alumno?
 
+> **Respuesta de Jeremy (2026-11-09).**
+>
+> - **Rendimiento %:** c) Se calcula con las cargas o las sesiones hechas frente a las planificadas, como hoy. Lo que declara el
+>   alumno solo cuenta cuando la rutina no tiene kg ni repeticiones fijas.
+> - **Alimentación %:** lo declara el alumno en el check-in del domingo, de 0 a 100 %, como adherencia percibida, salvo que la
+>   app ya calcule el porcentaje de comidas marcadas como cumplidas en la semana. La app no marca comidas cumplidas: mide los días
+>   con las kcal en rango (RN-G09).
+
 ## Panel de fatiga y recuperación
 
 **P-23 · Cuándo es ámbar** (panel, línea «LECTURA»)
 
 La hoja dice cuándo es rojo, pero no cuándo es ámbar:
+
 - **Recuperación roja:** estrés de 4 o más, o sueño de menos de 6 h.
 - **Carga roja:** volumen más de 30 % sobre el promedio de las 3 semanas previas.
 
 Con Mateo:
+
 - **Recuperación:**
   - semana 1 (estrés 3, sueño 6.4 h): ámbar;
   - semana 3 (estrés 3, sueño 7.1 h): ámbar;
@@ -83,9 +124,18 @@ Con Mateo:
   - semana 2, con 5 %: verde.
 
 Necesitamos los umbrales exactos de ámbar:
+
 1. **Recuperación:** ¿estrés 3? ¿Y con qué sueño, por ejemplo menos de 7 h?
 2. **Carga:** ¿más de 10 % o más de 15 % sobre el promedio?
 3. **Fatiga percibida:** ¿3?
+
+> **Respuesta de Jeremy (2026-11-09).**
+>
+> 1. **Recuperación ámbar:** estrés 3, o sueño de 6.0 h a menos de 7.0 h, mientras nada esté en rojo. La semana 3 de Mateo
+>    (estrés 3, sueño 7.1 h) es ámbar por el estrés, aunque duerma más de 7 h.
+> 2. **Carga ámbar:** más de 15 % y hasta 30 % sobre el promedio. Con los datos de Mateo sirven 10 % y 15 % (5 % verde y 18 %
+>    ámbar), pero 15 % deja pasar una sobrecarga progresiva normal de 8 a 12 % sin falsas alertas.
+> 3. **Fatiga percibida,** de 1 a 5: verde 1 o 2, ámbar 3 y roja 4 o 5, igual que el estrés.
 
 **P-24 · Estado general** (panel, columna «Estado general»)
 
@@ -93,14 +143,27 @@ Necesitamos los umbrales exactos de ámbar:
 base («SIN BASE») y la recuperación es ámbar, y el estado general sale ámbar. ¿«Sin base» cuenta como verde? ¿El
 promedio de 3 semanas ignora las semanas sin datos? Por ejemplo, la semana 6 da (6,336 + 3,375) ÷ 2 = 4,855.5.
 
+> **Respuesta de Jeremy (2026-11-09).**
+>
+> 1. Sí: el estado general es el peor de los tres. Rojo manda sobre ámbar, y ámbar sobre verde.
+> 2. «Sin base» cuenta como verde: no suma alerta, y deciden las métricas que tienen datos. En la semana 1 manda el ámbar de la
+>    recuperación.
+> 3. El promedio de 3 semanas ignora las semanas sin datos, en la suma y en el divisor: la semana 6 da (6,336 + 3,375) ÷ 2 =
+>    4,855.5.
+
 **P-25 · Panel frente al control semanal**
 
 - En la semana 2, el panel sale rojo y el control dice «Descarga 20–30 % y revisar».
 - En la semana 3, el panel sale ámbar y el control dice «Continuar plan».
 
 Cuando no coinciden:
+
 - a) El panel solo informa y decide el control semanal.
 - b) El panel cambia la decisión de la semana. Si es así, dinos cómo.
+
+> **Respuesta de Jeremy (2026-11-09).** a) El panel solo informa y decide el control semanal. En la semana 3, el panel ámbar avisa
+> de fatiga o de carga, y el control dice «Continuar plan» porque el rendimiento de Mateo subió a 100 %. Así hay un solo motor de
+> decisión: la descarga la prescribe el control semanal.
 
 ## Volumen ajustado y fatiga por músculo
 
@@ -114,6 +177,17 @@ RIR 2, por 1.1, da 1,782. Solo vemos algunos valores: RIR 2 = 1.1, RIR 3 = 1.0, 
 3. ¿La cadencia (3-1-1) o la ejecución («Buena») cambian el volumen?
 4. ¿Cómo cuentan los ejercicios sin peso, como el peso corporal, el cardio o la movilidad?
 
+> **Respuesta de Jeremy (2026-11-10).**
+>
+> 1. **Factor RIR:** 1.0 + (3 − RIR) × 0.1. RIR 0 = 1.3, RIR 1 = 1.2, RIR 2 = 1.1, RIR 3 = 1.0, RIR 4 = 0.9, y RIR 5 o más = 0.8.
+> 2. **Factor descanso:** 45 s = 1.15, 60 s = 1.10, 75 s = 1.05, 90 s = 1.00, 120 s = 1.00, y 180 s o más = 0.95. Con 90 y
+>    120 s en 1.00 cuadra el ejemplo: 1,620 × 1.1 = 1,782.
+> 3. La cadencia y la ejecución no cambian el volumen: son indicadores técnicos para que el coach decida si mantiene o sube la
+>    carga la semana siguiente.
+> 4. **Ejercicios sin peso:**
+>    - la movilidad, las isometrías por tiempo y el cardio aportan 0 kg de volumen y solo cuentan para cumplir la sesión;
+>    - la calistenia y el peso corporal suman sus series efectivas al grupo muscular, y tonelaje solo si registran lastre.
+
 **P-27 · Fatiga por grupo muscular** (panel, «Fatiga por grupo muscular»)
 
 1. Necesitamos los coeficientes de cada ejercicio, o de cada patrón: fatiga muscular, fatiga neural, carga axial y
@@ -122,6 +196,25 @@ RIR 2, por 1.1, da 1,782. Solo vemos algunos valores: RIR 2 = 1.1, RIR 3 = 1.0, 
    Mateo hizo jalón al pecho y sentadilla. ¿Esos dos ejercicios no están en tu tabla de coeficientes?
 3. ¿Usamos tus 17 grupos (Pecho, Dorsal, Trapecio, … Abductor) en el panel y en las series ponderadas? ¿El ejercicio
    secundario vale 0.5, como hoy en la app?
+
+> **Respuesta de Jeremy (2026-11-10).**
+>
+> 1. **Coeficientes por patrón de movimiento,** no por ejercicio (fatiga muscular, fatiga neural, carga axial y demanda
+>    técnica):
+>    - compuestos de pierna y cadera (sentadilla, peso muerto): 1.2, 1.3, 1.3 y 1.2;
+>    - compuestos libres de torso (press banca, remo, dominadas): 1.1, 1.1, 1.0 y 1.1;
+>    - compuestos guiados y poleas (jalón, prensa): 1.0, 1.0, 0.8 y 0.9;
+>    - aislamiento y brazos: 0.9, 0.7, 0.5 y 0.8;
+>    - movilidad y cardio: 0.
+>
+>    **Fórmulas:**
+>    - «Fatiga entrenamiento» es el volumen ajustado del grupo, ponderado: 1.0 el músculo primario y 0.5 el secundario;
+>    - el «Estado» lo compara con «Base 3 sem.» con los umbrales de P-23: verde hasta +15 %, ámbar de +15 % a +30 % y rojo más
+>      de +30 %;
+>    - «Recuperación est.»: 48 h en verde, 60 h en ámbar y 72 h en rojo.
+> 2. Fue un error de nombres en la fórmula del Excel: en la app, el jalón al pecho va a Dorsal y la sentadilla a Cuádriceps.
+> 3. Sí: los 17 grupos de la app, con 1.0 el primario y 0.5 el secundario. Así salen los promedios de «Base 3 sem.», como
+>    Pecho 1,461.6 y Tríceps 312.2.
 
 ## Informe mensual
 
@@ -177,6 +270,14 @@ RIR 2, por 1.1, da 1,782. Solo vemos algunos valores: RIR 2 = 1.1, RIR 3 = 1.0, 
 2. **Días de las sesiones:** el microciclo pone Full Body A, B y C en lunes, miércoles y viernes. Pero las fechas de
    asistencia son martes, jueves y sábado (06/10, 08/10, 10/10…). En la demo seguimos las fechas.
 
+> **Respuesta de Jeremy (2026-11-10).**
+>
+> 1. Manda la asistencia: una sesión ausente no suma tonelaje. Pero el 6,336 de la semana 3 que citan P-23 y P-24 incluye esa
+>    sentadilla. Para conservar el ejemplo en ámbar (+18 %), el 22/10 pasa a «ASISTIÓ» en la semilla; si queda «AUSENTE», la
+>    semana baja a 3,762 y sale verde.
+> 2. Mandan las fechas reales (martes, jueves y sábado), como ya hace la demo. «Lunes, miércoles y viernes» es texto fijo de
+>    la plantilla.
+
 **P-34 · Plantilla de la prescripción** («Prescripción de rutina»)
 
 1. La hoja dice «Días / semana: 3» y «División sugerida: FULL BODY / TORSO-PIERNA», pero trae 5 sesiones: Superior A,
@@ -191,6 +292,23 @@ RIR 2, por 1.1, da 1,782. Solo vemos algunos valores: RIR 2 = 1.1, RIR 3 = 1.0, 
    60 y 45 s) son los valores base de cada patrón?
 6. ¿Qué significan el RIR 4 de la movilidad y el RIR 5 del cardio?
 
+> **Respuesta de Jeremy (2026-11-10).**
+>
+> 1. 3 días: Full Body A, B y C. 4 días: torso-pierna (Superior A, Inferior A, Superior B, Inferior B). 5 días: lo mismo más
+>    Acondicionamiento, las 5 tablas de la hoja.
+> 2. Hasta 8 bloques, como la V3, y por defecto se muestran los 5 de la hoja, sin los vacíos.
+> 3. Ejercicios por nivel (básico, intermedio y avanzado):
+>    - movilidad de hombro: dislocaciones con banda, rotación externa en polea, CARs de hombro;
+>    - movilidad torácica: open book en el suelo, extensión en foam roller, rotación en cuadrupedia;
+>    - estabilidad lumbar: bird-dog, puente glúteo unilateral, hip thrust o extensión isométrica;
+>    - antirrotación: press Pallof isométrico, press Pallof dinámico, press Pallof en split stance;
+>    - tronco antiextensión: plancha frontal, dead bug, rueda abdominal;
+>    - cardiorrespiratorio: caminata inclinada Z2, remo o bici constante, intervalos en AirBike o remo;
+>    - brazos: curl con mancuerna y tríceps en polea, curl con barra Z y press francés, curl inclinado y extensión tras nuca.
+> 4. «10–12/lado» son repeticiones por lado y «20–30 s/lado», una isometría en segundos por lado.
+> 5. Sí: los tempos (3-1-1 y 2-1-2) y los descansos (120, 90, 75, 60 y 45 s) son los valores base de cada patrón.
+> 6. El RIR 4 y el RIR 5 de la movilidad y el cardio solo indican un esfuerzo suave (RPE 5 a 6) y no cambian el volumen.
+
 ## Otros
 
 **P-35 · «Seguimiento asistido por WhatsApp»** (macrociclo, fila «Revisión», semanas 1 a 8)
@@ -198,10 +316,16 @@ RIR 2, por 1.1, da 1,782. Solo vemos algunos valores: RIR 2 = 1.1, RIR 3 = 1.0, 
 La V3 decía «Seguimiento diario» y «Control y ajuste». ¿Es un tipo de revisión nuevo, en el que el coach acompaña por
 WhatsApp fuera de la app? La app no se integra con WhatsApp; sí podemos mostrar la etiqueta y un botón que abra el chat.
 
+> **Respuesta de Jeremy (2026-11-10).** Sí, es una modalidad de acompañamiento: la etiqueta en el macrociclo y un botón que abra
+> el chat del alumno con un enlace wa.me, sin integrar ninguna API de mensajería.
+
 **P-36 · «La rutina se prescribe en Nutriplace»** (microciclo, «Uso»)
 
 ¿«Nutriplace» será el nombre de esta plataforma? Hoy usamos «NutriCoach» como nombre de trabajo. ¿O es otra herramienta
 que usas?
+
+> **Respuesta de Jeremy (2026-11-10).** Es la misma plataforma: «Nutriplace» era otro nombre comercial en la hoja. Se mantiene
+> «NutriCoach» en el sistema.
 
 **P-37 · Semanas 9 a 12 y momento de la descarga**
 
@@ -210,3 +334,9 @@ que usas?
 2. Las semanas 1 y 2 dicen «Descarga», pero la descarga se aplicó en la semana 4 («Se aplicó descarga en la cuarta
    semana»), y la semana 4 de la V3 es «Progresar». ¿La descarga se aplica en la semana siguiente a la decisión o
    cuando el coach elige? En la app, la decisión del coach crea la versión de las semanas que siguen.
+
+> **Respuesta de Jeremy (2026-11-10).**
+>
+> 1. Sí: el mesociclo 3 sigue la V3 (Descarga, Consolidación, Consolidación y Transición/retest).
+> 2. La descarga se aplica en la semana siguiente a la decisión del coach, como hoy en la app. Con Mateo, la alerta saltó en
+>    las semanas 2 y 3, y la reducción de volumen se hizo en la semana 4 (3,375).

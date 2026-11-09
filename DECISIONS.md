@@ -2545,3 +2545,44 @@ Consecuencias:
 - Siguen el PR 1b (las porciones del alimento fuente por perfil, P-20.5) y el 1e (reprogramar, P-20.3).
 - Para Notion (/notion-sync de P14.5): 04 RF-24 (las fichas del plan muestran los perfiles) y RF-28 (Hoy y Mi plan), y
   05.3 (las plantillas 1.1.0).
+
+## ADR-102 · Porciones de cada perfil de día por la API — aceptada (2026-11-09)
+Contexto: P14.5, PR 1b (07 §2; P-20.5, respondida por Jeremy el 2026-11-08: el día de descanso es el mismo plan con menos
+porciones de almidones o cereales, en las comidas peri-entreno o en el almuerzo y la cena; solo cambia la cantidad del alimento
+fuente y la proteína y la grasa no se tocan). Rodrigo decidió el 2026-11-08: en intercambios, el coach con una sugerencia; en
+composición y menú, gramos por alimento; la app muestra las porciones del perfil de hoy. Como en el 1c y el 1d, la API va
+primero y las pantallas en el PR siguiente.
+Decisión:
+- Motor 1.9.0, `STARCH_BY_DAY_PROFILE` 1.0.0: los almidones de un perfil por tiempo de comida.
+  - Los que pide el perfil salen de la diferencia de carbohidratos entre el perfil y el plan, en intercambios enteros (medio
+    cuenta como uno).
+  - Los de menos se quitan primero de la media tarde, luego de la cena y después del último tiempo del día al primero, sin
+    bajar de 0.
+  - Los de más se suman de a uno, alternando la media tarde y la cena: P-20.6, respondida por Jeremy el 2026-11-09 (b, con
+    reparto alternado), para no tocar el desayuno, la media mañana ni el almuerzo. Un plan sin media tarde ni cena los suma por
+    turnos del último tiempo al primero. Jeremy dio también otra opción, un tope por tiempo (por ejemplo, 2) y el resto hacia
+    atrás hasta el almuerzo; queda la alternancia, que es la que eligió, y el coach cambia la sugerencia (RN-E09).
+  - NC-ENG-313 (carbohidratos) y NC-ENG-314 (tiempos).
+- Intercambios: `starchByProfile` en el borrador, un valor por tiempo, cuando el coach cambia la sugerencia.
+  - Tabla `nutrition.plan_meal_profile_exchange`, solo con STA. Un perfil sin filas lleva la sugerencia, que el cálculo
+    recalcula y el snapshot congela con su método (RN-D01).
+  - Un tiempo sin almidones en el plan admite almidones permitidos si un perfil los lleva ahí; para publicar, todo tiempo con
+    almidones en algún perfil necesita uno (RN-G05).
+- Composición y menú: `byProfile` en cada alimento (gramos y medida casera) o receta (porciones).
+  - Tabla `nutrition.plan_item_profile`. Solo se guarda lo que cambia lo del plan; 0 es «ese día no va».
+  - Para publicar, ningún tiempo queda sin alimentos en un perfil, y en el menú la opción A tampoco (RN-G05).
+- Cálculo: cada perfil suma su día con sus cantidades y su adecuación frente a sus metas (RN-E10). En intercambios, los totales
+  con sus almidones; en composición, el día; en el menú, los siete días.
+- Snapshot del plan versión 4: `portions` en cada perfil y `byProfile` en cada alimento o receta. En uno de la versión 3, cada
+  perfil lleva las del plan (`portions: null` en la API).
+- App del paciente: `GET /me/plan` muestra las porciones del perfil de la meta de ese día (`profile`), y «como en el plan»
+  registra esas. Lo que ese día no va no aparece y no se registra desde el plan (NC-TRK, no está en el plan).
+- La web conserva las porciones al guardar; editarlas, mostrarlas y las fichas llegan con el PR siguiente.
+Consecuencias:
+- Migración `202611090000_nutrition_profile_portions`: las dos tablas, con RLS forzada, sin acceso del paciente y solo en
+  borrador (`nutrition.guard_plan_children`).
+- Pruebas: el método en el motor; el dominio de intercambios, composición y menú; el cálculo de cada perfil; la app del
+  paciente; la integración `day-profiles.int.spec.ts` con la sugerencia, el reparto del coach, el snapshot 4 y un día de
+  Descanso en la app.
+- Para Notion (/notion-sync de P14.5): 02 §9 (el método), 03 RN-E09 y RN-G05 (porciones por perfil), 04 RF-19 a RF-21 y RF-28,
+  05.2 (las tablas) y 05 §2 (snapshot 4).

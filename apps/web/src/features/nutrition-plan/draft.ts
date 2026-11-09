@@ -47,6 +47,11 @@ export interface PlanDraft {
   readonly instructions: string;
   /** Los perfiles de día además de Entrenamiento (07 §2, P-20); vacío, una sola meta. */
   readonly dayProfiles: readonly DayProfileRow[];
+  /**
+   * Los almidones de cada tiempo que el coach dio a un perfil (P-20.5), por código; sin la clave, la sugerencia del motor. Vuelven
+   * tal cual al guardar mientras sigan el perfil y los tiempos.
+   */
+  readonly starchByProfile: Readonly<Record<string, readonly number[]>>;
 }
 
 type PlanFields = Pick<
@@ -92,6 +97,11 @@ export function draftOf(plan: PlanFields): PlanDraft {
     hydrationMl: plan.hydrationTargetMl === null ? '' : String(plan.hydrationTargetMl),
     instructions: plan.instructions ?? '',
     dayProfiles: dayProfileRowsOf(plan.dayProfiles),
+    starchByProfile: Object.fromEntries(
+      plan.dayProfiles.flatMap((profile) =>
+        profile.portions?.manual ? [[profile.code, profile.portions.starchByMeal]] : [],
+      ),
+    ),
   };
 }
 
@@ -182,12 +192,20 @@ export function planBody(draft: PlanDraft): UpdateExchangePlan | null {
   if (hydrationTargetMl === undefined || dayProfiles === null || instructions.length > 2_000) {
     return null;
   }
+  // Un reparto de almidones de un perfil que ya no está o de otros tiempos vuelve a la sugerencia (P-20.5).
+  const codes = new Set(dayProfiles.map((profile) => profile.code));
+  const starchByProfile = Object.fromEntries(
+    Object.entries(draft.starchByProfile)
+      .filter(([code, starch]) => codes.has(code) && starch.length === meals.length)
+      .map(([code, starch]) => [code, [...starch]]),
+  );
   return {
     modality: 'EXCHANGES',
     fixedServings: { VEG, FRU, MILK },
     overrides,
     meals,
     splitOverrides,
+    starchByProfile,
     hydrationTargetMl,
     instructions: instructions === '' ? null : instructions,
     dayProfiles,

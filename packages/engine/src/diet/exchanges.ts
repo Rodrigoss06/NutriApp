@@ -204,3 +204,121 @@ export const MEAL_SPLIT_LARGEST_REMAINDER = defineMethod<MealSplitInput, MealSpl
     return { outputs: { servingsByMeal: rows.map(({ meal, servings }) => ({ meal, servings })) } };
   },
 });
+
+export interface StarchByDayProfileMeal {
+  readonly meal: string;
+  /** BREAKFAST, MID_MORNING, LUNCH, AFTERNOON, DINNER o CUSTOM. */
+  readonly slotCode: string;
+  /** Los intercambios de almidones del tiempo en el plan (Entrenamiento). */
+  readonly starch: number;
+}
+
+export interface StarchByDayProfileInput {
+  /** Los carbohidratos del plan, sumados de sus intercambios. */
+  readonly baseChoG: number;
+  /** La meta de carbohidratos del perfil. */
+  readonly profileChoG: number;
+  /** Los carbohidratos de un intercambio de almidones en la lista del plan (RN-E11). */
+  readonly starchChoG: number;
+  /** Los tiempos en el orden del día. */
+  readonly meals: readonly StarchByDayProfileMeal[];
+}
+
+export interface StarchByDayProfileOutput {
+  /** Los intercambios de almidones que pide el perfil frente al plan: negativo, de menos. */
+  readonly deltaServings: number;
+  readonly servingsByMeal: readonly { readonly meal: string; readonly servings: number }[];
+}
+
+/** Las comidas de antes y después de entrenar (P-20.5 y P-20.6): ahí se quitan primero y ahí se suman. */
+const AROUND_TRAINING = ['AFTERNOON', 'DINNER'];
+
+/** Los tiempos en el orden en que pierden almidones: la media tarde, la cena y después del último del día al primero. */
+function removalOrder(meals: readonly StarchByDayProfileMeal[]): number[] {
+  const rank = (index: number): number => {
+    const found = AROUND_TRAINING.indexOf(meals[index]?.slotCode ?? '');
+    return found === -1 ? AROUND_TRAINING.length : found;
+  };
+  return meals.map((_, index) => index).sort((a, b) => rank(a) - rank(b) || b - a);
+}
+
+/** Los tiempos que ganan almidones, por turnos: la media tarde y la cena; si el plan no tiene ninguna, del último al primero. */
+function additionOrder(meals: readonly StarchByDayProfileMeal[]): number[] {
+  const order = removalOrder(meals);
+  const around = order.filter((index) => AROUND_TRAINING.includes(meals[index]?.slotCode ?? ''));
+  return around.length > 0 ? around : order;
+}
+
+const nonNegative = (value: number): boolean => Number.isFinite(value) && value >= 0;
+
+/**
+ * Los almidones de un perfil de día por tiempo de comida (07 §2, P-20.5): el perfil es el mismo plan con más o menos
+ * intercambios de almidones, y lo demás no cambia. Los que pide salen de la diferencia de carbohidratos entre el perfil y el
+ * plan, en intercambios enteros (medio cuenta como uno). Los de menos se quitan primero de la media tarde, luego de la cena y
+ * después del último tiempo del día al primero, sin bajar de 0. Los de más se suman de a uno, alternando la media tarde y
+ * la cena (P-20.6); un plan sin ninguna de las dos los suma por turnos del último tiempo al primero. Es la sugerencia: el
+ * coach la cambia (RN-E09).
+ */
+export const STARCH_BY_DAY_PROFILE = defineMethod<
+  StarchByDayProfileInput,
+  StarchByDayProfileOutput
+>({
+  code: 'STARCH_BY_DAY_PROFILE',
+  version: '1.0.0',
+  kind: 'DIET',
+  population: 'ALL',
+  requiredInputs: ['baseChoG', 'profileChoG', 'starchChoG', 'meals'],
+  requiredSites: [],
+  citation:
+    'Hoja piloto de JV Fitness, P-20.5 y P-20.6 (respuestas de Jeremy del 2026-11-08 y del 2026-11-09): menos almidones, primero en la media tarde y luego en la cena; más almidones, alternando la media tarde y la cena',
+  validity: [
+    {
+      rule: 'RN-E09',
+      severity: 'ERROR',
+      code: 'NC-ENG-313',
+      message:
+        'Un intercambio de almidones tiene más de 0 g de carbohidratos, y los del plan y los del perfil no son negativos.',
+      when: ({ baseChoG, profileChoG, starchChoG }) =>
+        !(Number.isFinite(starchChoG) && starchChoG > 0) ||
+        !nonNegative(baseChoG) ||
+        !nonNegative(profileChoG),
+    },
+    {
+      rule: 'RN-E09',
+      severity: 'ERROR',
+      code: 'NC-ENG-314',
+      message:
+        'El plan tiene al menos un tiempo de comida y sus almidones son enteros no negativos.',
+      when: ({ meals }) =>
+        meals.length === 0 ||
+        meals.some((meal) => !Number.isInteger(meal.starch) || meal.starch < 0),
+    },
+  ],
+  compute: ({ baseChoG, profileChoG, starchChoG, meals }) => {
+    const exact = (profileChoG - baseChoG) / starchChoG;
+    // Medio intercambio cuenta como uno, de más o de menos; || 0 evita el -0.
+    const deltaServings = (exact < 0 ? -Math.round(-exact) : Math.round(exact)) || 0;
+    const servings = meals.map((meal) => meal.starch);
+    if (deltaServings > 0) {
+      const order = additionOrder(meals);
+      for (let added = 0; added < deltaServings; added += 1) {
+        const index = order[added % order.length] ?? 0;
+        servings[index] = (servings[index] ?? 0) + 1;
+      }
+    } else {
+      let missing = -deltaServings;
+      for (const index of removalOrder(meals)) {
+        if (missing <= 0) break;
+        const taken = Math.min(missing, servings[index] ?? 0);
+        servings[index] = (servings[index] ?? 0) - taken;
+        missing -= taken;
+      }
+    }
+    return {
+      outputs: {
+        deltaServings,
+        servingsByMeal: meals.map(({ meal }, index) => ({ meal, servings: servings[index] ?? 0 })),
+      },
+    };
+  },
+});

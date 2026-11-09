@@ -3,6 +3,16 @@
 Cambiar una fórmula o una constante sube la versión del método afectado y la del motor (02 §9).
 Los resultados guardados conservan la versión con que se calcularon (RN-D01, RN-D08).
 
+## 1.9.0 — 2026-11-09
+
+- Nuevo método `STARCH_BY_DAY_PROFILE` 1.0.0: los almidones de un perfil de día por tiempo de comida (07 §2, P14.5). El perfil
+  es el mismo plan con más o menos intercambios de almidones y lo demás no cambia (P-20.5, respuesta de Jeremy). Los que pide
+  salen de la diferencia de carbohidratos entre el perfil y el plan, en intercambios enteros (medio cuenta como uno). Los de
+  menos se quitan primero de la media tarde, luego de la cena y después del último tiempo al primero, sin bajar de 0; los de
+  más se suman de a uno, alternando la media tarde y la cena (P-20.6, respuesta de Jeremy), y sin ninguna de las dos, por
+  turnos del último tiempo al primero (RN-E09). Es la sugerencia que el coach cambia (ADR-102). Insumos fuera de rango:
+  NC-ENG-313 (carbohidratos) y NC-ENG-314 (tiempos). G-01 a G-40 siguen igual.
+
 ## 1.8.0 — 2026-11-08
 
 - Nuevo método `MACROS_DAY_PROFILE` 1.0.0: un perfil de día del plan (07 §2, P14.5). El coach escribe los gramos de

@@ -3,6 +3,7 @@ import {
   compositionPlan,
   compositionPublishProblems,
   emptyMenuDays,
+  itemsInProfile,
   weeklyMenuPlan,
   weeklyMenuPublishProblems,
   type CompositionDraft,
@@ -17,17 +18,20 @@ const RICE = '01927000-0000-7000-8000-000000000001';
 const CHICKEN = '01927000-0000-7000-8000-000000000002';
 const STEW = '01927000-0000-7000-8000-000000000003';
 
-const food = (foodId: string, grams: number, householdText: string | null = null): FoodItem => ({
-  itemType: 'FOOD',
-  foodId,
-  grams,
-  householdText,
-});
-const recipe = (recipeId: string, servings: number): RecipeItem => ({
-  itemType: 'RECIPE',
-  recipeId,
-  servings,
-});
+const food = (
+  foodId: string,
+  grams: number,
+  householdText: string | null = null,
+  byProfile: FoodItem['byProfile'] = {},
+): FoodItem => ({ itemType: 'FOOD', foodId, grams, householdText, byProfile });
+const recipe = (
+  recipeId: string,
+  servings: number,
+  byProfile: RecipeItem['byProfile'] = {},
+): RecipeItem => ({ itemType: 'RECIPE', recipeId, servings, byProfile });
+
+/** El perfil Descanso de Mateo en la hoja piloto (P-20). */
+const REST = { code: 'REST', name: 'Descanso', choG: 240, proteinG: 160, fatG: 70 };
 
 const BREAKFAST: MealHeader = {
   slotCode: 'BREAKFAST',
@@ -208,5 +212,91 @@ describe('RN-E13 · RN-G05 · lo que falta para publicar un menú', () => {
   it('un menú nuevo no tiene nada en ningún día', () => {
     expect(emptyMenuDays(2)).toHaveLength(7);
     expect(emptyMenuDays(2)[0]).toEqual({ meals: [cell([]), cell([])] });
+  });
+});
+
+describe('07 §2 · P-20.5 · la cantidad de cada alimento en un perfil de día', () => {
+  it('se guarda con los decimales de la base; la que es igual a la del plan no se guarda', () => {
+    const result = compositionPlan({
+      ...COMPOSITION,
+      dayProfiles: [REST, { ...REST, code: 'ALTO', name: 'Alto' }],
+      meals: [
+        {
+          ...BREAKFAST,
+          sharePct: 100,
+          items: [
+            food(RICE, 200, '1 taza', {
+              REST: { grams: 120.456, householdText: '½ taza' },
+              ALTO: { grams: 200, householdText: '1 taza' },
+            }),
+          ],
+        },
+      ],
+    });
+    expect(result.ok && result.value.meals[0]?.items[0]?.byProfile).toEqual({
+      REST: { grams: 120.46, householdText: '½ taza' },
+    });
+  });
+
+  it('solo de un perfil del plan', () => {
+    expect(
+      problems(
+        compositionPlan({
+          ...COMPOSITION,
+          dayProfiles: [REST],
+          meals: [
+            {
+              ...BREAKFAST,
+              sharePct: 100,
+              items: [food(RICE, 200, null, { ALTO: { grams: 250, householdText: null } })],
+            },
+          ],
+        }),
+      ),
+    ).toEqual(['Desayuno: tiene una cantidad para ALTO, que no es un perfil del plan.']);
+  });
+
+  it('en un perfil, cada alimento lleva su cantidad de ese día y el que tiene 0 g no va', () => {
+    const items = [
+      food(RICE, 200, '1 taza', { REST: { grams: 120, householdText: '½ taza' } }),
+      food(CHICKEN, 150, null, { REST: { grams: 0, householdText: null } }),
+      recipe(STEW, 1, { REST: { servings: 0.5 } }),
+    ];
+    expect(itemsInProfile(items, 'REST')).toEqual([
+      food(RICE, 120, '½ taza', { REST: { grams: 120, householdText: '½ taza' } }),
+      recipe(STEW, 0.5, { REST: { servings: 0.5 } }),
+    ]);
+    expect(itemsInProfile(items, 'ALTO')).toEqual(items);
+    expect(itemsInProfile(items, null)).toEqual(items);
+  });
+
+  it('para publicar, ningún tiempo queda sin alimentos en un perfil (RN-G05)', () => {
+    const zero = { REST: { grams: 0, householdText: null } };
+    expect(
+      compositionPublishProblems({
+        ...COMPOSITION,
+        dayProfiles: [REST],
+        meals: COMPOSITION.meals.map((meal, i) =>
+          i === 2
+            ? { ...meal, items: meal.items.map((item) => ({ ...item, byProfile: zero })) }
+            : meal,
+        ),
+      }),
+    ).toEqual(['Descanso: Cena queda sin alimentos; deja al menos uno con más de 0 g (RN-G05).']);
+  });
+
+  it('en el menú, también las recetas; la opción A que queda vacía en un perfil, con sus días', () => {
+    const days = MENU.days.map((day, d) => ({
+      meals: day.meals.map((c, m) =>
+        m === 1 && d >= 5 ? cell([recipe(STEW, 1, { REST: { servings: 0 } })], c.optionB) : c,
+      ),
+    }));
+    const result = weeklyMenuPlan({ ...MENU, dayProfiles: [REST], days });
+    expect(result.ok && result.value.days[6]?.meals[1]?.optionA).toEqual([
+      recipe(STEW, 1, { REST: { servings: 0 } }),
+    ]);
+    expect(weeklyMenuPublishProblems({ ...MENU, dayProfiles: [REST], days })).toEqual([
+      'Descanso: Almuerzo queda sin la opción A el sábado y el domingo; deja algo con más de 0 (RN-G05).',
+    ]);
   });
 });

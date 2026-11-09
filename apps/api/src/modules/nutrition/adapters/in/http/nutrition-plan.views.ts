@@ -7,9 +7,14 @@ import type {
   NutritionPlanPreview,
   WeeklyMenuPlanPreview,
 } from '@nutricoach/contracts';
-import type { ItemTotals as CalculatedTotals } from '../../../application/food-plan-calculation.js';
+import type {
+  ItemTotals as CalculatedTotals,
+  FoodAdequacyBlock,
+} from '../../../application/food-plan-calculation.js';
+import type { ExchangeAdequacy } from '../../../application/plan-calculation.js';
 import type {
   CompositionPlanDocument,
+  DocumentDayProfile,
   DocumentMenuItem,
   ExchangePlanDocument,
   PlanDocument,
@@ -23,9 +28,15 @@ import type {
 const methodsOf = (document: PlanDocument) =>
   document.methods.map((m) => ({ ...m, warnings: m.warnings.map((w) => ({ ...w })) }));
 
-/** Los perfiles de día con sus metas y su método (07 §2); un snapshot de la versión 1 o 2 no los trae: una sola meta. */
-const dayProfilesOf = (document: PlanDocument) =>
-  (document.dayProfiles ?? []).map((profile) => ({
+/**
+ * Los perfiles de día con sus metas, su método y sus porciones (07 §2, P-20.5); un snapshot de la versión 1 o 2 no los trae
+ * (una sola meta) y uno de la 3 no trae sus porciones (null: las del plan).
+ */
+function dayProfilesOf<TPortions, TView>(
+  profiles: readonly DocumentDayProfile<TPortions>[] | undefined,
+  portionsOf: (portions: TPortions) => TView,
+) {
+  return (profiles ?? []).map((profile) => ({
     code: profile.code,
     name: profile.name,
     kcal: profile.kcal,
@@ -33,7 +44,9 @@ const dayProfilesOf = (document: PlanDocument) =>
     proteinG: profile.proteinG,
     fatG: profile.fatG,
     method: { ...profile.method, warnings: profile.method.warnings.map((w) => ({ ...w })) },
+    portions: profile.portions === undefined ? null : portionsOf(profile.portions),
   }));
+}
 
 const totalsOf = (totals: CalculatedTotals): ItemTotals => ({
   ingredientCount: totals.ingredientCount,
@@ -42,12 +55,23 @@ const totalsOf = (totals: CalculatedTotals): ItemTotals => ({
   ),
 });
 
-const adequacyOf = (document: CompositionPlanDocument | WeeklyMenuPlanDocument) => ({
-  rangePct: [document.adequacy.rangePct[0], document.adequacy.rangePct[1]] as [number, number],
-  kcal: { ...document.adequacy.kcal },
-  cho: { ...document.adequacy.cho },
-  protein: { ...document.adequacy.protein },
-  fat: { ...document.adequacy.fat },
+const foodAdequacyOf = (adequacy: FoodAdequacyBlock) => ({
+  rangePct: [adequacy.rangePct[0], adequacy.rangePct[1]] as [number, number],
+  kcal: { ...adequacy.kcal },
+  cho: { ...adequacy.cho },
+  protein: { ...adequacy.protein },
+  fat: { ...adequacy.fat },
+});
+
+const adequacyOf = (document: CompositionPlanDocument | WeeklyMenuPlanDocument) =>
+  foodAdequacyOf(document.adequacy);
+
+const exchangeAdequacyOf = (adequacy: ExchangeAdequacy) => ({
+  rangePct: [adequacy.rangePct[0], adequacy.rangePct[1]] as [number, number],
+  kcal: { ...adequacy.kcal },
+  cho: { ...adequacy.cho },
+  protein: { ...adequacy.protein },
+  fat: { ...adequacy.fat },
 });
 
 /** Intercambios: lo que calcula el motor, sin redondear (RN-D09), y cada cálculo con su método (RN-D01, RN-D02). */
@@ -58,17 +82,16 @@ function exchangeCalculation(
   return {
     modality: 'EXCHANGES',
     targets: { ...document.targets },
-    dayProfiles: dayProfilesOf(document),
+    dayProfiles: dayProfilesOf(document.dayProfiles, (portions) => ({
+      starchByMeal: [...portions.starchByMeal],
+      manual: portions.manual,
+      totals: { ...portions.totals },
+      adequacy: exchangeAdequacyOf(portions.adequacy),
+    })),
     exchanges: document.exchanges.map((e) => ({ ...e })),
     manualSplit: [...document.manualSplit],
     totals: { ...document.totals },
-    adequacy: {
-      rangePct: [document.adequacy.rangePct[0], document.adequacy.rangePct[1]],
-      kcal: { ...document.adequacy.kcal },
-      cho: { ...document.adequacy.cho },
-      protein: { ...document.adequacy.protein },
-      fat: { ...document.adequacy.fat },
-    },
+    adequacy: exchangeAdequacyOf(document.adequacy),
     methods: methodsOf(document),
     publishProblems: [...publishProblems],
   };
@@ -95,6 +118,9 @@ function itemOf(
       foodId: item.foodId,
       grams: item.grams,
       householdText: item.householdText,
+      byProfile: Object.fromEntries(
+        Object.entries(item.byProfile ?? {}).map(([code, portion]) => [code, { ...portion }]),
+      ),
       foodName: item.foodName,
       state: food?.state ?? 'READY',
       nutrientsPer100g: coreOf(document, (code) => food?.nutrientsPer100g[code] ?? null),
@@ -106,6 +132,9 @@ function itemOf(
     itemType: 'RECIPE',
     recipeId: item.recipeId,
     servings: item.servings,
+    byProfile: Object.fromEntries(
+      Object.entries(item.byProfile ?? {}).map(([code, portion]) => [code, { ...portion }]),
+    ),
     recipeName: item.recipeName,
     nutrientsPerServing: coreOf(document, (code) => perServing?.[code]?.value ?? null),
   };
@@ -118,7 +147,10 @@ function compositionCalculation(
   return {
     modality: 'COMPOSITION',
     targets: { ...document.targets },
-    dayProfiles: dayProfilesOf(document),
+    dayProfiles: dayProfilesOf(document.dayProfiles, (portions) => ({
+      totals: totalsOf(portions.totals),
+      adequacy: foodAdequacyOf(portions.adequacy),
+    })),
     nutrients: document.nutrients.map((n) => ({ ...n })),
     meals: document.meals.map((meal) => ({
       slotCode: meal.slotCode,
@@ -146,7 +178,12 @@ function weeklyMenuCalculation(
   return {
     modality: 'WEEKLY_MENU',
     targets: { ...document.targets },
-    dayProfiles: dayProfilesOf(document),
+    dayProfiles: dayProfilesOf(document.dayProfiles, (portions) => ({
+      weeklyAverage: Object.fromEntries(
+        Object.entries(portions.weeklyAverage).map(([code, average]) => [code, { ...average }]),
+      ),
+      adequacy: foodAdequacyOf(portions.adequacy),
+    })),
     nutrients: document.nutrients.map((n) => ({ ...n })),
     meals: document.meals.map((meal) => ({ ...meal })),
     days: document.days.map((day) => ({

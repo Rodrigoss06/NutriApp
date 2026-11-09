@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   catalogFoodDraft,
+  dayPortionsOf,
   dayTotals,
   planDrafts,
   planView,
@@ -361,6 +362,7 @@ describe('RF-28 · RN-G06 · el plan en la app, listo para registrar', () => {
 
     expect(planView(plan, '2026-11-01')).toEqual({
       ...meta,
+      profile: null,
       planId: 'plan-1',
       modality: 'EXCHANGES',
       meals: [
@@ -459,5 +461,209 @@ describe('RF-28 · RN-G06 · el plan en la app, listo para registrar', () => {
       },
     ]);
     expect(planView(plan, '2026-11-03').meals[0]?.options).toEqual([]);
+  });
+});
+
+describe('07 §2 · P-20.5 · las porciones del perfil del día', () => {
+  // La hoja piloto de Mateo: el día de descanso es el mismo plan con menos almidones (P-20.5, respuesta de Jeremy).
+  const REST = { code: 'REST', name: 'Descanso', kcal: 2230, choG: 240, proteinG: 160, fatG: 70 };
+  const shown = {
+    versionNo: 1,
+    validFrom: '2026-10-30',
+    targets: { kcal: 2510, choG: 310, proteinG: 160, fatG: 70 },
+    hydrationTargetMl: null,
+    instructions: null,
+  };
+  const bread = {
+    groupCode: 'STA',
+    foodId: 'food-bread',
+    foodName: 'Pan',
+    grams: 30,
+    householdText: null,
+  };
+  const egg = {
+    groupCode: 'MEAT',
+    foodId: 'food-egg',
+    foodName: 'Huevo',
+    grams: 50,
+    householdText: null,
+  };
+  const exchangeMeals = [
+    {
+      id: 'meal-breakfast',
+      slotCode: 'BREAKFAST',
+      name: 'Desayuno',
+      timeOfDay: null,
+      servings: { STA: 2, MEAT: 2 },
+      allowedFoods: [bread, egg],
+    },
+    {
+      id: 'meal-afternoon',
+      slotCode: 'AFTERNOON',
+      name: 'Media tarde',
+      timeOfDay: null,
+      servings: { STA: 1, MEAT: 0 },
+      allowedFoods: [bread],
+    },
+  ];
+  const exchanges: AppPlan = {
+    ...shown,
+    planId: 'plan-1',
+    modality: 'EXCHANGES',
+    exchangeList: {
+      groups: [
+        { code: 'STA', name: 'Almidones', choG: 15, proteinG: 2, fatG: 0, kcal: 70 },
+        { code: 'MEAT', name: 'Carnes', choG: 0, proteinG: 7, fatG: 3, kcal: 55 },
+      ],
+    },
+    meals: exchangeMeals,
+    dayProfiles: [{ ...REST, portions: { starchByMeal: [1, 0], manual: false } }],
+  };
+  const rest = dayPortionsOf(exchanges, 'REST');
+
+  it('el perfil de la meta del día; Entrenamiento, un perfil que el plan no tiene o un snapshot sin porciones: las del plan', () => {
+    expect(rest).toEqual({ code: 'REST', name: 'Descanso', starchByMeal: [1, 0] });
+    expect(dayPortionsOf(exchanges, 'TRAINING')).toBeNull();
+    expect(dayPortionsOf(exchanges, null)).toBeNull();
+    expect(dayPortionsOf({ ...exchanges, dayProfiles: [REST] }, 'REST')).toEqual({
+      code: 'REST',
+      name: 'Descanso',
+      starchByMeal: null,
+    });
+  });
+
+  it('intercambios: los almidones del perfil por tiempo; un tiempo que se queda sin almidones no los ofrece', () => {
+    const view = planView(exchanges, '2026-11-01', rest);
+
+    expect(view.profile).toEqual({ code: 'REST', name: 'Descanso' });
+    expect(
+      view.meals.map((meal) =>
+        meal.options.map((o) => o.kind === 'EXCHANGE' && [o.groupCode, o.servings]),
+      ),
+    ).toEqual([
+      [
+        ['STA', 1],
+        ['MEAT', 2],
+      ],
+      [],
+    ]);
+    expect(planView(exchanges, '2026-11-01').profile).toBeNull();
+  });
+
+  it('intercambios: se registra la porción del perfil; lo que ese día no va no está en el plan', () => {
+    const pick = (mealId: string) =>
+      ({
+        kind: 'EXCHANGE',
+        mealId,
+        groupCode: 'STA',
+        foodId: 'food-bread',
+        servings: null,
+      }) as const;
+    expect(planDrafts(exchanges, pick('meal-breakfast'), rest)?.[0]).toMatchObject({
+      servings: 1,
+      grams: 30,
+      nutrients: { choG: 15 },
+    });
+    expect(planDrafts(exchanges, pick('meal-afternoon'), rest)).toBeNull();
+    expect(planDrafts(exchanges, pick('meal-afternoon'))?.[0]?.servings).toBe(1);
+  });
+
+  it('composición: los gramos y la medida casera del perfil; el alimento con 0 g ese día no aparece ni se registra', () => {
+    const composition: AppPlan = {
+      ...shown,
+      planId: 'plan-2',
+      modality: 'COMPOSITION',
+      foods: { 'food-oats': OATS, 'food-quinoa': OATS },
+      meals: [
+        {
+          id: 'meal-breakfast',
+          slotCode: 'BREAKFAST',
+          name: 'Desayuno',
+          timeOfDay: null,
+          items: [
+            {
+              itemType: 'FOOD',
+              foodId: 'food-oats',
+              foodName: 'Avena',
+              grams: 40,
+              householdText: '4 cdas',
+              byProfile: { REST: { grams: 20, householdText: '2 cdas' } },
+            },
+            {
+              itemType: 'FOOD',
+              foodId: 'food-quinoa',
+              foodName: 'Quinua',
+              grams: 50,
+              householdText: null,
+              byProfile: { REST: { grams: 0, householdText: null } },
+            },
+          ],
+        },
+      ],
+      dayProfiles: [REST],
+    };
+    const portions = dayPortionsOf(composition, 'REST');
+    const oats = {
+      kind: 'FOOD',
+      mealId: 'meal-breakfast',
+      foodId: 'food-oats',
+      grams: null,
+    } as const;
+
+    expect(planDrafts(composition, oats, portions)?.[0]).toMatchObject({
+      grams: 20,
+      householdText: '2 cdas',
+      nutrients: { kcal: 76 },
+    });
+    expect(planDrafts(composition, { ...oats, foodId: 'food-quinoa' }, portions)).toBeNull();
+    expect(planView(composition, '2026-11-01', portions).meals[0]?.options).toEqual([
+      { kind: 'FOOD', foodId: 'food-oats', foodName: 'Avena', grams: 20, householdText: '2 cdas' },
+    ]);
+  });
+
+  it('menú: la receta en las porciones del perfil', () => {
+    const menu: LoggablePlan = {
+      planId: 'plan-3',
+      modality: 'WEEKLY_MENU',
+      foods: { 'food-oats': OATS },
+      recipes: {
+        'recipe-rice': {
+          name: 'Arroz con pollo',
+          perServing: { nutrients: { ENERC_KCAL: { value: 520 } } },
+        },
+      },
+      meals: [{ slotCode: 'LUNCH', name: 'Almuerzo' }],
+      days: [
+        {
+          dayOfWeek: 1,
+          meals: [
+            {
+              id: 'cell-monday-lunch',
+              optionA: [
+                {
+                  itemType: 'RECIPE',
+                  recipeId: 'recipe-rice',
+                  recipeName: 'Arroz con pollo',
+                  servings: 1.5,
+                  byProfile: { REST: { servings: 1 } },
+                },
+              ],
+              optionB: [],
+            },
+          ],
+        },
+      ],
+      dayProfiles: [REST],
+    };
+    const drafts = planDrafts(
+      menu,
+      { kind: 'MENU', mealId: 'cell-monday-lunch', option: 'A' },
+      dayPortionsOf(menu, 'REST'),
+    );
+    expect(drafts?.[0]).toMatchObject({
+      itemType: 'RECIPE',
+      servings: 1,
+      nutrients: { kcal: 520 },
+    });
   });
 });
