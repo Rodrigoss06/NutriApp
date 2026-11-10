@@ -14,7 +14,7 @@ import { weekLabel } from './diet-view';
 import { ProgramPicker } from './program-picker';
 import { StatTable } from './stat-table';
 import { OneRmChart, TrainingWeekCharts } from './training-charts';
-import { mesocycleGroups, musclesInOrder, muscleWeekNo } from './training-view';
+import { adjustedText, mesocycleGroups, musclesInOrder, muscleWeekNo } from './training-view';
 
 const ONE_DECIMAL = new Intl.NumberFormat('es-PE', { maximumFractionDigits: 1 });
 /** Series fraccionadas (RN-F06): 1 por músculo principal y 0.5 por secundario, sin ceros de relleno. */
@@ -87,6 +87,12 @@ function WeeksTable({ weeks, caption }: { weeks: readonly TrainingWeek[]; captio
           header: 'Tonelaje',
           numeric: true,
           cell: (week) => (week.tonnageKg === null ? '—' : `${load(week.tonnageKg)} kg`),
+        },
+        {
+          key: 'adjusted',
+          header: 'Volumen ajustado',
+          numeric: true,
+          cell: (week) => adjustedText(week.adjustedVolumeKg, week.unfactoredSets),
         },
         {
           key: 'srpe',
@@ -175,6 +181,12 @@ function MusclesTable({
           numeric: true,
           cell: (muscle) => (muscle.tonnageKg === null ? '—' : `${load(muscle.tonnageKg)} kg`),
         },
+        {
+          key: 'adjusted',
+          header: 'Volumen ajustado',
+          numeric: true,
+          cell: (muscle) => adjustedText(muscle.adjustedVolumeKg, muscle.unfactoredSets),
+        },
         { key: 'rpe', header: 'RPE', numeric: true, cell: (muscle) => scale(muscle.avgRpe) },
         {
           key: 'stimulus',
@@ -254,6 +266,7 @@ export function TrainingAnalyticsView({
         <p className="flex flex-wrap gap-x-4 gap-y-1">
           {[
             methods.tonnage,
+            methods.adjustedVolume,
             methods.fractionalSets,
             methods.compliance,
             methods.rpe,

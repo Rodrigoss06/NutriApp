@@ -164,6 +164,7 @@ export class PatientAnalyticsController {
       program: view.program && { ...view.program },
       methods: {
         tonnage: { ...view.methods.tonnage },
+        adjustedVolume: { ...view.methods.adjustedVolume },
         fractionalSets: { ...view.methods.fractionalSets },
         compliance: { ...view.methods.compliance },
         sfr: { ...view.methods.sfr },

@@ -1,9 +1,23 @@
-import type {
-  OneRmSeries,
-  TrainingAnalytics,
-  TrainingMuscleWeek,
-  TrainingWeek,
+import {
+  formatNumber,
+  type OneRmSeries,
+  type TrainingAnalytics,
+  type TrainingMuscleWeek,
+  type TrainingWeek,
 } from '@nutricoach/contracts';
+
+/**
+ * El volumen ajustado con lo que quedó «sin factor» (P-26, ADR-106): «1,782 kg», «594 kg · 2 sin factor». Una serie sin factor no
+ * se cuenta como 1: se dice aparte.
+ */
+export function adjustedText(
+  adjustedVolumeKg: number | null,
+  unfactoredSets: number | null,
+): string {
+  if (adjustedVolumeKg === null) return '—';
+  const kg = `${formatNumber(adjustedVolumeKg, 'trainingLoad')} kg`;
+  return unfactoredSets ? `${kg} · ${String(unfactoredSets)} sin factor` : kg;
+}
 
 export interface MesocycleGroup {
   readonly id: string;

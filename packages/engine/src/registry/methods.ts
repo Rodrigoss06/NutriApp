@@ -40,6 +40,7 @@ import {
 } from '../energy/index.js';
 import { ACROMIOILIAC_INDEX, CORMIC_INDEX, MANOUVRIER_INDEX } from '../proportionality/index.js';
 import {
+  ADJUSTED_VOLUME,
   COMPLIANCE,
   FRACTIONAL_SETS,
   ONERM_BRZYCKI1993,
@@ -103,6 +104,7 @@ export const METHODS: Readonly<Record<MethodCode, AnyMethod>> = Object.freeze({
   PRI_JV,
   READINESS_JV,
   WEEKLY_REVIEW_JV,
+  ADJUSTED_VOLUME,
 } satisfies Record<MethodCode, unknown>);
 
 /**

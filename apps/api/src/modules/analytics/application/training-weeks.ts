@@ -1,14 +1,16 @@
 import { FRACTIONAL_SETS, RPE_FROM_RIR, runMethod, SFR, type MuscleRole } from '@nutricoach/engine';
 import type { DaySet, DayFacts } from '../../tracking/index.js';
+import type { FactorVersion } from '../domain/adjusted-volume.js';
 import { CARDIO_MUSCLE } from '../domain/daily-summary.js';
 import type { CalendarWeek } from '../domain/program-calendar.js';
+import { adjustedVolumeOf } from './adjusted-volume.js';
 import type { WeeklyMuscleRow } from './ports/analytics.ports.js';
 
 /**
  * El volumen de cada semana del macrociclo por grupo muscular (RF-33, RN-F06 a RN-F09): lo hecho en las sesiones de esa semana del
  * programa contra lo programado, con el motor. Una sesión se cuenta en su semana aunque se haga otro día (ADR-083). Las series de
  * cardio van en minutos, no aquí (ADR-071). El tonelaje de una serie se reparte como las series: principal 1 y secundario 0.5
- * (ADR-088).
+ * (ADR-088), y el volumen ajustado igual, con la tabla de factores vigente al empezar la semana (ADR-106).
  */
 
 const roleOf = (weight: number): MuscleRole['role'] => (weight >= 1 ? 'PRIMARY' : 'SECONDARY');
@@ -46,10 +48,15 @@ export interface WeeklyInput {
   readonly lineageProgramIds: ReadonlySet<string>;
   /** La última versión publicada de la línea. */
   readonly programId: string;
+  /** La tabla de factores vigente un día (ADR-106). */
+  readonly factorsOn: (localDate: string) => FactorVersion | null;
+  /** El descanso prescrito de una serie en el programa con que se registró su entreno (ADR-106). */
+  readonly restOf: (workout: DayFacts['workouts'][number], set: DaySet) => number | null;
 }
 
 export function weeklyMuscleRows(input: WeeklyInput): WeeklyMuscleRow[] {
   const setsByWeek = new Map<number, DaySet[]>();
+  const restById = new Map<string, number | null>();
   for (const day of input.days) {
     for (const workout of day.workouts) {
       if (
@@ -61,6 +68,7 @@ export function weeklyMuscleRows(input: WeeklyInput): WeeklyMuscleRow[] {
         continue;
       }
       setsByWeek.set(workout.weekNo, [...(setsByWeek.get(workout.weekNo) ?? []), ...workout.sets]);
+      for (const set of workout.sets) restById.set(set.id, input.restOf(workout, set));
     }
   }
   return input.weeks.flatMap((week) => {
@@ -75,6 +83,16 @@ export function weeklyMuscleRows(input: WeeklyInput): WeeklyMuscleRow[] {
       ),
     });
     const done = run.ok ? run.result.outputs.setsByMuscle : {};
+    const volume = adjustedVolumeOf(
+      effective.map((set) => ({
+        id: set.id,
+        reps: set.reps,
+        loadKg: set.loadKg,
+        rir: set.rir,
+        restSeconds: restById.get(set.id) ?? null,
+      })),
+      input.factorsOn(week.weekStart),
+    );
     const muscles = [...new Set([...Object.keys(week.plannedByMuscle), ...Object.keys(done)])]
       .filter((muscle) => muscle !== CARDIO_MUSCLE)
       .sort();
@@ -84,6 +102,10 @@ export function weeklyMuscleRows(input: WeeklyInput): WeeklyMuscleRow[] {
         return contribution ? [{ set, weight: contribution.weight }] : [];
       });
       const sets = involved.map(({ set }) => set);
+      const adjusted = involved.map(({ set, weight }) => {
+        const value = volume.bySet.get(set.id) ?? null;
+        return value === null ? null : value * weight;
+      });
       return {
         weekStart: week.weekStart,
         muscleCode: muscle,
@@ -97,6 +119,12 @@ export function weeklyMuscleRows(input: WeeklyInput): WeeklyMuscleRow[] {
           involved.length === 0
             ? null
             : involved.reduce((total, { set, weight }) => total + set.tonnageKg * weight, 0),
+        adjustedVolumeKg:
+          involved.length === 0
+            ? null
+            : adjusted.reduce<number>((total, value) => total + (value ?? 0), 0),
+        unfactoredSets:
+          involved.length === 0 ? null : adjusted.filter((value) => value === null).length,
         avgRpe: average(sets.map(rpeOf)),
         avgStimulus: average(sets.map((set) => set.stimulusRating)),
         avgFatigue: average(sets.map((set) => set.fatigueRating)),

@@ -2,7 +2,11 @@ import { Inject, Injectable } from '@nestjs/common';
 import type { ProgramStatus } from '../domain/program.js';
 import type { WeeklyLight } from '../domain/weekly-review.js';
 import { PROGRAM_STORE, type ProgramStore } from './ports/program.ports.js';
-import { WEEKLY_REVIEW_STORE, type WeeklyReviewStore } from './ports/weekly-review.ports.js';
+import {
+  WEEKLY_REVIEW_STORE,
+  type VolumeFactorsRow,
+  type WeeklyReviewStore,
+} from './ports/weekly-review.ports.js';
 import type { ProgramSnapshot } from './program-document.js';
 
 /** Los controles semanales del programa vigente, para las alertas del panel (RF-34). */
@@ -35,6 +39,14 @@ export class TrainingApi {
    */
   latestPublishedOfLineage(lineageId: string): Promise<ProgramSnapshot | null> {
     return this.programs.latestSnapshot(lineageId);
+  }
+
+  /**
+   * Las versiones de las tablas de factores del volumen ajustado (P-26, ADR-106): las de la organización y las globales, de la
+   * más vieja a la más nueva. La vigente de un día la elige quien las usa.
+   */
+  volumeFactorVersions(organizationId: string): Promise<readonly VolumeFactorsRow[]> {
+    return this.reviews.volumeFactorVersions(organizationId);
   }
 
   /** Su estado: así quien lo pide sabe si es un borrador o algo que no existe. null si no existe o no se ve. */

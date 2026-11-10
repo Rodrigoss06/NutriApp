@@ -3,6 +3,14 @@
 Cambiar una fórmula o una constante sube la versión del método afectado y la del motor (02 §9).
 Los resultados guardados conservan la versión con que se calcularon (RN-D01, RN-D08).
 
+## 1.10.0 — 2026-11-10
+
+- Nuevo método `ADJUSTED_VOLUME` 1.0.0: el volumen ajustado de la hoja piloto de JV Fitness (P14.5, PR 2; P-26, respuesta de
+  Jeremy): por serie, repeticiones × carga × factor RIR × factor del descanso prescrito, con las tablas de factores como datos
+  versionados (ADR-106). Un RIR o un descanso que la tabla no trae queda «sin factor», nunca como 1, y se cuenta aparte. Sin
+  carga, la serie aporta 0 kg. Tablas mal formadas: NC-ENG-411; series con valores negativos: NC-ENG-412. G-01 a G-40 siguen
+  igual.
+
 ## 1.9.0 — 2026-11-09
 
 - Nuevo método `STARCH_BY_DAY_PROFILE` 1.0.0: los almidones de un perfil de día por tiempo de comida (07 §2, P14.5). El perfil

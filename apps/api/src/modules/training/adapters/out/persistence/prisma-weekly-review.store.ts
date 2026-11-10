@@ -6,6 +6,7 @@ import type {
   ReviewDecision,
   ThresholdRow,
   ThresholdValues,
+  VolumeFactorsRow,
   WeeklyReviewStore,
 } from '../../../application/ports/weekly-review.ports.js';
 import type {
@@ -18,6 +19,18 @@ import type {
 
 const isoDate = (value: Date): string => value.toISOString().slice(0, 10);
 const asDate = (value: string): Date => new Date(`${value}T00:00:00Z`);
+
+/** Una tabla de factores guardada: la migración y la columna aseguran que es una lista; cada fila se lee con sus tipos. */
+function factorRows(value: unknown): VolumeFactorsRow['rir'] {
+  if (!Array.isArray(value)) return [];
+  return value.flatMap((item: unknown) => {
+    if (item === null || typeof item !== 'object') return [];
+    const { from, factor, orMore } = item as Record<string, unknown>;
+    return typeof from === 'number' && typeof factor === 'number'
+      ? [{ from, factor, orMore: orMore === true }]
+      : [];
+  });
+}
 const num = (value: { toString(): string } | null): number | null =>
   value === null ? null : Number(value);
 
@@ -171,6 +184,20 @@ export class PrismaWeeklyReviewStore implements WeeklyReviewStore {
       orderBy: [{ organizationId: { sort: 'asc', nulls: 'last' } }, { validFrom: 'desc' }],
     });
     return row ? toThreshold(row) : null;
+  }
+
+  async volumeFactorVersions(organizationId: string): Promise<readonly VolumeFactorsRow[]> {
+    const rows = await this.db.tx.volumeFactorTable.findMany({
+      where: { OR: [{ organizationId }, { organizationId: null }] },
+      orderBy: [{ validFrom: 'asc' }, { id: 'asc' }],
+    });
+    return rows.map((row) => ({
+      id: row.id,
+      organizationId: row.organizationId,
+      validFrom: row.validFrom.toISOString().slice(0, 10),
+      rir: factorRows(row.rirFactors),
+      rest: factorRows(row.restFactors),
+    }));
   }
 
   async baseThreshold(onDate: string): Promise<ThresholdRow | null> {

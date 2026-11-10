@@ -48,6 +48,7 @@ export const METHOD_LABELS = {
   PRI_JV: 'Perfil de rendimiento (PRI de JV Fitness)',
   READINESS_JV: 'Recuperación e indicación del día (JV Fitness)',
   WEEKLY_REVIEW_JV: 'Control semanal (JV Fitness)',
+  ADJUSTED_VOLUME: 'Volumen ajustado (RIR y descanso, JV Fitness)',
 } as const satisfies Record<string, string>;
 
 export type LabeledMethodCode = keyof typeof METHOD_LABELS;

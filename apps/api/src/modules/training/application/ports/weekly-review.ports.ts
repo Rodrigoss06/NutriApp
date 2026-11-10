@@ -33,7 +33,28 @@ export interface ReviewDecision {
   readonly resultingProgramId: string | null;
 }
 
-/** training.weekly_review y training.readiness_threshold, en la transacción de quien llama y con su RLS. */
+/** Una versión de las tablas de factores del volumen ajustado (P-26, ADR-106): `from` es el RIR o los segundos de descanso. */
+export interface VolumeFactorsRow {
+  readonly id: string;
+  /** null: la global, con los valores de Jeremy. */
+  readonly organizationId: string | null;
+  readonly validFrom: string;
+  readonly rir: readonly {
+    readonly from: number;
+    readonly factor: number;
+    readonly orMore: boolean;
+  }[];
+  readonly rest: readonly {
+    readonly from: number;
+    readonly factor: number;
+    readonly orMore: boolean;
+  }[];
+}
+
+/**
+ * training.weekly_review, training.readiness_threshold y training.volume_factor_table, en la transacción de quien llama y con su
+ * RLS.
+ */
 export interface WeeklyReviewStore {
   /** Los programas publicados de la organización del contexto. */
   publishedPrograms(): Promise<readonly PublishedProgramRef[]>;
@@ -56,6 +77,8 @@ export interface WeeklyReviewStore {
   ownThresholdOn(organizationId: string, validFrom: string): Promise<ThresholdRow | null>;
   insertThreshold(row: ThresholdRow): Promise<void>;
   updateThreshold(id: string, values: ThresholdValues): Promise<void>;
+  /** Todas las versiones de los factores que ve la organización: las suyas y las globales (P-26). */
+  volumeFactorVersions(organizationId: string): Promise<readonly VolumeFactorsRow[]>;
 }
 
 export const WEEKLY_REVIEW_STORE = Symbol('WEEKLY_REVIEW_STORE');
