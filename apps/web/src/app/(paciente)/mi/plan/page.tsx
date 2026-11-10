@@ -6,7 +6,7 @@ import type { Metadata } from 'next';
 import { DayLog } from '@/features/patient-app/day-log';
 import { MealLogger } from '@/features/patient-app/meal-logger';
 import { OffPlanLogger } from '@/features/patient-app/off-plan-logger';
-import { PlanDayProfiles } from '@/features/patient-app/plan-day-profiles';
+import { PlanDayProfiles, TodayPortions } from '@/features/patient-app/plan-day-profiles';
 import { serverApi } from '@/lib/api/server';
 
 export const metadata: Metadata = { title: 'Plan' };
@@ -39,6 +39,7 @@ export default async function Page() {
             </p>
           ) : null}
           <PlanDayProfiles plan={current} todayCode={today.data.target?.profile?.code ?? null} />
+          <TodayPortions plan={current} />
           <MealLogger meals={current.meals} localDate={today.data.localDate} editable />
         </>
       ) : (

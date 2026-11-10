@@ -150,17 +150,50 @@ function meals(sheet: ExchangeDietSheet, frame: SheetFrame): ReactElement {
   );
 }
 
+/**
+ * Los almidones de cada tiempo en cada perfil de día (07 §2, P-20.5; plantilla 1.2.0): el perfil es el mismo plan con más o
+ * menos almidones, y lo demás no cambia. Sin perfiles con sus almidones (o lo publicado antes), nada.
+ */
+function profileStarch(sheet: ExchangeDietSheet, frame: SheetFrame): ReactElement | null {
+  const profiles = sheet.dayProfiles.flatMap((profile) =>
+    profile.starchByMeal ? [{ name: profile.name, starchByMeal: profile.starchByMeal }] : [],
+  );
+  if (profiles.length === 0) return null;
+  const starch = sheet.groups.find((group) => group.code === 'STA')?.name ?? 'Almidones';
+  return section(
+    `${starch} por perfil de día`,
+    frame.colors,
+    table(
+      [
+        { label: 'Tiempo', flex: 2.2 },
+        { label: 'Entrenamiento', flex: 1.3, numeric: true },
+        ...profiles.map((profile) => ({ label: profile.name, flex: 1.3, numeric: true })),
+      ],
+      sheet.meals.map((meal, index) => [
+        meal.name,
+        num(meal.exchanges.find((e) => e.groupName === starch)?.servings ?? 0, 'exchanges'),
+        ...profiles.map((profile) => num(profile.starchByMeal[index] ?? 0, 'exchanges')),
+      ]),
+    ),
+    h(
+      Text,
+      { style: styles.note },
+      `En cada perfil cambian solo los ${starch.toLocaleLowerCase('es')}; lo demás es igual que el plan. Sugerencia de ${methodLabel('STARCH_BY_DAY_PROFILE')}, que el profesional ajusta.`,
+    ),
+  );
+}
+
 function exchangeDiet(
   sheet: ExchangeDietSheet,
   frame: SheetFrame,
-  withProfiles: boolean,
+  version: { readonly profiles: boolean; readonly portions: boolean },
 ): ReactElement<DocumentProps> {
   const { patient } = sheet;
   return sheetDocument(
     frame,
     patientLine(patient),
     targets(sheet, frame),
-    withProfiles ? dayProfilesSection(sheet.targets, sheet.dayProfiles, frame) : null,
+    version.profiles ? dayProfilesSection(sheet.targets, sheet.dayProfiles, frame) : null,
     sheet.hydrationMl === null
       ? null
       : section(
@@ -174,6 +207,7 @@ function exchangeDiet(
         ),
     groups(sheet, frame),
     meals(sheet, frame),
+    version.portions ? profileStarch(sheet, frame) : null,
     sheet.instructions
       ? section('Indicaciones', frame.colors, h(Text, null, sheet.instructions))
       : null,
@@ -196,11 +230,15 @@ function exchangeDiet(
 /** El título y el subtítulo del encabezado de esta ficha. */
 /** Versión 1.0.0: la de P11, igual para volver a dibujar lo que ya se generó (RN-H02). */
 export const exchangeDietV1 = (sheet: ExchangeDietSheet, frame: SheetFrame) =>
-  exchangeDiet(sheet, frame, false);
+  exchangeDiet(sheet, frame, { profiles: false, portions: false });
 
 /** Versión 1.1.0 (P14.5): además, la meta de cada perfil de día (07 §2). */
 export const exchangeDietV110 = (sheet: ExchangeDietSheet, frame: SheetFrame) =>
-  exchangeDiet(sheet, frame, true);
+  exchangeDiet(sheet, frame, { profiles: true, portions: false });
+
+/** Versión 1.2.0 (P14.5): además, los almidones de cada tiempo en cada perfil (P-20.5). */
+export const exchangeDietV120 = (sheet: ExchangeDietSheet, frame: SheetFrame) =>
+  exchangeDiet(sheet, frame, { profiles: true, portions: true });
 
 export function exchangeDietTitles(sheet: ExchangeDietSheet): { title: string; subtitle: string } {
   return {

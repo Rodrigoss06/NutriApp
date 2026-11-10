@@ -3,6 +3,7 @@ import { enterStyle, formatNumber } from '@nutricoach/ui';
 import type { ReactNode } from 'react';
 import { DayProfilesTable } from './day-profiles-table';
 import { AdequacyTable, ExchangeTable, SplitTable } from './plan-tables';
+import { ProfileStarchTable } from './profile-starch-table';
 
 const ML = new Intl.NumberFormat('es-PE');
 
@@ -69,6 +70,14 @@ export function PlanView({ plan }: { plan: ExchangeNutritionPlan }) {
         />
       </Block>
 
+      {plan.dayProfiles.some((profile) => profile.portions) ? (
+        <Block id="plan-perfiles" title="Almidones por perfil de día" order={3}>
+          <ProfileStarchTable
+            plan={plan}
+            starchName={groups.find((group) => group.code === 'STA')?.name ?? 'Almidones'}
+          />
+        </Block>
+      ) : null}
       <Block id="plan-alimentos" title="Alimentos permitidos" order={3}>
         <div className="grid gap-4 lg:grid-cols-2">
           {plan.meals.map((meal) => (

@@ -33,15 +33,33 @@ export type SheetTotals = Readonly<Record<keyof typeof SHEET_NUTRIENTS, SheetTot
   readonly of: number;
 };
 
-/** Lo que come el paciente en un tiempo: un alimento con sus gramos y medida casera, o una receta en porciones. */
+/**
+ * Lo que come el paciente en un tiempo: un alimento con sus gramos y medida casera, o una receta en porciones. byProfile: su
+ * cantidad en los perfiles de día que la cambian (P-20.5; plantilla 1.2.0); solo si hay alguno, para que lo de antes quede igual.
+ */
 export type SheetMenuItem =
   | {
       readonly kind: 'FOOD';
       readonly name: string;
       readonly grams: number;
       readonly householdText: string | null;
+      readonly byProfile?: Readonly<
+        Record<string, { readonly grams: number; readonly householdText: string | null }>
+      >;
     }
-  | { readonly kind: 'RECIPE'; readonly name: string; readonly servings: number };
+  | {
+      readonly kind: 'RECIPE';
+      readonly name: string;
+      readonly servings: number;
+      readonly byProfile?: Readonly<Record<string, { readonly servings: number }>>;
+    };
+
+/** Las cantidades por perfil de un alimento o receta del snapshot, solo si hay alguna. */
+function withPortions<T extends object>(
+  byProfile: Readonly<Record<string, T>> | undefined,
+): { readonly byProfile?: Readonly<Record<string, T>> } {
+  return byProfile && Object.keys(byProfile).length > 0 ? { byProfile } : {};
+}
 
 export interface SheetFoodAdequacy {
   readonly pct: number;
@@ -185,6 +203,7 @@ export function menuSheet(
               name: item.foodName,
               grams: item.grams,
               householdText: item.householdText,
+              ...withPortions(item.byProfile),
             })),
             optionB: [],
           })),
@@ -204,8 +223,14 @@ export function menuSheet(
           name: entry.foodName,
           grams: entry.grams,
           householdText: entry.householdText,
+          ...withPortions(entry.byProfile),
         }
-      : { kind: 'RECIPE', name: entry.recipeName, servings: entry.servings };
+      : {
+          kind: 'RECIPE',
+          name: entry.recipeName,
+          servings: entry.servings,
+          ...withPortions(entry.byProfile),
+        };
   return {
     ...common,
     days: snapshot.days.map((day) => ({

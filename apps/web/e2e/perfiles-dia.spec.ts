@@ -4,11 +4,14 @@ import { luisWithPrescription } from './support/luis';
 import { createOrganization, loginInPage } from './support/stack';
 
 /**
- * P14.5 (PR 1d) de punta a punta: los perfiles de día del plan (07 §2; P-20, respuestas de Jeremy; ADR-100, ADR-101) en
- * escritorio y en el celular. Entrenamiento es la meta de la prescripción (G-17); Descanso y los perfiles propios llevan sus
- * gramos, con la proteína y la grasa de Entrenamiento ya puestas (P-20.1), y las kcal salen de los gramos (P-20.2). axe en
- * cada paso. Datos sintéticos de seeds/luis.
+ * P14.5 (PR 1d y 1f) de punta a punta: los perfiles de día del plan (07 §2; P-20, respuestas de Jeremy; ADR-100, ADR-101,
+ * ADR-103) en escritorio y en el celular. Entrenamiento es la meta de la prescripción (G-17); Descanso y los perfiles propios
+ * llevan sus gramos, con la proteína y la grasa de Entrenamiento ya puestas (P-20.1), y las kcal salen de los gramos (P-20.2).
+ * Cada perfil es el mismo plan con menos (o más) del alimento fuente (P-20.5). axe en cada paso. Datos sintéticos de seeds/luis
+ * y la TPCA que carga catalog:load.
  */
+
+const RICE = 'Arroz pilado o pulido cocido';
 
 async function recordTab(page: Page, name: string): Promise<void> {
   await page
@@ -70,6 +73,124 @@ test.describe('P14.5 · Perfiles de día del plan', () => {
         profiles.getByRole('group', { name: 'Alto' }).getByLabel('Carbohidratos (g)'),
       ).toHaveValue('250');
       await expect(profiles.getByRole('group', { name: 'Alto' })).toContainText('2,099 kcal');
+      expect(await seriousViolations(page)).toEqual([]);
+    });
+  });
+});
+
+async function newPlan(page: Page, patientId: string, modality: string): Promise<void> {
+  await page.goto(`/panel/pacientes/${patientId}/dieta/nuevo`);
+  await page.getByRole('combobox', { name: 'Modalidad' }).click();
+  await page.getByRole('option', { name: modality }).click();
+  await page.getByRole('button', { name: 'Crear borrador' }).click();
+  await expect(page.getByRole('heading', { name: 'Plan nutricional' })).toBeVisible();
+}
+
+async function addRest(page: Page, choG: string): Promise<void> {
+  const profiles = page.getByRole('region', { name: 'Perfiles de día' });
+  await profiles.getByRole('button', { name: 'Agregar Descanso' }).click();
+  await profiles
+    .getByRole('group', { name: 'Descanso' })
+    .getByLabel('Carbohidratos (g)')
+    .fill(choG);
+}
+
+async function saved(page: Page): Promise<void> {
+  await page.getByRole('button', { name: 'Guardar borrador' }).click();
+  await expect(page.getByText('Guardado', { exact: true })).toBeVisible();
+}
+
+test.describe('P14.5 · Porciones de cada perfil de día (P-20.5)', () => {
+  test('intercambios: Descanso sugiere menos almidones con su método; el coach los ajusta y quedan guardados', async ({
+    page,
+  }) => {
+    test.setTimeout(2 * 60_000);
+    const organization = await createOrganization();
+    const luisId = await luisWithPrescription(organization.ownerEmail);
+    await loginInPage(page, organization.ownerEmail);
+    await page.goto(`/panel/pacientes/${luisId}`);
+    await recordTab(page, 'Dieta');
+    await page.getByRole('link', { name: 'Nuevo plan' }).click();
+    await page.getByRole('button', { name: 'Crear borrador' }).click();
+    await page.waitForURL(/\/dieta\/[0-9a-f-]{36}$/);
+    await addRest(page, '120');
+    const toSplit = async () => {
+      await page.getByRole('button', { name: 'Siguiente: Intercambios' }).click();
+      await page.getByRole('button', { name: 'Siguiente: Reparto y alimentos' }).click();
+    };
+    await toSplit();
+    const rest = page.getByRole('region', { name: /^Descanso/ });
+
+    await test.step('la sugerencia, con su método y la adecuación de Descanso (RN-D02, RN-E10)', async () => {
+      await expect(rest).toContainText('Sugerencia');
+      await expect(rest).toContainText('Almidones del perfil de día');
+      await expect(rest.getByRole('table', { name: 'Adecuación de Descanso' })).toBeVisible();
+      expect(await seriousViolations(page)).toEqual([]);
+    });
+
+    await test.step('ajustada a mano, se guarda y vuelve igual', async () => {
+      await rest.getByRole('button', { name: 'Ajustar a mano Descanso' }).click();
+      await rest.getByLabel('Almidones en Desayuno, Descanso').fill('1');
+      await expect(rest).toContainText('Ajustado a mano');
+      expect(await seriousViolations(page)).toEqual([]);
+      await saved(page);
+      await page.reload();
+      await toSplit();
+      await expect(rest.getByLabel('Almidones en Desayuno, Descanso')).toHaveValue('1');
+      await expect(rest).toContainText('Ajustado a mano');
+    });
+  });
+
+  test('composición: los gramos de Descanso de un alimento, su adecuación, y en el plan publicado', async ({
+    page,
+  }) => {
+    test.setTimeout(3 * 60_000);
+    const organization = await createOrganization();
+    const luisId = await luisWithPrescription(organization.ownerEmail);
+    await loginInPage(page, organization.ownerEmail);
+    await newPlan(page, luisId, 'Composición');
+    await page.getByRole('button', { name: 'Usar 2,500 ml (EFSA 2010)' }).click();
+    for (const meal of ['Desayuno', 'Media mañana', 'Media tarde', 'Cena']) {
+      await page.getByRole('button', { name: `Quitar ${meal}`, exact: true }).click();
+    }
+    await page.getByLabel('% del día de Almuerzo').fill('100');
+    await page.getByRole('button', { name: 'Agregar a Almuerzo' }).click();
+    await page
+      .getByRole('searchbox', { name: 'Buscar alimento para Almuerzo' })
+      .fill('arroz pilado cocido');
+    await page.getByRole('button', { name: `Agregar ${RICE}` }).click();
+    await page.getByRole('button', { name: 'Listo' }).click();
+    await page.getByLabel(`Gramos de ${RICE}`).fill('200');
+    await addRest(page, '120');
+    const showRest = async () => {
+      // Con la vista previa al día: si llega con el menú abierto, el editor se vuelve a dibujar y el toque se pierde.
+      await expect(page.locator('[aria-busy="true"]')).toHaveCount(0);
+      const select = page.getByRole('combobox', { name: 'Porciones de' });
+      await select.click();
+      await page.getByRole('option', { name: 'Descanso' }).click();
+      await expect(select).toContainText('Descanso');
+    };
+
+    await test.step('en Descanso se escriben solo sus gramos, con su día y su adecuación', async () => {
+      await showRest();
+      await expect(page.getByRole('button', { name: 'Agregar a Almuerzo' })).toHaveCount(0);
+      await page.getByLabel(`Gramos en Descanso de ${RICE}`).fill('100');
+      await expect(
+        page.getByRole('heading', { name: 'Lo que aporta un día de Descanso' }),
+      ).toBeVisible();
+      await expect(page.getByRole('table', { name: 'Adecuación de Descanso' })).toBeVisible();
+      expect(await seriousViolations(page)).toEqual([]);
+    });
+
+    await test.step('se guardan, vuelven igual y el plan publicado dice la cantidad de Descanso', async () => {
+      await saved(page);
+      await page.reload();
+      await showRest();
+      await expect(page.getByLabel(`Gramos en Descanso de ${RICE}`)).toHaveValue('100');
+      await page.getByRole('button', { name: 'Publicar plan' }).click();
+      await page.getByRole('button', { name: 'Publicar', exact: true }).click();
+      await expect(page.getByText('Vigente', { exact: true })).toBeVisible();
+      await expect(page.getByText('Descanso: 100 g')).toBeVisible();
       expect(await seriousViolations(page)).toEqual([]);
     });
   });

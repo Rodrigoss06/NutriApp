@@ -13,6 +13,7 @@ import {
 } from '../../../application/sheets/sheet-fixtures.spec-support.js';
 import { pngImage } from '../../../../../../test/support/images.js';
 import { pdfText, pdfTextItems } from '../../../../../../test/support/pdf-text.js';
+import type { MenuSheet, SheetMenuItem } from '../../../application/sheets/menu-sheet.js';
 import { ReactPdfRenderer } from './react-pdf.renderer.js';
 
 /** Un PNG de 1 × 1 píxel: el logo más chico posible. */
@@ -402,4 +403,86 @@ describe('RN-H01 · 07 §2 · P-20 · las fichas del plan 1.1.0 con los perfiles
     );
     expect(menu).toContain('Metas por perfil de día');
   });
+});
+
+describe('RN-H01 · 07 §2 · P-20.5 · las fichas del plan 1.2.0 con las porciones de cada perfil', () => {
+  const REST = { code: 'REST', name: 'Descanso', kcal: 1579, choG: 120, proteinG: 160, fatG: 51 };
+
+  it(
+    'la dieta 1.2.0 dice los almidones de cada tiempo en Descanso; la 1.1.0 dibuja lo de siempre',
+    SLOW,
+    async () => {
+      const content = {
+        ...LUIS_EXCHANGE_SHEET,
+        dayProfiles: [{ ...REST, starchByMeal: LUIS_EXCHANGE_SHEET.meals.map(() => 0) }],
+      };
+      const text = await pdfText(
+        await renderer.render({ ...INPUT, content, templateVersion: '1.2.0' }),
+      );
+      for (const expected of [
+        'Almidones por perfil de día',
+        'Metas por perfil de día',
+        'Almidones del perfil de día',
+      ]) {
+        expect(text).toContain(expected);
+      }
+      const old = await pdfText(
+        await renderer.render({ ...INPUT, content, templateVersion: '1.1.0' }),
+      );
+      expect(old).not.toContain('Almidones por perfil de día');
+      // Lo publicado antes de las porciones no trae almidones por perfil: la 1.2.0 no agrega nada.
+      const before = await pdfText(
+        await renderer.render({
+          ...INPUT,
+          content: { ...LUIS_EXCHANGE_SHEET, dayProfiles: [REST] },
+          templateVersion: '1.2.0',
+        }),
+      );
+      expect(before).not.toContain('Almidones por perfil de día');
+    },
+  );
+
+  it(
+    'el menú 1.2.0 dice cada alimento que cambia en Descanso, con su cantidad en el plan',
+    SLOW,
+    async () => {
+      const [monday, ...rest] = LUIS_MENU_SHEET.days;
+      if (!monday) throw new Error('El menú de Luis no tiene lunes.');
+      const [first, ...cells] = monday.cells;
+      if (!first) throw new Error('El lunes no tiene tiempos.');
+      const [item, ...items] = first.optionA;
+      if (!item) throw new Error('El lunes no tiene nada en su primer tiempo.');
+      const changed: SheetMenuItem =
+        item.kind === 'FOOD'
+          ? { ...item, byProfile: { REST: { grams: 0, householdText: null } } }
+          : { ...item, byProfile: { REST: { servings: 0 } } };
+      const content: MenuSheet = {
+        ...LUIS_MENU_SHEET,
+        dayProfiles: [REST],
+        days: [
+          {
+            ...monday,
+            cells: [
+              {
+                ...first,
+                optionA: [changed, ...items],
+              },
+              ...cells,
+            ],
+          },
+          ...rest,
+        ],
+      };
+      const text = await pdfText(
+        await renderer.render({ ...INPUT, content, templateVersion: '1.2.0' }),
+      );
+      for (const expected of ['Porciones por perfil de día', 'Lunes', item.name, 'no va']) {
+        expect(text).toContain(expected);
+      }
+      const old = await pdfText(
+        await renderer.render({ ...INPUT, content, templateVersion: '1.1.0' }),
+      );
+      expect(old).not.toContain('Porciones por perfil de día');
+    },
+  );
 });

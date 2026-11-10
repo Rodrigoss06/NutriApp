@@ -172,8 +172,8 @@ describe('RF-24 · la ficha se genera al publicar', () => {
       status: 'READY',
       document: {
         kind: 'EXCHANGE_DIET',
-        // La 1.1.0 desde P14.5: suma las metas por perfil de día (ADR-101).
-        templateVersion: '1.1.0',
+        // La 1.2.0 desde P14.5: suma las metas (ADR-101) y las porciones de cada perfil de día (ADR-103).
+        templateVersion: '1.2.0',
         fileName: 'ficha-dieta-por-intercambios.pdf',
       },
     });
@@ -181,7 +181,7 @@ describe('RF-24 · la ficha se genera al publicar', () => {
     // Sin pedido, la firma quien publicó el plan.
     expect(row).toMatchObject({
       generated_by: org.staff.responsible.userId,
-      template_version: '1.1.0',
+      template_version: '1.2.0',
     });
     const [file] = await owner<{ purpose: string; mime_type: string }>(
       `SELECT f.purpose, f.mime_type FROM platform.file_object f

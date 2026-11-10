@@ -2,11 +2,9 @@ import type {
   CompositionNutritionPlan,
   DayProfileInput,
   FoodDetail,
-  FoodProfilePortion,
   FoodState,
   MealSlot,
   MenuItemView,
-  RecipeProfilePortion,
   RecipeSummary,
   UpdateCompositionPlan,
   UpdateWeeklyMenuPlan,
@@ -37,6 +35,20 @@ export const DAY_NAMES = [
   'Domingo',
 ] as const;
 
+/**
+ * La cantidad de un alimento en un perfil de día como se escribe (07 §2, P-20.5): en gramos, con la medida casera con que se
+ * guardó mientras no se cambie; «0», ese día no va.
+ */
+export interface ProfileFoodAmount {
+  readonly grams: string;
+  readonly householdText: string | null;
+}
+
+/** Las porciones de una receta en un perfil de día como se escriben (P-20.5); «0», ese día no va. */
+export interface ProfileRecipeAmount {
+  readonly servings: string;
+}
+
 /** Un alimento como se escribe: en gramos de parte comestible o en una de sus medidas caseras (RN-E12). */
 export interface FoodItemRow {
   readonly kind: 'FOOD';
@@ -51,8 +63,8 @@ export interface FoodItemRow {
   readonly amount: string;
   /** La medida con que se guardó, mientras no se cambie la cantidad. */
   readonly savedHouseholdText: string | null;
-  /** Su cantidad en los perfiles de día que la cambian (P-20.5): vuelve tal cual al guardar. */
-  readonly byProfile: Readonly<Record<string, FoodProfilePortion>>;
+  /** Su cantidad en los perfiles de día que la cambian, por código (P-20.5); sin la clave, la del plan. */
+  readonly byProfile: Readonly<Record<string, ProfileFoodAmount>>;
 }
 
 /** Una receta del recetario, en porciones (RN-E16). */
@@ -62,8 +74,8 @@ export interface RecipeItemRow {
   readonly recipeId: string;
   readonly recipeName: string;
   readonly servings: string;
-  /** Sus porciones en los perfiles de día que las cambian (P-20.5): vuelven tal cual al guardar. */
-  readonly byProfile: Readonly<Record<string, RecipeProfilePortion>>;
+  /** Sus porciones en los perfiles de día que las cambian, por código (P-20.5); sin la clave, las del plan. */
+  readonly byProfile: Readonly<Record<string, ProfileRecipeAmount>>;
 }
 
 export type ItemRow = FoodItemRow | RecipeItemRow;
@@ -137,7 +149,12 @@ function savedFoodRow(item: FoodItemView, key: string, measures: Measures): Food
     unit: GRAMS,
     amount: String(item.grams),
     savedHouseholdText: item.householdText,
-    byProfile: item.byProfile,
+    byProfile: Object.fromEntries(
+      Object.entries(item.byProfile).map(([code, portion]) => [
+        code,
+        { grams: String(portion.grams), householdText: portion.householdText },
+      ]),
+    ),
   };
 }
 
@@ -150,7 +167,12 @@ function savedItemRow(item: MenuItemView, key: string, measures: Measures): Item
         recipeId: item.recipeId,
         recipeName: item.recipeName,
         servings: String(item.servings),
-        byProfile: item.byProfile,
+        byProfile: Object.fromEntries(
+          Object.entries(item.byProfile).map(([code, portion]) => [
+            code,
+            { servings: String(portion.servings) },
+          ]),
+        ),
       };
 }
 
@@ -220,22 +242,103 @@ export function itemError(row: ItemRow): string | undefined {
   return row.unit === GRAMS ? 'Más de 0 y hasta 9999 g.' : 'Más de 0 y hasta 100.';
 }
 
+/** Gramos de un perfil: de 0 (ese día no va) a 9999. */
+export function profileGramsOf(text: string): number | null {
+  const value = parseDecimal(text);
+  return value !== null && value >= 0 && value <= 9_999 ? value : null;
+}
+
+/** Porciones de una receta en un perfil: de 0 (ese día no va) a 99. */
+export function profileServingsOf(text: string): number | null {
+  const value = parseDecimal(text);
+  return value !== null && value >= 0 && value <= 99 ? value : null;
+}
+
+/** Lo escrito para un perfil en una fila; '' si lleva la cantidad del plan. */
+export function profileAmountText(row: ItemRow, code: string): string {
+  return row.kind === 'FOOD'
+    ? (row.byProfile[code]?.grams ?? '')
+    : (row.byProfile[code]?.servings ?? '');
+}
+
+/** Lo que dice el error de la cantidad de un perfil, o undefined si sirve o lleva la del plan. */
+export function profileAmountError(row: ItemRow, code: string): string | undefined {
+  const text = profileAmountText(row, code);
+  if (text.trim() === '') return undefined;
+  if (row.kind === 'FOOD') return profileGramsOf(text) === null ? 'De 0 a 9999 g.' : undefined;
+  return profileServingsOf(text) === null ? 'De 0 a 99.' : undefined;
+}
+
+/**
+ * Cambia la cantidad de una fila en un perfil (P-20.5): vacía, vuelve a la del plan. Cambiar los gramos deja de lado la medida
+ * casera con que se guardó.
+ */
+export function withProfileAmount<R extends ItemRow>(
+  items: readonly R[],
+  key: string,
+  code: string,
+  text: string,
+): R[] {
+  const others = <T>(byProfile: Readonly<Record<string, T>>) =>
+    Object.fromEntries(Object.entries(byProfile).filter(([other]) => other !== code));
+  const empty = text.trim() === '';
+  return items.map((row): R => {
+    if (row.key !== key) return row;
+    if (row.kind === 'FOOD') {
+      const rest = others(row.byProfile);
+      return {
+        ...row,
+        byProfile: empty ? rest : { ...rest, [code]: { grams: text, householdText: null } },
+      };
+    }
+    const rest = others(row.byProfile);
+    return { ...row, byProfile: empty ? rest : { ...rest, [code]: { servings: text } } };
+  });
+}
+
 type ItemBody = UpdateWeeklyMenuPlan['days'][number]['meals'][number]['optionA'][number];
 type FoodBody = Extract<ItemBody, { itemType: 'FOOD' }>;
 
-function foodBodyOf(row: FoodItemRow): FoodBody | null {
+/**
+ * Las cantidades de cada perfil para el cuerpo, solo de los perfiles del plan (codes); null si alguna no sirve. Un perfil que ya
+ * no está se deja de lado: la API no lo aceptaría.
+ */
+function portionsOf<T, U>(
+  byProfile: Readonly<Record<string, T>>,
+  codes: ReadonlySet<string>,
+  parse: (amount: T) => U | null,
+): Record<string, U> | null {
+  const result: Record<string, U> = {};
+  for (const [code, amount] of Object.entries(byProfile)) {
+    if (!codes.has(code)) continue;
+    const parsed = parse(amount);
+    if (parsed === null) return null;
+    result[code] = parsed;
+  }
+  return result;
+}
+
+function foodBodyOf(row: FoodItemRow, codes: ReadonlySet<string>): FoodBody | null {
   const amount = foodItemOf(row);
-  return amount
-    ? { itemType: 'FOOD', foodId: row.foodId, ...amount, byProfile: row.byProfile }
+  const byProfile = portionsOf(row.byProfile, codes, ({ grams, householdText }) => {
+    const value = profileGramsOf(grams);
+    return value === null ? null : { grams: value, householdText };
+  });
+  return amount && byProfile
+    ? { itemType: 'FOOD', foodId: row.foodId, ...amount, byProfile }
     : null;
 }
 
-function itemBodyOf(row: ItemRow): ItemBody | null {
-  if (row.kind === 'FOOD') return foodBodyOf(row);
+function itemBodyOf(row: ItemRow, codes: ReadonlySet<string>): ItemBody | null {
+  if (row.kind === 'FOOD') return foodBodyOf(row, codes);
   const servings = recipeServingsOf(row.servings);
-  return servings === null
+  const byProfile = portionsOf(row.byProfile, codes, ({ servings: text }) => {
+    const value = profileServingsOf(text);
+    return value === null ? null : { servings: value };
+  });
+  return servings === null || byProfile === null
     ? null
-    : { itemType: 'RECIPE', recipeId: row.recipeId, servings, byProfile: row.byProfile };
+    : { itemType: 'RECIPE', recipeId: row.recipeId, servings, byProfile };
 }
 
 /** Todos o null: basta uno que no sirva para no pedir la vista previa. */
@@ -309,9 +412,10 @@ export function compositionDraftOf(
  */
 export function compositionBody(draft: CompositionDraft): UpdateCompositionPlan | null {
   const columns = columnsOf(draft);
+  const codes = new Set(columns?.dayProfiles.map((profile) => profile.code));
   const meals = allOrNull(draft.meals, (meal) => {
     const header = headerBodyOf(meal);
-    const items = allOrNull(meal.items, foodBodyOf);
+    const items = allOrNull(meal.items, (row) => foodBodyOf(row, codes));
     return header && items ? { ...header, items } : null;
   });
   return columns && meals ? { modality: 'COMPOSITION', meals, ...columns } : null;
@@ -346,11 +450,12 @@ export function menuDraftOf(
 /** El cuerpo de PUT y de la vista previa de un menú, o null mientras algo falte o no sea un número válido. */
 export function menuBody(draft: MenuDraft): UpdateWeeklyMenuPlan | null {
   const columns = columnsOf(draft);
+  const codes = new Set(columns?.dayProfiles.map((profile) => profile.code));
   const meals = allOrNull(draft.meals, headerBodyOf);
   const days = allOrNull(draft.days, (day) => {
     const cells = allOrNull(day.cells, (cell) => {
-      const optionA = allOrNull(cell.optionA, itemBodyOf);
-      const optionB = allOrNull(cell.optionB, itemBodyOf);
+      const optionA = allOrNull(cell.optionA, (row) => itemBodyOf(row, codes));
+      const optionB = allOrNull(cell.optionB, (row) => itemBodyOf(row, codes));
       return optionA && optionB ? { optionA, optionB } : null;
     });
     return cells ? { meals: cells } : null;

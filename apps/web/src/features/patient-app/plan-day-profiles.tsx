@@ -43,3 +43,17 @@ export function PlanDayProfiles({
     </section>
   );
 }
+
+/**
+ * De qué tipo de día son las porciones que se ven y se registran (07 §2, P-20.5): las del perfil de la meta de hoy. En
+ * Entrenamiento o con una sola meta, las del plan, y no dice nada.
+ */
+export function TodayPortions({ plan }: { plan: CurrentPlan }) {
+  if (!plan.profile) return null;
+  return (
+    <p className="rounded-xl border border-border bg-card p-3 text-sm">
+      Hoy es día de <span className="font-medium">{plan.profile.name}</span>: las porciones de abajo
+      son las de ese día.
+    </p>
+  );
+}

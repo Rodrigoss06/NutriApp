@@ -123,6 +123,7 @@ export function FoodAdequacyTable({
   plannedLabel,
   of,
   methods,
+  label = 'Adecuación del plan',
 }: {
   targets: Targets;
   adequacy: Adequacy;
@@ -132,15 +133,17 @@ export function FoodAdequacyTable({
   /** De cuántos alimentos (o días) sale lo planeado. */
   of: number;
   methods: CompositionPlanPreview['methods'];
+  /** El nombre de la tabla: la de un perfil de día dice cuál (P-20.5). */
+  label?: string;
 }) {
   const [min, max] = adequacy.rangePct;
   const days = adequacy.kcal.days;
   const noun = days > 1 ? 'días' : 'alimentos';
   return (
     <div className="flex flex-col gap-2">
-      <TableScroll label="Adecuación del plan">
+      <TableScroll label={label}>
         <table className="w-full border-collapse text-sm">
-          <caption className="sr-only">Adecuación del plan</caption>
+          <caption className="sr-only">{label}</caption>
           <thead className="bg-surface text-left text-muted-foreground">
             <tr>
               <th scope="col" className="px-3 py-2 font-medium">

@@ -1197,8 +1197,9 @@ interface FoodHit {
 }
 
 /**
- * El plan de Mateo por la API (P14.5, ADR-101): su prescripción con la meta de Entrenamiento de la hoja, 160/310/70 g (2,510 kcal),
- * y la composición con el perfil Descanso, 160/240/70 g (2,230 kcal; mandan los gramos, P-20.2). La prescripción sale de su
+ * El plan de Mateo por la API (P14.5, ADR-101 y ADR-103): su prescripción con la meta de Entrenamiento de la hoja, 160/310/70 g
+ * (2,510 kcal), y la composición con el perfil Descanso, 160/240/70 g (2,230 kcal; mandan los gramos, P-20.2), con menos pan en
+ * la media tarde y menos papa en la cena (P-20.5). La prescripción sale de su
  * evaluación del 05/10: la vista previa da su GET y el ajuste lo lleva a 2,510 kcal. Si ya tiene un plan publicado, no se toca.
  */
 async function publishMateoPlan(
@@ -1277,7 +1278,16 @@ async function publishMateoPlan(
       )) as { foods: FoodHit[] };
       const food = found.foods.find((f) => f.name === item.food && !f.own);
       if (!food) throw new Error(`El catálogo no trae «${item.food}»: corre pnpm catalog:load.`);
-      foods.push({ itemType: 'FOOD', foodId: food.id, grams: item.grams, householdText: null });
+      // Descanso: la cantidad de ese día (P-20.5), solo en los alimentos que la cambian.
+      const restGrams = 'restGrams' in item ? item.restGrams : undefined;
+      foods.push({
+        itemType: 'FOOD',
+        foodId: food.id,
+        grams: item.grams,
+        householdText: null,
+        byProfile:
+          restGrams === undefined ? {} : { REST: { grams: restGrams, householdText: null } },
+      });
     }
     items.push({
       slotCode: meal.slotCode,

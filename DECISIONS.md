@@ -2586,3 +2586,41 @@ Consecuencias:
   Descanso en la app.
 - Para Notion (/notion-sync de P14.5): 02 §9 (el método), 03 RN-E09 y RN-G05 (porciones por perfil), 04 RF-19 a RF-21 y RF-28,
   05.2 (las tablas) y 05 §2 (snapshot 4).
+
+## ADR-103 · Pantallas de las porciones de cada perfil, fichas del plan 1.2.0 y el Descanso de Mateo — aceptada (2026-11-09)
+Contexto: P14.5, PR 1f (07 §2; P-20.5; RN-E10, RN-G05, RN-H01, RN-H02; ADR-102). Las porciones de cada perfil llegaron por la
+API en el PR 1b; faltaban las pantallas, las fichas y la demo.
+Decisión:
+- Intercambios, paso «Reparto y alimentos»:
+  - una tarjeta por perfil con los almidones de cada tiempo junto a los de Entrenamiento;
+  - la sugerencia lleva su método (`STARCH_BY_DAY_PROFILE`); «Ajustar a mano» parte de ella y «Volver a la sugerencia» la
+    recupera;
+  - cada perfil muestra su adecuación frente a sus metas;
+  - agregar o quitar un tiempo ajusta el reparto del coach, y el de un perfil que ya no está no viaja.
+- Composición y menú: «Porciones de» elige Entrenamiento (el plan) o un perfil.
+  - En un perfil se escriben solo las cantidades: vacía es la del plan y 0 es «ese día no va». Agregar, quitar y la medida
+    casera son del plan.
+  - La medida casera guardada de un perfil se conserva mientras no cambien sus gramos.
+  - El día (composición) o la semana (menú) y la adecuación del lado son las del perfil elegido. El menú trae el promedio de
+    la semana de cada perfil desde la API (ADR-102).
+  - Un perfil nuevo usa el código que tomará de su nombre al guardar.
+- Plan publicado:
+  - en intercambios, la tabla de almidones de cada perfil y su adecuación;
+  - en composición y menú, cada alimento dice su cantidad en los perfiles que la cambian («Descanso: 100 g», «no va») y cada
+    perfil muestra su adecuación.
+- App del paciente: Hoy y Plan dicen de qué perfil son las porciones de hoy. La API ya las da (ADR-102).
+- Fichas EXCHANGE_DIET y WEEKLY_MENU 1.2.0 (migración `202611090100_documents_profile_portions_templates`):
+  - la dieta suma «Almidones por perfil de día»;
+  - el menú, que imprime también la composición, suma «Porciones por perfil de día» con cada alimento o receta que cambia;
+  - la 1.1.0 queda retirada y se sigue dibujando igual (RN-H02);
+  - el contenido de la ficha solo suma esos datos cuando existen, así que lo publicado antes de las porciones da la misma
+    ficha.
+- `pnpm demo:3`: el Descanso de Mateo lleva 30 g de pan en la media tarde (en vez de 100) y 50 g de papa en la cena (en vez
+  de 200): unos 240 g de carbohidratos con la TPCA. Son de ejemplo, mientras Jeremy no dé los de Mateo.
+Consecuencias:
+- Unitarias: las cantidades por perfil y los almidones a mano en los borradores de la web; las fichas 1.2.0 frente a la
+  1.1.0, con y sin porciones.
+- Integración: `documents.int.spec.ts` con la plantilla 1.2.0; `demo-3.int.spec.ts` con el Descanso de Mateo en unos 240 g.
+- E2E `e2e/perfiles-dia.spec.ts`: la sugerencia y el ajuste de almidones, y los gramos de Descanso en una composición hasta
+  el plan publicado, con axe.
+- Para Notion (/notion-sync de P14.5): 04 RF-24 (fichas 1.2.0) y RF-28 (Hoy y Plan), y 05.3 (las plantillas 1.2.0).

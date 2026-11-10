@@ -212,7 +212,7 @@ describe('Demo 3 · Mateo, el alumno ficticio de la hoja de Jeremy', () => {
     ).toEqual([22, 20.8]);
   });
 
-  it('07 §2 · P-20 · su plan con Entrenamiento (2,510 kcal) y Descanso (2,230), y la meta de cada día de octubre según su perfil', async () => {
+  it('07 §2 · P-20 · su plan con Entrenamiento (2,510 kcal) y Descanso (2,230) con sus porciones, y la meta de cada día de octubre según su perfil', async () => {
     expect(report.mateo.plan).toBe('CREATED');
     const plans = await get<{ plans: { id: string; status: string }[] }>(
       `/patients/${mateoId}/nutrition-plans`,
@@ -220,7 +220,15 @@ describe('Demo 3 · Mateo, el alumno ficticio de la hoja de Jeremy', () => {
     const published = plans.plans.find(({ status }) => status === 'PUBLISHED');
     const plan = await get<{
       targets: { kcal: number; choG: number; proteinG: number; fatG: number };
-      dayProfiles: { code: string; name: string; kcal: number }[];
+      dayProfiles: {
+        code: string;
+        name: string;
+        kcal: number;
+        portions: {
+          totals: { nutrients: Record<string, { value: number | null }> };
+          adequacy: { cho: { pct: number } };
+        } | null;
+      }[];
     }>(`/nutrition-plans/${published?.id ?? ''}`);
     // Mandan los gramos (P-20.2): 160/310/70 g son 2,510 kcal y 160/240/70 g, 2,230.
     expect(Math.round(plan.targets.kcal)).toBe(2510);
@@ -228,6 +236,10 @@ describe('Demo 3 · Mateo, el alumno ficticio de la hoja de Jeremy', () => {
     expect(Math.round(plan.targets.fatG)).toBe(70);
     expect(Math.round(plan.targets.choG)).toBe(310);
     expect(plan.dayProfiles).toMatchObject([{ code: 'REST', name: 'Descanso', kcal: 2230 }]);
+    // P-20.5: Descanso es el mismo plan con menos pan en la media tarde y menos papa en la cena: unos 240 g de carbohidratos.
+    const rest = plan.dayProfiles[0]?.portions;
+    expect(Math.round(rest?.totals.nutrients.CHOCDF?.value ?? 0)).toBe(240);
+    expect(rest?.adequacy.cho.pct).toBeGreaterThan(98);
 
     const { rows } = await pool('owner').query<{
       day: string;

@@ -48,10 +48,10 @@ export interface PlanDraft {
   /** Los perfiles de día además de Entrenamiento (07 §2, P-20); vacío, una sola meta. */
   readonly dayProfiles: readonly DayProfileRow[];
   /**
-   * Los almidones de cada tiempo que el coach dio a un perfil (P-20.5), por código; sin la clave, la sugerencia del motor. Vuelven
-   * tal cual al guardar mientras sigan el perfil y los tiempos.
+   * Los almidones de cada tiempo que el coach dio a un perfil (P-20.5), por código y en el orden de los tiempos; sin la clave, la
+   * sugerencia del motor (STARCH_BY_DAY_PROFILE).
    */
-  readonly starchByProfile: Readonly<Record<string, readonly number[]>>;
+  readonly starchByProfile: Readonly<Record<string, readonly string[]>>;
 }
 
 type PlanFields = Pick<
@@ -99,7 +99,7 @@ export function draftOf(plan: PlanFields): PlanDraft {
     dayProfiles: dayProfileRowsOf(plan.dayProfiles),
     starchByProfile: Object.fromEntries(
       plan.dayProfiles.flatMap((profile) =>
-        profile.portions?.manual ? [[profile.code, profile.portions.starchByMeal]] : [],
+        profile.portions?.manual ? [[profile.code, profile.portions.starchByMeal.map(String)]] : [],
       ),
     ),
   };
@@ -192,13 +192,15 @@ export function planBody(draft: PlanDraft): UpdateExchangePlan | null {
   if (hydrationTargetMl === undefined || dayProfiles === null || instructions.length > 2_000) {
     return null;
   }
-  // Un reparto de almidones de un perfil que ya no está o de otros tiempos vuelve a la sugerencia (P-20.5).
+  // Un reparto de almidones de un perfil que ya no está no viaja: la API no lo aceptaría (P-20.5).
   const codes = new Set(dayProfiles.map((profile) => profile.code));
-  const starchByProfile = Object.fromEntries(
-    Object.entries(draft.starchByProfile)
-      .filter(([code, starch]) => codes.has(code) && starch.length === meals.length)
-      .map(([code, starch]) => [code, [...starch]]),
-  );
+  const starchByProfile: Record<string, number[]> = {};
+  for (const [code, texts] of Object.entries(draft.starchByProfile)) {
+    if (!codes.has(code)) continue;
+    const values = texts.map(servingsOf);
+    if (values.some((v) => v === null)) return null;
+    starchByProfile[code] = values as number[];
+  }
   return {
     modality: 'EXCHANGES',
     fixedServings: { VEG, FRU, MILK },
@@ -223,6 +225,9 @@ export function withMeal(draft: PlanDraft, key: string): PlanDraft {
     split: Object.fromEntries(
       Object.entries(draft.split).map(([code, values]) => [code, [...values, '0']]),
     ),
+    starchByProfile: Object.fromEntries(
+      Object.entries(draft.starchByProfile).map(([code, values]) => [code, [...values, '0']]),
+    ),
   };
 }
 
@@ -234,6 +239,12 @@ export function withoutMeal(draft: PlanDraft, key: string): PlanDraft {
     meals: draft.meals.filter((m) => m.key !== key),
     split: Object.fromEntries(
       Object.entries(draft.split).map(([code, values]) => [
+        code,
+        values.filter((_, i) => i !== index),
+      ]),
+    ),
+    starchByProfile: Object.fromEntries(
+      Object.entries(draft.starchByProfile).map(([code, values]) => [
         code,
         values.filter((_, i) => i !== index),
       ]),
@@ -272,6 +283,40 @@ export function withSplitValue(
   return {
     ...draft,
     split: { ...draft.split, [code]: values.map((v, i) => (i === index ? text : v)) },
+  };
+}
+
+/**
+ * Reparte a mano los almidones de un perfil, partiendo de la sugerencia; null vuelve a la sugerencia del motor (P-20.5).
+ */
+export function withProfileStarch(
+  draft: PlanDraft,
+  code: string,
+  servings: readonly number[] | null,
+): PlanDraft {
+  const rest = Object.fromEntries(
+    Object.entries(draft.starchByProfile).filter(([other]) => other !== code),
+  );
+  return {
+    ...draft,
+    starchByProfile: servings === null ? rest : { ...rest, [code]: servings.map(String) },
+  };
+}
+
+export function withProfileStarchValue(
+  draft: PlanDraft,
+  code: string,
+  index: number,
+  text: string,
+): PlanDraft {
+  const values = draft.starchByProfile[code];
+  if (!values) return draft;
+  return {
+    ...draft,
+    starchByProfile: {
+      ...draft.starchByProfile,
+      [code]: values.map((v, i) => (i === index ? text : v)),
+    },
   };
 }
 
