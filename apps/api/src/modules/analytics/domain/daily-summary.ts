@@ -106,6 +106,10 @@ export interface DailySummary {
   readonly workoutsDone: number;
   readonly workoutsPlanned: number | null;
   readonly tonnageKg: number | null;
+  /** El volumen ajustado de las series con factor (P-26, ADR-106); sin entrenos, null. */
+  readonly adjustedVolumeKg: number | null;
+  /** Las series con carga que quedaron «sin factor»; sin entrenos, null. */
+  readonly unfactoredSets: number | null;
   readonly effectiveSets: number | null;
   readonly srpeLoad: number | null;
   readonly cardioMinutes: number | null;
@@ -146,12 +150,14 @@ export function mealSlotsOf(
 
 /**
  * El resumen del día. `plannedSlots` son los tiempos del plan vigente ese día (null sin plan). Un día sin registros de comida o de
- * agua no consume 0: queda sin dato. Un entreno omitido no cuenta como hecho ni suma series (RN-F09).
+ * agua no consume 0: queda sin dato. Un entreno omitido no cuenta como hecho ni suma series (RN-F09). `volume` es el volumen
+ * ajustado de sus series efectivas, calculado con el descanso prescrito de cada una (ADR-106).
  */
 export function dailySummary(
   day: SummaryDay,
   plannedSlots: readonly string[] | null,
   adequacy: AdequacyRule,
+  volume: { readonly adjustedVolumeKg: number; readonly unfactoredSets: number } | null = null,
 ): DailySummary {
   const totals = Object.fromEntries(
     SUMMARY_NUTRIENTS.map((key) => [key, nutrientTotal(day.foods, key)]),
@@ -188,6 +194,8 @@ export function dailySummary(
     workoutsDone: done.length,
     workoutsPlanned: target?.plannedSessions ?? null,
     tonnageKg: done.length === 0 ? null : sets.reduce((total, set) => total + set.tonnageKg, 0),
+    adjustedVolumeKg: done.length === 0 ? null : (volume?.adjustedVolumeKg ?? null),
+    unfactoredSets: done.length === 0 ? null : (volume?.unfactoredSets ?? null),
     effectiveSets: done.length === 0 ? null : sets.length,
     srpeLoad: day.checkin?.srpeLoad ?? null,
     cardioMinutes:

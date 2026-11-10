@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { DayFacts, DaySet } from '../../tracking/index.js';
+import type { FactorVersion } from '../domain/adjusted-volume.js';
 import type { CalendarWeek } from '../domain/program-calendar.js';
 import { estimateOneRm } from './one-rm-estimate.js';
 import { weeklyMuscleRows } from './training-weeks.js';
@@ -39,6 +40,7 @@ const BENCH = [
 const set = (id: string, values: Partial<DaySet> = {}): DaySet => ({
   id,
   exerciseId: 'squat',
+  setNo: 1,
   muscleContributions: SQUAT,
   isWarmup: false,
   reps: 8,
@@ -68,6 +70,7 @@ const day = (
       id: 'w-1',
       outcome: 'COMPLETED',
       programId: 'p-1',
+      sessionId: null,
       mesocycleId: 'm-1',
       weekNo: 1,
       isDeload: false,
@@ -100,8 +103,33 @@ const G21 = [
   }),
 ];
 
-const rowsOf = (days: readonly DayFacts[], ids = new Set(['p-1'])) =>
-  weeklyMuscleRows({ weeks: [WEEK], days, lineageProgramIds: ids, programId: 'p-2' });
+/** P-26: la tabla de Jeremy, vigente desde antes de la semana (ADR-106). */
+const JV_FACTORS: FactorVersion = {
+  id: 'jv',
+  organizationId: null,
+  validFrom: '2026-01-01',
+  rir: [0, 1, 2, 3, 4]
+    .map((rir) => ({ from: rir, factor: 1 + (3 - rir) * 0.1, orMore: false }))
+    .concat([{ from: 5, factor: 0.8, orMore: true }]),
+  rest: [
+    { from: 90, factor: 1, orMore: false },
+    { from: 120, factor: 1, orMore: false },
+  ],
+};
+
+const rowsOf = (
+  days: readonly DayFacts[],
+  ids = new Set(['p-1']),
+  restOf: (set: DaySet) => number | null = () => 120,
+) =>
+  weeklyMuscleRows({
+    weeks: [WEEK],
+    days,
+    lineageProgramIds: ids,
+    programId: 'p-2',
+    factorsOn: () => JV_FACTORS,
+    restOf: (_workout, set) => restOf(set),
+  });
 
 describe('G-24 · RN-F06 · series fraccionadas de la semana contra lo programado', () => {
   it('cuádriceps 3, glúteo 3, isquiosurales 1.5, pectoral 2, tríceps 1 y deltoides anterior 1', () => {
@@ -191,6 +219,33 @@ describe('RN-F09 · qué cuenta en la semana', () => {
 
     expect(rows.find((row) => row.muscleCode === 'CARDIO')).toBeUndefined();
     expect(rows.find((row) => row.muscleCode === 'QUADRICEPS')?.fractionalSetsDone).toBe(0);
+  });
+});
+
+describe('P-26 · ADR-106 · volumen ajustado por grupo, repartido como las series', () => {
+  it('la hoja: 3 × 12 × 45 kg con RIR 2 y 120 s da 1,782 al principal y la mitad al secundario', () => {
+    const sets = ['s-1', 's-2', 's-3'].map((id) =>
+      set(id, { reps: 12, loadKg: 45, rir: 2, tonnageKg: 540 }),
+    );
+    const rows = rowsOf([day(sets)]);
+    const quads = rows.find((row) => row.muscleCode === 'QUADRICEPS');
+    const hamstrings = rows.find((row) => row.muscleCode === 'HAMSTRINGS');
+    expect(quads?.adjustedVolumeKg).toBeCloseTo(1_782, 6);
+    expect(quads?.unfactoredSets).toBe(0);
+    expect(hamstrings?.adjustedVolumeKg).toBeCloseTo(891, 6);
+  });
+
+  it('una serie sin RIR o con un descanso que la tabla no trae queda «sin factor» y no suma', () => {
+    const sets = [
+      set('con-factor', { reps: 12, loadKg: 45, rir: 2, tonnageKg: 540 }),
+      set('sin-rir', { reps: 12, loadKg: 45, rir: null, tonnageKg: 540 }),
+      set('descanso-raro', { reps: 12, loadKg: 45, rir: 2, tonnageKg: 540 }),
+    ];
+    const quads = rowsOf([day(sets)], new Set(['p-1']), (candidate) =>
+      candidate.id === 'descanso-raro' ? 100 : 120,
+    ).find((row) => row.muscleCode === 'QUADRICEPS');
+    expect(quads?.adjustedVolumeKg).toBeCloseTo(594, 6);
+    expect(quads?.unfactoredSets).toBe(2);
   });
 });
 

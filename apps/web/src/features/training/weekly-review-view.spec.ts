@@ -27,6 +27,8 @@ const week = (weekNo: number, changes: Partial<TrainingWeek> = {}): TrainingWeek
     sessionsDone: 0,
     sessionsCompliancePct: 0,
     tonnageKg: null,
+    adjustedVolumeKg: null,
+    unfactoredSets: null,
     srpeLoad: null,
     cardioMinutesPlanned: 0,
     cardioMinutesDone: null,

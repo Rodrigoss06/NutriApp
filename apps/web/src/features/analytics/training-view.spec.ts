@@ -1,6 +1,12 @@
 import type { TrainingAnalytics, TrainingWeek } from '@nutricoach/contracts';
 import { describe, expect, it } from 'vitest';
-import { mesocycleGroups, musclesInOrder, muscleWeekNo, oneRmKey } from './training-view';
+import {
+  adjustedText,
+  mesocycleGroups,
+  musclesInOrder,
+  muscleWeekNo,
+  oneRmKey,
+} from './training-view';
 
 const week = (weekNo: number, mesocycleId: string, started: boolean): TrainingWeek => ({
   weekNo,
@@ -16,6 +22,8 @@ const week = (weekNo: number, mesocycleId: string, started: boolean): TrainingWe
   sessionsDone: started ? 1 : null,
   sessionsCompliancePct: null,
   tonnageKg: null,
+  adjustedVolumeKg: null,
+  unfactoredSets: null,
   srpeLoad: null,
   cardioMinutesPlanned: 0,
   cardioMinutesDone: null,
@@ -31,6 +39,7 @@ describe('RF-33 · la analítica de rutina en pantalla', () => {
     program: null,
     methods: {
       tonnage: method,
+      adjustedVolume: method,
       fractionalSets: method,
       compliance: method,
       sfr: method,
@@ -64,6 +73,8 @@ describe('RF-33 · la analítica de rutina en pantalla', () => {
       setsDone: 3,
       compliancePct: 100,
       tonnageKg: 1440,
+      adjustedVolumeKg: null,
+      unfactoredSets: null,
       avgRpe: 8,
       avgStimulus: null,
       avgFatigue: null,
@@ -84,6 +95,8 @@ describe('RF-33 · la analítica de rutina en pantalla', () => {
       setsDone,
       compliancePct: 0,
       tonnageKg: null,
+      adjustedVolumeKg: null,
+      unfactoredSets: null,
       avgRpe: null,
       avgStimulus: null,
       avgFatigue: null,
@@ -111,5 +124,13 @@ describe('RF-33 · la analítica de rutina en pantalla', () => {
     expect(oneRmKey({ ...series, formula: 'EPLEY' })).not.toBe(
       oneRmKey({ ...series, formula: 'BRZYCKI' }),
     );
+  });
+});
+
+describe('P-26 · el volumen ajustado en pantalla (ADR-106)', () => {
+  it('con lo que quedó sin factor dicho aparte; sin entrenos, una raya', () => {
+    expect(adjustedText(1_782, 0)).toBe('1,782 kg');
+    expect(adjustedText(594, 2)).toBe('594 kg · 2 sin factor');
+    expect(adjustedText(null, null)).toBe('—');
   });
 });

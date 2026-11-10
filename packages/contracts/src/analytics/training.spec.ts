@@ -16,6 +16,8 @@ const WEEK = {
   sessionsDone: 2,
   sessionsCompliancePct: 66.7,
   tonnageKg: 3630,
+  adjustedVolumeKg: 3993,
+  unfactoredSets: 0,
   srpeLoad: 840,
   cardioMinutesPlanned: 0,
   cardioMinutesDone: 0,
@@ -27,6 +29,8 @@ const WEEK = {
       setsDone: 12,
       compliancePct: 75,
       tonnageKg: 1330,
+      adjustedVolumeKg: 1463,
+      unfactoredSets: 0,
       avgRpe: 8,
       avgStimulus: 4,
       avgFatigue: 3,
@@ -40,6 +44,11 @@ describe('RF-33 · contrato de la analítica de rutina', () => {
     expect(trainingWeekSchema.parse(WEEK).muscles[0]?.compliancePct).toBe(75);
   });
 
+  it('P-26 · el volumen ajustado va con lo que quedó «sin factor»; una serie sin factor no se cuenta como 1', () => {
+    expect(trainingWeekSchema.parse({ ...WEEK, unfactoredSets: 2 }).unfactoredSets).toBe(2);
+    expect(trainingWeekSchema.safeParse({ ...WEEK, unfactoredSets: -1 }).success).toBe(false);
+  });
+
   it('una semana que no empieza deja lo hecho en null', () => {
     const future = {
       ...WEEK,
@@ -47,6 +56,8 @@ describe('RF-33 · contrato de la analítica de rutina', () => {
       sessionsDone: null,
       sessionsCompliancePct: null,
       tonnageKg: null,
+      adjustedVolumeKg: null,
+      unfactoredSets: null,
       srpeLoad: null,
       cardioMinutesDone: null,
       cardioCompliancePct: null,
@@ -60,6 +71,7 @@ describe('RF-33 · contrato de la analítica de rutina', () => {
       program: null,
       methods: {
         tonnage: METHOD,
+        adjustedVolume: METHOD,
         fractionalSets: METHOD,
         compliance: METHOD,
         sfr: METHOD,

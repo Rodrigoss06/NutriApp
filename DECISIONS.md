@@ -2690,3 +2690,40 @@ Consecuencias:
   - el paciente pasa su sesión a mañana y lo deshace;
   - el coach elige el perfil de mañana.
 - Para Notion (/notion-sync de P14.5): 04 RF-28 (Hoy) y RF-29.
+
+## ADR-106 · Volumen ajustado por RIR y descanso — aceptada (2026-11-10)
+Contexto: P14.5, PR 2 (07 §10; P-26, respondida por Jeremy el 2026-11-10; RN-F03, RN-F06; ADR-098). El prompt pide volumen ×
+factor RIR × factor descanso, con las tablas como datos versionados. Un valor que la hoja no trae queda «sin factor», nunca como 1.
+El ejemplo de la hoja, 3 × 12 × 45 kg con RIR 2 y 120 s, da 1,782.
+Decisión:
+- Motor 1.10.0, `ADJUSTED_VOLUME` 1.0.0:
+  - por serie, repeticiones × carga × factor RIR × factor del descanso prescrito;
+  - la fila exacta de la tabla o la última «o más» que alcanza el valor; si no, «sin factor»: la serie no suma al ajustado y se
+    cuenta aparte;
+  - sin carga (peso corporal sin lastre, movilidad o cardio), 0 kg, como dijo Jeremy;
+  - NC-ENG-411 (tabla mal formada) y NC-ENG-412 (valores negativos).
+- `training.volume_factor_table` (migración `202611100100_training_volume_factors`), versionada como los umbrales de 07 §11.
+  - Una fila global con los valores de P-26: RIR 0 = 1.3 a RIR 5 o más = 0.8; 45 s = 1.15, 60 = 1.10, 75 = 1.05, 90 y
+    120 = 1.00, 180 s o más = 0.95.
+  - Vale desde el 2026-01-01, para cubrir la hoja de Mateo. La de la organización manda sobre la global desde que vale.
+  - Se lee con `TrainingApi.volumeFactorVersions`, y la analítica elige la vigente de cada día.
+- El descanso es el prescrito: en el snapshot del programa del entreno, la serie con su número en el ejercicio de su sesión.
+  - Si el paciente hizo más series que las prescritas, vale la última.
+  - Sin sesión, el ejercicio donde aparece primero en el programa.
+  - Los hechos de tracking suman `setNo` a cada serie y `sessionId` a cada entreno.
+- Analítica:
+  - `adjusted_volume_kg` y `unfactored_sets` en el resumen diario y en el volumen semanal por grupo; cada grupo lleva el principal
+    al 100 % y el secundario al 50 %, como el tonelaje (ADR-088);
+  - la semana suma sus días, y la API da el método (`methods.adjustedVolume`);
+  - en la web, «Volumen ajustado» por semana y por grupo, con «n sin factor» aparte.
+- Por confirmar con Jeremy, sin inventar mientras tanto: un descanso entre dos valores de la tabla (100 s, 150 s), uno de menos
+  de 45 s y una serie con RPE y sin RIR quedan «sin factor». Cambiarlo es cambiar la tabla o el método.
+Consecuencias:
+- Motor: el ejemplo de la hoja, «o más», «sin factor», sin carga y los errores. Se propone como caso dorado G-42 en el
+  /notion-sync.
+- Analítica: la tabla vigente cada día, el descanso prescrito y el ajustado por grupo.
+- Integración `analytics-training.int.spec.ts`: 8 × 60 kg con RIR 2 y 90 s da 528, y la serie sin RIR queda «sin factor»; la
+  reconstrucción da lo mismo.
+- Sigue el PR 4 (fatiga por grupo muscular, P-27), que usa este volumen ajustado por grupo.
+- Para Notion (/notion-sync de P14.5): 02 §9 (`ADJUSTED_VOLUME`), 03 (una regla del volumen ajustado y G-42), 05.2
+  (`training.volume_factor_table`), 05.3 (las columnas de analytics) y 04 RF-33.

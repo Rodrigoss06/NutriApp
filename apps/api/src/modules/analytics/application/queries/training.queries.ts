@@ -1,5 +1,6 @@
 import { Inject, Injectable } from '@nestjs/common';
 import {
+  ADJUSTED_VOLUME,
   COMPLIANCE,
   READINESS_JV,
   RPE_FROM_RIR,
@@ -48,6 +49,8 @@ export interface TrainingMuscleWeekView {
   readonly setsDone: number;
   readonly compliancePct: number;
   readonly tonnageKg: number | null;
+  readonly adjustedVolumeKg: number | null;
+  readonly unfactoredSets: number | null;
   readonly avgRpe: number | null;
   readonly avgStimulus: number | null;
   readonly avgFatigue: number | null;
@@ -68,6 +71,8 @@ export interface TrainingWeekView {
   readonly sessionsDone: number | null;
   readonly sessionsCompliancePct: number | null;
   readonly tonnageKg: number | null;
+  readonly adjustedVolumeKg: number | null;
+  readonly unfactoredSets: number | null;
   readonly srpeLoad: number | null;
   readonly cardioMinutesPlanned: number;
   readonly cardioMinutesDone: number | null;
@@ -87,6 +92,7 @@ export interface TrainingAnalyticsView {
   } | null;
   readonly methods: {
     readonly tonnage: MethodRef;
+    readonly adjustedVolume: MethodRef;
     readonly fractionalSets: MethodRef;
     readonly compliance: MethodRef;
     readonly sfr: MethodRef;
@@ -151,6 +157,8 @@ function weekView(
     sessionsCompliancePct:
       sessionsDone === null ? null : compliance(sessionsDone, week.sessionsPlanned),
     tonnageKg: started ? sumOf(inWeek.map((day) => day.tonnageKg)) : null,
+    adjustedVolumeKg: started ? sumOf(inWeek.map((day) => day.adjustedVolumeKg)) : null,
+    unfactoredSets: started ? sumOf(inWeek.map((day) => day.unfactoredSets)) : null,
     srpeLoad: started ? sumOf(inWeek.map((day) => day.srpeLoad)) : null,
     cardioMinutesPlanned: week.cardioMinutesPlanned,
     cardioMinutesDone: cardioDone,
@@ -164,6 +172,8 @@ function weekView(
         setsDone: row.fractionalSetsDone,
         compliancePct: compliance(row.fractionalSetsDone, row.fractionalSetsPlanned ?? 0),
         tonnageKg: row.tonnageKg,
+        adjustedVolumeKg: row.adjustedVolumeKg,
+        unfactoredSets: row.unfactoredSets,
         avgRpe: row.avgRpe,
         avgStimulus: row.avgStimulus,
         avgFatigue: row.avgFatigue,
@@ -246,6 +256,7 @@ export class TrainingQueries {
       });
       const methods = {
         tonnage: ref(TONNAGE),
+        adjustedVolume: ref(ADJUSTED_VOLUME),
         fractionalSets: snapshot
           ? ref(snapshot.setsMethod)
           : { code: 'FRACTIONAL_SETS', version: '1.0.0' },

@@ -14,6 +14,10 @@ export const trainingMuscleWeekSchema = z.object({
   compliancePct: z.number(),
   /** El tonelaje de sus series, principal al 100 % y secundario al 50 % (ADR-088). */
   tonnageKg: amount,
+  /** El volumen ajustado de sus series con factor, repartido igual (P-26, ADR-106). */
+  adjustedVolumeKg: amount,
+  /** Las series del grupo con carga que quedaron «sin factor»: no suman al ajustado. */
+  unfactoredSets: count.nullable(),
   avgRpe: amount,
   avgStimulus: amount,
   avgFatigue: amount,
@@ -38,6 +42,10 @@ export const trainingWeekSchema = z.object({
   sessionsDone: count.nullable(),
   sessionsCompliancePct: amount,
   tonnageKg: amount,
+  /** Volumen × factor RIR × factor descanso de las series con factor (P-26, ADR-106). */
+  adjustedVolumeKg: amount,
+  /** Las series con carga que quedaron «sin factor». */
+  unfactoredSets: count.nullable(),
   srpeLoad: amount,
   cardioMinutesPlanned: z.number().nonnegative(),
   cardioMinutesDone: amount,
@@ -78,6 +86,7 @@ export const trainingAnalyticsSchema = z.object({
     .nullable(),
   methods: z.object({
     tonnage: methodRef,
+    adjustedVolume: methodRef,
     fractionalSets: methodRef,
     compliance: methodRef,
     sfr: methodRef,

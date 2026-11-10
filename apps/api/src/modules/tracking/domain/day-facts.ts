@@ -84,6 +84,8 @@ export interface FactWorkout {
   readonly localDate: string;
   readonly outcome: 'COMPLETED' | 'PARTIAL' | 'SKIPPED';
   readonly programId: string | null;
+  /** La sesión del programa que se registró; null si se registró sin sesión. */
+  readonly sessionId: string | null;
   readonly mesocycleId: string | null;
   readonly weekNo: number | null;
   readonly isDeload: boolean;
@@ -96,6 +98,8 @@ export interface FactSet {
   readonly localDate: string;
   readonly workoutLogId: string;
   readonly exerciseId: string;
+  /** El número de la serie en su ejercicio: con él se busca su descanso prescrito (P-26). */
+  readonly setNo: number;
   /** Congeladas al registrar: músculo principal 1 y secundario 0.5 (RN-F06). */
   readonly muscleContributions: readonly { readonly muscle: string; readonly weight: number }[];
   readonly isWarmup: boolean;
@@ -218,6 +222,7 @@ function dayWorkouts(
         id: workout.id,
         outcome: workout.outcome,
         programId: workout.programId,
+        sessionId: workout.sessionId,
         mesocycleId: workout.mesocycleId,
         weekNo: workout.weekNo,
         isDeload: workout.isDeload,
@@ -233,6 +238,7 @@ function dayWorkouts(
               {
                 id: set.id,
                 exerciseId: set.exerciseId,
+                setNo: set.setNo,
                 muscleContributions: set.muscleContributions,
                 isWarmup: set.isWarmup,
                 rir: set.rir,

@@ -167,8 +167,9 @@ beforeAll(async () => {
     outcome: 'COMPLETED',
     durationMinutes: 40,
     sessionRpe: 7,
+    // La primera con RIR 2: su volumen ajustado tiene factor; la segunda, sin RIR, queda «sin factor» (P-26, ADR-106).
     sets: [
-      { exerciseId, setNo: 1, reps: 8, loadKg: 60 },
+      { exerciseId, setNo: 1, reps: 8, loadKg: 60, rir: 2 },
       { exerciseId, setNo: 2, reps: 8, loadKg: 60 },
     ],
   });
@@ -208,6 +209,9 @@ describe('RF-33 · la semana del macrociclo contra lo programado', () => {
       sessionsCompliancePct: 100,
       tonnageKg: 960,
       srpeLoad: 280,
+      // P-26: 8 × 60 kg con RIR 2 (1.1) y los 90 s prescritos (1.0) dan 528; la serie sin RIR no suma (ADR-106).
+      adjustedVolumeKg: 528,
+      unfactoredSets: 1,
     });
     expect(week?.muscles).toEqual([
       expect.objectContaining({
@@ -216,6 +220,8 @@ describe('RF-33 · la semana del macrociclo contra lo programado', () => {
         setsDone: 1,
         compliancePct: 100,
         tonnageKg: 480,
+        adjustedVolumeKg: 264,
+        unfactoredSets: 1,
       }),
       expect.objectContaining({
         muscleCode: 'QUADRICEPS',
@@ -223,8 +229,11 @@ describe('RF-33 · la semana del macrociclo contra lo programado', () => {
         setsDone: 2,
         compliancePct: 100,
         tonnageKg: 960,
+        adjustedVolumeKg: 528,
+        unfactoredSets: 1,
       }),
     ]);
+    expect(result.methods.adjustedVolume).toEqual({ code: 'ADJUSTED_VOLUME', version: '1.0.0' });
     expect(result.methods.fractionalSets.code).toBe('FRACTIONAL_SETS');
     expect(result.methods.srpe.code).toBe('READINESS_JV');
   });

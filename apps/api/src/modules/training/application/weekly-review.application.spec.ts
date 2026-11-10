@@ -207,6 +207,10 @@ class MemoryReviews implements WeeklyReviewStore {
     this.thresholds = this.thresholds.map((t) => (t.id === id ? { ...t, ...values } : t));
     return Promise.resolve();
   }
+  /** El control semanal no usa el volumen ajustado (ADR-106). */
+  volumeFactorVersions() {
+    return Promise.resolve([]);
+  }
 }
 
 let reviews: MemoryReviews;

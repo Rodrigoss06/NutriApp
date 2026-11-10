@@ -2,7 +2,8 @@ import { Inject, Injectable } from '@nestjs/common';
 import { CLOCK, type Clock } from '@nutricoach/shared-kernel';
 import { ClinicalApi } from '../../clinical/index.js';
 import { TrackingApi } from '../../tracking/index.js';
-import { TrainingApi } from '../../training/index.js';
+import { TrainingApi, type ProgramSnapshot } from '../../training/index.js';
+import { factorsOn, prescribedRest } from '../domain/adjusted-volume.js';
 import { programCalendar } from '../domain/program-calendar.js';
 import { localDateIn } from './local-date.js';
 import { ANALYTICS_STORE, type AnalyticsStore } from './ports/analytics.ports.js';
@@ -46,9 +47,12 @@ export class TrainingProjection {
     if (!patient) return 0;
     const today = localDateIn(this.clock.now(), patient.timezone);
     const lineageOf = new Map<string, string | null>();
+    // Los snapshots de cada versión: dicen la línea y el descanso prescrito de cada serie (ADR-106).
+    const snapshots = new Map<string, ProgramSnapshot | null>();
     const lineage = async (programId: string): Promise<string | null> => {
       if (!lineageOf.has(programId)) {
         const snapshot = await this.training.publishedProgram(programId);
+        snapshots.set(programId, snapshot);
         lineageOf.set(
           programId,
           snapshot && snapshot.patientId === patientId ? snapshot.lineageId : null,
@@ -62,6 +66,8 @@ export class TrainingProjection {
       if (id !== null) lineages.add(id);
     }
     let written = 0;
+    const versions =
+      lineages.size > 0 ? await this.training.volumeFactorVersions(organizationId) : [];
     for (const lineageId of lineages) {
       const latest = await this.training.latestPublishedOfLineage(lineageId);
       if (!latest) continue;
@@ -84,6 +90,14 @@ export class TrainingProjection {
         days,
         lineageProgramIds: members,
         programId: latest.programId,
+        factorsOn: (localDate) => factorsOn(versions, localDate),
+        restOf: (workout, set) =>
+          prescribedRest(
+            workout.programId === null ? null : (snapshots.get(workout.programId) ?? null),
+            workout.sessionId,
+            set.exerciseId,
+            set.setNo,
+          ),
       });
       await this.store.replaceWeeklyVolume(
         organizationId,

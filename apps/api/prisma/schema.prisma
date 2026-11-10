@@ -66,6 +66,8 @@ model PatientDailySummary {
   dayKind            String?  @map("day_kind")
   dayProfileCode     String?  @map("day_profile_code")
   dayProfileName     String?  @map("day_profile_name")
+  adjustedVolumeKg   Decimal? @map("adjusted_volume_kg") @db.Decimal(10, 1)
+  unfactoredSets     Int?     @map("unfactored_sets") @db.SmallInt
 
   @@id([patientId, localDate])
   @@index([organizationId, localDate], map: "daily_summary_org")
@@ -108,6 +110,8 @@ model PatientWeeklyMuscleVolume {
   avgStimulus           Decimal? @map("avg_stimulus") @db.Decimal(3, 1)
   avgFatigue            Decimal? @map("avg_fatigue") @db.Decimal(3, 1)
   sfr                   Decimal? @db.Decimal(4, 2)
+  adjustedVolumeKg      Decimal? @map("adjusted_volume_kg") @db.Decimal(10, 1)
+  unfactoredSets        Int?     @map("unfactored_sets") @db.SmallInt
 
   @@id([patientId, weekStart, muscleCode])
   @@map("patient_weekly_muscle_volume")
@@ -2380,4 +2384,18 @@ model DayChange {
   @@index([organizationId, localDate], map: "day_change_by_date", where: raw("(voided_at IS NULL)"))
   @@map("day_change")
   @@schema("tracking")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model VolumeFactorTable {
+  id             String   @id @db.Uuid
+  organizationId String?  @map("organization_id") @db.Uuid
+  validFrom      DateTime @map("valid_from") @db.Date
+  rirFactors     Json     @map("rir_factors")
+  restFactors    Json     @map("rest_factors")
+
+  @@unique([organizationId, validFrom])
+  @@map("volume_factor_table")
+  @@schema("training")
 }

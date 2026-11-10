@@ -34,6 +34,10 @@ export interface WeeklyMuscleRow {
   readonly fractionalSetsDone: number;
   readonly fractionalSetsPlanned: number | null;
   readonly tonnageKg: number | null;
+  /** Principal al 100 % y secundario al 50 %, con las series que tienen factor (ADR-106). */
+  readonly adjustedVolumeKg: number | null;
+  /** Las series del grupo con carga que quedaron «sin factor». */
+  readonly unfactoredSets: number | null;
   readonly avgRpe: number | null;
   readonly avgStimulus: number | null;
   readonly avgFatigue: number | null;

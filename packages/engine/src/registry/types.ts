@@ -45,6 +45,7 @@ export const METHOD_CODES = [
   'PRI_JV',
   'READINESS_JV',
   'WEEKLY_REVIEW_JV',
+  'ADJUSTED_VOLUME',
 ] as const;
 
 export type MethodCode = (typeof METHOD_CODES)[number];
