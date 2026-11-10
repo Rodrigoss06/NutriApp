@@ -1,4 +1,16 @@
-import { Body, Controller, Get, Param, ParseUUIDPipe, Post, Query, Req, Res } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  HttpCode,
+  HttpStatus,
+  Param,
+  ParseUUIDPipe,
+  Post,
+  Query,
+  Req,
+  Res,
+} from '@nestjs/common';
 import {
   correctFoodLogSchema,
   logCheckinSchema,
@@ -7,7 +19,9 @@ import {
   logMetricSchema,
   logNoteSchema,
   logWorkoutSchema,
+  todayActionSchema,
   type Checkin,
+  type DaySchedule,
   type FoodListResponse,
   type FoodLog,
   type FoodLogsResponse,
@@ -31,6 +45,7 @@ import {
   ProblemException,
   type ContextualRequest,
 } from '../../../../../platform/index.js';
+import { DayScheduleCommands } from '../../../application/commands/day-schedule.commands.js';
 import { RecordCommands, type Logged } from '../../../application/commands/record.commands.js';
 import { TrainingLogCommands } from '../../../application/commands/training-log.commands.js';
 import type {
@@ -43,6 +58,7 @@ import type {
   StoredWorkout,
 } from '../../../application/ports/records.ports.js';
 import { MeQueries } from '../../../application/queries/me.queries.js';
+import type { DaySchedule as ScheduleView } from '../../../domain/day-schedule.js';
 import { FOOD_NOT_FOUND, RECORD_NOT_FOUND } from '../../../domain/tracking-errors.js';
 
 const STATUS_BY_CODE: Readonly<Record<string, number>> = {
@@ -115,6 +131,12 @@ const checkinOf = (checkin: StoredCheckin): Checkin => ({
   readiness: checkin.readiness && readinessOf(checkin.readiness),
 });
 const workoutOf = (workout: StoredWorkout): WorkoutLog => ({ ...workout });
+/** La agenda como la ve el paciente: sin los perfiles que puede elegir el coach (ADR-104). */
+const scheduleOf = ({ today, tomorrow, options }: ScheduleView): DaySchedule => ({
+  today,
+  tomorrow,
+  options,
+});
 
 /** 201 si quedó registrado ahora; 200 si es un reintento con el mismo clientId y vuelve lo de la primera vez (RN-G08). */
 function respond<T, R>(response: Response, logged: Logged<T>, map: (value: T) => R): R {
@@ -132,6 +154,7 @@ export class MeTrackingController {
     private readonly commands: RecordCommands,
     private readonly training: TrainingLogCommands,
     private readonly queries: MeQueries,
+    private readonly schedules: DayScheduleCommands,
   ) {}
 
   @Get('today')
@@ -142,7 +165,22 @@ export class MeTrackingController {
       ...view,
       sessions: view.sessions ? [...view.sessions] : null,
       readiness: view.readiness && readinessOf(view.readiness),
+      schedule: scheduleOf(view.schedule),
     };
+  }
+
+  /** «No entreno hoy», «mover a mañana» o «sí entreno hoy» (P-20.3, ADR-104): responde la agenda ya cambiada. */
+  @Post('schedule/today')
+  @PatientOnly()
+  @HttpCode(HttpStatus.OK)
+  async changeToday(
+    @Req() request: ContextualRequest,
+    @Body() body: unknown,
+  ): Promise<DaySchedule> {
+    const { action } = parseBody(todayActionSchema, body);
+    const result = await this.schedules.patientToday(contextOf(request), action);
+    if (isErr(result)) throw problem(result.error);
+    return scheduleOf(result.value);
   }
 
   /** El entreno de hoy (RF-29): las sesiones del programa vigente, lo registrado y su registro diario. */

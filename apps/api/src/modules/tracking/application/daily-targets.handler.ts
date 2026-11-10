@@ -11,6 +11,8 @@ import { ClinicalApi } from '../../clinical/index.js';
 import { TenancyApi } from '../../tenancy/index.js';
 import { dailyTargetOf, localDate } from '../domain/active-plan.js';
 import { dayProfileOf, trainingTargetOf } from '../domain/active-program.js';
+import { addDays } from '../domain/day-changes.js';
+import { DAY_CHANGE_STORE, type DayChangeStore } from './ports/day-changes.ports.js';
 import { TRACKING_STORE, type TrackingStore } from './ports/tracking.ports.js';
 
 /** Contexto de plataforma para listar las organizaciones: la RLS de tenancy se lo permite a PLATFORM_ADMIN. */
@@ -24,7 +26,8 @@ const platformContext: SecurityContext = {
 /**
  * Cada hora en el worker: a cada paciente con un plan o un programa vigente le crea la meta de su día local si aún no la tiene
  * (RN-G03, RN-G04). Nunca reescribe un día que ya tiene meta. Idempotente. La meta de alimentación es la del perfil de día
- * que pide el programa vigente (07 §2, §8; P-20.4).
+ * que pide el programa vigente (07 §2, §8; P-20.4), con los cambios del día: la sesión que llegó de ayer con «mover a mañana» y
+ * el perfil que eligió el coach (P-20.3, ADR-104).
  */
 @Injectable()
 export class DailyTargetsHandler {
@@ -32,6 +35,7 @@ export class DailyTargetsHandler {
     @Inject(UNIT_OF_WORK) private readonly uow: UnitOfWork,
     @Inject(CLOCK) private readonly clock: Clock,
     @Inject(TRACKING_STORE) private readonly store: TrackingStore,
+    @Inject(DAY_CHANGE_STORE) private readonly dayChanges: DayChangeStore,
     @Inject(ClinicalApi) private readonly clinical: ClinicalApi,
     @Inject(TenancyApi) private readonly tenancy: TenancyApi,
   ) {}
@@ -47,6 +51,8 @@ export class DailyTargetsHandler {
         let count = 0;
         const programs = await this.store.activePrograms();
         const calendars = new Map(programs.map((p) => [p.patientId, p.calendar]));
+        // Desde anteayer en UTC: cubre el ayer local de cualquier zona horaria.
+        const changes = await this.dayChanges.activeSince(addDays(localDate(now, 'UTC'), -2));
         for (const plan of await this.store.activeNutritionPlans()) {
           const patient = await this.clinical.patientRef(plan.patientId);
           if (!patient || patient.status === 'ARCHIVED') continue;
@@ -58,7 +64,10 @@ export class DailyTargetsHandler {
               organizationId,
               localDate: today,
               planId: plan.planId,
-              target: dailyTargetOf(plan.targets, calendar ? dayProfileOf(calendar, today) : null),
+              target: dailyTargetOf(
+                plan.targets,
+                dayProfileOf(calendar ?? null, today, changes.get(plan.patientId) ?? []),
+              ),
             },
             'KEEP',
           );
@@ -68,7 +77,11 @@ export class DailyTargetsHandler {
           const patient = await this.clinical.patientRef(program.patientId);
           if (!patient || patient.status === 'ARCHIVED') continue;
           const today = localDate(now, patient.timezone);
-          const target = trainingTargetOf(program.calendar, today);
+          const target = trainingTargetOf(
+            program.calendar,
+            today,
+            changes.get(program.patientId) ?? [],
+          );
           if (!target) continue;
           const written = await this.store.setTrainingTarget(
             { patientId: program.patientId, organizationId, localDate: today, target },

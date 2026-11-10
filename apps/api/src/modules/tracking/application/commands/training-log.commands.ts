@@ -15,6 +15,7 @@ import {
 } from '@nutricoach/shared-kernel';
 import { atomically } from '../../../../platform/index.js';
 import { ClinicalApi } from '../../../clinical/index.js';
+import { addDays } from '../../domain/day-changes.js';
 import {
   dayPerformance,
   locateSession,
@@ -31,6 +32,7 @@ import {
   RECORD_VOIDED,
 } from '../../domain/tracking-errors.js';
 import { trainingDayOf } from '../active-training.js';
+import { DAY_CHANGE_STORE, type DayChangeStore } from '../ports/day-changes.ports.js';
 import {
   RECORD_STORE,
   type CheckinFields,
@@ -119,6 +121,7 @@ export class TrainingLogCommands {
     @Inject(RECORD_STORE) private readonly store: RecordStore,
     @Inject(RecordGate) private readonly gate: RecordGate,
     @Inject(ClinicalApi) private readonly clinical: ClinicalApi,
+    @Inject(DAY_CHANGE_STORE) private readonly dayChanges: DayChangeStore,
   ) {}
 
   logCheckin(
@@ -141,6 +144,11 @@ export class TrainingLogCommands {
       const training = trainingDayOf(
         await this.store.activeTraining(patient.patientId),
         input.localDate,
+        await this.dayChanges.active(
+          patient.patientId,
+          addDays(input.localDate, -1),
+          input.localDate,
+        ),
       );
       const workouts = await this.store.dayWorkouts(patient.patientId, input.localDate);
       const performance = dayPerformance(dayTonnage(training?.program ?? null, workouts), {
@@ -260,6 +268,11 @@ export class TrainingLogCommands {
       const training = trainingDayOf(
         await this.store.activeTraining(patient.patientId),
         input.localDate,
+        await this.dayChanges.active(
+          patient.patientId,
+          addDays(input.localDate, -1),
+          input.localDate,
+        ),
       );
       if (!training) return err(NO_ACTIVE_PROGRAM);
       const { program } = training;

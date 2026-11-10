@@ -30,7 +30,8 @@ function dayOf(payload: unknown): EventDay | null {
 
 /**
  * tracking.*.logged, tracking.*.voided y tracking.log.adjusted (02 §8): recalcula el resumen y el 1RM del día afectado (RN-G02,
- * RN-G12) y, si cambió un entreno, el volumen de las semanas de su programa. Idempotente: se recalcula entero desde tracking, así
+ * RN-G12) y, si cambió un entreno, el volumen de las semanas de su programa. tracking.target.changed: la meta del día cambió con
+ * «no entreno hoy», «mover a mañana» o el perfil del coach (ADR-104), y también cambian sus sesiones planificadas. Idempotente: se recalcula entero desde tracking, así
  * que repetir un evento o recibirlos desordenados da lo mismo.
  */
 @Injectable()
@@ -48,6 +49,7 @@ export class DailySummaryConsumer implements EventConsumer, OnModuleInit {
     'tracking.workout.logged',
     'tracking.workout.voided',
     'tracking.log.adjusted',
+    'tracking.target.changed',
   ] as const;
 
   constructor(
@@ -66,7 +68,8 @@ export class DailySummaryConsumer implements EventConsumer, OnModuleInit {
     const { organizationId } = event;
     if (!organizationId || !day) return;
     await this.projection.refresh(organizationId, day.patientId, day.localDate, day.localDate);
-    const isWorkout = event.type.startsWith('tracking.workout.');
+    const isWorkout =
+      event.type.startsWith('tracking.workout.') || event.type === 'tracking.target.changed';
     const isTrainingAdjustment =
       event.type === 'tracking.log.adjusted' && TRAINING_TARGETS.has(day.targetType ?? '');
     if (isWorkout || isTrainingAdjustment) {

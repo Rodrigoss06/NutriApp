@@ -15,6 +15,7 @@ import type { SnapshotProgram, SnapshotSession } from '../domain/training-day.js
 import { itemClientId } from './commands/record.commands.js';
 import { RecordGate } from './commands/record-gate.js';
 import { TrainingLogCommands, type CheckinInput } from './commands/training-log.commands.js';
+import type { DayChangeStore } from './ports/day-changes.ports.js';
 import type {
   ActiveSnapshot,
   NewCheckin,
@@ -314,6 +315,8 @@ const commands = () =>
     }) as unknown as RecordStore,
     new RecordGate(clock, ids, outbox, clinical, tenancy),
     clinical,
+    // Sin cambios del día: manda el programa (ADR-104).
+    { active: () => Promise.resolve([]) } as unknown as DayChangeStore,
   );
 
 const types = () => events.map((event) => event.type);

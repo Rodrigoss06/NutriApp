@@ -1,6 +1,7 @@
 import { z } from 'zod';
 import { upToDecimals } from '../decimals.js';
 import { MEAL_SLOTS, PLAN_MODALITIES } from '../nutrition/plan.js';
+import { dayScheduleSchema } from './schedule.js';
 
 const isoDate = z.iso.date();
 const decimals = (digits: number) =>
@@ -442,6 +443,8 @@ export const meTodaySchema = z.object({
   sessions: z.array(daySessionSchema).nullable(),
   /** La recuperación e indicación de hoy si ya completó su registro diario (RN-G15). */
   readiness: readinessSchema.nullable(),
+  /** Hoy y mañana con sus cambios, y si hoy puede decir «no entreno hoy», «mover a mañana» o deshacerlo (P-20.3). */
+  schedule: dayScheduleSchema,
 });
 export type MeToday = z.infer<typeof meTodaySchema>;
 

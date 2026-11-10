@@ -12,6 +12,7 @@ import {
 import { beforeEach, describe, expect, it } from 'vitest';
 import type { ClinicalApi } from '../../clinical/index.js';
 import { AdjustmentCommands, type AdjustmentInput } from './commands/adjustment.commands.js';
+import type { DayScheduleSource } from './day-schedule-source.js';
 import type {
   NewAdjustment,
   RecordStore,
@@ -174,7 +175,9 @@ const clinical = {
 } as unknown as ClinicalApi;
 
 const commands = () => new AdjustmentCommands(uow, clock, ids, outbox, store, clinical);
-const queries = () => new PatientRecordsQueries(uow, audit, store, clinical);
+// La agenda del día no se usa aquí (ADR-104).
+const queries = () =>
+  new PatientRecordsQueries(uow, audit, store, clinical, {} as unknown as DayScheduleSource);
 const adjust = (input: Partial<AdjustmentInput>) =>
   commands().adjust(context, PATIENT, {
     targetType: 'HYDRATION',

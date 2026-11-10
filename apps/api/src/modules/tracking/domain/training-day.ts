@@ -1,4 +1,5 @@
 import { sessionsOn } from './active-program.js';
+import type { DayChange } from './day-changes.js';
 
 /**
  * El entreno del paciente desde el snapshot del programa publicado (RN-F12): la sesión del día como la ve, su tonelaje planificado
@@ -185,12 +186,19 @@ export function locateSession(
 
 export type ProgramDay = ProgramPlace & { readonly sessions: readonly SnapshotSession[] };
 
-/** El día del programa (07 §8): su semana, su mesociclo y sus sesiones; ninguna en un descanso. Fuera del programa, null. */
-export function programDayOn(program: SnapshotProgram, localDate: string): ProgramDay | null {
+/**
+ * El día del programa (07 §8): su semana, su mesociclo y sus sesiones; ninguna en un descanso. La sesión movida a mañana llega con
+ * su semana (ADR-104). Fuera del programa, null.
+ */
+export function programDayOn(
+  program: SnapshotProgram,
+  localDate: string,
+  changes: readonly DayChange[] = [],
+): ProgramDay | null {
   const weeks = program.mesocycles.flatMap((mesocycle) =>
     mesocycle.weeks.map((week) => ({ ...week, mesocycleId: mesocycle.id, week })),
   );
-  const day = sessionsOn({ startDate: program.startDate, weeks }, localDate);
+  const day = sessionsOn({ startDate: program.startDate, weeks }, localDate, changes);
   if (!day) return null;
   const place = weeks.find(({ weekNo }) => weekNo === day.weekNo);
   return place
