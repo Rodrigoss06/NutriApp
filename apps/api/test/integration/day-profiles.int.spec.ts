@@ -1,7 +1,8 @@
+import type request from 'supertest';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { JobRegistry } from '../../src/platform/index.js';
 import { ApiHarness, type StaffOrganization } from './support/api-harness.js';
-import { pool } from './support/database.js';
+import { id, pool } from './support/database.js';
 import { luisWithPrescription } from './support/luis.js';
 
 /**
@@ -242,7 +243,7 @@ describe('RN-E07 · 07 §2 · los perfiles de día en el borrador', () => {
 });
 
 describe('RN-E15 · publicar congela los perfiles de día', () => {
-  it('el snapshot de la versión 3 los trae con su método, y una versión nueva los copia', async () => {
+  it('el snapshot los trae con su método, y una versión nueva los copia', async () => {
     const published = await harness
       .post(`/nutrition-plans/${plan.id}/publish`, undefined, cookie)
       .set('If-Match', String(plan.version));
@@ -254,7 +255,7 @@ describe('RN-E15 · publicar congela los perfiles de día', () => {
        FROM nutrition.plan WHERE id = $1`,
       [plan.id],
     );
-    expect(row?.version).toBe(3);
+    expect(row?.version).toBe(4);
     expect(row?.profiles).toMatchObject([
       { code: 'REST', kcal: REST_KCAL, method: { methodCode: 'MACROS_DAY_PROFILE' } },
       { code: 'ALTO', kcal: HIGH_KCAL },
@@ -341,5 +342,194 @@ describe('RN-G03 · 07 §8 · P-20.4 · la meta de cada día según su perfil', 
     const target = await todayTarget();
     expect(target).toMatchObject({ kind: 'TRAINING', code: 'TRAINING', name: 'Entrenamiento' });
     expect(target?.kcal).toBeCloseTo(1834.5, 1);
+  });
+});
+
+interface Portions {
+  starchByMeal: number[];
+  manual: boolean;
+  totals: { choG: number };
+  adequacy: { cho: { pct: number } };
+}
+
+interface MePlanView {
+  plan: {
+    profile: { code: string; name: string } | null;
+    meals: {
+      id: string;
+      slotCode: string;
+      options: { groupCode: string; servings: number; foods: { foodId: string }[] }[];
+    }[];
+  } | null;
+}
+
+/** El acceso a la app (RN-A06): invitación por correo, cada finalidad que falta y la sesión PATIENT. */
+async function appSession(): Promise<string> {
+  const email = `luis-perfiles-${id()}@demo.test`;
+  const invited = await harness.post(`/patients/${patientId}/invitation`, { email }, cookie);
+  expect(invited.status, JSON.stringify(invited.body)).toBeLessThan(300);
+  const token = await harness.invitationTokenFor(email);
+  const inspected = await harness.post('/invitations/inspect', { token });
+  const consents = (inspected.body as { consents: { id: string }[] }).consents.map((c) => c.id);
+  const accepted: request.Response = await harness.post('/invitations/accept', {
+    token,
+    password: 'un-cielo-gris-sobre-lima',
+    acceptedConsentDocumentIds: consents,
+  });
+  expect(accepted.status, JSON.stringify(accepted.body)).toBe(200);
+  const raw = accepted.headers['set-cookie'] as unknown as string[] | undefined;
+  return raw?.find((c) => c.startsWith('nc_session='))?.split(';')[0] ?? '';
+}
+
+describe('07 §2 · P-20.5 · los almidones de cada perfil en un plan por intercambios', () => {
+  // G-18 da a Luis 6 almidones (1, 1, 2, 1 y 1 por tiempo) y 191 g de carbohidratos. Su Descanso pide 120 g: unos 5 almidones
+  // menos (15 g cada uno en la DEMO).
+  let exchanges: Plan & { dayProfiles: (Profile & { portions: Portions | null })[] };
+  const portionsOf = (body: unknown) =>
+    (body as { dayProfiles: { portions: Portions | null }[] }).dayProfiles[0]?.portions;
+
+  it('sin reparto del coach, Descanso lleva la sugerencia del motor: primero la media tarde y la cena', async () => {
+    const created = await harness.post(
+      `/patients/${patientId}/nutrition-plans`,
+      { modality: 'EXCHANGES', energyPrescriptionId: prescriptionId, exchangeListId: DEMO },
+      cookie,
+    );
+    expect(created.status, JSON.stringify(created.body)).toBe(201);
+    const draft = created.body as Plan;
+    const saved = await put(draft, readyBody(draft, [REST]));
+    expect(saved.status, JSON.stringify(saved.body)).toBe(200);
+    exchanges = saved.body as typeof exchanges;
+
+    expect(portionsOf(exchanges)).toMatchObject({
+      starchByMeal: [1, 0, 0, 0, 0],
+      manual: false,
+      totals: { choG: 191 - 5 * 15 },
+    });
+    expect(
+      (exchanges as unknown as { methods: { methodCode: string }[] }).methods.some(
+        (m) => m.methodCode === 'STARCH_BY_DAY_PROFILE',
+      ),
+    ).toBe(true);
+    const rows = await owner(
+      `SELECT 1 FROM nutrition.plan_meal_profile_exchange WHERE plan_id = $1`,
+      [exchanges.id],
+    );
+    expect(rows).toHaveLength(0);
+  });
+
+  it('el reparto del coach se guarda y manda; publicar lo congela en el snapshot 4', async () => {
+    const saved = await put(exchanges, {
+      ...readyBody(exchanges, [REST]),
+      starchByProfile: { REST: [1, 1, 1, 0, 0] },
+    });
+    expect(saved.status, JSON.stringify(saved.body)).toBe(200);
+    exchanges = saved.body as typeof exchanges;
+    expect(portionsOf(exchanges)).toMatchObject({ starchByMeal: [1, 1, 1, 0, 0], manual: true });
+    const rows = await owner<{ servings: number }>(
+      `SELECT servings FROM nutrition.plan_meal_profile_exchange WHERE plan_id = $1 AND profile_code = 'REST'`,
+      [exchanges.id],
+    );
+    expect(rows.map((r) => r.servings).sort()).toEqual([0, 0, 1, 1, 1]);
+
+    const published = await harness
+      .post(`/nutrition-plans/${exchanges.id}/publish`, undefined, cookie)
+      .set('If-Match', String(exchanges.version));
+    expect(published.status, JSON.stringify(published.body)).toBe(200);
+    const [snapshot] = await owner<{ version: number; portions: Portions }>(
+      `SELECT snapshot_schema_version AS version, snapshot->'dayProfiles'->0->'portions' AS portions
+       FROM nutrition.plan WHERE id = $1`,
+      [exchanges.id],
+    );
+    expect(snapshot).toMatchObject({ version: 4, portions: { starchByMeal: [1, 1, 1, 0, 0] } });
+    await expect(
+      owner(`UPDATE nutrition.plan_meal_profile_exchange SET servings = 2 WHERE plan_id = $1`, [
+        exchanges.id,
+      ]),
+    ).rejects.toThrow(/RN-E15/);
+  });
+
+  it('un día de Descanso, la app muestra y registra sus almidones; lo que ese día no va no está en el plan (RN-G05)', async () => {
+    await harness.deliver('tracking.plans');
+    // La sesión 1 fue ayer: hoy no hay sesión y vale Descanso.
+    await publishProgram(day(-1), null);
+    expect(await todayTarget()).toMatchObject({ code: 'REST' });
+    const patientCookie = await appSession();
+
+    const view = (await harness.get('/me/plan', patientCookie)).body as MePlanView;
+    expect(view.plan?.profile).toEqual({ code: 'REST', name: 'Descanso' });
+    const starch = (slot: string) =>
+      view.plan?.meals
+        .find((meal) => meal.slotCode === slot)
+        ?.options.find((option) => option.groupCode === 'STA')?.servings ?? 0;
+    expect(['BREAKFAST', 'MID_MORNING', 'LUNCH', 'AFTERNOON', 'DINNER'].map(starch)).toEqual([
+      1, 1, 1, 0, 0,
+    ]);
+
+    const mealId = (slot: string) => view.plan?.meals.find((m) => m.slotCode === slot)?.id ?? '';
+    const log = (slot: string) =>
+      harness.post(
+        '/me/food-logs',
+        {
+          clientId: id(),
+          localDate: day(),
+          source: { kind: 'EXCHANGE', mealId: mealId(slot), groupCode: 'STA', foodId: foods.STA },
+        },
+        patientCookie,
+      );
+    const lunch = await log('LUNCH');
+    expect(lunch.status, JSON.stringify(lunch.body)).toBe(201);
+    expect((lunch.body as { records: { servings: number }[] }).records[0]?.servings).toBe(1);
+    const afternoon = await log('AFTERNOON');
+    expect(afternoon.status, JSON.stringify(afternoon.body)).toBe(422);
+  });
+});
+
+describe('07 §2 · P-20.5 · la cantidad de cada alimento en un perfil (composición)', () => {
+  it('se guarda solo lo que cambia; el perfil calcula su día y su adecuación con esas cantidades', async () => {
+    const created = await harness.post(
+      `/patients/${patientId}/nutrition-plans`,
+      { modality: 'COMPOSITION', energyPrescriptionId: prescriptionId },
+      cookie,
+    );
+    expect(created.status, JSON.stringify(created.body)).toBe(201);
+    const draft = created.body as Plan;
+    const item = (grams: number, rest: number) => ({
+      itemType: 'FOOD',
+      foodId: foods.STA,
+      grams,
+      householdText: null,
+      byProfile: { REST: { grams: rest, householdText: null } },
+    });
+    const saved = await put(draft, {
+      modality: 'COMPOSITION',
+      meals: draft.meals.map(({ slotCode, name, timeOfDay, sharePct }) => ({
+        slotCode,
+        name,
+        timeOfDay,
+        sharePct,
+        items: [item(200, slotCode === 'AFTERNOON' ? 100 : 200)],
+      })),
+      hydrationTargetMl: 2_500,
+      instructions: null,
+      dayProfiles: [REST],
+    });
+    expect(saved.status, JSON.stringify(saved.body)).toBe(200);
+    const plan = saved.body as {
+      meals: { slotCode: string; items: { byProfile: Record<string, { grams: number }> }[] }[];
+      totals: { nutrients: Record<string, { value: number }> };
+      dayProfiles: { portions: { totals: { nutrients: Record<string, { value: number }> } } }[];
+    };
+
+    // 200 g en cada tiempo; en la media tarde de Descanso, 100. A 150 kcal por 100 g: 1,500 y 1,350 kcal.
+    expect(plan.meals.find((m) => m.slotCode === 'AFTERNOON')?.items[0]?.byProfile).toEqual({
+      REST: { grams: 100, householdText: null },
+    });
+    expect(plan.meals.find((m) => m.slotCode === 'LUNCH')?.items[0]?.byProfile).toEqual({});
+    expect(plan.totals.nutrients.ENERC_KCAL?.value).toBeCloseTo(1500, 6);
+    expect(plan.dayProfiles[0]?.portions.totals.nutrients.ENERC_KCAL?.value).toBeCloseTo(1350, 6);
+    const rows = await owner(`SELECT 1 FROM nutrition.plan_item_profile WHERE plan_id = $1`, [
+      (saved.body as Plan).id,
+    ]);
+    expect(rows).toHaveLength(1);
   });
 });

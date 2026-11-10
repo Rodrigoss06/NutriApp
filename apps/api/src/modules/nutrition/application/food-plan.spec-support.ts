@@ -72,11 +72,13 @@ export const food = (foodId: string, grams: number): FoodItem => ({
   foodId,
   grams,
   householdText: null,
+  byProfile: {},
 });
 export const recipe = (recipeId: string, servings: number): RecipeItem => ({
   itemType: 'RECIPE',
   recipeId,
   servings,
+  byProfile: {},
 });
 
 export const cell = (

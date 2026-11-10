@@ -28,17 +28,26 @@ const AUTOMATIC: PlanMethods['automaticServings'] = {
   FAT: 3,
 };
 
-/** Un reparto sencillo: todo al primer tiempo. La aplicación usa el mayor residuo del motor. */
+/**
+ * Un reparto sencillo: todo al primer tiempo. La aplicación usa el mayor residuo del motor. La sugerencia de almidones de un
+ * perfil quita 2 del primer tiempo; la aplicación usa STARCH_BY_DAY_PROFILE.
+ */
 const methods = (split: PlanMethods['split'] = (total) => [total, 0, 0, 0, 0]): PlanMethods => ({
   automaticServings: AUTOMATIC,
   split,
+  profileStarch: (_profile, meals) =>
+    meals.map((m, i) => (i === 0 ? Math.max(0, m.servings.STA - 2) : m.servings.STA)),
 });
+
+/** El perfil Descanso de Mateo en la hoja piloto: 240 g de carbohidratos, 160 de proteína y 70 de grasa (P-20). */
+const REST = { code: 'REST', name: 'Descanso', choG: 240, proteinG: 160, fatG: 70 };
 
 const DRAFT: PlanDraftInput = {
   fixedServings: { VEG: 4, FRU: 3, MILK: 3 },
   overrides: {},
   meals: DEFAULT_MEALS,
   splitOverrides: {},
+  starchByProfile: {},
   hydrationTargetMl: null,
   instructions: null,
   dayProfiles: [],
@@ -171,6 +180,7 @@ describe('RN-E13 · RN-G05 · lo que falta para publicar', () => {
       {
         automaticServings: { VEG: 0, FRU: 0, MILK: 0, STA: 2, MEAT: 1, FAT: 0 },
         split: (total) => [total],
+        profileStarch: (_profile, meals) => meals.map((m) => m.servings.STA),
       },
       NAMES,
     );
@@ -201,9 +211,103 @@ describe('RN-E13 · RN-G05 · lo que falta para publicar', () => {
       {
         automaticServings: { VEG: 0, FRU: 0, MILK: 0, STA: 2, MEAT: 1, FAT: 0 },
         split: (total) => [total],
+        profileStarch: (_profile, meals) => meals.map((m) => m.servings.STA),
       },
       NAMES,
     );
     expect(ready.ok && publishProblems(ready.value, NAMES)).toEqual([]);
+  });
+});
+
+describe('07 §2 · P-20.5 · los almidones de cada perfil de día', () => {
+  it('sin reparto del coach, el perfil lleva la sugerencia; lo demás es lo del plan', () => {
+    const result = exchangePlan({ ...DRAFT, dayProfiles: [REST] }, methods(), NAMES);
+
+    expect(result.ok && result.value.profiles).toEqual([
+      { code: 'REST', starchByMeal: [4, 0, 0, 0, 0], manual: false },
+    ]);
+  });
+
+  it('el reparto del coach reemplaza a la sugerencia y queda marcado, aunque sume otro total', () => {
+    const result = exchangePlan(
+      { ...DRAFT, dayProfiles: [REST], starchByProfile: { REST: [2, 0, 1, 0, 0] } },
+      methods(),
+      NAMES,
+    );
+
+    expect(result.ok && result.value.profiles).toEqual([
+      { code: 'REST', starchByMeal: [2, 0, 1, 0, 0], manual: true },
+    ]);
+  });
+
+  it('el reparto de un perfil tiene un valor por tiempo y es de un perfil del plan', () => {
+    expect(
+      problems({
+        ...DRAFT,
+        dayProfiles: [REST],
+        starchByProfile: { REST: [3, 0], ALTO: [1, 0, 0, 0, 0] },
+      }),
+    ).toEqual([
+      'Descanso: el reparto de almidones necesita un valor por cada uno de los 5 tiempos de comida (RN-E09).',
+      'Hay un reparto de almidones para ALTO, que no es un perfil del plan.',
+    ]);
+  });
+
+  it('un tiempo sin almidones en el plan admite los suyos si un perfil los lleva ahí (RN-G05)', () => {
+    const meals = DEFAULT_MEALS.map((m, i) =>
+      i === 3
+        ? {
+            ...m,
+            allowedFoods: [
+              { groupCode: 'STA' as const, foodId: RICE, grams: 30, householdText: null },
+            ],
+          }
+        : m,
+    );
+    expect(problems({ ...DRAFT, meals })).toEqual([
+      'Media tarde: Almidones no tiene intercambios en este tiempo; quita sus alimentos permitidos (RN-G05).',
+    ]);
+    expect(
+      problems({
+        ...DRAFT,
+        meals,
+        dayProfiles: [{ ...REST, code: 'ALTO', name: 'Alto' }],
+        starchByProfile: { ALTO: [6, 0, 0, 1, 0] },
+      }),
+    ).toEqual([]);
+  });
+
+  it('para publicar, un tiempo con almidones en algún perfil necesita un almidón permitido (RN-G05)', () => {
+    const plan = exchangePlan(
+      {
+        ...DRAFT,
+        fixedServings: { VEG: 0, FRU: 0, MILK: 0 },
+        hydrationTargetMl: 2_500,
+        meals: [
+          {
+            ...meal(0),
+            sharePct: 50,
+            allowedFoods: [
+              { groupCode: 'STA', foodId: RICE, grams: 30, householdText: null },
+              { groupCode: 'MEAT', foodId: CHICKEN, grams: 35, householdText: null },
+            ],
+          },
+          { ...meal(4), sharePct: 50 },
+        ],
+        dayProfiles: [{ ...REST, code: 'ALTO', name: 'Alto' }],
+        starchByProfile: { ALTO: [2, 1] },
+      },
+      {
+        automaticServings: { VEG: 0, FRU: 0, MILK: 0, STA: 2, MEAT: 1, FAT: 0 },
+        split: (total) => [total, 0],
+        profileStarch: (_profile, meals) => meals.map((m) => m.servings.STA),
+      },
+      NAMES,
+    );
+    if (!plan.ok) throw new Error('El borrador debía ser válido.');
+
+    expect(publishProblems(plan.value, NAMES)).toEqual([
+      'Cena: falta al menos un alimento permitido de Almidones (RN-G05).',
+    ]);
   });
 });

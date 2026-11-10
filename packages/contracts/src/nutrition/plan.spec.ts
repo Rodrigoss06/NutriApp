@@ -82,7 +82,7 @@ describe('RF-21 · RN-E16 · borrador del menú semanal', () => {
       days: week({ optionA: [recipe], optionB: [food] }),
     });
     expect(parsed.modality === 'WEEKLY_MENU' && parsed.days[6]?.meals[0]?.optionA).toEqual([
-      recipe,
+      { ...recipe, byProfile: {} },
     ]);
   });
 
@@ -103,6 +103,72 @@ describe('RF-21 · RN-E16 · borrador del menú semanal', () => {
         ...draft,
         days: week({ optionA: [{ ...recipe, servings: 0 }], optionB: [] }),
       }).success,
+    ).toBe(false);
+  });
+});
+
+describe('07 §2 · P-20.5 · las porciones de cada perfil de día', () => {
+  it('un alimento o una receta cambian su cantidad en un perfil; 0 es «ese día no va»', () => {
+    const parsed = updateNutritionPlanSchema.parse({
+      modality: 'WEEKLY_MENU',
+      meals: [meal],
+      hydrationTargetMl: null,
+      instructions: null,
+      days: week({
+        optionA: [
+          { ...food, byProfile: { REST: { grams: 100, householdText: ' ½ taza ' } } },
+          { ...recipe, byProfile: { REST: { servings: 0 } } },
+        ],
+        optionB: [],
+      }),
+    });
+    expect(parsed.modality === 'WEEKLY_MENU' && parsed.days[0]?.meals[0]?.optionA).toEqual([
+      {
+        ...food,
+        householdText: '1 taza',
+        byProfile: { REST: { grams: 100, householdText: '½ taza' } },
+      },
+      { ...recipe, byProfile: { REST: { servings: 0 } } },
+    ]);
+  });
+
+  it('el código del perfil va en mayúsculas y la cantidad no es negativa', () => {
+    const items = (byProfile: unknown) => ({
+      modality: 'COMPOSITION',
+      hydrationTargetMl: null,
+      instructions: null,
+      meals: [{ ...meal, items: [{ ...food, byProfile }] }],
+    });
+    expect(
+      updateNutritionPlanSchema.safeParse(items({ rest: { grams: 100, householdText: null } }))
+        .success,
+    ).toBe(false);
+    expect(
+      updateNutritionPlanSchema.safeParse(items({ REST: { grams: -1, householdText: null } }))
+        .success,
+    ).toBe(false);
+  });
+
+  it('en intercambios, los almidones de cada tiempo de un perfil; sin ellos, la sugerencia', () => {
+    const exchanges = {
+      modality: 'EXCHANGES',
+      fixedServings: { VEG: 3, FRU: 2, MILK: 2 },
+      overrides: {},
+      meals: [{ ...meal, allowedFoods: [] }],
+      splitOverrides: {},
+      hydrationTargetMl: null,
+      instructions: null,
+    };
+    const parsed = updateNutritionPlanSchema.parse(exchanges);
+    expect(parsed.modality === 'EXCHANGES' && parsed.starchByProfile).toEqual({});
+    const manual = updateNutritionPlanSchema.parse({
+      ...exchanges,
+      starchByProfile: { REST: [4] },
+    });
+    expect(manual.modality === 'EXCHANGES' && manual.starchByProfile).toEqual({ REST: [4] });
+    expect(
+      updateNutritionPlanSchema.safeParse({ ...exchanges, starchByProfile: { REST: [1.5] } })
+        .success,
     ).toBe(false);
   });
 });

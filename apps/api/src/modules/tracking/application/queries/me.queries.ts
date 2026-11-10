@@ -20,6 +20,7 @@ import { localDate as localDateOf } from '../../domain/active-plan.js';
 import { sessionsOn } from '../../domain/active-program.js';
 import { sessionView, type SessionView } from '../../domain/training-day.js';
 import {
+  dayPortionsOf,
   dayTotals,
   planView,
   recordWindow,
@@ -238,13 +239,20 @@ export class MeQueries {
     });
   }
 
-  /** El plan vigente por tiempos de comida, listo para registrar (RF-28); sin fecha, el de hoy. */
+  /**
+   * El plan vigente por tiempos de comida, listo para registrar (RF-28); sin fecha, el de hoy. Con las porciones del perfil de ese
+   * día, el de su meta (RN-G03, P-20.5).
+   */
   plan(context: SecurityContext, localDate: string | null): Promise<PlanView | null> {
     const scope = scopeOf(context);
     return this.uow.query(context, async () => {
       const date = localDate ?? (await this.#today(scope.patientId));
-      const plan = appPlanOn(await this.store.activeNutrition(scope.patientId), date);
-      return plan ? planView(plan, date) : null;
+      const [active, target] = await Promise.all([
+        this.store.activeNutrition(scope.patientId),
+        this.store.dayTarget(scope.patientId, date),
+      ]);
+      const plan = appPlanOn(active, date);
+      return plan ? planView(plan, date, dayPortionsOf(plan, target?.profile?.code ?? null)) : null;
     });
   }
 

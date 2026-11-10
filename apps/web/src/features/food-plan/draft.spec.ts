@@ -33,6 +33,7 @@ const rice = (change: Partial<FoodItemRow> = {}): FoodItemRow => ({
   unit: GRAMS,
   amount: '150',
   savedHouseholdText: null,
+  byProfile: {},
   ...change,
 });
 
@@ -43,6 +44,7 @@ const foodView = {
   state: 'COOKED' as const,
   grams: 150,
   householdText: '1 taza',
+  byProfile: { REST: { grams: 100, householdText: '⅔ taza' } },
   nutrientsPer100g: {},
 };
 
@@ -99,6 +101,7 @@ describe('RF-20 · borrador por composición', () => {
           inputsHash: 'x',
           warnings: [],
         },
+        portions: null,
       },
     ],
   };
@@ -112,7 +115,16 @@ describe('RF-20 · borrador por composición', () => {
           name: 'Almuerzo',
           timeOfDay: '13:00',
           sharePct: 100,
-          items: [{ itemType: 'FOOD', foodId: RICE, grams: 150, householdText: '1 taza' }],
+          items: [
+            {
+              itemType: 'FOOD',
+              foodId: RICE,
+              grams: 150,
+              householdText: '1 taza',
+              // P-20.5: la cantidad de Descanso vuelve tal cual al guardar.
+              byProfile: { REST: { grams: 100, householdText: '⅔ taza' } },
+            },
+          ],
         },
       ],
       hydrationTargetMl: 2000,
@@ -164,6 +176,7 @@ describe('RF-21 · RN-E16 · borrador del menú semanal', () => {
                 recipeId: STEW,
                 recipeName: 'Guiso',
                 servings: 1.5,
+                byProfile: {},
                 nutrientsPerServing: {},
               },
             ],
@@ -181,8 +194,16 @@ describe('RF-21 · RN-E16 · borrador del menú semanal', () => {
     const body = menuBody(menuDraftOf(plan));
     expect(body?.days).toHaveLength(7);
     expect(body?.days[6]?.meals[0]).toEqual({
-      optionA: [{ itemType: 'RECIPE', recipeId: STEW, servings: 1.5 }],
-      optionB: [{ itemType: 'FOOD', foodId: RICE, grams: 150, householdText: '1 taza' }],
+      optionA: [{ itemType: 'RECIPE', recipeId: STEW, servings: 1.5, byProfile: {} }],
+      optionB: [
+        {
+          itemType: 'FOOD',
+          foodId: RICE,
+          grams: 150,
+          householdText: '1 taza',
+          byProfile: { REST: { grams: 100, householdText: '⅔ taza' } },
+        },
+      ],
     });
     expect(body?.instructions).toBe('Variar las frutas.');
     expect(body?.dayProfiles).toEqual([]);
@@ -210,7 +231,7 @@ describe('RF-21 · RN-E16 · borrador del menú semanal', () => {
     const keys = copied.days.map((day) => day.cells[1]?.optionA[0]?.key);
     expect(new Set(keys).size).toBe(7);
     expect(menuBody({ ...copied, hydrationMl: '2000' })?.days[5]?.meals[1]?.optionA).toEqual([
-      { itemType: 'FOOD', foodId: RICE, grams: 150, householdText: null },
+      { itemType: 'FOOD', foodId: RICE, grams: 150, householdText: null, byProfile: {} },
     ]);
   });
 });

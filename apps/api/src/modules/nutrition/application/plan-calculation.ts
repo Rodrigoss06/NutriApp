@@ -4,6 +4,7 @@ import {
   kcalOfMacros,
   MEAL_SPLIT_LARGEST_REMAINDER,
   runMethod,
+  STARCH_BY_DAY_PROFILE,
   type AnyMethod,
   type Issue,
   type MethodCode,
@@ -16,6 +17,7 @@ import {
   type ExchangeGroupCode,
   type ExchangePlan,
   type PlanDraftInput,
+  type PlannedMeal,
 } from '../domain/nutrition-plan.js';
 
 /** Las metas exactas del plan, las de su prescripción (RN-E07): sin redondear (RN-D09). */
@@ -58,23 +60,45 @@ export interface Adequacy {
   readonly inRange: boolean;
 }
 
+export interface MacroTotals {
+  readonly kcal: number;
+  readonly choG: number;
+  readonly proteinG: number;
+  readonly fatG: number;
+}
+
+export interface ExchangeAdequacy {
+  readonly rangePct: readonly [number, number];
+  readonly kcal: Adequacy;
+  readonly cho: Adequacy;
+  readonly protein: Adequacy;
+  readonly fat: Adequacy;
+}
+
+/**
+ * Las porciones de un perfil de día (07 §2, P-20.5): sus almidones por tiempo, los totales del plan con ellos y la adecuación
+ * frente a las metas del perfil (RN-E10).
+ */
+export interface ExchangeProfileCalculation {
+  readonly code: string;
+  readonly starchByMeal: readonly number[];
+  /** El coach cambió la sugerencia de STARCH_BY_DAY_PROFILE. */
+  readonly manual: boolean;
+  readonly totals: MacroTotals;
+  readonly adequacy: ExchangeAdequacy;
+}
+
 export interface PlanCalculation {
   readonly plan: ExchangePlan;
-  readonly totals: {
-    readonly kcal: number;
-    readonly choG: number;
-    readonly proteinG: number;
-    readonly fatG: number;
-  };
-  readonly adequacy: {
-    readonly rangePct: readonly [number, number];
-    readonly kcal: Adequacy;
-    readonly cho: Adequacy;
-    readonly protein: Adequacy;
-    readonly fat: Adequacy;
-  };
+  readonly totals: MacroTotals;
+  readonly adequacy: ExchangeAdequacy;
+  /** Uno por perfil de día, en su orden. */
+  readonly profiles: readonly ExchangeProfileCalculation[];
   readonly methods: readonly PlanMethodRun[];
 }
+
+/** Las metas de un perfil de día por su código (07 §2). */
+export type ProfileTargets = PlanTargets & { readonly code: string };
 
 type Run<T> =
   | { readonly ok: true; readonly outputs: T; readonly method: PlanMethodRun }
@@ -103,13 +127,15 @@ export function runPlanMethod<T>(method: AnyMethod, inputs: Record<string, unkno
 /**
  * Un plan por intercambios con el motor: el método clásico con los grupos fijos (RN-E08), el reparto de cada grupo por
  * el mayor residuo (RN-E09) y la adecuación de kcal y de cada macronutriente frente a las metas, con el rango de la
- * organización (RN-E10). Los ajustes a mano y las reglas del plan los decide el dominio.
+ * organización (RN-E10). Cada perfil de día lleva sus almidones por tiempo, sugeridos por STARCH_BY_DAY_PROFILE o del coach,
+ * y su adecuación frente a sus metas (P-20.5). Los ajustes a mano y las reglas del plan los decide el dominio.
  */
 export function calculatePlan(
   input: PlanDraftInput,
   targets: PlanTargets,
   list: PlanList,
   rangePct: readonly [number, number],
+  profileTargets: readonly ProfileTargets[] = [],
 ): Result<PlanCalculation, DomainError> {
   const exchanges = runPlanMethod<{ servings: Record<ExchangeGroupCode, number> }>(
     EXCHANGES_CLASSIC,
@@ -150,17 +176,70 @@ export function calculatePlan(
     ExchangeGroupCode,
     string
   >;
-  const plan = exchangePlan(input, { automaticServings: exchanges.outputs.servings, split }, names);
-  if (!plan.ok) return plan;
-
   const byCode = new Map(list.groups.map((g) => [g.code, g]));
-  const sum = (macro: 'choG' | 'proteinG' | 'fatG'): number =>
-    plan.value.exchanges.reduce(
-      (total, e) => total + e.servings * (byCode.get(e.groupCode)?.[macro] ?? 0),
+  const starchRuns: PlanMethodRun[] = [];
+  const starchErrors: DomainError[] = [];
+  const profileStarch = (
+    profile: { readonly choG: number },
+    planned: readonly PlannedMeal[],
+  ): readonly number[] => {
+    const base = planned.map((meal) => meal.servings.STA);
+    const baseChoG = planned.reduce(
+      (total, meal) =>
+        total +
+        EXCHANGE_GROUP_CODES.reduce(
+          (sum, code) => sum + meal.servings[code] * (byCode.get(code)?.choG ?? 0),
+          0,
+        ),
       0,
     );
-  const macros = { choG: sum('choG'), proteinG: sum('proteinG'), fatG: sum('fatG') };
-  const totals = { ...macros, kcal: kcalOfMacros(macros) };
+    const result = runPlanMethod<{ servingsByMeal: { servings: number }[] }>(
+      STARCH_BY_DAY_PROFILE,
+      {
+        baseChoG,
+        profileChoG: profile.choG,
+        starchChoG: byCode.get('STA')?.choG ?? 0,
+        meals: planned.map((meal, index) => ({
+          meal: String(index),
+          slotCode: meal.slotCode,
+          starch: meal.servings.STA,
+        })),
+      },
+    );
+    if (!result.ok) {
+      starchErrors.push(result.error);
+      return base;
+    }
+    starchRuns.push(result.method);
+    return result.outputs.servingsByMeal.map((row) => row.servings);
+  };
+  const plan = exchangePlan(
+    input,
+    { automaticServings: exchanges.outputs.servings, split, profileStarch },
+    names,
+  );
+  if (!plan.ok) return plan;
+  const [starchError] = starchErrors;
+  if (starchError) return err(starchError);
+
+  const sum = (
+    macro: 'choG' | 'proteinG' | 'fatG',
+    servingsOf: (code: ExchangeGroupCode, servings: number) => number,
+  ): number =>
+    plan.value.exchanges.reduce(
+      (total, e) =>
+        total + servingsOf(e.groupCode, e.servings) * (byCode.get(e.groupCode)?.[macro] ?? 0),
+      0,
+    );
+  const totalsWith = (servingsOf: (code: ExchangeGroupCode, servings: number) => number) => {
+    const macros = {
+      choG: sum('choG', servingsOf),
+      proteinG: sum('proteinG', servingsOf),
+      fatG: sum('fatG', servingsOf),
+    };
+    return { ...macros, kcal: kcalOfMacros(macros) };
+  };
+  const totals = totalsWith((_, servings) => servings);
 
   const adequacyRuns: PlanMethodRun[] = [];
   const adequacy = (prescribed: number, planned: number): Result<Adequacy, DomainError> => {
@@ -173,26 +252,46 @@ export function calculatePlan(
     adequacyRuns.push(result.method);
     return ok({ pct: result.outputs.adequacyPct, inRange: result.outputs.daysInRange === 1 });
   };
-  const kcal = adequacy(targets.kcal, totals.kcal);
-  if (!kcal.ok) return kcal;
-  const cho = adequacy(targets.choG, totals.choG);
-  if (!cho.ok) return cho;
-  const protein = adequacy(targets.proteinG, totals.proteinG);
-  if (!protein.ok) return protein;
-  const fat = adequacy(targets.fatG, totals.fatG);
-  if (!fat.ok) return fat;
-
-  return ok({
-    plan: plan.value,
-    totals,
-    adequacy: {
+  const block = (
+    prescribed: PlanTargets,
+    planned: MacroTotals,
+  ): Result<ExchangeAdequacy, DomainError> => {
+    const kcal = adequacy(prescribed.kcal, planned.kcal);
+    if (!kcal.ok) return kcal;
+    const cho = adequacy(prescribed.choG, planned.choG);
+    if (!cho.ok) return cho;
+    const protein = adequacy(prescribed.proteinG, planned.proteinG);
+    if (!protein.ok) return protein;
+    const fat = adequacy(prescribed.fatG, planned.fatG);
+    if (!fat.ok) return fat;
+    return ok({
       rangePct,
       kcal: kcal.value,
       cho: cho.value,
       protein: protein.value,
       fat: fat.value,
-    },
-    methods: [exchanges.method, ...splits, ...adequacyRuns],
+    });
+  };
+  const planAdequacy = block(targets, totals);
+  if (!planAdequacy.ok) return planAdequacy;
+
+  const profiles: ExchangeProfileCalculation[] = [];
+  for (const profile of plan.value.profiles) {
+    const prescribed = profileTargets.find((t) => t.code === profile.code);
+    if (!prescribed) throw new Error(`El perfil ${profile.code} sin sus metas.`);
+    const starch = profile.starchByMeal.reduce((total, servings) => total + servings, 0);
+    const profileTotals = totalsWith((code, servings) => (code === 'STA' ? starch : servings));
+    const profileAdequacy = block(prescribed, profileTotals);
+    if (!profileAdequacy.ok) return profileAdequacy;
+    profiles.push({ ...profile, totals: profileTotals, adequacy: profileAdequacy.value });
+  }
+
+  return ok({
+    plan: plan.value,
+    totals,
+    adequacy: planAdequacy.value,
+    profiles,
+    methods: [exchanges.method, ...splits, ...starchRuns, ...adequacyRuns],
   });
 }
 

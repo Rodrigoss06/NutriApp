@@ -53,6 +53,7 @@ const document = (hydrationTargetMl: number) => {
       overrides: {},
       meals: DEFAULT_MEALS,
       splitOverrides: {},
+      starchByProfile: {},
       hydrationTargetMl,
       instructions: null,
       dayProfiles: [],
@@ -73,7 +74,7 @@ describe('RN-E15 · RN-H02 · snapshot del plan publicado', () => {
     const { snapshot } = planSnapshot(document(2_500), META);
 
     expect(snapshot).toMatchObject({
-      schemaVersion: 3,
+      schemaVersion: 4,
       modality: 'EXCHANGES',
       engineVersion: ENGINE_VERSION,
       validFrom: '2026-10-22',
@@ -112,7 +113,7 @@ describe('RN-E15 · RN-E16 · snapshot de un menú semanal', () => {
     const { snapshot } = planSnapshot(menuDocument(), META);
     if (snapshot.modality !== 'WEEKLY_MENU') throw new Error('Debía ser un menú.');
 
-    expect(snapshot.schemaVersion).toBe(3);
+    expect(snapshot.schemaVersion).toBe(4);
     expect(Object.keys(snapshot.foods).sort()).toEqual([RICE, CHICKEN, EGG].sort());
     expect(snapshot.foods[EGG]?.nutrientsPer100g).toMatchObject({ CHOCDF: null, NA: 140 });
     expect(snapshot.recipes[STEW]).toMatchObject({ name: 'Arroz con pollo', servings: 2 });

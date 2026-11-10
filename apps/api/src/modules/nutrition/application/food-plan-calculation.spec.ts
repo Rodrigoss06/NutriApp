@@ -156,3 +156,62 @@ describe('RN-E16 · menú semanal: 7 días con recetas, opciones A y B', () => {
     expect(new Set(runs.map((m) => m.inputsHash)).size).toBe(runs.length);
   });
 });
+
+describe('07 §2 · P-20.5 · RN-E10 · la cantidad de cada alimento en un perfil de día', () => {
+  const REST_DRAFT = { code: 'REST', name: 'Descanso', choG: 75, proteinG: 50, fatG: 30 };
+  const REST = { code: 'REST', kcal: 4 * 75 + 4 * 50 + 9 * 30, choG: 75, proteinG: 50, fatG: 30 };
+
+  it('en composición, el día del perfil suma sus cantidades; el alimento que lleva 0 g no cuenta', () => {
+    const draft: CompositionDraft = {
+      ...COMPOSITION,
+      dayProfiles: [REST_DRAFT],
+      meals: COMPOSITION.meals.map((meal, i) =>
+        i === 1
+          ? {
+              ...meal,
+              items: [
+                { ...food(RICE, 200), byProfile: { REST: { grams: 100, householdText: null } } },
+                { ...food(CHICKEN, 150), byProfile: { REST: { grams: 0, householdText: null } } },
+              ],
+            }
+          : meal,
+      ),
+    };
+    const result = calculateComposition(draft, TARGETS, SOURCES, [90, 110], [REST]);
+    if (!result.ok) throw new Error(JSON.stringify(result.error));
+    const [rest] = result.value.profiles;
+
+    // El huevo (140) y 100 g de arroz (120): sin el pollo.
+    expect(rest?.totals.ingredientCount).toBe(2);
+    expect(rest?.totals.nutrients.ENERC_KCAL?.value).toBeCloseTo(260, 10);
+    expect(rest?.adequacy.kcal.pct).toBeCloseTo((260 / REST.kcal) * 100, 10);
+    // Lo del plan no cambia.
+    expect(result.value.totals.nutrients.ENERC_KCAL?.value).toBeCloseTo(545, 10);
+  });
+
+  it('en el menú, la adecuación del perfil es la de sus siete días, con las recetas en sus porciones', () => {
+    const draft: WeeklyMenuDraft = {
+      ...MENU,
+      dayProfiles: [REST_DRAFT],
+      days: MENU.days.map((day) => ({
+        meals: day.meals.map((c) => ({
+          ...c,
+          optionA: c.optionA.map((item) =>
+            item.itemType === 'RECIPE' ? { ...item, byProfile: { REST: { servings: 1 } } } : item,
+          ),
+        })),
+      })),
+    };
+    const result = calculateWeeklyMenu(draft, TARGETS, SOURCES, [90, 110], [REST]);
+    if (!result.ok) throw new Error(JSON.stringify(result.error));
+    const [rest] = result.value.profiles;
+
+    expect(rest?.adequacy.kcal.days).toBe(7);
+    expect(rest?.adequacy.kcal.pct).toBeLessThan(result.value.adequacy.kcal.pct);
+    // El promedio de la semana del perfil: el de su adecuación.
+    expect(rest?.weeklyAverage.ENERC_KCAL?.known).toBeCloseTo(
+      ((rest?.adequacy.kcal.pct ?? 0) * REST.kcal) / 100,
+      9,
+    );
+  });
+});

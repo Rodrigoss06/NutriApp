@@ -19,6 +19,7 @@ import { FoodApi } from '../../../food/index.js';
 import type { PlanSnapshot } from '../../../nutrition/index.js';
 import {
   catalogFoodDraft,
+  dayPortionsOf,
   planDrafts,
   type FoodLogDraft,
   type LoggablePlan,
@@ -374,11 +375,15 @@ export class RecordCommands {
         ],
       });
     }
-    const active = await this.store.activeNutrition(patientId);
+    const [active, target] = await Promise.all([
+      this.store.activeNutrition(patientId),
+      this.store.dayTarget(patientId, localDate),
+    ]);
     if (!active || localDate < active.effectiveFrom) return err(NO_ACTIVE_PLAN);
     // El snapshot lo escribió nutrition (RN-E15): su tipo cumple el de tracking, y el compilador lo comprueba aquí.
     const plan: LoggablePlan = active.snapshot as PlanSnapshot;
-    const drafts = planDrafts(plan, source);
+    // Lo del plan ese día es lo del perfil de su meta (RN-G03, P-20.5).
+    const drafts = planDrafts(plan, source, dayPortionsOf(plan, target?.profile?.code ?? null));
     if (!drafts || drafts.length > MAX_ITEMS_PER_REQUEST) return err(NOT_IN_PLAN);
     return ok({ planId: active.id, drafts });
   }

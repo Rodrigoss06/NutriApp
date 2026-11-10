@@ -8,7 +8,14 @@ import type {
   PlanNutrient,
   WeeklyAverage,
 } from './food-plan-calculation.js';
-import type { PlanCalculation, PlanList, PlanMethodRun, PlanTargets } from './plan-calculation.js';
+import type {
+  ExchangeAdequacy,
+  MacroTotals,
+  PlanCalculation,
+  PlanList,
+  PlanMethodRun,
+  PlanTargets,
+} from './plan-calculation.js';
 import type {
   CalculatedComposition,
   CalculatedPlan,
@@ -36,16 +43,46 @@ export interface PlanDocumentMeal {
   readonly allowedFoods: readonly PlanDocumentFood[];
 }
 
+/**
+ * Las porciones de un perfil en intercambios (07 §2, P-20.5): los almidones de cada tiempo, en su orden (los demás grupos son
+ * los del plan), con los totales del día y su adecuación frente a las metas del perfil (RN-E10).
+ */
+export interface ExchangeProfilePortions {
+  readonly starchByMeal: readonly number[];
+  /** El coach cambió la sugerencia de STARCH_BY_DAY_PROFILE. */
+  readonly manual: boolean;
+  readonly totals: MacroTotals;
+  readonly adequacy: ExchangeAdequacy;
+}
+
+/** Lo de un perfil en composición: el día con sus cantidades y su adecuación (P-20.5, RN-E10). */
+export interface CompositionProfilePortions {
+  readonly totals: ItemTotals;
+  readonly adequacy: FoodAdequacyBlock;
+}
+
+/** Lo de un perfil en el menú: el promedio y la adecuación de los siete días con sus cantidades (P-20.5, RN-E10). */
+export interface MenuProfilePortions {
+  readonly weeklyAverage: Readonly<Record<string, WeeklyAverage>>;
+  readonly adequacy: FoodAdequacyBlock;
+}
+
+/**
+ * Un perfil de día con sus metas, su método y sus porciones. Los snapshots de la versión 3 no traen las porciones: el perfil
+ * lleva las del plan.
+ */
+export type DocumentDayProfile<TPortions> = DayProfileTargets & { readonly portions?: TPortions };
+
 /** Un plan por intercambios entero, como lo calcula el motor: lo que muestra un borrador y lo que congela un snapshot. */
 export interface ExchangePlanDocument {
   readonly modality: 'EXCHANGES';
   /** Las metas de la prescripción: las de Entrenamiento (07 §2). */
   readonly targets: PlanTargets;
   /**
-   * Los demás perfiles de día con sus metas y su método (P-20); vacío, una sola meta. Los snapshots de las versiones 1 y 2
-   * no lo traen.
+   * Los demás perfiles de día con sus metas, su método y sus porciones (P-20); vacío, una sola meta. Los snapshots de las
+   * versiones 1 y 2 no lo traen.
    */
-  readonly dayProfiles?: readonly DayProfileTargets[];
+  readonly dayProfiles?: readonly DocumentDayProfile<ExchangeProfilePortions>[];
   readonly exchangeList: PlanList;
   readonly exchanges: readonly DailyExchange[];
   readonly manualSplit: readonly ExchangeGroupCode[];
@@ -57,8 +94,15 @@ export interface ExchangePlanDocument {
   readonly instructions: string | null;
 }
 
-export type DocumentFoodItem = FoodItem & { readonly foodName: string };
-export type DocumentRecipeItem = RecipeItem & { readonly recipeName: string };
+/** byProfile falta en los snapshots anteriores a la versión 4: las cantidades del plan valen todos los días. */
+export type DocumentFoodItem = Omit<FoodItem, 'byProfile'> & {
+  readonly byProfile?: FoodItem['byProfile'];
+  readonly foodName: string;
+};
+export type DocumentRecipeItem = Omit<RecipeItem, 'byProfile'> & {
+  readonly byProfile?: RecipeItem['byProfile'];
+  readonly recipeName: string;
+};
 export type DocumentMenuItem = DocumentFoodItem | DocumentRecipeItem;
 
 /** Una receta del menú congelada: lo que rinde, sus ingredientes y lo de una porción (RN-E12). */
@@ -76,11 +120,6 @@ export interface DocumentRecipe {
 interface FoodPlanDocumentBase {
   /** Las metas de la prescripción: las de Entrenamiento (07 §2). */
   readonly targets: PlanTargets;
-  /**
-   * Los demás perfiles de día con sus metas y su método (P-20); vacío, una sola meta. Los snapshots de las versiones 1 y 2
-   * no lo traen.
-   */
-  readonly dayProfiles?: readonly DayProfileTargets[];
   readonly nutrients: readonly PlanNutrient[];
   readonly foods: Readonly<Record<string, PlanFoodData>>;
   readonly adequacy: FoodAdequacyBlock;
@@ -92,6 +131,11 @@ interface FoodPlanDocumentBase {
 /** Una dieta por composición entera (RF-20): cada tiempo con sus alimentos y sus totales, y los del día. */
 export interface CompositionPlanDocument extends FoodPlanDocumentBase {
   readonly modality: 'COMPOSITION';
+  /**
+   * Los demás perfiles de día con sus metas, su método y sus porciones (P-20); vacío, una sola meta. Los snapshots de las
+   * versiones 1 y 2 no lo traen.
+   */
+  readonly dayProfiles?: readonly DocumentDayProfile<CompositionProfilePortions>[];
   readonly meals: readonly (MealHeader & {
     readonly id: string;
     readonly items: readonly DocumentFoodItem[];
@@ -111,6 +155,11 @@ export interface DocumentMenuCell {
 /** Un menú semanal entero (RF-21): de lunes a domingo, cada celda con sus opciones, y el promedio de la semana. */
 export interface WeeklyMenuPlanDocument extends FoodPlanDocumentBase {
   readonly modality: 'WEEKLY_MENU';
+  /**
+   * Los demás perfiles de día con sus metas, su método y sus porciones (P-20); vacío, una sola meta. Los snapshots de las
+   * versiones 1 y 2 no lo traen.
+   */
+  readonly dayProfiles?: readonly DocumentDayProfile<MenuProfilePortions>[];
   readonly meals: readonly MealHeader[];
   readonly days: readonly {
     readonly dayOfWeek: number;
@@ -123,15 +172,35 @@ export interface WeeklyMenuPlanDocument extends FoodPlanDocumentBase {
 
 export type PlanDocument = ExchangePlanDocument | CompositionPlanDocument | WeeklyMenuPlanDocument;
 
+/** Cada perfil con sus porciones, las que calculó el motor para su código. */
+function withPortions<TCalculated extends { readonly code: string }, TPortions>(
+  profiles: readonly DayProfileTargets[],
+  calculated: readonly TCalculated[],
+  portionsOf: (found: TCalculated) => TPortions,
+): DocumentDayProfile<TPortions>[] {
+  return profiles.map((profile) => {
+    const found = calculated.find((portions) => portions.code === profile.code);
+    if (!found) throw new Error(`El perfil ${profile.code} sin sus porciones.`);
+    return { ...profile, portions: portionsOf(found) };
+  });
+}
+
 export function planDocument(
   calculated: CalculatedPlan,
   mealIds: readonly string[],
+  profiles: readonly DayProfileTargets[] = [],
 ): ExchangePlanDocument {
   const { calculation, targets, list, foods } = calculated;
   const { plan } = calculation;
   return {
     modality: 'EXCHANGES',
     targets,
+    dayProfiles: withPortions(profiles, calculation.profiles, (found) => ({
+      starchByMeal: found.starchByMeal,
+      manual: found.manual,
+      totals: found.totals,
+      adequacy: found.adequacy,
+    })),
     exchangeList: list,
     exchanges: plan.exchanges,
     manualSplit: plan.manualSplit,
@@ -190,6 +259,7 @@ function usedFoods(
 export function compositionDocument(
   calculated: CalculatedComposition,
   mealIds: readonly string[],
+  profiles: readonly DayProfileTargets[] = [],
 ): CompositionPlanDocument {
   const { calculation, targets, sources } = calculated;
   const { plan } = calculation;
@@ -197,6 +267,10 @@ export function compositionDocument(
   return {
     modality: 'COMPOSITION',
     targets,
+    dayProfiles: withPortions(profiles, calculation.profiles, (found) => ({
+      totals: found.totals,
+      adequacy: found.adequacy,
+    })),
     nutrients: sources.nutrients,
     foods: usedFoods(
       sources,
@@ -223,6 +297,7 @@ export function compositionDocument(
 export function weeklyMenuDocument(
   calculated: CalculatedWeeklyMenu,
   cellIds: readonly string[],
+  profiles: readonly DayProfileTargets[] = [],
 ): WeeklyMenuPlanDocument {
   const { calculation, targets, sources } = calculated;
   const { plan } = calculation;
@@ -250,6 +325,10 @@ export function weeklyMenuDocument(
   return {
     modality: 'WEEKLY_MENU',
     targets,
+    dayProfiles: withPortions(profiles, calculation.profiles, (found) => ({
+      weeklyAverage: found.weeklyAverage,
+      adequacy: found.adequacy,
+    })),
     nutrients: sources.nutrients,
     foods: usedFoods(sources, [
       ...items.flatMap((item) => (item.itemType === 'FOOD' ? [item.foodId] : [])),
@@ -280,15 +359,16 @@ export function weeklyMenuDocument(
 }
 
 /**
- * Versión del esquema del snapshot: la app y las fichas la leen antes de leer lo demás (05 §2). La 3 trae los perfiles de
- * día (`dayProfiles`, P14.5, ADR-100). La 2 traía las metas de descanso en kcal (ADR-099), que no llegaron a staging; un
- * snapshot de la 1 o la 2 se lee con una sola meta.
+ * Versión del esquema del snapshot: la app y las fichas la leen antes de leer lo demás (05 §2). La 4 trae las porciones de
+ * cada perfil (`portions` de cada perfil y `byProfile` de cada alimento o receta, P-20.5, ADR-102); en la 3, cada perfil
+ * lleva las del plan. La 3 trae los perfiles de día (`dayProfiles`, P14.5, ADR-100). La 2 traía las metas de descanso en
+ * kcal (ADR-099), que no llegaron a staging; un snapshot de la 1 o la 2 se lee con una sola meta.
  */
-export const PLAN_SNAPSHOT_SCHEMA_VERSION = 3;
+export const PLAN_SNAPSHOT_SCHEMA_VERSION = 4;
 
 /** Quién publicó, cuándo y desde qué día vale. */
 export interface PlanSnapshotMeta {
-  readonly schemaVersion: 1 | 2 | typeof PLAN_SNAPSHOT_SCHEMA_VERSION;
+  readonly schemaVersion: 1 | 2 | 3 | typeof PLAN_SNAPSHOT_SCHEMA_VERSION;
   readonly planId: string;
   readonly lineageId: string;
   readonly versionNo: number;

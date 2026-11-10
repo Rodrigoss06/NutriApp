@@ -5,6 +5,7 @@ import {
   DEFAULT_MEAL_HEADERS,
   emptyMenuDays,
   weeklyMenuPublishProblems,
+  type MenuItem,
   type PlanDraft,
 } from '../domain/food-plan.js';
 import {
@@ -49,6 +50,7 @@ export function newDraft(modality: PlanModality): PlanDraft {
         overrides: {},
         meals: DEFAULT_MEALS,
         splitOverrides: {},
+        starchByProfile: {},
         ...empty,
       };
     case 'COMPOSITION':
@@ -79,19 +81,35 @@ export async function calculateDraft(
   switch (draft.modality) {
     case 'EXCHANGES': {
       if (!exchangeListId) throw new Error('Un plan por intercambios sin lista.');
-      const value = await calculator.calculate(organizationId, prescription, exchangeListId, draft);
+      const value = await calculator.calculate(
+        organizationId,
+        prescription,
+        exchangeListId,
+        draft,
+        profiles.value,
+      );
       return value.ok
         ? ok({ modality: draft.modality, value: value.value, dayProfiles: profiles.value })
         : err(value.error);
     }
     case 'COMPOSITION': {
-      const value = await calculator.composition(organizationId, prescription, draft);
+      const value = await calculator.composition(
+        organizationId,
+        prescription,
+        draft,
+        profiles.value,
+      );
       return value.ok
         ? ok({ modality: draft.modality, value: value.value, dayProfiles: profiles.value })
         : err(value.error);
     }
     case 'WEEKLY_MENU': {
-      const value = await calculator.weeklyMenu(organizationId, prescription, draft);
+      const value = await calculator.weeklyMenu(
+        organizationId,
+        prescription,
+        draft,
+        profiles.value,
+      );
       return value.ok
         ? ok({ modality: draft.modality, value: value.value, dayProfiles: profiles.value })
         : err(value.error);
@@ -126,11 +144,11 @@ export function documentOf(calculated: CalculatedDraft, mealIds: readonly string
   const { dayProfiles } = calculated;
   switch (calculated.modality) {
     case 'EXCHANGES':
-      return { ...planDocument(calculated.value, mealIds), dayProfiles };
+      return planDocument(calculated.value, mealIds, dayProfiles);
     case 'COMPOSITION':
-      return { ...compositionDocument(calculated.value, mealIds), dayProfiles };
+      return compositionDocument(calculated.value, mealIds, dayProfiles);
     case 'WEEKLY_MENU':
-      return { ...weeklyMenuDocument(calculated.value, mealIds), dayProfiles };
+      return weeklyMenuDocument(calculated.value, mealIds, dayProfiles);
   }
 }
 
@@ -177,14 +195,31 @@ export function changedFields(before: PlanDraft, after: PlanDraft): readonly str
       ...meals,
       ...(same(before.splitOverrides, after.splitOverrides) ? [] : ['plan_meal_exchange']),
       ...(same(foods(before), foods(after)) ? [] : ['plan_meal_allowed_food']),
+      ...(same(before.starchByProfile, after.starchByProfile)
+        ? []
+        : ['plan_meal_profile_exchange']),
       ...columns,
     ];
   }
-  const items = (draft: PlanDraft) =>
+  const items = (draft: PlanDraft): readonly (readonly MenuItem[])[] =>
     draft.modality === 'COMPOSITION'
       ? draft.meals.map((m) => m.items)
       : draft.modality === 'WEEKLY_MENU'
-        ? draft.days
-        : null;
-  return [...meals, ...(same(items(before), items(after)) ? [] : ['plan_item']), ...columns];
+        ? draft.days.flatMap((day) => day.meals.flatMap((cell) => [cell.optionA, cell.optionB]))
+        : [];
+  const amounts = (draft: PlanDraft) =>
+    items(draft).map((list) =>
+      list.map((item) =>
+        item.itemType === 'FOOD'
+          ? [item.foodId, item.grams, item.householdText]
+          : [item.recipeId, item.servings],
+      ),
+    );
+  const portions = (draft: PlanDraft) => items(draft).map((list) => list.map((i) => i.byProfile));
+  return [
+    ...meals,
+    ...(same(amounts(before), amounts(after)) ? [] : ['plan_item']),
+    ...(same(portions(before), portions(after)) ? [] : ['plan_item_profile']),
+    ...columns,
+  ];
 }

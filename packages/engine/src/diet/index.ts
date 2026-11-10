@@ -3,6 +3,7 @@ export {
   EXCHANGES_CLASSIC,
   EXCHANGE_GROUP_CODES,
   MEAL_SPLIT_LARGEST_REMAINDER,
+  STARCH_BY_DAY_PROFILE,
   type ExchangeGroup,
   type ExchangeGroupCode,
   type ExchangeList,
@@ -11,6 +12,9 @@ export {
   type MealShare,
   type MealSplitInput,
   type MealSplitOutput,
+  type StarchByDayProfileInput,
+  type StarchByDayProfileMeal,
+  type StarchByDayProfileOutput,
 } from './exchanges.js';
 export {
   ATWATER_KCAL_PER_G,

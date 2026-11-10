@@ -492,7 +492,10 @@ const planMacrosSchema = z.object({
   fatG: z.number(),
 });
 
-/** GET /api/v1/me/plan?date=: el plan vigente por tiempos de comida, listo para registrar (RF-28). En el menú, el día pedido. */
+/**
+ * GET /api/v1/me/plan?date=: el plan vigente por tiempos de comida, listo para registrar (RF-28), con las porciones del perfil de
+ * ese día. En el menú, el día pedido.
+ */
 export const mePlanSchema = z.object({
   plan: z
     .object({
@@ -504,6 +507,11 @@ export const mePlanSchema = z.object({
       targets: planMacrosSchema,
       /** Los demás perfiles de día, en su orden; vacío, una sola meta (P-20). */
       dayProfiles: z.array(planMacrosSchema.extend({ code: z.string(), name: z.string() })),
+      /**
+       * El perfil de ese día, el de su meta (07 §2): sus porciones son las de meals (P-20.5). null, las del plan: Entrenamiento o
+       * un plan sin perfiles.
+       */
+      profile: z.object({ code: z.string(), name: z.string() }).nullable(),
       hydrationTargetMl: z.number().int().nullable(),
       instructions: z.string().nullable(),
       meals: z.array(

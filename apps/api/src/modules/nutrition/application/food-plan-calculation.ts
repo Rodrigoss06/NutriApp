@@ -2,12 +2,18 @@ import { ADEQUACY, RECIPE_NUTRIENTS, type RecipeOutput } from '@nutricoach/engin
 import { err, ok, type DomainError, type Result } from '@nutricoach/shared-kernel';
 import {
   compositionPlan,
+  itemsInProfile,
   weeklyMenuPlan,
   type CompositionDraft,
   type MenuItem,
   type WeeklyMenuDraft,
 } from '../domain/food-plan.js';
-import { runPlanMethod, type PlanMethodRun, type PlanTargets } from './plan-calculation.js';
+import {
+  runPlanMethod,
+  type PlanMethodRun,
+  type PlanTargets,
+  type ProfileTargets,
+} from './plan-calculation.js';
 
 /** Un alimento como lo usa el cálculo: todos sus nutrientes por 100 g de parte comestible; null es «sin dato» (RN-I03). */
 export interface PlanFoodData {
@@ -67,12 +73,21 @@ export interface FoodAdequacyBlock {
   readonly fat: FoodAdequacy;
 }
 
+/** Un perfil de día en composición (P-20.5): el día con sus cantidades y su adecuación frente a sus metas (RN-E10). */
+export interface CompositionProfileCalculation {
+  readonly code: string;
+  readonly totals: ItemTotals;
+  readonly adequacy: FoodAdequacyBlock;
+}
+
 export interface CompositionCalculation {
   readonly plan: CompositionDraft;
   /** Uno por tiempo, en su orden. */
   readonly meals: readonly ItemTotals[];
   readonly totals: ItemTotals;
   readonly adequacy: FoodAdequacyBlock;
+  /** Uno por perfil de día, en su orden. */
+  readonly profiles: readonly CompositionProfileCalculation[];
   readonly methods: readonly PlanMethodRun[];
 }
 
@@ -87,6 +102,13 @@ export interface WeeklyAverage {
   readonly missingDays: number;
 }
 
+/** Un perfil de día en el menú (P-20.5): el promedio y la adecuación de los siete días con sus cantidades (RN-E10). */
+export interface MenuProfileCalculation {
+  readonly code: string;
+  readonly weeklyAverage: Readonly<Record<string, WeeklyAverage>>;
+  readonly adequacy: FoodAdequacyBlock;
+}
+
 export interface WeeklyMenuCalculation {
   readonly plan: WeeklyMenuDraft;
   /** De lunes a domingo: cada celda con lo de sus opciones y el día con la opción A de cada tiempo. */
@@ -98,6 +120,8 @@ export interface WeeklyMenuCalculation {
   /** Lo de una porción de cada receta del menú (RN-E12). */
   readonly recipes: ReadonlyMap<string, ItemTotals>;
   readonly adequacy: FoodAdequacyBlock;
+  /** Uno por perfil de día, en su orden. */
+  readonly profiles: readonly MenuProfileCalculation[];
   readonly methods: readonly PlanMethodRun[];
 }
 
@@ -125,7 +149,8 @@ class Summer {
 
   /**
    * RN-E16 con RECIPE_NUTRIENTS, como una receta de una porción: Σ gramos × valor por 100 g ÷ 100. Una receta entra
-   * como sus ingredientes, escalados a las porciones. Sin alimentos, todo es 0 y no se llama al motor.
+   * como sus ingredientes, escalados a las porciones. Sin alimentos, todo es 0 y no se llama al motor. Las cantidades son
+   * las que llegan: las de un perfil de día, si se las aplicó itemsInProfile.
    */
   totals(items: readonly MenuItem[]): ItemTotals {
     const ingredients = items.flatMap((item) => {
@@ -218,22 +243,37 @@ export function calculateComposition(
   targets: PlanTargets,
   sources: FoodPlanSources,
   rangePct: readonly [number, number],
+  profileTargets: readonly ProfileTargets[] = [],
 ): Result<CompositionCalculation, DomainError> {
   const plan = compositionPlan(draft);
   if (!plan.ok) return plan;
   const summer = new Summer(sources);
   const meals = plan.value.meals.map((meal) => summer.totals(meal.items));
-  const totals = summer.totals(plan.value.meals.flatMap((meal) => meal.items));
-  const adequacy = summer.adequacy(targets, [totals], rangePct, (code) => ({
-    missing: totals.nutrients[code]?.missing ?? 0,
-    of: totals.ingredientCount,
-  }));
+  const dayOf = (code: string | null) =>
+    summer.totals(plan.value.meals.flatMap((meal) => itemsInProfile(meal.items, code)));
+  const adequacyOf = (prescribed: PlanTargets, day: ItemTotals) =>
+    summer.adequacy(prescribed, [day], rangePct, (code) => ({
+      missing: day.nutrients[code]?.missing ?? 0,
+      of: day.ingredientCount,
+    }));
+  const totals = dayOf(null);
+  const adequacy = adequacyOf(targets, totals);
   if (!adequacy.ok) return adequacy;
+  const profiles: CompositionProfileCalculation[] = [];
+  for (const profile of plan.value.dayProfiles) {
+    const prescribed = profileTargets.find((t) => t.code === profile.code);
+    if (!prescribed) throw new Error(`El perfil ${profile.code} sin sus metas.`);
+    const day = dayOf(profile.code);
+    const profileAdequacy = adequacyOf(prescribed, day);
+    if (!profileAdequacy.ok) return profileAdequacy;
+    profiles.push({ code: profile.code, totals: day, adequacy: profileAdequacy.value });
+  }
   return ok({
     plan: plan.value,
     meals,
     totals,
     adequacy: adequacy.value,
+    profiles,
     methods: summer.methods,
   });
 }
@@ -248,6 +288,7 @@ export function calculateWeeklyMenu(
   targets: PlanTargets,
   sources: FoodPlanSources,
   rangePct: readonly [number, number],
+  profileTargets: readonly ProfileTargets[] = [],
 ): Result<WeeklyMenuCalculation, DomainError> {
   const plan = weeklyMenuPlan(draft);
   if (!plan.ok) return plan;
@@ -259,22 +300,24 @@ export function calculateWeeklyMenu(
     totals: summer.totals(day.meals.flatMap((cell) => cell.optionA)),
   }));
 
-  const weeklyAverage = Object.fromEntries(
-    sources.nutrients.map(({ code }) => {
-      const values = days.map((day) => day.totals.nutrients[code]);
-      const missingDays = values.filter((v) => v?.value === null).length;
-      const mean = (pick: (v: NutrientTotal) => number) =>
-        values.reduce((total, v) => total + (v ? pick(v) : 0), 0) / values.length;
-      return [
-        code,
-        {
-          value: missingDays > 0 ? null : mean((v) => v.value ?? 0),
-          known: mean((v) => v.known),
-          missingDays,
-        },
-      ];
-    }),
-  );
+  const averageOf = (week: readonly ItemTotals[]): Record<string, WeeklyAverage> =>
+    Object.fromEntries(
+      sources.nutrients.map(({ code }) => {
+        const values = week.map((day) => day.nutrients[code]);
+        const missingDays = values.filter((v) => v?.value === null).length;
+        const mean = (pick: (v: NutrientTotal) => number) =>
+          values.reduce((total, v) => total + (v ? pick(v) : 0), 0) / values.length;
+        return [
+          code,
+          {
+            value: missingDays > 0 ? null : mean((v) => v.value ?? 0),
+            known: mean((v) => v.known),
+            missingDays,
+          },
+        ];
+      }),
+    );
+  const weeklyAverage = averageOf(days.map((day) => day.totals));
 
   const recipeIds = [
     ...new Set(
@@ -290,26 +333,42 @@ export function calculateWeeklyMenu(
   const recipes = new Map(
     recipeIds.map((recipeId) => [
       recipeId,
-      summer.totals([{ itemType: 'RECIPE', recipeId, servings: 1 }]),
+      summer.totals([{ itemType: 'RECIPE', recipeId, servings: 1, byProfile: {} }]),
     ]),
   );
 
-  const adequacy = summer.adequacy(
+  const weekAdequacy = (prescribed: PlanTargets, week: readonly ItemTotals[]) =>
+    summer.adequacy(prescribed, week, rangePct, (code) => ({
+      missing: week.filter((day) => (day.nutrients[code]?.missing ?? 0) > 0).length,
+      of: week.length,
+    }));
+  const adequacy = weekAdequacy(
     targets,
     days.map((day) => day.totals),
-    rangePct,
-    (code) => ({
-      missing: days.filter((day) => (day.totals.nutrients[code]?.missing ?? 0) > 0).length,
-      of: days.length,
-    }),
   );
   if (!adequacy.ok) return adequacy;
+  const profiles: MenuProfileCalculation[] = [];
+  for (const profile of plan.value.dayProfiles) {
+    const prescribed = profileTargets.find((t) => t.code === profile.code);
+    if (!prescribed) throw new Error(`El perfil ${profile.code} sin sus metas.`);
+    const week = plan.value.days.map((day) =>
+      summer.totals(day.meals.flatMap((cell) => itemsInProfile(cell.optionA, profile.code))),
+    );
+    const profileAdequacy = weekAdequacy(prescribed, week);
+    if (!profileAdequacy.ok) return profileAdequacy;
+    profiles.push({
+      code: profile.code,
+      weeklyAverage: averageOf(week),
+      adequacy: profileAdequacy.value,
+    });
+  }
   return ok({
     plan: plan.value,
     days,
     weeklyAverage,
     recipes,
     adequacy: adequacy.value,
+    profiles,
     methods: summer.methods,
   });
 }
