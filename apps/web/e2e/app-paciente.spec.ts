@@ -79,7 +79,11 @@ test.describe('P13 · App del paciente: Hoy y el plan', () => {
     await water.getByRole('button', { name: '+ 250 ml' }).click();
     await expect(water.getByRole('status').getByText('250 ml de agua.')).toBeVisible();
 
-    await page.goto('/mi/mas');
+    // El agua refresca Hoy (router.refresh): ir a Más puede cruzarse con ese refresco, así que se reintenta.
+    await expect(async () => {
+      await page.goto('/mi/mas');
+      await expect(page.getByLabel('Escribe a tu equipo')).toBeVisible({ timeout: 2_000 });
+    }).toPass({ timeout: 15_000 });
     await page.getByLabel('Escribe a tu equipo').fill('Hoy me costó la cena.');
     await page.getByRole('button', { name: 'Enviar nota' }).click();
     await expect(page.getByRole('status').getByText('Nota enviada')).toBeVisible();
@@ -105,6 +109,57 @@ test.describe('P13 · App del paciente: Hoy y el plan', () => {
     await page.goto('/mi/hoy');
     await expect(page.getByText('Luis, vas muy bien.')).toBeVisible();
     expect(await seriousViolations(page)).toEqual([]);
+  });
+});
+
+/** El día de la semana en Lima: 0 es domingo. */
+const limaWeekday = (): number =>
+  new Date(
+    `${new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Lima' }).format(new Date())}T12:00:00Z`,
+  ).getUTCDay();
+
+test.describe('P14.5 · El check-in de la semana', () => {
+  test('RN-G11 · P-21 · P-22: la alimentación, el peso y un comentario que su equipo recibe como nota; otra vez, lo corrige', async ({
+    page,
+    browser,
+  }) => {
+    // Solo abre del domingo al martes y la app no cambia la fecha: los demás días lo prueba la integración con un reloj fijo.
+    test.skip(
+      ![0, 1, 2].includes(limaWeekday()),
+      'El check-in de la semana abre del domingo al martes.',
+    );
+    const organization = await createOrganization();
+    const patientId = await luisWithPrescription(organization.ownerEmail);
+    await publishedExchangePlanByApi(organization.ownerEmail, patientId);
+    const email = await appAccessByApi(organization.ownerEmail, patientId);
+
+    await loginAsPatientInPage(page, email);
+    await hoyWithPlan(page);
+    const card = page.getByRole('region', { name: 'Check-in de la semana' });
+    await expect(card.getByText(/^Se completa hasta el martes/)).toBeVisible();
+    await card.getByLabel('Cuánto de tu plan de alimentación cumpliste esta semana').fill('82');
+    await card.getByLabel('Tu peso de hoy').fill('79.4');
+    await card.getByLabel('Comentarios para tu equipo').fill('Semana con cenas tarde por trabajo.');
+    await card.getByRole('button', { name: 'Enviar check-in' }).click();
+    await expect(card.getByRole('status').getByText('Check-in enviado')).toBeVisible();
+    await expect(card.getByText(/Tu alimentación de la semana: 82 %/)).toBeVisible();
+    await expect(card.getByText(/Tu equipo recibió tu comentario/)).toBeVisible();
+    expect(await seriousViolations(page)).toEqual([]);
+
+    // RN-G12: corregirlo dentro del plazo.
+    await card.getByRole('button', { name: 'Corregir' }).click();
+    await card.getByLabel('Cuánto de tu plan de alimentación cumpliste esta semana').fill('85');
+    await card.getByRole('button', { name: 'Enviar check-in' }).click();
+    await expect(card.getByText(/Tu alimentación de la semana: 85 %/)).toBeVisible();
+
+    // RN-G13: su equipo lee el comentario como una nota en Seguimiento.
+    const staffContext = await browser.newContext();
+    const panel = await staffContext.newPage();
+    await loginInPage(panel, organization.ownerEmail);
+    await panel.goto(`/panel/pacientes/${patientId}/seguimiento`);
+    // Una sola nota: Seguimiento la muestra entre las nuevas y en el día.
+    await expect(panel.getByText('Semana con cenas tarde por trabajo.').first()).toBeVisible();
+    await staffContext.close();
   });
 });
 
@@ -196,8 +251,11 @@ test.describe('P13 · App del paciente: entreno, registro diario y ciclo', () =>
     await cycle.getByRole('button', { name: 'Autorizar el seguimiento del ciclo' }).click();
     await expect(cycle.getByText('Lo autorizaste')).toBeVisible();
 
-    await page.goto('/mi/registro');
-    await expect(symptoms).toBeVisible();
+    // Autorizar refresca Más (router.refresh): ir al registro puede cruzarse con ese refresco, así que se reintenta.
+    await expect(async () => {
+      await page.goto('/mi/registro');
+      await expect(symptoms).toBeVisible({ timeout: 2_000 });
+    }).toPass({ timeout: 15_000 });
 
     // ADR-080: la anticoncepción hormonal la registra el coach, solo con la autorización vigente.
     const staffContext = await browser.newContext();

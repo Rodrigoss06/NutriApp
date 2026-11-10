@@ -2836,3 +2836,25 @@ Consecuencias:
   - lo que lee el control semanal.
 - Para Notion (/notion-sync de P14.5): 03 RN-G11 (el check-in del domingo), 05.2 (`tracking.weekly_checkin`), 02 §8 (el evento),
   02 §9 (`WEEKLY_REVIEW_JV` 3.1.0), 04 RF-29 y RF-42, y 07 §9, §10 y §15 (P-21 y P-22 resueltas).
+
+## ADR-110 · Las pantallas del check-in de la semana — aceptada (2026-11-10)
+Contexto: P14.5, PR 5b (fase B; P-21 y P-22; ADR-109). La API del check-in llegó en el PR 5a.
+Decisión:
+- App del paciente, Hoy: «Check-in de la semana», del domingo al martes, cuando `/me/today` lo trae.
+  - Pide cuánto de su plan de alimentación cumplió en la semana (0 a 100 %, obligatorio).
+  - Pide su peso de hoy, opcional y solo si su app permite el peso en casa.
+  - Pide un comentario para su equipo, opcional, que le llega como nota.
+  - Dice hasta qué martes se completa. Enviado, muestra el porcentaje y si el equipo recibió el comentario, con «Corregir».
+  - Corregir no repite el peso ni el comentario ya enviados.
+  - Cada envío lleva su clientId y su Idempotency-Key.
+- Registro diario: deja de pedir la alimentación (P-22). Un registro ya guardado conserva la suya y la API la sigue aceptando.
+- Control semanal: «Alimentación de la semana» en vez de «Alimentación promedio», porque ahora es la del check-in del domingo
+  y, sin check-in, el promedio de los días.
+- E2E `app-paciente.spec.ts`: el check-in completo, con la corrección y la nota en Seguimiento.
+  - Solo corre del domingo al martes en Lima, porque la app no cambia la fecha; los demás días se salta, y la integración lo
+    prueba con un reloj fijo (ADR-109).
+  - Dos pasos de ese archivo reintentan la navegación que sigue a un `router.refresh()`: ir a Más después del agua y al
+    registro después de autorizar el ciclo. En el celular, a veces se cruzaban.
+Consecuencias:
+- Unitarias: lo que valida el formulario, el cuerpo del POST y el texto del plazo.
+- Guion de la Demo 3: el check-in en Hoy del paciente de prueba, si la demo cae de domingo a martes.

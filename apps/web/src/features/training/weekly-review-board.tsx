@@ -208,7 +208,8 @@ function AggregateList({
     ['Sueño promedio', hours(aggregates.avgSleepHours), aggregates.avgSleepHours],
     ['Rendimiento promedio', pct(aggregates.avgPerformancePct), aggregates.avgPerformancePct],
     [
-      'Alimentación promedio',
+      // La del check-in del domingo; sin check-in, el promedio de los registros diarios (P-22, ADR-109).
+      'Alimentación de la semana',
       pct(aggregates.avgNutritionCompliancePct),
       aggregates.avgNutritionCompliancePct,
     ],

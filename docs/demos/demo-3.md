@@ -85,8 +85,10 @@ En el celular del paciente de prueba:
 
 1. **Hoy:** el resumen del día, la indicación del día y las comidas del plan, que se registran en tres toques.
 2. **Registro diario:** sueño, fatiga, dolor, estrés y motivación, en menos de 2 minutos (07 §9).
-3. **Entreno:** la sesión del día, serie por serie, con su tonelaje.
-4. **Más:**
+3. **Check-in de la semana** (P14.5, PR 5b), si la demo cae entre domingo y martes: en Hoy, la alimentación de la semana, el
+   peso y un comentario. El coach lo ve como nota en Seguimiento, y la alimentación en el control semanal (P-21, P-22).
+4. **Entreno:** la sesión del día, serie por serie, con su tonelaje.
+5. **Más:**
    - Material: el recurso que el coach le asignó, que queda leído al abrirlo;
    - Fichas en PDF: las vigentes;
    - Progreso: su evolución.
