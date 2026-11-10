@@ -68,6 +68,7 @@ model PatientDailySummary {
   dayProfileName     String?  @map("day_profile_name")
   adjustedVolumeKg   Decimal? @map("adjusted_volume_kg") @db.Decimal(10, 1)
   unfactoredSets     Int?     @map("unfactored_sets") @db.SmallInt
+  fatigue            Int?     @db.SmallInt
 
   @@id([patientId, localDate])
   @@index([organizationId, localDate], map: "daily_summary_org")
@@ -2397,5 +2398,25 @@ model VolumeFactorTable {
 
   @@unique([organizationId, validFrom])
   @@map("volume_factor_table")
+  @@schema("training")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model FatiguePanelThreshold {
+  id                           String   @id @db.Uuid
+  organizationId               String?  @map("organization_id") @db.Uuid
+  validFrom                    DateTime @map("valid_from") @db.Date
+  recoveryRedStressMin         Decimal  @default(4) @map("recovery_red_stress_min") @db.Decimal(3, 1)
+  recoveryRedSleepBelowHours   Decimal  @default(6) @map("recovery_red_sleep_below_hours") @db.Decimal(3, 1)
+  recoveryAmberStressMin       Decimal  @default(3) @map("recovery_amber_stress_min") @db.Decimal(3, 1)
+  recoveryAmberSleepBelowHours Decimal  @default(7) @map("recovery_amber_sleep_below_hours") @db.Decimal(3, 1)
+  fatigueRedMin                Decimal  @default(4) @map("fatigue_red_min") @db.Decimal(3, 1)
+  fatigueAmberMin              Decimal  @default(3) @map("fatigue_amber_min") @db.Decimal(3, 1)
+  loadAmberAbovePct            Decimal  @default(15) @map("load_amber_above_pct") @db.Decimal(5, 1)
+  loadRedAbovePct              Decimal  @default(30) @map("load_red_above_pct") @db.Decimal(5, 1)
+
+  @@unique([organizationId, validFrom])
+  @@map("fatigue_panel_threshold")
   @@schema("training")
 }

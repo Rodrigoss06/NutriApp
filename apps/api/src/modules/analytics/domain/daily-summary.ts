@@ -37,6 +37,8 @@ export interface SummaryDay {
   readonly checkin: {
     readonly stress: number | null;
     readonly sleepHours: number | null;
+    /** De 1 a 5: la promedia el panel de fatiga (P-23, ADR-108). */
+    readonly fatigue: number | null;
     readonly energy: number | null;
     readonly srpeLoad: number | null;
   } | null;
@@ -115,6 +117,8 @@ export interface DailySummary {
   readonly cardioMinutes: number | null;
   readonly stress: number | null;
   readonly sleepHours: number | null;
+  /** La fatiga del registro diario, de 1 a 5 (ADR-108). */
+  readonly fatigue: number | null;
   readonly energy: number | null;
   readonly bodyWeightKg: number | null;
   readonly mealSlots: Readonly<Record<string, MealSlotDay>>;
@@ -206,6 +210,7 @@ export function dailySummary(
             .reduce((total, set) => total + (set.durationSeconds ?? 0) / 60, 0),
     stress: day.checkin?.stress ?? null,
     sleepHours: day.checkin?.sleepHours ?? null,
+    fatigue: day.checkin?.fatigue ?? null,
     energy: day.checkin?.energy ?? null,
     bodyWeightKg: day.bodyWeightKg,
     mealSlots: slots,

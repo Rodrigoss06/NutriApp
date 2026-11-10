@@ -2750,3 +2750,43 @@ Consecuencias:
   (`demo-3.int.spec.ts`).
 - Guion de la Demo 3: la comparativa en Evolución, la cadera en Progreso y el estrés en el control.
 - Para Notion (/notion-sync de P14.5): 04 RF-30 (la cadera), RF-35 (la comparativa) y RF-42 (el estrés en el resumen).
+
+## ADR-108 · Panel de fatiga y recuperación, con alerta en Inicio — aceptada (2026-11-10)
+Contexto: P14.5, PR 3 (fase B; P-23 a P-25, respondidas por Jeremy el 2026-11-09; RN-G16; RF-33, RF-34; ADR-098). La hoja piloto
+trae un panel por semana: recuperación, carga, fatiga percibida y estado general. Jeremy dio los umbrales de ámbar, la regla del
+estado general y el promedio de 3 semanas, y dijo que el panel solo informa. Rodrigo decidió el 2026-11-10:
+- los promedios se comparan por rangos, sin redondear: menos de 3.0 es verde, de 3.0 a menos de 4.0 es ámbar y 4.0 o más es rojo;
+- el 22/10 de Mateo pasa a «ASISTIÓ» en `demo:3` (P-33), para que la semana 3 dé los 6,336 de la hoja.
+Decisión:
+- Motor 1.11.0, `FATIGUE_PANEL_JV` 1.0.0, por semana del macrociclo:
+  - recuperación: roja con estrés de 4 o más o sueño de menos de 6 h; ámbar con estrés de 3 o más o sueño de menos de 7 h; con
+    un solo dato, decide ese; sin ninguno, «faltan datos»;
+  - carga: el volumen ajustado (ADR-106) frente al promedio de las 3 semanas previas que tienen volumen (P-24: las vacías no
+    cuentan en la suma ni en el divisor). Ámbar sobre +15 % y roja sobre +30 %. Sin previas, «sin base»; sin volumen, «faltan
+    datos». Se compara sin dividir, para que +30 % exacto no caiga en rojo por el redondeo binario;
+  - fatiga percibida: ámbar desde 3 y roja desde 4;
+  - estado general: el peor de los tres. «Sin base» no suma alerta, y lo que no tiene datos no decide;
+  - NC-ENG-413 (insumos fuera de rango) y NC-ENG-414 (umbrales cruzados).
+- `training.fatigue_panel_threshold` (migración `202611100300_training_fatigue_panel`), versionada como los umbrales de 07 §11:
+  - una fila global con los valores de P-23, desde el 2026-01-01;
+  - se lee con `TrainingApi.fatiguePanelThresholdVersions`, y vale la versión vigente al empezar cada semana;
+  - las 3 semanas de la base son del método, no de la tabla. Todavía no se editan en Ajustes.
+- Analítica:
+  - la fatiga del registro diario pasa al resumen diario (`fatigue`); las filas que ya existen se llenan con `analytics:rebuild`;
+  - el sueño se promedia en décimas, porque se guarda con un decimal: 7 días de 7.1 h dan 7.1 exacto;
+  - `GET /patients/:id/analytics/training` da el panel de cada semana que empezó (`weeks[].fatigue`), con la versión de los
+    umbrales y el hash de sus insumos, y el método en `methods.fatiguePanel`.
+- Inicio: `FATIGUE_RED` y `FATIGUE_AMBER` con el estado general de la última semana cerrada del programa vigente, durante 7 días,
+  como el semáforo de la semana. Llevan a Analítica › Rutina.
+- Web: «Panel de fatiga y recuperación» en Analítica › Rutina, con estrés, sueño, fatiga percibida, volumen ajustado, «Prom. 3
+  sem.», carga con su cambio, recuperación, fatiga y estado general. Cada color va con su ícono y su texto.
+- No cambia el control semanal (P-25): el panel no entra en `WEEKLY_REVIEW_JV` ni en su decisión.
+Consecuencias:
+- Motor: las semanas de Mateo de la hoja (ámbar, rojo, ámbar, verde y faltan datos, con las bases 5,220, 5,355, 5,682, 5,067 y
+  4,855.5), los bordes de cada umbral y los errores. Se propone como caso dorado G-43 en el /notion-sync.
+- Integración: `demo-3.int.spec.ts` reproduce el panel de la hoja por HTTP (criterio de la fase B), con 12 sesiones y 5,760 kg
+  en la semana 3; `analytics-training.int.spec.ts`, la semana en curso «sin base».
+- E2E `analitica.spec.ts`: el panel de Luis en rojo por la fatiga y la alerta en Inicio.
+- Para Notion (/notion-sync de P14.5): 02 §9 (`FATIGUE_PANEL_JV`), 03 (una regla del panel, RN-G18, y G-43), 05.2
+  (`training.fatigue_panel_threshold`), 05.3 (la columna `fatigue` y las alertas de `patient_overview`), 04 RF-33 y RF-34, y
+  07 §10 y §15 (P-23 a P-25 y P-33 resueltas).

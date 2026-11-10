@@ -42,6 +42,7 @@ import { ACROMIOILIAC_INDEX, CORMIC_INDEX, MANOUVRIER_INDEX } from '../proportio
 import {
   ADJUSTED_VOLUME,
   COMPLIANCE,
+  FATIGUE_PANEL_JV,
   FRACTIONAL_SETS,
   ONERM_BRZYCKI1993,
   ONERM_EPLEY1985,
@@ -105,6 +106,7 @@ export const METHODS: Readonly<Record<MethodCode, AnyMethod>> = Object.freeze({
   READINESS_JV,
   WEEKLY_REVIEW_JV,
   ADJUSTED_VOLUME,
+  FATIGUE_PANEL_JV,
 } satisfies Record<MethodCode, unknown>);
 
 /**

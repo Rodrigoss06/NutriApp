@@ -18,20 +18,29 @@ export interface FactorVersion {
   readonly rest: readonly FactorRow[];
 }
 
-const latestOn = (versions: readonly FactorVersion[], localDate: string): FactorVersion | null =>
+/** Una fila de datos versionados: la global (organización null) o la de una organización, con el día desde el que vale. */
+export interface Versioned {
+  readonly organizationId: string | null;
+  readonly validFrom: string;
+}
+
+const latestOn = <T extends Versioned>(versions: readonly T[], localDate: string): T | null =>
   versions
     .filter((version) => version.validFrom <= localDate)
-    .reduce<FactorVersion | null>(
+    .reduce<T | null>(
       (latest, version) =>
         latest === null || version.validFrom >= latest.validFrom ? version : latest,
       null,
     );
 
-/** La tabla vigente ese día: la más reciente de la organización si ya vale; si no, la global más reciente. */
-export function factorsOn(
-  versions: readonly FactorVersion[],
+/**
+ * La versión vigente ese día: la más reciente de la organización si ya vale; si no, la global más reciente. Sirve para las tablas de
+ * factores (ADR-106) y para los umbrales del panel de fatiga (ADR-108).
+ */
+export function versionOn<T extends Versioned>(
+  versions: readonly T[],
   localDate: string,
-): FactorVersion | null {
+): T | null {
   return (
     latestOn(
       versions.filter((version) => version.organizationId !== null),
@@ -43,6 +52,12 @@ export function factorsOn(
     )
   );
 }
+
+/** La tabla de factores vigente ese día. */
+export const factorsOn = (
+  versions: readonly FactorVersion[],
+  localDate: string,
+): FactorVersion | null => versionOn(versions, localDate);
 
 /** Lo que se usa del snapshot del programa publicado (RN-F12). */
 export interface RestSource {

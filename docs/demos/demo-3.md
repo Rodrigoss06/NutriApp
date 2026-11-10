@@ -42,14 +42,14 @@
 
 ## Qué trae la demo
 
-| Quién              | Qué tiene                                                                                                                                                                                                                                                                                                                                                                                                                                     |
-| ------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Consultorio Demo   | La organización de las demos 1 y 2. Toma los umbrales de la V3 (07 §11) desde el 05/10, para que el mes de Mateo tenga control                                                                                                                                                                                                                                                                                                                |
-| Dueña Demo         | Dueña, nutricionista y coach: atiende a Luis y a Mateo                                                                                                                                                                                                                                                                                                                                                                                        |
-| Luis               | Lo de la Demo 2, más: su perfil de entrenamiento, «Fuerza base» (4 semanas desde el lunes de la semana pasada), su semana G-20 registrada y su control                                                                                                                                                                                                                                                                                        |
-| Mateo Prueba       | Dos evaluaciones básicas con bioimpedancia (05/10 y 31/10). Su plan por composición con dos perfiles de día: Entrenamiento, 2,510 kcal (160/310/70 g, su prescripción), y Descanso, 2,230 kcal (160/240/70 g), con menos pan en la media tarde y menos papa en la cena. «Full Body» con las fases de pérdida de grasa de la V3, semanas 1 a 8 desde el 06/10. 11 entrenos y 1 ausencia, 28 registros diarios y los controles de sus 4 semanas |
-| Paciente de prueba | Su semana registrada desde el celular                                                                                                                                                                                                                                                                                                                                                                                                         |
-| Catálogos          | 169 ejercicios base, la tabla patrón × nivel de la V3 y 560 actividades del Compendium 2024                                                                                                                                                                                                                                                                                                                                                   |
+| Quién              | Qué tiene                                                                                                                                                                                                                                                                                                                                                                                                                                                 |
+| ------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Consultorio Demo   | La organización de las demos 1 y 2. Toma los umbrales de la V3 (07 §11) desde el 05/10, para que el mes de Mateo tenga control                                                                                                                                                                                                                                                                                                                            |
+| Dueña Demo         | Dueña, nutricionista y coach: atiende a Luis y a Mateo                                                                                                                                                                                                                                                                                                                                                                                                    |
+| Luis               | Lo de la Demo 2, más: su perfil de entrenamiento, «Fuerza base» (4 semanas desde el lunes de la semana pasada), su semana G-20 registrada y su control                                                                                                                                                                                                                                                                                                    |
+| Mateo Prueba       | Dos evaluaciones básicas con bioimpedancia (05/10 y 31/10). Su plan por composición con dos perfiles de día: Entrenamiento, 2,510 kcal (160/310/70 g, su prescripción), y Descanso, 2,230 kcal (160/240/70 g), con menos pan en la media tarde y menos papa en la cena. «Full Body» con las fases de pérdida de grasa de la V3, semanas 1 a 8 desde el 06/10. 12 entrenos (el 22/10 asistió, P-33), 28 registros diarios y los controles de sus 4 semanas |
+| Paciente de prueba | Su semana registrada desde el celular                                                                                                                                                                                                                                                                                                                                                                                                                     |
+| Catálogos          | 169 ejercicios base, la tabla patrón × nivel de la V3 y 560 actividades del Compendium 2024                                                                                                                                                                                                                                                                                                                                                               |
 
 ## 1 · Biblioteca de ejercicios y actividades (RF-25, RF-38) · 3 min
 
@@ -109,12 +109,25 @@ En el celular del paciente de prueba:
 
 **Qué debe aparecer**
 
-| En pantalla                                                             | Hoja de Jeremy                                                  |
-| ----------------------------------------------------------------------- | --------------------------------------------------------------- |
-| Fases de las semanas 1 a 4: Adaptación, Base, Acumulación y Acumulación | Macrociclo, mesociclo 1                                         |
-| Sesiones hechas por semana: 3, 3, 2 y 3                                 | Informe mensual: 11 de 12 sesiones                              |
-| Tonelaje por semana: 5,220, 5,490, 3,420 y 3,750 kg                     | Volumen del registro de cargas. Ver la semana 3 en la sección 9 |
-| 1RM estimado de «Press banca» con Epley: 56.0, 59.5, 63.0 y 46.7 kg     | Registro de cargas: «1RM estimado»                              |
+| En pantalla                                                             | Hoja de Jeremy                                                   |
+| ----------------------------------------------------------------------- | ---------------------------------------------------------------- |
+| Fases de las semanas 1 a 4: Adaptación, Base, Acumulación y Acumulación | Macrociclo, mesociclo 1                                          |
+| Sesiones hechas por semana: 3, 3, 3 y 3                                 | Registro de cargas: 12 sesiones. Ver la semana 3 en la sección 9 |
+| Tonelaje por semana: 5,220, 5,490, 5,760 y 3,750 kg                     | Volumen del registro de cargas                                   |
+| 1RM estimado de «Press banca» con Epley: 56.0, 59.5, 63.0 y 46.7 kg     | Registro de cargas: «1RM estimado»                               |
+
+**Panel de fatiga y recuperación (P14.5, PR 3):** en la misma pestaña, debajo de las semanas.
+
+| Semana de Mateo | Estrés · sueño · fatiga | Volumen ajustado | Prom. 3 sem. | Carga         | Recuperación | Estado general |
+| --------------- | ----------------------- | ---------------- | ------------ | ------------- | ------------ | -------------- |
+| 1               | 3 · 6.4 h · 3           | 5,220            | —            | Sin base      | Ámbar        | Ámbar          |
+| 2               | 4 · 6.8 h · 4           | 5,490            | 5,220        | Verde (+5 %)  | Rojo         | Rojo           |
+| 3               | 3 · 7.1 h · 3           | 6,336            | 5,355        | Ámbar (+18 %) | Ámbar        | Ámbar          |
+| 4               | 2 · 7.4 h · 2           | 3,375            | 5,682        | Verde (−41 %) | Verde        | Verde          |
+| 5               | Sin registros           | —                | 5,067        | Faltan datos  | Faltan datos | Faltan datos   |
+
+**Qué decir:** son las semanas de la hoja (P-23 y P-24). El panel solo informa: en la semana 3 sale ámbar y el control dice
+«Continuar plan», porque decide el control semanal (P-25). Los promedios se comparan sin redondear: un estrés de 2.6 es verde.
 
 ## 6 · Control semanal (RF-42) · Mateo y Luis · 6 min
 
@@ -149,6 +162,7 @@ Ajustes › Umbrales del entrenamiento (07 §11).
 - los pacientes sin registros en 3 días;
 - la adherencia baja;
 - el semáforo del día y de la semana;
+- el panel de fatiga en ámbar o en rojo de la última semana cerrada (P14.5, PR 3);
 - los controles sin decidir, con Luis y Mateo;
 - las notas sin leer.
 
@@ -173,30 +187,31 @@ del evaluador (RN-C06).
 
 ## 9 · La hoja de Jeremy frente a la app · Mateo · 5 min
 
-| Coincide                                                                                                                                                                                                                                                                          | Difiere o falta (P14.5)                                                     |
-| --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------- |
-| Las metas por tipo de día, con las respuestas de Jeremy a P-20: mandan los gramos, así que son 2,510 y 2,230 kcal. Cada día de octubre lleva la de su perfil: Entrenamiento si tiene sesión y Descanso si no. Las comidas de Descanso: el mismo plan con menos almidones (P-20.5) | Las porciones exactas de Descanso de Mateo: las de la demo son de ejemplo   |
-| El macrociclo V3 de las semanas 1 a 8                                                                                                                                                                                                                                             | «No entreno hoy» y «mover a mañana» (PR 1e)                                 |
-| El control de las 4 semanas                                                                                                                                                                                                                                                       | El panel de fatiga y recuperación, y el volumen ajustado por RIR y descanso |
-| El 1RM de Epley y el porcentaje                                                                                                                                                                                                                                                   | La fatiga por grupo muscular: faltan los coeficientes de cada ejercicio     |
-| Las sesiones (11 de 12), el sueño, el rendimiento y la alimentación por semana                                                                                                                                                                                                    | El informe mensual y las fotos                                              |
-| Peso, cintura, cadera y grasa                                                                                                                                                                                                                                                     | El expediente de documentos y el check-in semanal                           |
+| Coincide                                                                                                                                                                                                                                                                          | Difiere o falta (P14.5)                                                   |
+| --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------- |
+| Las metas por tipo de día, con las respuestas de Jeremy a P-20: mandan los gramos, así que son 2,510 y 2,230 kcal. Cada día de octubre lleva la de su perfil: Entrenamiento si tiene sesión y Descanso si no. Las comidas de Descanso: el mismo plan con menos almidones (P-20.5) | Las porciones exactas de Descanso de Mateo: las de la demo son de ejemplo |
+| El macrociclo V3 de las semanas 1 a 8                                                                                                                                                                                                                                             | «No entreno hoy» y «mover a mañana» (PR 1e)                               |
+| El control de las 4 semanas, el volumen ajustado por RIR y descanso, y el panel de fatiga y recuperación                                                                                                                                                                          | La fatiga por grupo muscular (PR 4)                                       |
+| El 1RM de Epley y el porcentaje                                                                                                                                                                                                                                                   | La prescripción de la hoja (PR 9)                                         |
+| Las sesiones (12), el sueño, el rendimiento y la alimentación por semana                                                                                                                                                                                                          | El informe mensual y las fotos                                            |
+| Peso, cintura, cadera y grasa                                                                                                                                                                                                                                                     | El expediente de documentos y el check-in semanal                         |
 
 Dos diferencias de datos de la hoja:
 
-- **La semana 3:** el registro de cargas trae la sentadilla del 22/10 (3 × 12 × 65 kg), pero ese día es una ausencia y
-  el informe cuenta 2 sesiones. La app sigue la asistencia, así que el tonelaje de la semana 3 es de 3,420 kg.
+- **La semana 3:** el registro de cargas trae la sentadilla del 22/10 (3 × 12 × 65 kg), pero en asistencias ese día es
+  una ausencia. Jeremy (P-33): manda la asistencia, pero el 6,336 de su panel incluye esa sentadilla. Para conservar el
+  ejemplo en ámbar, en la demo el 22/10 asistió: el tonelaje de la semana 3 es de 5,760 kg y su volumen ajustado, 6,336.
 - **Los días:** la hoja rotula las sesiones lunes, miércoles y viernes, pero las fechas de asistencia son martes, jueves
   y sábado. La app sigue las fechas.
 
-Las dos están en las preguntas para Jeremy (`docs/preguntas/hoja-piloto-mateo.md`).
+Las dos están respondidas en las preguntas para Jeremy (`docs/preguntas/hoja-piloto-mateo.md`, P-33).
 
 **Qué decir de los perfiles de día:**
 
 - Jeremy respondió P-20: los gramos mandan y hay más tipos de día que entrenamiento y descanso.
 - En el plan de Mateo, Descanso trae la proteína y la grasa de Entrenamiento ya puestas.
-- El programa elige el perfil de cada día. La ausencia del 22/10 no cambia su meta, porque nadie reprogramó la sesión
-  (P-20.3).
+- El programa elige el perfil de cada día: un día con sesión es Entrenamiento, aunque el paciente falte, porque nadie
+  reprogramó la sesión (P-20.3).
 - Descanso es el mismo plan con menos almidones (P-20.5). En el editor, «Porciones de: Descanso» muestra los gramos de ese
   día: 30 g de pan en la media tarde y 50 g de papa en la cena, unos 240 g de carbohidratos. Son de ejemplo y se pueden
   cambiar ahí mismo.

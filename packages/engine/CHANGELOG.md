@@ -3,6 +3,14 @@
 Cambiar una fórmula o una constante sube la versión del método afectado y la del motor (02 §9).
 Los resultados guardados conservan la versión con que se calcularon (RN-D01, RN-D08).
 
+## 1.11.0 — 2026-11-10
+
+- Nuevo método `FATIGUE_PANEL_JV` 1.0.0: el panel de fatiga y recuperación de la hoja piloto de JV Fitness (P14.5, PR 3; P-23 y
+  P-24, respuestas de Jeremy), por semana del macrociclo (ADR-108). Recuperación con el estrés y el sueño promedio, carga con el
+  volumen ajustado frente al promedio de las 3 semanas previas que tienen volumen, fatiga percibida y estado general (el peor de
+  los tres; «sin base» no suma alerta). Los umbrales son datos versionados y los promedios se comparan sin redondear. Insumos
+  fuera de rango: NC-ENG-413; umbrales cruzados: NC-ENG-414. G-01 a G-40 siguen igual.
+
 ## 1.10.0 — 2026-11-10
 
 - Nuevo método `ADJUSTED_VOLUME` 1.0.0: el volumen ajustado de la hoja piloto de JV Fitness (P14.5, PR 2; P-26, respuesta de

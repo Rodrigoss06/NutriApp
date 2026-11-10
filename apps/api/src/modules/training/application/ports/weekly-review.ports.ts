@@ -52,8 +52,27 @@ export interface VolumeFactorsRow {
 }
 
 /**
- * training.weekly_review, training.readiness_threshold y training.volume_factor_table, en la transacción de quien llama y con su
- * RLS.
+ * Una versión de los umbrales del panel de fatiga y recuperación (P-23, ADR-108): recuperación por estrés y sueño, fatiga percibida y
+ * carga sobre el promedio de las 3 semanas previas.
+ */
+export interface FatiguePanelThresholdRow {
+  readonly id: string;
+  /** null: la global, con los valores de Jeremy. */
+  readonly organizationId: string | null;
+  readonly validFrom: string;
+  readonly recoveryRedStressMin: number;
+  readonly recoveryRedSleepBelowHours: number;
+  readonly recoveryAmberStressMin: number;
+  readonly recoveryAmberSleepBelowHours: number;
+  readonly fatigueRedMin: number;
+  readonly fatigueAmberMin: number;
+  readonly loadAmberAbovePct: number;
+  readonly loadRedAbovePct: number;
+}
+
+/**
+ * training.weekly_review, training.readiness_threshold, training.volume_factor_table y training.fatigue_panel_threshold, en la
+ * transacción de quien llama y con su RLS.
  */
 export interface WeeklyReviewStore {
   /** Los programas publicados de la organización del contexto. */
@@ -79,6 +98,10 @@ export interface WeeklyReviewStore {
   updateThreshold(id: string, values: ThresholdValues): Promise<void>;
   /** Todas las versiones de los factores que ve la organización: las suyas y las globales (P-26). */
   volumeFactorVersions(organizationId: string): Promise<readonly VolumeFactorsRow[]>;
+  /** Todas las versiones de los umbrales del panel que ve la organización: las suyas y las globales (P-23). */
+  fatiguePanelThresholdVersions(
+    organizationId: string,
+  ): Promise<readonly FatiguePanelThresholdRow[]>;
 }
 
 export const WEEKLY_REVIEW_STORE = Symbol('WEEKLY_REVIEW_STORE');

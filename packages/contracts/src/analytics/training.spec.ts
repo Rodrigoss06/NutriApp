@@ -37,6 +37,23 @@ const WEEK = {
       sfr: 1.33,
     },
   ],
+  fatigue: null,
+};
+
+// La semana 3 de Mateo en la hoja piloto: +18 % sobre su promedio y estrés 3, ámbar.
+const PANEL = {
+  thresholdId: '019a2000-0000-7000-8000-000000000003',
+  inputsHash: 'a'.repeat(64),
+  avgStress: 3,
+  avgSleepHours: 7.1,
+  avgFatigue: 3,
+  adjustedVolumeKg: 6336,
+  baseVolumeKg: 5355,
+  loadChangePct: 18.32,
+  load: 'AMBER',
+  recovery: 'AMBER',
+  perceivedFatigue: 'AMBER',
+  overall: 'AMBER',
 };
 
 describe('RF-33 · contrato de la analítica de rutina', () => {
@@ -47,6 +64,15 @@ describe('RF-33 · contrato de la analítica de rutina', () => {
   it('P-26 · el volumen ajustado va con lo que quedó «sin factor»; una serie sin factor no se cuenta como 1', () => {
     expect(trainingWeekSchema.parse({ ...WEEK, unfactoredSets: 2 }).unfactoredSets).toBe(2);
     expect(trainingWeekSchema.safeParse({ ...WEEK, unfactoredSets: -1 }).success).toBe(false);
+  });
+
+  it('P-23 · P-24 · el panel de fatiga de la semana; la carga puede quedar «sin base», el estado general no', () => {
+    expect(trainingWeekSchema.parse({ ...WEEK, fatigue: PANEL }).fatigue?.overall).toBe('AMBER');
+    const firstWeek = { ...PANEL, baseVolumeKg: null, loadChangePct: null, load: 'NO_BASE' };
+    expect(trainingWeekSchema.parse({ ...WEEK, fatigue: firstWeek }).fatigue?.load).toBe('NO_BASE');
+    expect(
+      trainingWeekSchema.safeParse({ ...WEEK, fatigue: { ...PANEL, overall: 'NO_BASE' } }).success,
+    ).toBe(false);
   });
 
   it('una semana que no empieza deja lo hecho en null', () => {
@@ -72,6 +98,7 @@ describe('RF-33 · contrato de la analítica de rutina', () => {
       methods: {
         tonnage: METHOD,
         adjustedVolume: METHOD,
+        fatiguePanel: METHOD,
         fractionalSets: METHOD,
         compliance: METHOD,
         sfr: METHOD,

@@ -89,7 +89,7 @@
       ]
     },
     {
-      "_comment": "La hoja registra también la sentadilla del 22/10 (3 × 12 × 65 kg), pero en asistencias ese día es una ausencia y el informe cuenta 2 sesiones: aquí manda la asistencia (pregunta a Jeremy).",
+      "_comment": "El 22/10 asistió (P-33, respuesta de Jeremy y decisión de Rodrigo del 2026-11-10): la hoja lo marca ausente, pero su 6,336 de volumen ajustado incluye la sentadilla (3 × 12 × 65 kg), y así la semana 3 sale ámbar en el panel de fatiga (+18 %).",
       "weekNo": 3,
       "sleepHours": 7.1,
       "stress": 3,
@@ -99,7 +99,7 @@
       "rir": 2,
       "sessions": [
         { "date": "2026-10-20", "reps": 12, "loadKg": 45 },
-        { "date": "2026-10-22", "absence": "Ausencia por carga laboral" },
+        { "date": "2026-10-22", "reps": 12, "loadKg": 65 },
         { "date": "2026-10-24", "reps": 12, "loadKg": 50 }
       ]
     },

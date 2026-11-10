@@ -2,6 +2,7 @@ import { Inject, Injectable } from '@nestjs/common';
 import {
   ADJUSTED_VOLUME,
   COMPLIANCE,
+  FATIGUE_PANEL_JV,
   READINESS_JV,
   RPE_FROM_RIR,
   runMethod,
@@ -30,6 +31,7 @@ import { PROGRAM_NOT_FOUND } from '../../domain/analytics-errors.js';
 import type { DailySummary } from '../../domain/daily-summary.js';
 import type { OneRmPoint } from '../../domain/one-rm.js';
 import { programCalendar, type CalendarWeek } from '../../domain/program-calendar.js';
+import { fatiguePanelOf, panelWeeks, type FatiguePanelWeek } from '../fatigue-panel.js';
 import { localDateIn } from '../local-date.js';
 import { oneRmMethod } from '../one-rm-estimate.js';
 import {
@@ -78,6 +80,8 @@ export interface TrainingWeekView {
   readonly cardioMinutesDone: number | null;
   readonly cardioCompliancePct: number | null;
   readonly muscles: readonly TrainingMuscleWeekView[];
+  /** El panel de fatiga y recuperación de la semana (P-23, P-24; ADR-108); null si no empezó o no hay umbrales. */
+  readonly fatigue: FatiguePanelWeek | null;
 }
 
 export interface TrainingAnalyticsView {
@@ -93,6 +97,7 @@ export interface TrainingAnalyticsView {
   readonly methods: {
     readonly tonnage: MethodRef;
     readonly adjustedVolume: MethodRef;
+    readonly fatiguePanel: MethodRef;
     readonly fractionalSets: MethodRef;
     readonly compliance: MethodRef;
     readonly sfr: MethodRef;
@@ -137,7 +142,7 @@ function weekView(
   today: string,
   days: readonly DailySummary[],
   muscles: readonly WeeklyMuscleRow[],
-): TrainingWeekView {
+): Omit<TrainingWeekView, 'fatigue'> {
   const started = week.weekStart <= today;
   const inWeek = daysIn(days, week);
   const sessionsDone = started ? inWeek.reduce((total, day) => total + day.workoutsDone, 0) : null;
@@ -257,6 +262,7 @@ export class TrainingQueries {
       const methods = {
         tonnage: ref(TONNAGE),
         adjustedVolume: ref(ADJUSTED_VOLUME),
+        fatiguePanel: ref(FATIGUE_PANEL_JV),
         fractionalSets: snapshot
           ? ref(snapshot.setsMethod)
           : { code: 'FRACTIONAL_SETS', version: '1.0.0' },
@@ -278,6 +284,13 @@ export class TrainingQueries {
         snapshot.endDate,
       );
       const points = await this.store.oneRmSeries(patientId, snapshot.startDate, snapshot.endDate);
+      const thresholds =
+        context.organizationId === null
+          ? []
+          : await this.programs.fatiguePanelThresholdVersions(context.organizationId);
+      const calendar = programCalendar(snapshot);
+      const weeks = calendar.map((week) => weekView(week, today, days, muscles));
+      const panel = fatiguePanelOf(panelWeeks(calendar, days, today), thresholds);
       return ok({
         program: {
           programId: snapshot.programId,
@@ -295,7 +308,7 @@ export class TrainingQueries {
           name: mesocycle.name,
           focus: mesocycle.focus,
         })),
-        weeks: programCalendar(snapshot).map((week) => weekView(week, today, days, muscles)),
+        weeks: weeks.map((week) => ({ ...week, fatigue: panel.get(week.weekNo) ?? null })),
         oneRm: oneRmSeries(points, exerciseNames(snapshot)),
       });
     });

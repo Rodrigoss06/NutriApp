@@ -14,6 +14,8 @@ export const OVERVIEW_ALERTS = [
   'READINESS_YELLOW',
   'WEEKLY_RED',
   'WEEKLY_AMBER',
+  'FATIGUE_RED',
+  'FATIGUE_AMBER',
   'PENDING_REVIEW',
 ] as const;
 export type OverviewAlert = (typeof OVERVIEW_ALERTS)[number];
@@ -41,6 +43,11 @@ export interface OverviewInput {
     readonly light: 'GREEN' | 'AMBER' | 'RED' | 'NO_DATA';
   } | null;
   readonly undecidedReviews: number;
+  /** El estado general del panel de fatiga de la última semana cerrada del programa (P-24, ADR-108). */
+  readonly latestFatigueWeek: {
+    readonly weekEnd: string;
+    readonly overall: 'GREEN' | 'AMBER' | 'RED' | 'NO_DATA';
+  } | null;
 }
 
 /**
@@ -83,6 +90,12 @@ export function overviewAlerts(input: OverviewInput): OverviewAlert[] {
   if (week && week.weekEnd >= addDays(input.today, -WEEKLY_LIGHT_DAYS)) {
     if (week.light === 'RED') alerts.push('WEEKLY_RED');
     if (week.light === 'AMBER') alerts.push('WEEKLY_AMBER');
+  }
+  // El panel de fatiga solo informa (P-25): alerta como el semáforo de la semana, mientras no haya otra cerrada.
+  const fatigue = input.latestFatigueWeek;
+  if (fatigue && fatigue.weekEnd >= addDays(input.today, -WEEKLY_LIGHT_DAYS)) {
+    if (fatigue.overall === 'RED') alerts.push('FATIGUE_RED');
+    if (fatigue.overall === 'AMBER') alerts.push('FATIGUE_AMBER');
   }
   if (input.undecidedReviews > 0) alerts.push('PENDING_REVIEW');
   return alerts;

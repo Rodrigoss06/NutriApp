@@ -103,6 +103,7 @@ export class PrismaAnalyticsStore implements AnalyticsStore {
         cardioMinutes: row.cardioMinutes,
         stress: row.stress,
         sleepHours: row.sleepHours,
+        fatigue: row.fatigue,
         energy: row.energy,
         bodyWeightKg: row.bodyWeightKg,
         mealSlots: Object.fromEntries(
@@ -168,6 +169,7 @@ export class PrismaAnalyticsStore implements AnalyticsStore {
       cardioMinutes: num(row.cardioMinutes),
       stress: row.stress,
       sleepHours: num(row.sleepHours),
+      fatigue: row.fatigue,
       energy: row.energy,
       bodyWeightKg: num(row.bodyWeightKg),
       mealSlots: mealSlotsOf(row.mealSlots),

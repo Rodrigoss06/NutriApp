@@ -136,6 +136,10 @@ Necesitamos los umbrales exactos de ámbar:
 > 2. **Carga ámbar:** más de 15 % y hasta 30 % sobre el promedio. Con los datos de Mateo sirven 10 % y 15 % (5 % verde y 18 %
 >    ámbar), pero 15 % deja pasar una sobrecarga progresiva normal de 8 a 12 % sin falsas alertas.
 > 3. **Fatiga percibida,** de 1 a 5: verde 1 o 2, ámbar 3 y roja 4 o 5, igual que el estrés.
+>
+> **Decisión de Rodrigo (2026-11-10), para el PR 3.** La app promedia el registro diario de la semana: los promedios se comparan
+> por rangos, sin redondear. Menos de 3.0 es verde, de 3.0 a menos de 4.0 es ámbar y 4.0 o más es rojo, en el estrés y en la
+> fatiga. Redondear antes haría que un 2.6 dispare un ámbar falso.
 
 **P-24 · Estado general** (panel, columna «Estado general»)
 
@@ -206,7 +210,6 @@ RIR 2, por 1.1, da 1,782. Solo vemos algunos valores: RIR 2 = 1.1, RIR 3 = 1.0, 
 >    - compuestos guiados y poleas (jalón, prensa): 1.0, 1.0, 0.8 y 0.9;
 >    - aislamiento y brazos: 0.9, 0.7, 0.5 y 0.8;
 >    - movilidad y cardio: 0.
->
 >    **Fórmulas:**
 >    - «Fatiga entrenamiento» es el volumen ajustado del grupo, ponderado: 1.0 el músculo primario y 0.5 el secundario;
 >    - el «Estado» lo compara con «Base 3 sem.» con los umbrales de P-23: verde hasta +15 %, ámbar de +15 % a +30 % y rojo más
@@ -277,6 +280,9 @@ RIR 2, por 1.1, da 1,782. Solo vemos algunos valores: RIR 2 = 1.1, RIR 3 = 1.0, 
 >    semana baja a 3,762 y sale verde.
 > 2. Mandan las fechas reales (martes, jueves y sábado), como ya hace la demo. «Lunes, miércoles y viernes» es texto fijo de
 >    la plantilla.
+>
+> **Decisión de Rodrigo (2026-11-10), para el PR 3.** El 22/10 pasa a «ASISTIÓ» en `demo:3`: la semana 3 de Mateo tiene 3
+> sesiones, 5,760 kg de tonelaje y 6,336 de volumen ajustado, y el panel sale ámbar (+18 %), como en la hoja.
 
 **P-34 · Plantilla de la prescripción** («Prescripción de rutina»)
 

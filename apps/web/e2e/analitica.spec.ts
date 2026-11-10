@@ -120,7 +120,22 @@ test.describe('P14 · Analítica y control semanal', () => {
     await expect(
       page.getByRole('region', { name: /Series por grupo muscular de la semana/ }),
     ).toBeVisible();
+    // P14.5, PR 3 (P-23, P-24): el panel de fatiga de la semana 1. La fatiga percibida de 5 la pone en rojo; sin semanas previas,
+    // la carga queda «sin base» y no suma alerta.
+    const panel = page.getByRole('region', { name: 'Panel de fatiga y recuperación por semana' });
+    await expect(panel.getByRole('row', { name: /^S1 ·/ })).toContainText('Sin base');
+    await expect(panel.getByRole('row', { name: /^S1 ·/ })).toContainText('Rojo');
+    await expect(page.getByText('Panel de fatiga y recuperación (JV Fitness)')).toBeVisible();
     expect(await seriousViolations(page)).toEqual([]);
+
+    // La semana 1 ya cerró: Inicio avisa del panel en rojo, que solo informa (P-25).
+    await gotoUntil(page, '/panel', async () => {
+      await expect(
+        page
+          .getByRole('list', { name: 'Alertas de Luis Ejemplo Sintético' })
+          .getByText('Fatiga y recuperación en rojo'),
+      ).toBeVisible({ timeout: 2_000 });
+    });
 
     // RF-42: al abrir el control, la semana 1 se calcula ya (07 §10): ámbar por la fatiga, 1.05 × 0.90 = 0.945 (RN-G16).
     const control = `/panel/pacientes/${luis}/entrenamiento/control-semanal`;

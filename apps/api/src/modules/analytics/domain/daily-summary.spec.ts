@@ -205,10 +205,17 @@ describe('RN-F03 · RN-F09 · el entrenamiento del día', () => {
 
 describe('RN-G14 · RN-F09 · la carga sRPE y los minutos de cardio del día', () => {
   it('la carga sRPE es la que calculó la recuperación del registro diario; sin registro diario, sin dato', () => {
-    const checkin = { stress: 2, sleepHours: 7, energy: null, srpeLoad: 350 };
+    const checkin = { stress: 2, sleepHours: 7, fatigue: 3, energy: null, srpeLoad: 350 };
 
     expect(dailySummary({ ...DAY, checkin }, null, rule).srpeLoad).toBe(350);
     expect(dailySummary(DAY, null, rule).srpeLoad).toBeNull();
+  });
+
+  it('ADR-108 · la fatiga del registro diario queda en el día para el panel de fatiga; sin registro, sin dato', () => {
+    const checkin = { stress: 2, sleepHours: 7, fatigue: 3, energy: null, srpeLoad: null };
+
+    expect(dailySummary({ ...DAY, checkin }, null, rule).fatigue).toBe(3);
+    expect(dailySummary(DAY, null, rule).fatigue).toBeNull();
   });
 
   it('los minutos de cardio salen de las series del grupo cardiorrespiratorio de los entrenos hechos', () => {

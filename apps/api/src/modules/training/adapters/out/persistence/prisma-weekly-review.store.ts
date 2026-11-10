@@ -2,6 +2,7 @@ import { Inject, Injectable } from '@nestjs/common';
 import { TransactionHost } from '@nestjs-cls/transactional';
 import type { Db } from '../../../../../platform/index.js';
 import type {
+  FatiguePanelThresholdRow,
   PublishedProgramRef,
   ReviewDecision,
   ThresholdRow,
@@ -197,6 +198,28 @@ export class PrismaWeeklyReviewStore implements WeeklyReviewStore {
       validFrom: row.validFrom.toISOString().slice(0, 10),
       rir: factorRows(row.rirFactors),
       rest: factorRows(row.restFactors),
+    }));
+  }
+
+  async fatiguePanelThresholdVersions(
+    organizationId: string,
+  ): Promise<readonly FatiguePanelThresholdRow[]> {
+    const rows = await this.db.tx.fatiguePanelThreshold.findMany({
+      where: { OR: [{ organizationId }, { organizationId: null }] },
+      orderBy: [{ validFrom: 'asc' }, { id: 'asc' }],
+    });
+    return rows.map((row) => ({
+      id: row.id,
+      organizationId: row.organizationId,
+      validFrom: isoDate(row.validFrom),
+      recoveryRedStressMin: Number(row.recoveryRedStressMin),
+      recoveryRedSleepBelowHours: Number(row.recoveryRedSleepBelowHours),
+      recoveryAmberStressMin: Number(row.recoveryAmberStressMin),
+      recoveryAmberSleepBelowHours: Number(row.recoveryAmberSleepBelowHours),
+      fatigueRedMin: Number(row.fatigueRedMin),
+      fatigueAmberMin: Number(row.fatigueAmberMin),
+      loadAmberAbovePct: Number(row.loadAmberAbovePct),
+      loadRedAbovePct: Number(row.loadRedAbovePct),
     }));
   }
 
