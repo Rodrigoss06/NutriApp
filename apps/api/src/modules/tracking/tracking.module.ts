@@ -3,20 +3,26 @@ import { ContentModule } from '../content/index.js';
 import { FoodModule } from '../food/index.js';
 import { NutritionModule } from '../nutrition/index.js';
 import { TrainingModule, WeekCheckinSources } from '../training/index.js';
+import { DayChangesConsumer } from './adapters/in/events/day-changes.consumer.js';
 import { PlansConsumer } from './adapters/in/events/plans.consumer.js';
 import { MeTrackingController } from './adapters/in/http/me-tracking.controller.js';
 import { PatientRecordsController } from './adapters/in/http/patient-records.controller.js';
 import { ProgramsConsumer } from './adapters/in/events/programs.consumer.js';
 import { DailyTargetsJob } from './adapters/in/jobs/daily-targets.job.js';
+import { PrismaDayChangeStore } from './adapters/out/persistence/prisma-day-change.store.js';
 import { PrismaFactsStore } from './adapters/out/persistence/prisma-facts.store.js';
 import { PrismaRecordStore } from './adapters/out/persistence/prisma-record.store.js';
 import { PrismaTrackingStore } from './adapters/out/persistence/prisma-tracking.store.js';
 import { AdjustmentCommands } from './application/commands/adjustment.commands.js';
+import { DayScheduleCommands } from './application/commands/day-schedule.commands.js';
 import { RecordGate } from './application/commands/record-gate.js';
 import { RecordCommands } from './application/commands/record.commands.js';
 import { TrainingLogCommands } from './application/commands/training-log.commands.js';
 import { DailyTargetsHandler } from './application/daily-targets.handler.js';
+import { DayRetarget } from './application/day-retarget.js';
+import { DayScheduleSource } from './application/day-schedule-source.js';
 import { PlanActivation } from './application/plan-activation.js';
+import { DAY_CHANGE_STORE } from './application/ports/day-changes.ports.js';
 import { FACTS_STORE } from './application/ports/facts.ports.js';
 import { RECORD_STORE } from './application/ports/records.ports.js';
 import { TRACKING_STORE } from './application/ports/tracking.ports.js';
@@ -39,6 +45,11 @@ import { TrackingWeekCheckins } from './application/week-checkins.source.js';
     RecordCommands,
     TrainingLogCommands,
     AdjustmentCommands,
+    DayScheduleCommands,
+    DayScheduleSource,
+    DayRetarget,
+    DayChangesConsumer,
+    { provide: DAY_CHANGE_STORE, useClass: PrismaDayChangeStore },
     MeQueries,
     PatientRecordsQueries,
     { provide: RECORD_STORE, useClass: PrismaRecordStore },

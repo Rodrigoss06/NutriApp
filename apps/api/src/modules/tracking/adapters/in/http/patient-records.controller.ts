@@ -8,14 +8,18 @@ import {
   Param,
   ParseUUIDPipe,
   Post,
+  Put,
   Req,
 } from '@nestjs/common';
 import {
   adjustRecordSchema,
+  dayProfileChoiceSchema,
   markAppNotesReadSchema,
+  todayActionSchema,
   type AppNote,
   type AppNotesResponse,
   type PatientDay,
+  type PatientDaySchedule,
   type RecordAdjustment,
 } from '@nutricoach/contracts';
 import { isErr, type DomainError, type SecurityContext } from '@nutricoach/shared-kernel';
@@ -33,6 +37,7 @@ import {
   WRITE_ACCESS_REQUIRED,
 } from '../../../../clinical/index.js';
 import { AdjustmentCommands } from '../../../application/commands/adjustment.commands.js';
+import { DayScheduleCommands } from '../../../application/commands/day-schedule.commands.js';
 import type {
   StoredAdjustment,
   StoredCheckin,
@@ -40,7 +45,15 @@ import type {
   StoredSetLog,
 } from '../../../application/ports/records.ports.js';
 import { PatientRecordsQueries } from '../../../application/queries/patient-records.queries.js';
+import type { DaySchedule } from '../../../domain/day-schedule.js';
 import { RECORD_NOT_FOUND } from '../../../domain/tracking-errors.js';
+
+const scheduleOf = (schedule: DaySchedule): PatientDaySchedule => ({
+  today: schedule.today,
+  tomorrow: schedule.tomorrow,
+  options: schedule.options,
+  choices: schedule.choices.map((choice) => ({ ...choice })),
+});
 
 const STATUS_BY_CODE: Readonly<Record<string, number>> = {
   [PATIENT_NOT_FOUND.code]: 404,
@@ -131,7 +144,56 @@ export class PatientRecordsController {
   constructor(
     private readonly queries: PatientRecordsQueries,
     private readonly commands: AdjustmentCommands,
+    private readonly schedules: DayScheduleCommands,
   ) {}
+
+  /** Hoy y mañana del paciente con sus cambios, lo que se puede hacer hoy y los perfiles que puede poner el coach (ADR-104). */
+  @Get('schedule')
+  @RequirePermission('patients.read')
+  @Header('Cache-Control', 'no-store')
+  async schedule(
+    @Req() request: ContextualRequest,
+    @Param('patientId', ParseUUIDPipe) patientId: string,
+  ): Promise<PatientDaySchedule> {
+    const view = await this.queries.schedule(contextOf(request), patientId);
+    if (!view) throw notFound();
+    return scheduleOf(view);
+  }
+
+  /** «No entreno hoy», «mover a mañana» o «sí entreno hoy», pedido por el coach (P-20.3). */
+  @Post('schedule/today')
+  @RequirePermission('patients.write')
+  @HttpCode(HttpStatus.OK)
+  async changeToday(
+    @Req() request: ContextualRequest,
+    @Param('patientId', ParseUUIDPipe) patientId: string,
+    @Body() body: unknown,
+  ): Promise<PatientDaySchedule> {
+    const { action } = parseBody(todayActionSchema, body);
+    const result = await this.schedules.staffToday(contextOf(request), patientId, action);
+    if (isErr(result)) throw problem(result.error);
+    return scheduleOf(result.value);
+  }
+
+  /** El perfil de hoy o de mañana que elige el coach; null vuelve a lo que pide el programa (P-20.4). */
+  @Put('schedule/:date/profile')
+  @RequirePermission('patients.write')
+  async setProfile(
+    @Req() request: ContextualRequest,
+    @Param('patientId', ParseUUIDPipe) patientId: string,
+    @Param('date') date: string,
+    @Body() body: unknown,
+  ): Promise<PatientDaySchedule> {
+    const { profileCode } = parseBody(dayProfileChoiceSchema, body);
+    const result = await this.schedules.setProfile(
+      contextOf(request),
+      patientId,
+      dateOf(date),
+      profileCode,
+    );
+    if (isErr(result)) throw problem(result.error);
+    return scheduleOf(result.value);
+  }
 
   @Get('records/:date')
   @RequirePermission('patients.read')

@@ -2624,3 +2624,49 @@ Consecuencias:
 - E2E `e2e/perfiles-dia.spec.ts`: la sugerencia y el ajuste de almidones, y los gramos de Descanso en una composición hasta
   el plan publicado, con axe.
 - Para Notion (/notion-sync de P14.5): 04 RF-24 (fichas 1.2.0) y RF-28 (Hoy y Plan), y 05.3 (las plantillas 1.2.0).
+
+## ADR-104 · Los cambios del día por la API: «no entreno hoy», «mover a mañana» y el perfil por fecha — aceptada (2026-11-10)
+Contexto: P14.5, PR 1e (07 §2 y §8; P-20.3 y P-20.4; RN-G03). Jeremy respondió en P-20.3 que el día pasa a descanso solo si se
+reprograma la sesión a tiempo: «no entreno hoy» baja la meta de hoy, «mover a mañana» cambia hoy a 2,230 kcal y mañana a 2,510,
+y nunca de forma automática a medianoche. ADR-100 dejó que lo hacen el paciente y el coach, solo hoy y mañana. Rodrigo decidió el
+2026-11-10:
+- «mover a mañana» mueve también la sesión: Entreno la muestra mañana y deja registrarla, y la sesión lleva su perfil;
+- si mañana ya tiene sesión, solo se ofrece «no entreno hoy»: nada de dos sesiones el mismo día ni desplazamientos en cascada
+  antes de P15;
+- «sí entreno hoy» deshace el cambio mientras no termine el día; si fue «mover a mañana», la sesión vuelve a hoy y mañana a
+  Descanso;
+- el coach elige para hoy o mañana cualquier perfil del plan: Entrenamiento, Descanso o los propios (P-20.4).
+Como en el 1c y el 1d, la API va primero y las pantallas en el PR siguiente (1g).
+Decisión:
+- Tabla `tracking.day_change` (migración `202611100000_tracking_day_changes`), un cambio por fila:
+  - `NOT_TRAINING` y `MOVED` en el día de hoy (en `MOVED`, el día del que sale la sesión hacia el siguiente);
+  - `PROFILE` con el código del perfil, para hoy o mañana;
+  - quién lo hizo (`created_by` y su rol) y cuándo. Deshacer lo anula (`voided_at`); nunca se borra.
+  - Un cambio vigente de cada tipo por día. RLS de tenant, del equipo de atención y de ACCOUNT; el paciente solo los suyos.
+- Dominio (`day-changes.ts`, `day-schedule.ts` y el calendario de `active-program.ts`):
+  - entre los cambios que tocan un día, manda el último: «no entreno hoy» es Descanso, el del coach es su perfil y una sesión que
+    se fue o llegó vuelve al perfil de la sesión del día;
+  - la sesión movida sale de hoy, que queda sin sesiones, y llega a mañana con su semana del programa;
+  - «no entreno hoy» no toca la meta de entrenamiento: la sesión sigue planificada y no hecha (P-33, manda la asistencia);
+  - «mover a mañana» se ofrece si la sesión es de hoy (la que llegó de ayer no se vuelve a mover) y mañana es un día del programa
+    sin sesión;
+  - el perfil del coach vale también sin programa.
+- API:
+  - el paciente: `POST /me/schedule/today` con `NOT_TRAINING`, `MOVE_TO_TOMORROW` o `UNDO`, y Hoy (`GET /me/today`) trae la agenda
+    de hoy y mañana con lo que puede hacer (`schedule`);
+  - el coach: `GET /patients/:id/schedule` con los perfiles que puede poner, `POST /patients/:id/schedule/today` y
+    `PUT /patients/:id/schedule/:fecha/profile`, con acceso de escritura al paciente;
+  - lo que el día no permite da 422: NC-TRK-014 (no entreno), NC-TRK-015 (mover), NC-TRK-016 (deshacer), NC-TRK-017 (una fecha
+    que no es hoy ni mañana) y NC-TRK-018 (un perfil que el plan no tiene).
+- La meta de hoy: el paciente no escribe su meta (RN-G03). El cambio deja `tracking.day.rescheduled`, y tracking vuelve a fijar
+  la meta de hoy con el contexto SYSTEM (`tracking.day-changes`) y avisa con `tracking.target.changed`, que la analítica usa para
+  recalcular el día y las semanas del programa. La de mañana la fija el trabajo de cada hora al llegar el día, con los cambios.
+- Entreno, el registro diario y el registro de una sesión leen el día con sus cambios.
+Consecuencias:
+- Unitarias: el calendario con la sesión movida, el último cambio que manda, lo que se puede hacer hoy, la agenda con sus kcal y
+  los errores de cada acción; los contratos de las acciones.
+- Integración `day-changes.int.spec.ts` (10 casos como app_user): mover y deshacer con la meta de hoy y el resumen diario, «no
+  entreno hoy», los 422, el coach con sus perfiles y el trabajo de cada hora con el perfil del coach.
+- PR 1g: los botones en Hoy y en Entreno de la app, y la agenda del paciente para el coach.
+- Para Notion (/notion-sync de P14.5): 07 §8 (los cambios del día), 03 RN-G03 (la meta de hoy cambia solo con un cambio del día),
+  04 RF-28 y RF-29, 05.2 (`tracking.day_change`) y 02 §8 (los dos eventos).

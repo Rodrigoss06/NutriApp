@@ -10,7 +10,9 @@ import {
 } from '@nutricoach/shared-kernel';
 import { ClinicalApi } from '../../../clinical/index.js';
 import { adjustedFoods, adjustedWaterMl, latestByTarget } from '../../domain/adjustments.js';
+import { dayScheduleOf, type DaySchedule } from '../../domain/day-schedule.js';
 import { dayTotals, type DayTotals } from '../../domain/records.js';
+import { DayScheduleSource } from '../day-schedule-source.js';
 import {
   RECORD_STORE,
   type RecordStore,
@@ -52,7 +54,21 @@ export class PatientRecordsQueries {
     @Inject(AUDIT_PORT) private readonly audit: AuditPort,
     @Inject(RECORD_STORE) private readonly store: RecordStore,
     @Inject(ClinicalApi) private readonly clinical: ClinicalApi,
+    @Inject(DayScheduleSource) private readonly schedules: DayScheduleSource,
   ) {}
+
+  /**
+   * Hoy y mañana del paciente con sus cambios, lo que se puede hacer hoy y los perfiles que el coach puede poner (P-20.3, P-20.4,
+   * ADR-104). Es la agenda, no un registro clínico. Si el paciente no existe o no es de su equipo, undefined.
+   */
+  schedule(context: SecurityContext, patientId: string): Promise<DaySchedule | undefined> {
+    return this.uow.query(context, async () => {
+      const inputs = await this.schedules.load(patientId);
+      return inputs
+        ? dayScheduleOf(inputs.calendar, inputs.plan, inputs.today, inputs.changes)
+        : undefined;
+    });
+  }
 
   /** Los registros de un día con los ajustes; si el paciente no existe o no es de su equipo, undefined. */
   day(

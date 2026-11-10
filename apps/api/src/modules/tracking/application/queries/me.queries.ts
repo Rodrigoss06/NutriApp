@@ -18,6 +18,8 @@ import { TenancyApi } from '../../../tenancy/index.js';
 import type { ProgramSnapshot } from '../../../training/index.js';
 import { localDate as localDateOf } from '../../domain/active-plan.js';
 import { sessionsOn } from '../../domain/active-program.js';
+import { addDays, type DayChange } from '../../domain/day-changes.js';
+import { dayScheduleOf, type DaySchedule } from '../../domain/day-schedule.js';
 import { sessionView, type SessionView } from '../../domain/training-day.js';
 import {
   dayPortionsOf,
@@ -30,6 +32,8 @@ import {
 } from '../../domain/records.js';
 import { FUTURE_DATE } from '../../domain/tracking-errors.js';
 import { trainingDayOf } from '../active-training.js';
+import { calendarOf, planTargetsOn } from '../day-schedule-source.js';
+import { DAY_CHANGE_STORE, type DayChangeStore } from '../ports/day-changes.ports.js';
 import {
   RECORD_STORE,
   type ActiveSnapshot,
@@ -61,6 +65,8 @@ export interface TodayView {
   readonly sessions: readonly DaySessionView[] | null;
   /** La recuperación e indicación de hoy, si ya hizo su registro diario (RN-G15). */
   readonly readiness: StoredReadiness | null;
+  /** Hoy y mañana con sus cambios, y si hoy puede decir «no entreno hoy», «mover a mañana» o deshacerlo (P-20.3, ADR-104). */
+  readonly schedule: DaySchedule;
 }
 
 /** El entreno de hoy (RF-29): la semana del programa vigente, sus sesiones de hoy y lo ya registrado. */
@@ -115,8 +121,15 @@ function appPlanOn(active: ActiveSnapshot | null, localDate: string): AppPlan | 
   return plan;
 }
 
-/** Las sesiones del programa vigente ese día (07 §8): ninguna en un descanso; sin programa o fuera de sus semanas, null. */
-function sessionsOf(active: ActiveSnapshot | null, localDate: string): DaySessionView[] | null {
+/**
+ * Las sesiones del programa vigente ese día (07 §8), con la que se movió a mañana en su nuevo día (ADR-104): ninguna en un descanso;
+ * sin programa o fuera de sus semanas, null.
+ */
+function sessionsOf(
+  active: ActiveSnapshot | null,
+  localDate: string,
+  changes: readonly DayChange[],
+): DaySessionView[] | null {
   if (!active) return null;
   const program = active.snapshot as ProgramSnapshot;
   const day = sessionsOn(
@@ -125,6 +138,7 @@ function sessionsOf(active: ActiveSnapshot | null, localDate: string): DaySessio
       weeks: program.mesocycles.flatMap((mesocycle) => mesocycle.weeks),
     },
     localDate,
+    changes,
   );
   return (
     day?.sessions.map((session) => ({
@@ -149,6 +163,7 @@ export class MeQueries {
     @Inject(ClinicalApi) private readonly clinical: ClinicalApi,
     @Inject(TenancyApi) private readonly tenancy: TenancyApi,
     @Inject(FoodApi) private readonly food: FoodApi,
+    @Inject(DAY_CHANGE_STORE) private readonly dayChanges: DayChangeStore,
   ) {}
 
   /** Hoy: la meta del día (RN-G03) frente a lo registrado, el agua y la sesión del día. */
@@ -156,7 +171,7 @@ export class MeQueries {
     const scope = scopeOf(context);
     return this.uow.query(context, async () => {
       const today = await this.#today(scope.patientId);
-      const [editWindowDays, target, foods, hydration, nutrition, training, checkin] =
+      const [editWindowDays, target, foods, hydration, nutrition, training, checkin, changes] =
         await Promise.all([
           this.tenancy.trackingEditWindowDays(scope.organizationId),
           this.store.dayTarget(scope.patientId, today),
@@ -165,6 +180,7 @@ export class MeQueries {
           this.store.activeNutrition(scope.patientId),
           this.store.activeTraining(scope.patientId),
           this.store.activeCheckin(scope.patientId, today),
+          this.dayChanges.active(scope.patientId, addDays(today, -1), addDays(today, 1)),
         ]);
       const plan = appPlanOn(nutrition, today);
       return {
@@ -174,8 +190,14 @@ export class MeQueries {
         consumed: dayTotals(foods),
         waterMl: water(hydration),
         plan: plan ? { planId: plan.planId, modality: plan.modality } : null,
-        sessions: sessionsOf(training, today),
+        sessions: sessionsOf(training, today, changes),
         readiness: checkin?.readiness ?? null,
+        schedule: dayScheduleOf(
+          calendarOf(training),
+          planTargetsOn(nutrition, today),
+          today,
+          changes,
+        ),
       };
     });
   }
@@ -216,12 +238,13 @@ export class MeQueries {
     const scope = scopeOf(context);
     return this.uow.query(context, async () => {
       const today = await this.#today(scope.patientId);
-      const [active, workouts, checkin] = await Promise.all([
+      const [active, workouts, checkin, changes] = await Promise.all([
         this.store.activeTraining(scope.patientId),
         this.store.dayWorkouts(scope.patientId, today),
         this.store.activeCheckin(scope.patientId, today),
+        this.dayChanges.active(scope.patientId, addDays(today, -1), today),
       ]);
-      const training = trainingDayOf(active, today);
+      const training = trainingDayOf(active, today, changes);
       return {
         localDate: today,
         program: training && {

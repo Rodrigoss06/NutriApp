@@ -73,3 +73,34 @@ export const CORRECTION_INVALID = domainError({
   rule: 'RN-G02',
   message: 'Esa corrección no corresponde a ese registro: revisa la cantidad o exclúyelo.',
 });
+
+export const NOT_TRAINING_UNAVAILABLE = domainError({
+  code: 'NC-TRK-014',
+  rule: 'RN-G03',
+  message: 'Hoy no hay una sesión que dejar, o el día ya cambió: deshaz ese cambio primero.',
+});
+
+export const MOVE_UNAVAILABLE = domainError({
+  code: 'NC-TRK-015',
+  rule: 'RN-G03',
+  message:
+    'Solo se mueve a mañana la sesión de hoy, cuando mañana es un día del programa sin sesión y hoy no cambió todavía.',
+});
+
+export const NOTHING_TO_UNDO = domainError({
+  code: 'NC-TRK-016',
+  rule: 'RN-G03',
+  message: 'Hoy no hay un «no entreno hoy» ni un «mover a mañana» que deshacer.',
+});
+
+export const DAY_NOT_RESCHEDULABLE = domainError({
+  code: 'NC-TRK-017',
+  rule: 'RN-G03',
+  message: 'Solo se cambia el perfil de hoy o el de mañana.',
+});
+
+export const UNKNOWN_DAY_PROFILE = domainError({
+  code: 'NC-TRK-018',
+  rule: 'RN-G03',
+  message: 'Ese perfil de día no está en el plan vigente del paciente.',
+});

@@ -2360,3 +2360,24 @@ model PlanMealProfileExchange {
   @@map("plan_meal_profile_exchange")
   @@schema("nutrition")
 }
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model DayChange {
+  id             String    @id @db.Uuid
+  organizationId String    @map("organization_id") @db.Uuid
+  patientId      String    @map("patient_id") @db.Uuid
+  localDate      DateTime  @map("local_date") @db.Date
+  kind           String
+  dayProfileCode String?   @map("day_profile_code")
+  createdBy      String    @map("created_by") @db.Uuid
+  createdByRole  String    @map("created_by_role")
+  createdAt      DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  voidedBy       String?   @map("voided_by") @db.Uuid
+  voidedAt       DateTime? @map("voided_at") @db.Timestamptz(6)
+
+  @@unique([patientId, localDate, kind], map: "day_change_one_active", where: raw("(voided_at IS NULL)"))
+  @@index([organizationId, localDate], map: "day_change_by_date", where: raw("(voided_at IS NULL)"))
+  @@map("day_change")
+  @@schema("tracking")
+}

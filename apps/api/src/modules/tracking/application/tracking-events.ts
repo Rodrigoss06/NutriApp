@@ -7,7 +7,9 @@ import {
 
 /**
  * Eventos de los registros (02 §8): tracking.*.logged para la analítica (P14), y .voided para que un resumen no cuente lo anulado
- * (RN-G12). Solo identificadores, el día y si fue del plan: nunca lo que comió ni lo que escribió.
+ * (RN-G12). Solo identificadores, el día y si fue del plan: nunca lo que comió ni lo que escribió. tracking.day.rescheduled: el
+ * paciente o el coach cambiaron hoy o mañana (ADR-104), y tracking vuelve a fijar la meta de hoy; tracking.target.changed: la meta
+ * de un día cambió, y la analítica lo recalcula.
  */
 export type TrackingEventType =
   | 'tracking.food.logged'
@@ -22,7 +24,9 @@ export type TrackingEventType =
   | 'tracking.workout.logged'
   | 'tracking.workout.voided'
   | 'tracking.log.adjusted'
-  | 'tracking.note.read';
+  | 'tracking.note.read'
+  | 'tracking.day.rescheduled'
+  | 'tracking.target.changed';
 
 export interface TrackingEventPayload {
   readonly patientId: string;
