@@ -21,6 +21,7 @@ export type TrackingEventType =
   | 'tracking.metric.voided'
   | 'tracking.checkin.logged'
   | 'tracking.checkin.voided'
+  | 'tracking.weeklycheckin.logged'
   | 'tracking.workout.logged'
   | 'tracking.workout.voided'
   | 'tracking.log.adjusted'

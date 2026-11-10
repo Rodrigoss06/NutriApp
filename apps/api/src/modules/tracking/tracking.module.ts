@@ -23,6 +23,9 @@ import { DayRetarget } from './application/day-retarget.js';
 import { DayScheduleSource } from './application/day-schedule-source.js';
 import { PlanActivation } from './application/plan-activation.js';
 import { DAY_CHANGE_STORE } from './application/ports/day-changes.ports.js';
+import { WEEKLY_CHECKIN_STORE } from './application/ports/weekly-checkin.ports.js';
+import { WeeklyCheckinCommands } from './application/commands/weekly-checkin.commands.js';
+import { PrismaWeeklyCheckinStore } from './adapters/out/persistence/prisma-weekly-checkin.store.js';
 import { FACTS_STORE } from './application/ports/facts.ports.js';
 import { RECORD_STORE } from './application/ports/records.ports.js';
 import { TRACKING_STORE } from './application/ports/tracking.ports.js';
@@ -46,10 +49,12 @@ import { TrackingWeekCheckins } from './application/week-checkins.source.js';
     TrainingLogCommands,
     AdjustmentCommands,
     DayScheduleCommands,
+    WeeklyCheckinCommands,
     DayScheduleSource,
     DayRetarget,
     DayChangesConsumer,
     { provide: DAY_CHANGE_STORE, useClass: PrismaDayChangeStore },
+    { provide: WEEKLY_CHECKIN_STORE, useClass: PrismaWeeklyCheckinStore },
     MeQueries,
     PatientRecordsQueries,
     { provide: RECORD_STORE, useClass: PrismaRecordStore },

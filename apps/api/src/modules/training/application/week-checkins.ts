@@ -24,6 +24,11 @@ export interface WeekCheckin {
 /** Los registros diarios vigentes de un rango, con los ajustes del profesional aplicados (RN-G02). Los da tracking. */
 export interface WeekCheckinSource {
   checkins(patientId: string, from: string, to: string): Promise<readonly WeekCheckin[]>;
+  /**
+   * La alimentación del check-in del domingo vigente dentro del rango, de 0 a 100 (P-21, P-22; ADR-109); null si no lo hizo. Una
+   * semana de 7 días tiene un solo domingo.
+   */
+  weeklyNutrition(patientId: string, from: string, to: string): Promise<number | null>;
 }
 
 /**

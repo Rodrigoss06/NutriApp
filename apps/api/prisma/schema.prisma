@@ -2420,3 +2420,26 @@ model FatiguePanelThreshold {
   @@map("fatigue_panel_threshold")
   @@schema("training")
 }
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model WeeklyCheckin {
+  id                     String    @id @db.Uuid
+  organizationId         String    @map("organization_id") @db.Uuid
+  patientId              String    @map("patient_id") @db.Uuid
+  weekDate               DateTime  @map("week_date") @db.Date
+  clientId               String    @map("client_id") @db.Uuid
+  loggedOn               DateTime  @map("logged_on") @db.Date
+  nutritionCompliancePct Int       @map("nutrition_compliance_pct") @db.SmallInt
+  metricLogId            String?   @map("metric_log_id") @db.Uuid
+  noteId                 String?   @map("note_id") @db.Uuid
+  status                 String    @default("ACTIVE")
+  createdAt              DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  voidedAt               DateTime? @map("voided_at") @db.Timestamptz(6)
+
+  @@unique([patientId, weekDate], map: "weekly_checkin_one_active", where: raw("(status = 'ACTIVE'::text)"))
+  @@unique([patientId, weekDate, clientId])
+  @@index([organizationId, weekDate], map: "weekly_checkin_by_week", where: raw("(status = 'ACTIVE'::text)"))
+  @@map("weekly_checkin")
+  @@schema("tracking")
+}

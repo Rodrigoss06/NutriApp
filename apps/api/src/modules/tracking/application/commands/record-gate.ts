@@ -75,6 +75,13 @@ export class RecordGate {
     return ok(undefined);
   }
 
+  /** Hoy en la fecha local del paciente (RN-G04). */
+  async today(patient: PatientContext): Promise<Result<string, DomainError>> {
+    const ref = await this.clinical.patientRef(patient.patientId);
+    if (!ref) return err(PATIENT_NOT_FOUND);
+    return ok(localDateOf(this.clock.now(), ref.timezone));
+  }
+
   async emit(
     context: Pick<SecurityContext, 'organizationId' | 'userId' | 'role'>,
     type: TrackingEventType,

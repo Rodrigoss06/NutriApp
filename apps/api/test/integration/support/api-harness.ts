@@ -1,6 +1,7 @@
 import type { INestApplication } from '@nestjs/common';
 import { Test } from '@nestjs/testing';
 import { hash } from '@node-rs/argon2';
+import { CLOCK, type Clock } from '@nutricoach/shared-kernel';
 import request from 'supertest';
 import type { App } from 'supertest/types.js';
 import { AppModule } from '../../../src/app.module.js';
@@ -43,18 +44,27 @@ export interface StaffOrganization {
 }
 
 export class ApiHarness {
+  /** Con un reloj, la API lo usa en vez del del sistema: para las reglas que dependen del día de la semana. */
+  constructor(private readonly clock: Clock | null = null) {}
+
   app!: INestApplication<App>;
   readonly sent: MailMessage[] = [];
   #passwordHash: Promise<string> | null = null;
-  /** Desde cuándo entrega eventos: los de los archivos anteriores, en la misma base, no son de esta prueba. */
-  #since = new Date(0);
+  /**
+   * Desde qué evento entrega: los de los archivos anteriores, en la misma base, no son de esta prueba. Por el id (UUID v7, con la
+   * hora real en sus primeros 48 bits) y no por occurred_at, que sale del reloj de la API y con un reloj fijo puede ser anterior.
+   */
+  #sinceId = '00000000-0000-7000-8000-000000000000';
 
   async start(): Promise<void> {
-    this.#since = new Date(Date.now() - 1_000);
-    const moduleRef = await Test.createTestingModule({ imports: [AppModule] })
+    const ms = (Date.now() - 1_000).toString(16).padStart(12, '0');
+    this.#sinceId = `${ms.slice(0, 8)}-${ms.slice(8, 12)}-7000-8000-000000000000`;
+    const builder = Test.createTestingModule({ imports: [AppModule] })
       .overrideProvider(MAILER)
-      .useValue({ send: (message: MailMessage) => Promise.resolve(void this.sent.push(message)) })
-      .compile();
+      .useValue({ send: (message: MailMessage) => Promise.resolve(void this.sent.push(message)) });
+    const moduleRef = await (
+      this.clock ? builder.overrideProvider(CLOCK).useValue(this.clock) : builder
+    ).compile();
     this.app = moduleRef.createNestApplication({ logger: false });
     configureHttp(this.app);
     await this.app.init();
@@ -83,8 +93,8 @@ export class ApiHarness {
       occurred_at: Date;
     }>(
       `SELECT id, organization_id, aggregate_type, aggregate_id, event_type, payload, metadata, occurred_at
-       FROM platform.outbox_event WHERE event_type = ANY($1) AND occurred_at >= $2 ORDER BY id`,
-      [consumer.eventTypes, this.#since],
+       FROM platform.outbox_event WHERE event_type = ANY($1) AND id >= $2::uuid ORDER BY id`,
+      [consumer.eventTypes, this.#sinceId],
     );
     for (const row of rows) {
       await runner.process(consumer, {

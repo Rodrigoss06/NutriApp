@@ -11,6 +11,7 @@ import {
   type SecurityContext,
   type UnitOfWork,
 } from '@nutricoach/shared-kernel';
+import { ContentApi } from '../../../content/index.js';
 import { ClinicalApi } from '../../../clinical/index.js';
 import { FoodApi, type FoodSummaryRecord } from '../../../food/index.js';
 import type { PlanSnapshot } from '../../../nutrition/index.js';
@@ -47,6 +48,12 @@ import {
   type StoredReadiness,
   type StoredWorkout,
 } from '../ports/records.ports.js';
+import {
+  WEEKLY_CHECKIN_STORE,
+  type StoredWeeklyCheckin,
+  type WeeklyCheckinStore,
+} from '../ports/weekly-checkin.ports.js';
+import { closesOn, openWeekDate } from '../../domain/weekly-checkin.js';
 
 export interface DaySessionView {
   readonly position: number;
@@ -67,6 +74,13 @@ export interface TodayView {
   readonly readiness: StoredReadiness | null;
   /** Hoy y mañana con sus cambios, y si hoy puede decir «no entreno hoy», «mover a mañana» o deshacerlo (P-20.3, ADR-104). */
   readonly schedule: DaySchedule;
+  /** El check-in de la semana, abierto del domingo al martes (P-21, ADR-109); de miércoles a sábado, null. */
+  readonly weeklyCheckin: {
+    readonly weekDate: string;
+    readonly closesOn: string;
+    readonly asksWeight: boolean;
+    readonly done: StoredWeeklyCheckin | null;
+  } | null;
 }
 
 /** El entreno de hoy (RF-29): la semana del programa vigente, sus sesiones de hoy y lo ya registrado. */
@@ -164,6 +178,8 @@ export class MeQueries {
     @Inject(TenancyApi) private readonly tenancy: TenancyApi,
     @Inject(FoodApi) private readonly food: FoodApi,
     @Inject(DAY_CHANGE_STORE) private readonly dayChanges: DayChangeStore,
+    @Inject(WEEKLY_CHECKIN_STORE) private readonly weeklyCheckins: WeeklyCheckinStore,
+    @Inject(ContentApi) private readonly content: ContentApi,
   ) {}
 
   /** Hoy: la meta del día (RN-G03) frente a lo registrado, el agua y la sesión del día. */
@@ -183,6 +199,16 @@ export class MeQueries {
           this.dayChanges.active(scope.patientId, addDays(today, -1), addDays(today, 1)),
         ]);
       const plan = appPlanOn(nutrition, today);
+      const weekDate = openWeekDate(today);
+      const weeklyCheckin =
+        weekDate === null
+          ? null
+          : {
+              weekDate,
+              closesOn: closesOn(weekDate),
+              asksWeight: await this.content.allowsWeightLog(scope.patientId),
+              done: await this.weeklyCheckins.active(scope.patientId, weekDate),
+            };
       return {
         localDate: today,
         editWindowDays,
@@ -198,6 +224,7 @@ export class MeQueries {
           today,
           changes,
         ),
+        weeklyCheckin,
       };
     });
   }

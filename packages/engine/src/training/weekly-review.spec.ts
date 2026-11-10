@@ -183,9 +183,37 @@ describe('RN-G16 · semáforo, factor ajustado y decisión sugerida', () => {
     const run = expectOk(runMethod(WEEKLY_REVIEW_JV, input([GOOD])));
 
     expect(run.methodCode).toBe('WEEKLY_REVIEW_JV');
-    expect(run.methodVersion).toBe('3.0.0');
+    expect(run.methodVersion).toBe('3.1.0');
     expect(run.engineVersion).toBe(ENGINE_VERSION);
     expect(run.outputs.plannedVolumeFactor).toBe(1);
+  });
+});
+
+describe('RN-G16 · P-21 · P-22 · la alimentación del check-in del domingo (ADR-109)', () => {
+  it('manda sobre el promedio de los días: 70 % declarado el domingo es ámbar aunque los días digan 90 %', () => {
+    const weekly = outputsOf({ ...input([GOOD, GOOD]), weeklyNutritionCompliancePct: 70 });
+    expect(weekly.aggregates.avgNutritionCompliancePct).toBe(70);
+    expect(weekly).toMatchObject({ light: 'AMBER', reasons: ['NUTRITION'] });
+  });
+
+  it('sin check-in, el promedio de los días, como antes: los controles que ya existen no cambian', () => {
+    const before = expectOk(runMethod(WEEKLY_REVIEW_JV, input([GOOD, GOOD])));
+    expect(before.outputs.aggregates.avgNutritionCompliancePct).toBe(90);
+    expect(
+      outputsOf({ ...input([GOOD]), weeklyNutritionCompliancePct: null }).aggregates
+        .avgNutritionCompliancePct,
+    ).toBe(90);
+    expect(before.inputs).not.toHaveProperty('weeklyNutritionCompliancePct');
+  });
+
+  it('no calcula con una alimentación fuera de 0 a 100 o con decimales: NC-ENG-410', () => {
+    for (const value of [101, -1, 85.5]) {
+      expect(
+        expectErrors(
+          runMethod(WEEKLY_REVIEW_JV, { ...input([GOOD]), weeklyNutritionCompliancePct: value }),
+        ),
+      ).toEqual([{ rule: 'RN-G16', code: 'NC-ENG-410', severity: 'ERROR' }]);
+    }
   });
 });
 

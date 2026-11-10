@@ -59,7 +59,10 @@ export class WeeklyReviewService {
       const threshold = await this.store.thresholdFor(organizationId, weekEnd);
       if (!threshold) continue;
       const checkins = await source.checkins(snapshot.patientId, weekStart, weekEnd);
+      const weekly = await source.weeklyNutrition(snapshot.patientId, weekStart, weekEnd);
       const run = runMethod(WEEKLY_REVIEW_JV, {
+        // Sin check-in del domingo no se envía: así los controles que ya existen conservan sus insumos y su hash (ADR-109).
+        ...(weekly === null ? {} : { weeklyNutritionCompliancePct: weekly }),
         days: checkins.map(dayOf),
         plannedVolumeFactor: week.volumeFactor ?? BASE_VOLUME_FACTOR,
         thresholds: {
