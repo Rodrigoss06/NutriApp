@@ -4,6 +4,8 @@ import { UtensilsCrossed } from 'lucide-react';
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { DayLog } from '@/features/patient-app/day-log';
+import { hasSchedule } from '@/features/patient-app/day-schedule';
+import { DayScheduleCard } from '@/features/patient-app/day-schedule-card';
 import { DaySummary } from '@/features/patient-app/day-summary';
 import { IndicationCard } from '@/features/patient-app/indication-card';
 import { MealLogger } from '@/features/patient-app/meal-logger';
@@ -16,8 +18,9 @@ export const metadata: Metadata = { title: 'Hoy' };
 
 /**
  * Hoy, la pantalla de inicio de la app del paciente (RF-27, RF-28): el saludo y el mensaje del día, la indicación del día con su
- * texto (RN-G15, 07 §9), lo que va del día frente a la meta, las comidas del plan para registrar en tres toques (RN-G06), el agua
- * y la sesión del día. El título no se anima: es lo primero que se pinta (RNF-03).
+ * texto (RN-G15, 07 §9), lo que va del día frente a la meta, las comidas del plan para registrar en tres toques (RN-G06), el agua,
+ * la sesión del día y hoy y mañana, donde avisa «no entreno hoy» o «mover a mañana» (P-20.3). El título no se anima: es lo
+ * primero que se pinta (RNF-03).
  */
 export default async function Page() {
   const [account, today, app, plan] = await Promise.all([
@@ -80,6 +83,9 @@ export default async function Page() {
         />
       ) : null}
       {sections.has('TRAINING') ? <SessionCard sessions={today.data.sessions} /> : null}
+      {(sections.has('TRAINING') || nutrition) && hasSchedule(today.data.schedule) ? (
+        <DayScheduleCard schedule={today.data.schedule} />
+      ) : null}
       {day.ok && (nutrition || sections.has('HYDRATION')) ? (
         <section aria-labelledby="registrado-hoy" className="flex flex-col gap-2">
           <h2 id="registrado-hoy" className="text-lg font-semibold">

@@ -1,11 +1,16 @@
 import { expect, test, type Page } from '@playwright/test';
 import { seriousViolations } from './support/axe';
 import { luisWithPrescription } from './support/luis';
-import { createOrganization, loginInPage } from './support/stack';
+import {
+  appAccessByApi,
+  publishedExchangePlanByApi,
+  publishedProgramByApi,
+} from './support/patient-app';
+import { createOrganization, loginAsPatientInPage, loginInPage } from './support/stack';
 
 /**
- * P14.5 (PR 1d y 1f) de punta a punta: los perfiles de día del plan (07 §2; P-20, respuestas de Jeremy; ADR-100, ADR-101,
- * ADR-103) en escritorio y en el celular. Entrenamiento es la meta de la prescripción (G-17); Descanso y los perfiles propios
+ * P14.5 (PR 1d, 1f y 1g) de punta a punta: los perfiles de día del plan (07 §2; P-20, respuestas de Jeremy; ADR-100, ADR-101,
+ * ADR-103 y ADR-104) en escritorio y en el celular. Entrenamiento es la meta de la prescripción (G-17); Descanso y los perfiles propios
  * llevan sus gramos, con la proteína y la grasa de Entrenamiento ya puestas (P-20.1), y las kcal salen de los gramos (P-20.2).
  * Cada perfil es el mismo plan con menos (o más) del alimento fuente (P-20.5). axe en cada paso. Datos sintéticos de seeds/luis
  * y la TPCA que carga catalog:load.
@@ -193,5 +198,54 @@ test.describe('P14.5 · Porciones de cada perfil de día (P-20.5)', () => {
       await expect(page.getByText('Descanso: 100 g')).toBeVisible();
       expect(await seriousViolations(page)).toEqual([]);
     });
+  });
+});
+
+test.describe('P14.5 · Cambiar el día: «no entreno hoy» y «mover a mañana» (P-20.3, ADR-104)', () => {
+  test('el paciente pasa su sesión a mañana y lo deshace; el coach elige el perfil de mañana', async ({
+    page,
+    browser,
+  }) => {
+    const organization = await createOrganization();
+    const patientId = await luisWithPrescription(organization.ownerEmail);
+    await publishedExchangePlanByApi(organization.ownerEmail, patientId, [
+      { code: 'REST', name: 'Descanso', choG: 120, proteinG: 160, fatG: 51 },
+    ]);
+    // Una sola sesión, hoy: mañana queda libre para moverla.
+    await publishedProgramByApi(organization.ownerEmail, patientId, 1);
+    const email = await appAccessByApi(organization.ownerEmail, patientId);
+    await loginAsPatientInPage(page, email);
+
+    const card = page.getByRole('region', { name: 'Hoy y mañana' });
+    const move = card.getByRole('button', { name: 'Mover a mañana' });
+    await expect(async () => {
+      await page.goto('/mi/hoy');
+      await expect(move).toBeVisible({ timeout: 2_000 });
+    }).toPass({ timeout: 30_000 });
+    await expect(card.getByText('Descanso · 1,579 kcal · sin sesión')).toBeVisible();
+    expect(await seriousViolations(page)).toEqual([]);
+
+    await move.click();
+    await expect(card.getByText('Tu sesión de hoy pasó a mañana.')).toBeVisible();
+    await expect(card.getByText(/^Entrenamiento · .+ kcal · 1 sesión$/)).toBeVisible();
+    expect(await seriousViolations(page)).toEqual([]);
+    await card.getByRole('button', { name: 'Sí entreno hoy' }).click();
+    await expect(card.getByRole('button', { name: 'No entreno hoy' })).toBeVisible();
+    await expect(card.getByText('Tu sesión de hoy pasó a mañana.')).toHaveCount(0);
+
+    const staffContext = await browser.newContext();
+    const panel = await staffContext.newPage();
+    await loginInPage(panel, organization.ownerEmail);
+    await panel.goto(`/panel/pacientes/${patientId}/seguimiento`);
+    const agenda = panel.getByRole('region', { name: 'Hoy y mañana' });
+    await expect(agenda.getByText('Descanso · 1,579 kcal · sin sesión')).toBeVisible();
+    expect(await seriousViolations(panel)).toEqual([]);
+    const tomorrow = agenda.getByRole('combobox', { name: 'Perfil de mañana' });
+    await tomorrow.click();
+    await panel.getByRole('option', { name: 'Entrenamiento' }).click();
+    await expect(agenda.getByText('Perfil elegido por el coach')).toBeVisible();
+    await expect(tomorrow).toContainText('Entrenamiento');
+    expect(await seriousViolations(panel)).toEqual([]);
+    await staffContext.close();
   });
 });

@@ -2670,3 +2670,23 @@ Consecuencias:
 - PR 1g: los botones en Hoy y en Entreno de la app, y la agenda del paciente para el coach.
 - Para Notion (/notion-sync de P14.5): 07 §8 (los cambios del día), 03 RN-G03 (la meta de hoy cambia solo con un cambio del día),
   04 RF-28 y RF-29, 05.2 (`tracking.day_change`) y 02 §8 (los dos eventos).
+
+## ADR-105 · Pantallas de los cambios del día: Hoy y Seguimiento — aceptada (2026-11-10)
+Contexto: P14.5, PR 1g. La API de los cambios del día llegó en el PR 1e (ADR-104).
+Decisión:
+- App del paciente, Hoy: la tarjeta «Hoy y mañana».
+  - Cada día dice su perfil, sus kcal y sus sesiones («Descanso · 2,230 kcal · sin sesión»).
+  - Muestra «No entreno hoy», «Mover a mañana» y «Sí entreno hoy» solo cuando el día lo permite.
+  - Un aviso dice qué cambió hoy: no entrena, la sesión pasó a mañana, llegó la de ayer o el coach eligió el perfil.
+  - Cada toque lleva su Idempotency-Key.
+- Panel, Seguimiento: «Hoy y mañana», arriba de los registros.
+  - Cada día muestra su perfil, sus kcal, sus sesiones y el cambio que lo decidió.
+  - «Perfil de hoy» y «Perfil de mañana» ofrecen «Lo que pide el programa» y los perfiles del plan.
+  - El coach hace los mismos tres cambios por el paciente. Lo que el rol no puede lo decide la API.
+- Entreno no cambia: la API ya da la sesión movida en su nuevo día.
+Consecuencias:
+- Unitarias: los textos de la agenda.
+- E2E `e2e/perfiles-dia.spec.ts`, con axe:
+  - el paciente pasa su sesión a mañana y lo deshace;
+  - el coach elige el perfil de mañana.
+- Para Notion (/notion-sync de P14.5): 04 RF-28 (Hoy) y RF-29.

@@ -29,11 +29,13 @@ interface PlanRead {
 
 /**
  * Un plan por intercambios publicado por la API (G-18): un alimento propio por grupo, de 50 g por porción, en cada tiempo donde el
- * grupo tiene intercambios (RN-G05). Lo que haría el profesional en pantalla, para que la app tenga plan.
+ * grupo tiene intercambios (RN-G05), con sus perfiles de día si se piden (07 §2). Lo que haría el profesional en pantalla, para que
+ * la app tenga plan.
  */
 export async function publishedExchangePlanByApi(
   ownerEmail: string,
   patientId: string,
+  dayProfiles: readonly Readonly<Record<string, unknown>>[] = [],
 ): Promise<string> {
   const api = await apiAs(ownerEmail);
   const foods: Record<string, string> = {};
@@ -81,6 +83,7 @@ export async function publishedExchangePlanByApi(
         splitOverrides: {},
         hydrationTargetMl: 2_000,
         instructions: 'Toma agua entre comidas.',
+        dayProfiles,
       },
     });
     expect(saved.status(), 'guardar el plan').toBe(200);
@@ -126,10 +129,14 @@ interface ProgramRead {
 
 /**
  * El perfil de entrenamiento con su línea base (07 §2) y un programa publicado por la API que empieza hoy (07 §8): una semana
- * con tres sesiones de sentadilla goblet, 3 series de 8 con 60 kg, así el tonelaje prescrito se calcula (P-09). Lo que haría el
- * coach en pantalla, para que la app tenga la sesión del día.
+ * con tres sesiones de sentadilla goblet (o las que se pidan), 3 series de 8 con 60 kg, así el tonelaje prescrito se calcula
+ * (P-09). Lo que haría el coach en pantalla, para que la app tenga la sesión del día.
  */
-export async function publishedProgramByApi(ownerEmail: string, patientId: string): Promise<void> {
+export async function publishedProgramByApi(
+  ownerEmail: string,
+  patientId: string,
+  sessions = 3,
+): Promise<void> {
   const api = await apiAs(ownerEmail);
   const profile = await api.put(`/api/v1/patients/${patientId}/athlete-profile`, {
     data: {
@@ -169,7 +176,11 @@ export async function publishedProgramByApi(ownerEmail: string, patientId: strin
   const weekId = program.document.mesocycles[0]?.weeks[0]?.id ?? '';
   const saved = await api.put(`/api/v1/training-programs/${id}/weeks/${weekId}`, {
     headers: { 'If-Match': String(program.version) },
-    data: { sessions: [session('Sesión 1'), session('Sesión 2'), session('Sesión 3')] },
+    data: {
+      sessions: Array.from({ length: sessions }, (_, index) =>
+        session(`Sesión ${String(index + 1)}`),
+      ),
+    },
   });
   expect(saved.status(), 'guardar la semana').toBe(200);
   program = (await saved.json()) as ProgramRead;

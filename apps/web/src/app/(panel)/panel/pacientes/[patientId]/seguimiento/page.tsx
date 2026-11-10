@@ -1,10 +1,12 @@
-import type { AppNotesResponse, PatientDay } from '@nutricoach/contracts';
+import type { AppNotesResponse, PatientDay, PatientDaySchedule } from '@nutricoach/contracts';
 import { Notice } from '@nutricoach/ui';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import type { Metadata } from 'next';
 import Link from 'next/link';
+import { hasSchedule } from '@/features/patient-app/day-schedule';
 import { shiftDate } from '@/features/patient-records/adjustments';
 import { DayView } from '@/features/patient-records/day-view';
+import { ScheduleEditor } from '@/features/patient-records/schedule-editor';
 import { UnreadNotes } from '@/features/patient-records/unread-notes';
 import { Section } from '@/features/patients/section';
 import { getMembers, getPatient } from '@/features/patients/server';
@@ -25,7 +27,8 @@ const longDate = (date: string): string =>
 /**
  * Lo que el paciente registra en su app, día por día, como lo ve su equipo (RN-G01): en solo lectura, con los ajustes del
  * profesional (RN-G02) y sus notas nuevas, que quedan leídas al abrirlas (RN-G13). Leerlo queda en la auditoría (RN-B03). El día
- * es la fecha local del paciente (RN-G04).
+ * es la fecha local del paciente (RN-G04). Arriba, hoy y mañana: el perfil de cada día y lo que el coach puede cambiar (P-20.3,
+ * P-20.4).
  */
 export default async function TrackingPage({
   params,
@@ -44,10 +47,11 @@ export default async function TrackingPage({
   const requested = typeof fecha === 'string' && ISO_DATE.test(fecha) ? fecha : today;
   const date = requested > today ? today : requested;
   const id = encodeURIComponent(patientId);
-  const [day, unread, members] = await Promise.all([
+  const [day, unread, members, schedule] = await Promise.all([
     serverApi<PatientDay>(`/patients/${id}/records/${date}`),
     serverApi<AppNotesResponse>(`/patients/${id}/app-notes/unread`),
     getMembers(),
+    serverApi<PatientDaySchedule>(`/patients/${id}/schedule`),
   ]);
   if (!day.ok || !unread.ok || !members.ok) {
     return <Notice tone="danger" title="No pudimos cargar el seguimiento" />;
@@ -56,6 +60,14 @@ export default async function TrackingPage({
   return (
     <div className="flex flex-col gap-8">
       <UnreadNotes patientId={patientId} notes={unread.data.notes} />
+      {schedule.ok && (hasSchedule(schedule.data) || schedule.data.choices.length > 0) ? (
+        <Section
+          title="Hoy y mañana"
+          description="El perfil de cada día sale del programa. Si el paciente no entrena o cambia de día, se ajusta aquí; nunca cambia solo."
+        >
+          <ScheduleEditor patientId={patientId} schedule={schedule.data} />
+        </Section>
+      ) : null}
       <Section
         title="Registros de la app"
         description="Lo que registró el paciente, tal cual. No se edita: si algo no corresponde, se ajusta con un motivo y el original se conserva."
