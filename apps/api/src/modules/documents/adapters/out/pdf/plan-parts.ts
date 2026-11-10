@@ -2,8 +2,8 @@ import { methodLabel } from '@nutricoach/contracts';
 import { Text, View } from '@react-pdf/renderer';
 import { createElement as h, type ReactElement } from 'react';
 import type { EnergySummary } from '../../../../nutrition/index.js';
-import type { SheetPatient } from '../../../application/sheets/sheet-content.js';
-import { emphasis, fixed, num, styles } from './sheet-kit.js';
+import type { SheetDayProfile, SheetPatient } from '../../../application/sheets/sheet-content.js';
+import { emphasis, fixed, num, section, styles, table, type SheetFrame } from './sheet-kit.js';
 
 /** Piezas de las fichas de un plan (intercambios, menú y composición): el paciente y de dónde salen las metas. */
 
@@ -68,6 +68,52 @@ export function energyCard(energy: EnergySummary | null): ReactElement | null {
         `${num(energy.macros.fatPctKcal, 'percent')} %`,
         ' de las kcal y carbohidratos con lo que queda.',
       ),
+    ),
+  );
+}
+
+/**
+ * Las metas de cada perfil de día del plan (07 §2, P-20; plantillas 1.1.0): Entrenamiento, que es la de la prescripción, y los
+ * demás con sus gramos y las kcal que salen de ellos, con su método (RN-H04). Sin perfiles no dibuja nada.
+ */
+export function dayProfilesSection(
+  training: {
+    readonly kcal: number;
+    readonly choG: number;
+    readonly proteinG: number;
+    readonly fatG: number;
+  },
+  profiles: readonly SheetDayProfile[],
+  frame: SheetFrame,
+): ReactElement | null {
+  if (profiles.length === 0) return null;
+  const row = (name: string, p: typeof training) => [
+    name,
+    `${num(p.kcal, 'kcal')} kcal`,
+    `${num(p.choG, 'grams')} g`,
+    `${num(p.proteinG, 'grams')} g`,
+    `${num(p.fatG, 'grams')} g`,
+  ];
+  return section(
+    'Metas por perfil de día',
+    frame.colors,
+    table(
+      [
+        { label: 'Perfil de día', flex: 2.2 },
+        { label: 'Energía', flex: 1.2, numeric: true },
+        { label: 'Carbohidratos', flex: 1.3, numeric: true },
+        { label: 'Proteína', flex: 1.1, numeric: true },
+        { label: 'Grasa', flex: 1, numeric: true },
+      ],
+      [
+        row('Entrenamiento (prescripción)', training),
+        ...profiles.map((profile) => row(profile.name, profile)),
+      ],
+    ),
+    h(
+      Text,
+      { style: styles.note },
+      `Las kcal de cada perfil salen de sus gramos: ${methodLabel('MACROS_DAY_PROFILE')}. El programa elige el perfil de cada día.`,
     ),
   );
 }

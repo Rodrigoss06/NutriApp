@@ -2509,3 +2509,39 @@ Consecuencias:
   - 02 §9 (`MACROS_DAY_PROFILE`);
   - 05.2 (`plan_day_profile`, `session.day_profile_code`, `daily_target`) y 05.3 (el resumen diario);
   - el prompt de P14.5 con estos PR.
+
+## ADR-101 · Pantallas de los perfiles de día, fichas del plan 1.1.0 y Mateo en demo:3 — aceptada (2026-11-08)
+Contexto: P14.5, PR 1d (07 §2 y §8; P-20; RN-H01, RN-H02, RN-D02; ADR-100). Los perfiles de día llegaron por la API con el PR 1c;
+faltaban las pantallas, las fichas y la demo.
+Decisión:
+- Editor del plan, en las tres modalidades: «Perfiles de día», debajo de las metas de Entrenamiento:
+  - «Agregar Descanso» y «Agregar perfil» traen ya puestas la proteína y la grasa de Entrenamiento, y los carbohidratos los
+    escribe el coach (P-20.1);
+  - las kcal de cada perfil salen de la vista previa de la API, con su método (RN-D02);
+  - el código de un perfil nuevo sale de su nombre: mayúsculas sin tildes, sin chocar con REST, TRAINING ni otro perfil.
+- Plan publicado: una tabla con Entrenamiento (prescripción) y cada perfil.
+- Programa:
+  - cada sesión elige su perfil entre los del plan más reciente del paciente; sin perfil, Entrenamiento;
+  - un código que el plan ya no tiene sigue a la vista, para que no se pierda al guardar;
+  - la semana de solo lectura dice el perfil de cada sesión.
+- App del paciente: Hoy dice la meta de qué perfil es; Mi plan muestra las metas de cada tipo de día, con la de hoy marcada.
+- Analítica de dieta: una columna con el perfil de cada día.
+- Fichas: EXCHANGE_DIET 1.1.0 y WEEKLY_MENU 1.1.0 (el menú imprime también la composición), con «Metas por perfil de día»:
+  - migración `202611080200_documents_day_profiles_templates`;
+  - la 1.0.0 queda retirada y el código la sigue dibujando igual para lo ya generado (RN-H02);
+  - un plan sin perfiles no agrega nada.
+- `pnpm demo:3`: Mateo tiene su plan por la API.
+  - La prescripción sale de su evaluación del 05/10: la vista previa da su GET y el ajuste lo deja en 2,510 kcal, con 160/310/70 g.
+  - La composición son alimentos de la TPCA con todos sus datos: unas 2,450 kcal, en rango.
+  - El perfil Descanso tiene 160/240/70 g (2,230 kcal).
+  - Cada día de octubre lleva la meta de su perfil. La ausencia del 22/10 sigue en Entrenamiento: nadie reprogramó la sesión
+    (P-20.3).
+  - Una demo anterior a P14.5, que ya tenía el mes de Mateo sin plan, completa sus metas al correr otra vez.
+Consecuencias:
+- Unitarias: los perfiles en el borrador de la web y las fichas 1.1.0 frente a la 1.0.0.
+- Integración: `demo-3.int.spec.ts` suma el plan de Mateo y sus metas de octubre.
+- E2E `e2e/perfiles-dia.spec.ts` en escritorio y celular, con axe: Descanso con la proteína y la grasa puestas, sus kcal con
+  su método, un perfil propio, y que todo vuelve igual al guardar.
+- Siguen el PR 1b (las porciones del alimento fuente por perfil, P-20.5) y el 1e (reprogramar, P-20.3).
+- Para Notion (/notion-sync de P14.5): 04 RF-24 (las fichas del plan muestran los perfiles) y RF-28 (Hoy y Mi plan), y
+  05.3 (las plantillas 1.1.0).

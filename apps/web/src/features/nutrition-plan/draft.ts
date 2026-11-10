@@ -1,7 +1,5 @@
 import {
   SOLVED_GROUPS,
-  type DayProfile,
-  type DayProfileInput,
   type FIXED_GROUPS,
   type ExchangeGroupCode,
   type MealSlot,
@@ -9,6 +7,7 @@ import {
   type UpdateExchangePlan,
 } from '@nutricoach/contracts';
 import { parseDecimal } from '@nutricoach/ui';
+import { dayProfileRowsOf, dayProfilesBody, type DayProfileRow } from './day-profiles';
 
 export type FixedGroup = (typeof FIXED_GROUPS)[number];
 export type SolvedGroup = (typeof SOLVED_GROUPS)[number];
@@ -46,8 +45,8 @@ export interface PlanDraft {
   readonly meals: readonly MealRow[];
   readonly hydrationMl: string;
   readonly instructions: string;
-  /** Los perfiles de día además de Entrenamiento (07 §2, P-20), tal como se guardan; vacío, una sola meta. */
-  readonly dayProfiles: readonly DayProfileInput[];
+  /** Los perfiles de día además de Entrenamiento (07 §2, P-20); vacío, una sola meta. */
+  readonly dayProfiles: readonly DayProfileRow[];
 }
 
 type PlanFields = Pick<
@@ -92,13 +91,9 @@ export function draftOf(plan: PlanFields): PlanDraft {
     })),
     hydrationMl: plan.hydrationTargetMl === null ? '' : String(plan.hydrationTargetMl),
     instructions: plan.instructions ?? '',
-    dayProfiles: dayProfileInputsOf(plan.dayProfiles),
+    dayProfiles: dayProfileRowsOf(plan.dayProfiles),
   };
 }
-
-/** Los perfiles de día del plan como se guardan (07 §2): sin las kcal ni el método, que calcula la API (P-20.2). */
-export const dayProfileInputsOf = (profiles: readonly DayProfile[]): readonly DayProfileInput[] =>
-  profiles.map(({ code, name, choG, proteinG, fatG }) => ({ code, name, choG, proteinG, fatG }));
 
 const INTEGER = /^\d+$/;
 const TIME = /^([01]\d|2[0-3]):[0-5]\d$/;
@@ -183,7 +178,10 @@ export function planBody(draft: PlanDraft): UpdateExchangePlan | null {
   }
   const hydrationTargetMl = hydrationOf(draft.hydrationMl);
   const instructions = draft.instructions.trim();
-  if (hydrationTargetMl === undefined || instructions.length > 2_000) return null;
+  const dayProfiles = dayProfilesBody(draft.dayProfiles);
+  if (hydrationTargetMl === undefined || dayProfiles === null || instructions.length > 2_000) {
+    return null;
+  }
   return {
     modality: 'EXCHANGES',
     fixedServings: { VEG, FRU, MILK },
@@ -192,7 +190,7 @@ export function planBody(draft: PlanDraft): UpdateExchangePlan | null {
     splitOverrides,
     hydrationTargetMl,
     instructions: instructions === '' ? null : instructions,
-    dayProfiles: [...draft.dayProfiles],
+    dayProfiles,
   };
 }
 

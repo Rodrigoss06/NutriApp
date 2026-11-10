@@ -7,7 +7,7 @@ import type {
   SheetTotal,
   SheetTotals,
 } from '../../../application/sheets/menu-sheet.js';
-import { energyCard, patientLine } from './plan-parts.js';
+import { dayProfilesSection, energyCard, patientLine } from './plan-parts.js';
 import {
   emphasis,
   fixed,
@@ -213,12 +213,17 @@ function recipes(sheet: MenuSheet, frame: SheetFrame): ReactElement | null {
   );
 }
 
-export function weeklyMenuV1(sheet: MenuSheet, frame: SheetFrame): ReactElement<DocumentProps> {
+function weeklyMenu(
+  sheet: MenuSheet,
+  frame: SheetFrame,
+  withProfiles: boolean,
+): ReactElement<DocumentProps> {
   const menu = sheet.modality === 'WEEKLY_MENU';
   return sheetDocument(
     frame,
     patientLine(sheet.patient),
     targets(sheet, frame),
+    withProfiles ? dayProfilesSection(sheet.targets, sheet.dayProfiles, frame) : null,
     sheet.hydrationMl === null
       ? null
       : section(
@@ -259,6 +264,14 @@ export function weeklyMenuV1(sheet: MenuSheet, frame: SheetFrame): ReactElement<
 }
 
 /** El título y el subtítulo del encabezado: la composición se nombra como tal aunque use la ficha del menú. */
+/** Versión 1.0.0: la de P11, igual para volver a dibujar lo que ya se generó (RN-H02). */
+export const weeklyMenuV1 = (sheet: MenuSheet, frame: SheetFrame) =>
+  weeklyMenu(sheet, frame, false);
+
+/** Versión 1.1.0 (P14.5): además, la meta de cada perfil de día (07 §2). */
+export const weeklyMenuV110 = (sheet: MenuSheet, frame: SheetFrame) =>
+  weeklyMenu(sheet, frame, true);
+
 export function weeklyMenuTitles(sheet: MenuSheet): { title: string; subtitle: string } {
   return {
     title: sheet.modality === 'WEEKLY_MENU' ? 'Menú semanal' : 'Dieta por composición',

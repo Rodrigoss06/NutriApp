@@ -239,7 +239,11 @@ con la API y el worker corriendo:
   - su perfil;
   - «Full Body» con el ejercicio de cada día del registro de cargas;
   - sus 4 semanas: sueño, estrés, fatiga, rendimiento y alimentación por semana, y las cargas de cada sesión, con la
-    ausencia del 22/10.
+    ausencia del 22/10;
+  - su plan (`nutrition`), con las respuestas de Jeremy a P-20:
+    - la prescripción, que da los 160/310/70 g de Entrenamiento (2,510 kcal);
+    - una composición de alimentos de la TPCA con todos sus datos;
+    - el perfil Descanso, 160/240/70 g (2,230 kcal), que lleva cada día de octubre sin sesión (ADR-101).
 
   Lo que la hoja no trae está en `_demo`.
 

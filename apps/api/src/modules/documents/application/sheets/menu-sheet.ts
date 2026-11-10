@@ -4,7 +4,13 @@ import type {
   PlanSnapshot,
   WeeklyMenuPlanDocument,
 } from '../../../nutrition/index.js';
-import { uniqueMethods, type SheetMethod, type SheetPatient } from './sheet-content.js';
+import {
+  dayProfilesOf,
+  uniqueMethods,
+  type SheetDayProfile,
+  type SheetMethod,
+  type SheetPatient,
+} from './sheet-content.js';
 
 /** Energía, macronutrientes y fibra: los que la ficha muestra de cada día (RN-E16). */
 export const SHEET_NUTRIENTS = {
@@ -67,6 +73,8 @@ export interface MenuSheet {
     readonly proteinG: number;
     readonly fatG: number;
   };
+  /** Los demás perfiles de día con sus metas (07 §2, P-20); vacío, una sola meta. Los dibuja la plantilla 1.1.0. */
+  readonly dayProfiles: readonly SheetDayProfile[];
   readonly meals: readonly {
     readonly name: string;
     readonly timeOfDay: string | null;
@@ -158,6 +166,7 @@ export function menuSheet(
     },
     energy,
     targets: snapshot.targets,
+    dayProfiles: dayProfilesOf(snapshot.dayProfiles),
     meals: snapshot.meals.map(({ name, timeOfDay, sharePct }) => ({ name, timeOfDay, sharePct })),
     adequacy: snapshot.adequacy,
     hydrationMl: snapshot.hydrationTargetMl,

@@ -35,6 +35,9 @@ export function DaySummary({ today }: { today: MeToday }) {
       <h2 id="resumen-dia" className="text-lg font-semibold">
         Tu día
       </h2>
+      {target?.profile ? (
+        <p className="text-sm text-muted-foreground">Meta de hoy: {target.profile.name}.</p>
+      ) : null}
       <p className="mt-2 text-3xl font-semibold tabular-nums">
         {totalText(consumed.kcal, 'kcal')}
         <span className="text-base font-normal text-muted-foreground">

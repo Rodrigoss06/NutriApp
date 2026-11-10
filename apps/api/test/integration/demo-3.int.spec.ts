@@ -212,6 +212,45 @@ describe('Demo 3 · Mateo, el alumno ficticio de la hoja de Jeremy', () => {
     ).toEqual([22, 20.8]);
   });
 
+  it('07 §2 · P-20 · su plan con Entrenamiento (2,510 kcal) y Descanso (2,230), y la meta de cada día de octubre según su perfil', async () => {
+    expect(report.mateo.plan).toBe('CREATED');
+    const plans = await get<{ plans: { id: string; status: string }[] }>(
+      `/patients/${mateoId}/nutrition-plans`,
+    );
+    const published = plans.plans.find(({ status }) => status === 'PUBLISHED');
+    const plan = await get<{
+      targets: { kcal: number; choG: number; proteinG: number; fatG: number };
+      dayProfiles: { code: string; name: string; kcal: number }[];
+    }>(`/nutrition-plans/${published?.id ?? ''}`);
+    // Mandan los gramos (P-20.2): 160/310/70 g son 2,510 kcal y 160/240/70 g, 2,230.
+    expect(Math.round(plan.targets.kcal)).toBe(2510);
+    expect(Math.round(plan.targets.proteinG)).toBe(160);
+    expect(Math.round(plan.targets.fatG)).toBe(70);
+    expect(Math.round(plan.targets.choG)).toBe(310);
+    expect(plan.dayProfiles).toMatchObject([{ code: 'REST', name: 'Descanso', kcal: 2230 }]);
+
+    const { rows } = await pool('owner').query<{
+      day: string;
+      kcal: number;
+      kind: string;
+      profile: string;
+    }>(
+      `SELECT to_char(local_date, 'YYYY-MM-DD') AS day, round(kcal)::int AS kcal, day_kind AS kind,
+              day_profile_code AS profile
+       FROM tracking.daily_target WHERE patient_id = $1 AND local_date IN ('2026-10-06', '2026-10-07', '2026-10-22')
+       ORDER BY local_date`,
+      [mateoId],
+    );
+    expect(rows).toEqual([
+      // Martes con «Full Body A»: Entrenamiento.
+      { day: '2026-10-06', kcal: 2510, kind: 'TRAINING', profile: 'TRAINING' },
+      // Miércoles sin sesión: Descanso.
+      { day: '2026-10-07', kcal: 2230, kind: 'REST', profile: 'REST' },
+      // La ausencia del 22/10 no cambia la meta: nadie reprogramó la sesión (P-20.3).
+      { day: '2026-10-22', kcal: 2510, kind: 'TRAINING', profile: 'TRAINING' },
+    ]);
+  });
+
   it('RN-G14 · un registro diario por día, con su recuperación; la ausencia queda como sesión no hecha', async () => {
     expect(await count('tracking.daily_checkin', mateoId)).toBe(28);
     expect(await count('tracking.daily_readiness', mateoId)).toBe(28);
@@ -230,7 +269,7 @@ describe('Demo 3 · otra vez', () => {
   it('correrla otra vez no duplica nada', async () => {
     expect(await seedDemo3(api, pool('owner'), options)).toEqual({
       luis: { program: 'EXISTING', week: null, light: null },
-      mateo: { patient: 'EXISTING', program: 'EXISTING', reviews: [] },
+      mateo: { patient: 'EXISTING', plan: 'EXISTING', program: 'EXISTING', reviews: [] },
     });
     expect(await count('tracking.daily_checkin', luisId)).toBe(7);
     expect(await count('tracking.daily_checkin', mateoId)).toBe(28);

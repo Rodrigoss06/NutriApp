@@ -33,6 +33,7 @@ export const LUIS_EXCHANGE_SHEET: ExchangeDietSheet = {
     weightKg: 80,
   },
   targets: { kcal: 1834.54, choG: 183.6, proteinG: 160, fatG: 50.96 },
+  dayProfiles: [],
   totals: { kcal: 1889, choG: 191, proteinG: 162, fatG: 53 },
   adequacy: {
     rangePct: [90, 110],
@@ -142,6 +143,7 @@ export const LUIS_MENU_SHEET: MenuSheet = {
   plan: PLAN,
   energy: LUIS_EXCHANGE_SHEET.energy,
   targets: LUIS_EXCHANGE_SHEET.targets,
+  dayProfiles: [],
   meals: [{ name: 'Almuerzo', timeOfDay: '13:00', sharePct: 100 }],
   days: Array.from({ length: 7 }, (_, d) => ({
     dayOfWeek: d + 1,

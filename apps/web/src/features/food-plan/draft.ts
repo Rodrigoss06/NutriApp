@@ -11,13 +11,12 @@ import type {
   WeeklyMenuNutritionPlan,
 } from '@nutricoach/contracts';
 import { parseDecimal } from '@nutricoach/ui';
+import { hydrationOf, isTimeOfDay, MAX_MEALS, sharePctOf } from '@/features/nutrition-plan/draft';
 import {
-  hydrationOf,
-  isTimeOfDay,
-  dayProfileInputsOf,
-  MAX_MEALS,
-  sharePctOf,
-} from '@/features/nutrition-plan/draft';
+  dayProfileRowsOf,
+  dayProfilesBody,
+  type DayProfileRow,
+} from '@/features/nutrition-plan/day-profiles';
 import { GRAMS, type MeasureOption } from '@/features/recipe/draft';
 
 export { MAX_MEALS };
@@ -81,8 +80,8 @@ export interface CompositionDraft {
   readonly meals: readonly CompositionMealRow[];
   readonly hydrationMl: string;
   readonly instructions: string;
-  /** Los perfiles de día además de Entrenamiento (07 §2, P-20), tal como se guardan; vacío, una sola meta. */
-  readonly dayProfiles: readonly DayProfileInput[];
+  /** Los perfiles de día además de Entrenamiento (07 §2, P-20); vacío, una sola meta. */
+  readonly dayProfiles: readonly DayProfileRow[];
 }
 
 export type MenuOption = 'optionA' | 'optionB';
@@ -95,8 +94,8 @@ export interface MenuDraft {
   readonly days: readonly { readonly cells: readonly MenuCellRow[] }[];
   readonly hydrationMl: string;
   readonly instructions: string;
-  /** Los perfiles de día además de Entrenamiento (07 §2, P-20), tal como se guardan; vacío, una sola meta. */
-  readonly dayProfiles: readonly DayProfileInput[];
+  /** Los perfiles de día además de Entrenamiento (07 §2, P-20); vacío, una sola meta. */
+  readonly dayProfiles: readonly DayProfileRow[];
 }
 
 /** Las medidas caseras de cada alimento del plan, por su id. */
@@ -254,11 +253,14 @@ function columnsOf(draft: Pick<CompositionDraft, 'hydrationMl' | 'instructions' 
 } | null {
   const hydrationTargetMl = hydrationOf(draft.hydrationMl);
   const instructions = draft.instructions.trim();
-  if (hydrationTargetMl === undefined || instructions.length > 2_000) return null;
+  const dayProfiles = dayProfilesBody(draft.dayProfiles);
+  if (hydrationTargetMl === undefined || dayProfiles === null || instructions.length > 2_000) {
+    return null;
+  }
   return {
     hydrationTargetMl,
     instructions: instructions === '' ? null : instructions,
-    dayProfiles: [...draft.dayProfiles],
+    dayProfiles,
   };
 }
 
@@ -277,7 +279,7 @@ export function compositionDraftOf(
     })),
     hydrationMl: plan.hydrationTargetMl === null ? '' : String(plan.hydrationTargetMl),
     instructions: plan.instructions ?? '',
-    dayProfiles: dayProfileInputsOf(plan.dayProfiles),
+    dayProfiles: dayProfileRowsOf(plan.dayProfiles),
   };
 }
 
@@ -317,7 +319,7 @@ export function menuDraftOf(
     })),
     hydrationMl: plan.hydrationTargetMl === null ? '' : String(plan.hydrationTargetMl),
     instructions: plan.instructions ?? '',
-    dayProfiles: dayProfileInputsOf(plan.dayProfiles),
+    dayProfiles: dayProfileRowsOf(plan.dayProfiles),
   };
 }
 

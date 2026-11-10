@@ -49,6 +49,8 @@ export interface ExchangeDietSheet {
   /** De dónde salen las metas; null si el contexto ya no ve la prescripción. */
   readonly energy: EnergySummary | null;
   readonly targets: ExchangePlanDocument['targets'];
+  /** Los demás perfiles de día con sus metas (07 §2, P-20); vacío, una sola meta. Los dibuja la plantilla 1.1.0. */
+  readonly dayProfiles: readonly SheetDayProfile[];
   readonly totals: ExchangePlanDocument['totals'];
   readonly adequacy: {
     readonly rangePct: readonly [number, number];
@@ -101,6 +103,30 @@ export function sheetPatient(card: PatientCard, onDate: string): SheetPatient {
   };
 }
 
+/** Un perfil de día del plan con sus metas (07 §2, P-20). */
+export interface SheetDayProfile {
+  readonly code: string;
+  readonly name: string;
+  readonly kcal: number;
+  readonly choG: number;
+  readonly proteinG: number;
+  readonly fatG: number;
+}
+
+/** Los perfiles de día del snapshot; uno anterior a la versión 3 no los trae: una sola meta. */
+export function dayProfilesOf(
+  profiles: readonly SheetDayProfile[] | undefined,
+): readonly SheetDayProfile[] {
+  return (profiles ?? []).map(({ code, name, kcal, choG, proteinG, fatG }) => ({
+    code,
+    name,
+    kcal,
+    choG,
+    proteinG,
+    fatG,
+  }));
+}
+
 /** La ficha de una dieta por intercambios publicada, desde su snapshot (RN-E15): lo que se publicó, nada más. */
 export function exchangeDietSheet(
   snapshot: PlanSnapshot & ExchangePlanDocument,
@@ -120,6 +146,7 @@ export function exchangeDietSheet(
     },
     energy,
     targets: snapshot.targets,
+    dayProfiles: dayProfilesOf(snapshot.dayProfiles),
     totals: snapshot.totals,
     adequacy: snapshot.adequacy,
     list: {

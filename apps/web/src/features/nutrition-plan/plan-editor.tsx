@@ -15,6 +15,7 @@ import { useCanWrite } from '@/features/session/panel-session';
 import { CellInput } from './cell-input';
 import { draftOf, planBody, servingsOf, without, type PlanDraft } from './draft';
 import { MealsStep } from './editor-meals';
+import { DayProfilesCard } from './day-profiles-card';
 import { DraftPanel, HydrationCard, TargetsCard } from './plan-parts';
 import { AdequacyTable, ExchangeTable } from './plan-tables';
 import { usePlanDraft } from './use-plan-draft';
@@ -34,6 +35,7 @@ type Calculation = ExchangePlanPreview;
 
 function GoalsStep({
   plan,
+  calculation,
   patientId,
   patientSex,
   draft,
@@ -41,6 +43,7 @@ function GoalsStep({
   disabled,
 }: {
   plan: ExchangeNutritionPlan;
+  calculation: Calculation;
   patientId: string;
   patientSex: 'M' | 'F';
   draft: PlanDraft;
@@ -54,6 +57,15 @@ function GoalsStep({
         targets={plan.targets}
         patientId={patientId}
         energyPrescriptionId={plan.energyPrescriptionId}
+      />
+      <DayProfilesCard
+        rows={draft.dayProfiles}
+        training={plan.targets}
+        calculated={calculation.dayProfiles}
+        disabled={disabled}
+        onChange={(dayProfiles) => {
+          change((d) => ({ ...d, dayProfiles }));
+        }}
       />
 
       <section
@@ -230,6 +242,7 @@ export function PlanEditor({
           {step === 'metas' ? (
             <GoalsStep
               plan={plan}
+              calculation={calculation}
               patientId={patientId}
               patientSex={patientSex}
               draft={draft}

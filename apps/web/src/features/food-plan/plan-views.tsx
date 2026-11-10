@@ -8,6 +8,7 @@ import type {
 import { formatNumber } from '@nutricoach/ui';
 import { useState } from 'react';
 import { formatServings } from '@/features/food/format';
+import { DayProfilesTable } from '@/features/nutrition-plan/day-profiles-table';
 import { Block } from '@/features/nutrition-plan/plan-view';
 import { TableScroll } from '@/features/shell/table-scroll';
 import { DayTabs, dayPanelId, dayTabId } from './day-tabs';
@@ -74,6 +75,7 @@ export function CompositionView({ plan }: { plan: CompositionNutritionPlan }) {
           of={plan.totals.ingredientCount}
           methods={plan.methods}
         />
+        <DayProfilesTable training={plan.targets} profiles={plan.dayProfiles} />
       </Block>
 
       <Block id="plan-tiempos" title="Alimentos por tiempo" order={1}>
@@ -155,6 +157,7 @@ export function MenuView({ plan }: { plan: WeeklyMenuNutritionPlan }) {
           of={plan.days.length}
           methods={plan.methods}
         />
+        <DayProfilesTable training={plan.targets} profiles={plan.dayProfiles} />
       </Block>
 
       <Block id="plan-semana" title="Menú de la semana" order={1}>

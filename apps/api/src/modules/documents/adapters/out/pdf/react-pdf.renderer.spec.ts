@@ -361,3 +361,45 @@ describe('ADR-066 · la marca más larga cabe en el encabezado y el pie', () => 
     for (const item of bottom) expect(item.y + item.height).toBeLessThan(64);
   });
 });
+
+describe('RN-H01 · 07 §2 · P-20 · las fichas del plan 1.1.0 con los perfiles de día', () => {
+  // El descanso de Luis: 160 g de proteína y 51 g de grasa, como Entrenamiento, y 120 g de carbohidratos (1,579 kcal).
+  const REST = { code: 'REST', name: 'Descanso', kcal: 1579, choG: 120, proteinG: 160, fatG: 51 };
+  const withProfiles = { ...LUIS_EXCHANGE_SHEET, dayProfiles: [REST] };
+
+  it(
+    'la dieta 1.1.0 dice la meta de cada perfil con su método; la 1.0.0 dibuja lo de siempre',
+    SLOW,
+    async () => {
+      const text = await pdfText(
+        await renderer.render({ ...INPUT, content: withProfiles, templateVersion: '1.1.0' }),
+      );
+      for (const expected of [
+        'Metas por perfil de día',
+        'Entrenamiento (prescripción)',
+        'Descanso',
+        '1,579 kcal',
+        'Perfil de día (gramos y Atwater)',
+      ]) {
+        expect(text).toContain(expected);
+      }
+      const old = await pdfText(
+        await renderer.render({ ...INPUT, content: withProfiles, templateVersion: '1.0.0' }),
+      );
+      expect(old).not.toContain('Metas por perfil de día');
+    },
+  );
+
+  it('sin perfiles, la 1.1.0 no agrega nada; el menú 1.1.0 también los dibuja', SLOW, async () => {
+    const single = await pdfText(await renderer.render({ ...INPUT, templateVersion: '1.1.0' }));
+    expect(single).not.toContain('Metas por perfil de día');
+    const menu = await pdfText(
+      await renderer.render({
+        ...INPUT,
+        content: { ...LUIS_MENU_SHEET, dayProfiles: [REST] },
+        templateVersion: '1.1.0',
+      }),
+    );
+    expect(menu).toContain('Metas por perfil de día');
+  });
+});

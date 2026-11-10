@@ -10,6 +10,7 @@ import { useState } from 'react';
 import { TextAreaField } from '@/features/forms/fields';
 import { FormError } from '@/features/forms/form-error';
 import { sharePctOf } from '@/features/nutrition-plan/draft';
+import { DayProfilesCard } from '@/features/nutrition-plan/day-profiles-card';
 import { DraftPanel, HydrationCard, TargetsCard } from '@/features/nutrition-plan/plan-parts';
 import { usePlanDraft } from '@/features/nutrition-plan/use-plan-draft';
 import { useCanWrite } from '@/features/session/panel-session';
@@ -67,6 +68,15 @@ export function CompositionEditor({
           targets={plan.targets}
           patientId={patientId}
           energyPrescriptionId={plan.energyPrescriptionId}
+        />
+        <DayProfilesCard
+          rows={draft.dayProfiles}
+          training={plan.targets}
+          calculated={calculation.dayProfiles}
+          disabled={disabled}
+          onChange={(dayProfiles) => {
+            change((d) => ({ ...d, dayProfiles }));
+          }}
         />
         <HydrationCard
           value={draft.hydrationMl}
