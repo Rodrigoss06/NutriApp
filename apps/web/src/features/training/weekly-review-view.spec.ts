@@ -47,6 +47,7 @@ const review = (weekNo: number, changes: Partial<WeeklyReview> = {}): WeeklyRevi
   method: { code: 'WEEKLY_REVIEW_JV', version: '3.0.0' },
   light: 'GREEN',
   reasons: [],
+  avgStress: null,
   aggregates: null,
   plannedVolumeFactor: 1,
   suggestedVolumeFactor: 1,

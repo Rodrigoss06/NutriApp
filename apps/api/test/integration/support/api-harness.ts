@@ -46,8 +46,11 @@ export class ApiHarness {
   app!: INestApplication<App>;
   readonly sent: MailMessage[] = [];
   #passwordHash: Promise<string> | null = null;
+  /** Desde cuándo entrega eventos: los de los archivos anteriores, en la misma base, no son de esta prueba. */
+  #since = new Date(0);
 
   async start(): Promise<void> {
+    this.#since = new Date(Date.now() - 1_000);
     const moduleRef = await Test.createTestingModule({ imports: [AppModule] })
       .overrideProvider(MAILER)
       .useValue({ send: (message: MailMessage) => Promise.resolve(void this.sent.push(message)) })
@@ -58,8 +61,9 @@ export class ApiHarness {
   }
 
   /**
-   * Entrega al consumidor los eventos pendientes del outbox, como el worker (contexto SYSTEM del evento). Los ya
-   * procesados, también los de otros archivos de prueba, quedan como duplicados en platform.processed_event.
+   * Entrega al consumidor los eventos del outbox de este archivo de prueba, como el worker (contexto SYSTEM del evento). Los ya
+   * procesados quedan como duplicados en platform.processed_event. Los que dejaron los archivos anteriores en la misma base no
+   * se entregan: con la suite completa, generar sus fichas pasaba de 30 s en documents.sheets.
    */
   async deliver(consumerName: string): Promise<void> {
     const consumer = this.app
@@ -79,8 +83,8 @@ export class ApiHarness {
       occurred_at: Date;
     }>(
       `SELECT id, organization_id, aggregate_type, aggregate_id, event_type, payload, metadata, occurred_at
-       FROM platform.outbox_event WHERE event_type = ANY($1) ORDER BY id`,
-      [consumer.eventTypes],
+       FROM platform.outbox_event WHERE event_type = ANY($1) AND occurred_at >= $2 ORDER BY id`,
+      [consumer.eventTypes, this.#since],
     );
     for (const row of rows) {
       await runner.process(consumer, {

@@ -8,6 +8,7 @@ import {
   REVIEW_ALREADY_DECIDED,
   REVIEW_SUPERSEDED,
   weekDates,
+  averageStress,
 } from './weekly-review.js';
 
 describe('RN-G16 · 07 §10 · cuándo se controla una semana', () => {
@@ -55,5 +56,15 @@ describe('RN-F17 · la decisión del coach', () => {
       true,
       true,
     ]);
+  });
+});
+
+describe('P-25 · ADR-107 · el estrés promedio de la semana, que solo informa', () => {
+  it('el promedio de los registros que lo traen; sin ninguno, null', () => {
+    expect(
+      averageStress([{ stress: 3 }, { stress: null }, { stress: 2 }, { stress: 3 }]),
+    ).toBeCloseTo(8 / 3, 9);
+    expect(averageStress([{ stress: null }])).toBeNull();
+    expect(averageStress([])).toBeNull();
   });
 });

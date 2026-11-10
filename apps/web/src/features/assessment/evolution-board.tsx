@@ -20,7 +20,13 @@ import { StatTable } from '@/features/analytics/stat-table';
 import { Section } from '@/features/patients/section';
 import { formatDate } from '@/lib/dates';
 import { EvolutionChart } from './evolution-chart';
-import { metricName, seriesOptions, trendRows } from './evolution-view';
+import {
+  metricName,
+  physicalComparison,
+  seriesOptions,
+  trendRows,
+  type ComparisonRow,
+} from './evolution-view';
 import { SIGNIFICANCE_TONES } from './labels';
 
 type Series = {
@@ -304,6 +310,71 @@ function EvaluationsList({
   );
 }
 
+/** Un valor de la comparativa con su redondeo (RN-D09) y su unidad, o la lectura tal como la dio el equipo (RN-C08). */
+function comparisonValue(row: ComparisonRow, value: number): string {
+  return row.format.type === 'reading'
+    ? formatReading(value, row.format.unit)
+    : `${formatNumber(value, row.format.kind)} ${row.format.unit}`;
+}
+
+/**
+ * La comparativa física de la hoja de Jeremy (P14.5, PR 6a; ADR-107): peso, cintura, cadera y grasa, de la primera evaluación a
+ * la última, cada una con su comparación frente al CMD95 cuando es una medida (RN-C06).
+ */
+function PhysicalComparison({ evolution }: { evolution: EvolutionResponse }) {
+  const rows = physicalComparison(evolution);
+  if (rows.length === 0) {
+    return (
+      <p className="text-sm text-muted-foreground">
+        La comparativa aparece cuando hay dos evaluaciones con peso, cintura, cadera o grasa.
+      </p>
+    );
+  }
+  return (
+    <StatTable
+      label="Comparativa física"
+      caption="Peso, cintura, cadera y grasa de la primera evaluación a la última"
+      rows={rows}
+      rowKey={(row) => row.key}
+      columns={[
+        { key: 'name', header: 'Medida', cell: (row) => row.name },
+        {
+          key: 'first',
+          header: 'Inicial',
+          numeric: true,
+          cell: (row) =>
+            `${comparisonValue(row, row.first.value)} · ${formatDate(row.first.localDate)}`,
+        },
+        {
+          key: 'last',
+          header: 'Actual',
+          numeric: true,
+          cell: (row) =>
+            `${comparisonValue(row, row.last.value)} · ${formatDate(row.last.localDate)}`,
+        },
+        {
+          key: 'change',
+          header: 'Cambio',
+          numeric: true,
+          cell: (row) => signed(row.change, (value) => comparisonValue(row, value)),
+        },
+        {
+          key: 'significance',
+          header: 'Frente al CMD95',
+          cell: (row) =>
+            row.significance ? (
+              <StatusBadge tone={SIGNIFICANCE_TONES[row.significance]}>
+                {SIGNIFICANCE_LABELS[row.significance]}
+              </StatusBadge>
+            ) : (
+              <span className="text-muted-foreground">—</span>
+            ),
+        },
+      ]}
+    />
+  );
+}
+
 /**
  * La evolución antropométrica para el equipo (RF-35): el cambio real frente al ruido (RN-C06), los métodos sin compararse
  * entre sí (RN-D03), la bioimpedancia aparte (RN-C08), la tendencia por mes (RN-G09) y la ficha de evolución (RN-H01).
@@ -324,6 +395,12 @@ export function EvolutionBoard({
   const base = `/panel/pacientes/${patientId}/evaluaciones`;
   return (
     <div className="flex flex-col gap-8">
+      <Section
+        title="Comparativa física"
+        description="De la primera evaluación a la última, como en la hoja de seguimiento. La grasa va por método y la bioimpedancia aparte: no se comparan entre sí (RN-D03, RN-C08)."
+      >
+        <PhysicalComparison evolution={evolution} />
+      </Section>
       <Section
         title="Evaluaciones"
         description="Las evaluaciones cerradas vigentes, en orden. Si cambian el evaluador o las condiciones, el cambio puede deberse a eso y no al cuerpo (RN-C09)."

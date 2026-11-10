@@ -27,6 +27,7 @@ export class TrackingWeekCheckins implements WeekCheckinSource {
               performancePct: checkin.performancePct,
               nutritionCompliancePct: checkin.nutritionCompliancePct,
               menstrualSymptoms: checkin.menstrualSymptoms,
+              stress: checkin.stress,
             },
           ]
         : [],

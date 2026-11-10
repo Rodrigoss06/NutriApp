@@ -7,6 +7,7 @@ import {
   METRIC_UNIT_LABELS,
   SITE_NUMBER_KINDS,
   TREND_MAX_MONTHS,
+  type BiaUnit,
   type EvolutionResponse,
   type NumberKind,
   type TrendMonth,
@@ -152,4 +153,104 @@ export function trendRows(
       evaluations: byMonth.get(month) ?? [],
       trend: trends.get(month) ?? null,
     }));
+}
+
+/** Una fila de la comparativa física: de la primera evaluación a la última (P14.5, PR 6a; ADR-107). */
+export interface ComparisonRow {
+  readonly key: string;
+  readonly name: string;
+  /** Un número con su redondeo (RN-D09) y su unidad, o la lectura de bioimpedancia tal como la dio el equipo (RN-C08). */
+  readonly format:
+    | { readonly type: 'number'; readonly kind: NumberKind; readonly unit: string }
+    | { readonly type: 'reading'; readonly unit: BiaUnit };
+  readonly first: { readonly localDate: string; readonly value: number };
+  readonly last: { readonly localDate: string; readonly value: number };
+  readonly change: number;
+  /** RN-C06 en las medidas; null en un número derivado o en una lectura de bioimpedancia. */
+  readonly significance: EvolutionResponse['sites'][number]['points'][number]['significance'];
+}
+
+const COMPARED_SITES = [
+  ['BASIC_WEIGHT', 'Peso'],
+  ['GIRTH_WAIST', 'Cintura'],
+  ['GIRTH_HIP', 'Cadera'],
+] as const;
+
+interface Comparable {
+  readonly points: readonly { readonly localDate: string; readonly value: number }[];
+  readonly overall: {
+    readonly change: number;
+    readonly significance: ComparisonRow['significance'];
+  } | null;
+}
+
+function comparisonOf(
+  series: Comparable,
+  row: Pick<ComparisonRow, 'key' | 'name' | 'format'>,
+  measured: boolean,
+): ComparisonRow[] {
+  const first = series.points[0];
+  const last = series.points.at(-1);
+  if (!first || !last || series.points.length < 2 || !series.overall) return [];
+  return [
+    {
+      ...row,
+      first: { localDate: first.localDate, value: first.value },
+      last: { localDate: last.localDate, value: last.value },
+      change: series.overall.change,
+      significance: measured ? series.overall.significance : null,
+    },
+  ];
+}
+
+/**
+ * La comparativa física de la hoja de Jeremy (P14.5, PR 6a; ADR-107): peso, cintura y cadera con su CMD95 (RN-C06), y el % de grasa
+ * de cada método y de cada equipo de bioimpedancia por separado (RN-D03, RN-C08). Solo lo que tiene dos evaluaciones o más.
+ */
+export function physicalComparison(evolution: EvolutionResponse): ComparisonRow[] {
+  const sites = COMPARED_SITES.flatMap(([siteCode, name]) => {
+    const site = evolution.sites.find((candidate) => candidate.siteCode === siteCode);
+    return site
+      ? comparisonOf(
+          site,
+          {
+            key: siteCode,
+            name,
+            format: { type: 'number', kind: SITE_NUMBER_KINDS[site.unit], unit: site.unit },
+          },
+          true,
+        )
+      : [];
+  });
+  const fat = evolution.metrics
+    .filter((metric) => metric.metricCode === 'FAT_PCT')
+    .flatMap((metric) =>
+      comparisonOf(
+        metric,
+        {
+          key: `FAT_PCT:${metric.methodCode}`,
+          name: metricName(metric.metricCode, metric.methodCode),
+          format: {
+            type: 'number',
+            kind: lookup(METRIC_NUMBER_KINDS, metric.metricCode) ?? 'percent',
+            unit: lookup(METRIC_UNIT_LABELS, metric.unit) ?? metric.unit,
+          },
+        },
+        false,
+      ),
+    );
+  const bia = evolution.bia
+    .filter((reading) => reading.metric === 'FAT_PCT')
+    .flatMap((reading) =>
+      comparisonOf(
+        reading,
+        {
+          key: `BIA:${reading.device}`,
+          name: `% de grasa por bioimpedancia (${reading.deviceLabel})`,
+          format: { type: 'reading', unit: reading.unit },
+        },
+        false,
+      ),
+    );
+  return [...sites, ...fat, ...bia];
 }

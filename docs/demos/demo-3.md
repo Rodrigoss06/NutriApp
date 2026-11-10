@@ -125,18 +125,19 @@ En el celular del paciente de prueba:
 
 **Qué debe aparecer**
 
-| Semana de Mateo | Promedios                      | Control                                                                                           | Hoja de Jeremy             |
-| --------------- | ------------------------------ | ------------------------------------------------------------------------------------------------- | -------------------------- |
-| 1               | Sueño 6.4 h, rendimiento 80 %  | Rojo: «Rendimiento bajo el mínimo» y «Sueño bajo el mínimo semanal». «Descarga 20–30 % y revisar» | DESCARGA 20–30 % Y REVISAR |
-| 2               | Sueño 6.8 h, rendimiento 80 %  | Rojo: «Rendimiento bajo el mínimo». «Descarga 20–30 % y revisar»                                  | DESCARGA 20–30 % Y REVISAR |
-| 3               | Sueño 7.1 h, rendimiento 100 % | Verde: «Continuar plan»                                                                           | CONTINUAR PLAN             |
-| 4               | Sueño 7.4 h, rendimiento 100 % | Verde: «Continuar plan»                                                                           | CONTINUAR PLAN             |
+| Semana de Mateo | Promedios                                | Control                                                                                           | Hoja de Jeremy             |
+| --------------- | ---------------------------------------- | ------------------------------------------------------------------------------------------------- | -------------------------- |
+| 1               | Sueño 6.4 h, rendimiento 80 %, estrés 3  | Rojo: «Rendimiento bajo el mínimo» y «Sueño bajo el mínimo semanal». «Descarga 20–30 % y revisar» | DESCARGA 20–30 % Y REVISAR |
+| 2               | Sueño 6.8 h, rendimiento 80 %, estrés 4  | Rojo: «Rendimiento bajo el mínimo». «Descarga 20–30 % y revisar»                                  | DESCARGA 20–30 % Y REVISAR |
+| 3               | Sueño 7.1 h, rendimiento 100 %, estrés 3 | Verde: «Continuar plan»                                                                           | CONTINUAR PLAN             |
+| 4               | Sueño 7.4 h, rendimiento 100 %, estrés 2 | Verde: «Continuar plan»                                                                           | CONTINUAR PLAN             |
 
 **En vivo, con Luis:** su semana sale en ámbar, porque la fatiga promedio supera el umbral, y sugiere «Ajustar 5–15 %».
 El coach decide Mantener, Ajustar o Descargar y escribe una nota. Si ajusta o descarga, queda la versión siguiente del
 programa en borrador, y la publica el coach (RN-F17, RN-F12).
 
-**Qué decir:** el semáforo es una sugerencia y decide el coach. Los umbrales son de la organización y se cambian en
+**Qué decir:** el semáforo es una sugerencia y decide el coach. El estrés promedio está en el resumen, pero no cambia el semáforo:
+decide el control semanal (P-25). Los umbrales son de la organización y se cambian en
 Ajustes › Umbrales del entrenamiento (07 §11).
 
 ## 7 · Panel con alertas (RF-34) · 2 min
@@ -155,9 +156,9 @@ Ajustes › Umbrales del entrenamiento (07 §11).
 
 **Qué se hace:**
 
-1. Ficha de Mateo › Evaluaciones › Evolución.
+1. Ficha de Mateo › Evaluaciones › Evolución: arriba, la «Comparativa física».
 2. La ficha PDF de evolución.
-3. En la app, Progreso.
+3. En la app, Progreso: el peso, la cintura y la cadera.
 
 **Qué debe aparecer**
 
@@ -178,7 +179,7 @@ del evaluador (RN-C06).
 | El macrociclo V3 de las semanas 1 a 8                                                                                                                                                                                                                                             | «No entreno hoy» y «mover a mañana» (PR 1e)                                 |
 | El control de las 4 semanas                                                                                                                                                                                                                                                       | El panel de fatiga y recuperación, y el volumen ajustado por RIR y descanso |
 | El 1RM de Epley y el porcentaje                                                                                                                                                                                                                                                   | La fatiga por grupo muscular: faltan los coeficientes de cada ejercicio     |
-| Las sesiones (11 de 12), el sueño, el rendimiento y la alimentación por semana                                                                                                                                                                                                    | El informe mensual, las fotos y la cadera en Progreso de la app             |
+| Las sesiones (11 de 12), el sueño, el rendimiento y la alimentación por semana                                                                                                                                                                                                    | El informe mensual y las fotos                                              |
 | Peso, cintura, cadera y grasa                                                                                                                                                                                                                                                     | El expediente de documentos y el check-in semanal                           |
 
 Dos diferencias de datos de la hoja:

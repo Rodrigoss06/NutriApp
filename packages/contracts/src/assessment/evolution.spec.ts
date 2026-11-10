@@ -58,6 +58,7 @@ describe('RF-35 · el contrato de la evolución', () => {
     expect(PATIENT_EVOLUTION_ITEMS.map((item) => PATIENT_EVOLUTION_LABELS[item])).toEqual([
       'Peso',
       'Cintura',
+      'Cadera',
       'Suma de 6 pliegues',
       '% de grasa',
       'Masa muscular',
