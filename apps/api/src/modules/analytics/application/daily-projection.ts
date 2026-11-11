@@ -71,6 +71,7 @@ export class DailyProjection {
             reps: set.reps,
             loadKg: set.loadKg,
             rir: set.rir,
+            rpe: set.rpe,
             restSeconds: prescribedRest(program, workout.sessionId, set.exerciseId, set.setNo),
           });
         }

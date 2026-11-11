@@ -7,6 +7,8 @@ export interface VolumeSet {
   readonly reps: number | null;
   readonly loadKg: number | null;
   readonly rir: number | null;
+  /** Con RPE y sin RIR, el motor toma 10 − RPE entre 0 y 5 (RN-F05; ADR-113). */
+  readonly rpe: number | null;
   readonly restSeconds: number | null;
 }
 
@@ -18,7 +20,7 @@ export interface SetsVolume {
 }
 
 /**
- * El volumen ajustado de unas series con el motor (ADJUSTED_VOLUME, ADR-106) y la tabla vigente. Sin tabla vigente, o si el motor
+ * El volumen ajustado de unas series con el motor (ADJUSTED_VOLUME, ADR-106 y ADR-113) y la tabla vigente. Sin tabla vigente, o si el motor
  * rechaza los insumos, las series con carga quedan «sin factor»: nunca se cuentan como 1.
  */
 export function adjustedVolumeOf(

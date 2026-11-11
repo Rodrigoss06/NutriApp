@@ -235,16 +235,18 @@ describe('P-26 · ADR-106 · volumen ajustado por grupo, repartido como las seri
     expect(hamstrings?.adjustedVolumeKg).toBeCloseTo(891, 6);
   });
 
-  it('una serie sin RIR o con un descanso que la tabla no trae queda «sin factor» y no suma', () => {
+  it('sin RIR ni RPE, o sin descanso prescrito, queda «sin factor» y no suma; con solo el RPE y 100 s, sí (ADR-113)', () => {
     const sets = [
       set('con-factor', { reps: 12, loadKg: 45, rir: 2, tonnageKg: 540 }),
       set('sin-rir', { reps: 12, loadKg: 45, rir: null, tonnageKg: 540 }),
-      set('descanso-raro', { reps: 12, loadKg: 45, rir: 2, tonnageKg: 540 }),
+      set('sin-descanso', { reps: 12, loadKg: 45, rir: 2, tonnageKg: 540 }),
+      // RPE 8 = RIR 2 (1.1) y 100 s = 1.00, por tramos: 594 más.
+      set('solo-rpe', { reps: 12, loadKg: 45, rir: null, rpe: 8, tonnageKg: 540 }),
     ];
     const quads = rowsOf([day(sets)], new Set(['p-1']), (candidate) =>
-      candidate.id === 'descanso-raro' ? 100 : 120,
+      candidate.id === 'sin-descanso' ? null : candidate.id === 'solo-rpe' ? 100 : 120,
     ).find((row) => row.muscleCode === 'QUADRICEPS');
-    expect(quads?.adjustedVolumeKg).toBeCloseTo(594, 6);
+    expect(quads?.adjustedVolumeKg).toBeCloseTo(1_188, 6);
     expect(quads?.unfactoredSets).toBe(2);
   });
 });

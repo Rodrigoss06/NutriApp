@@ -89,6 +89,7 @@ export function weeklyMuscleRows(input: WeeklyInput): WeeklyMuscleRow[] {
         reps: set.reps,
         loadKg: set.loadKg,
         rir: set.rir,
+        rpe: set.rpe,
         restSeconds: restById.get(set.id) ?? null,
       })),
       input.factorsOn(week.weekStart),

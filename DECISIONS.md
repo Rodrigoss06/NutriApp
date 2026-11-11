@@ -2943,3 +2943,24 @@ Consecuencias:
   de cada bloque de la hoja.
 - Para Notion (/notion-sync de P14.5, antes de fusionar): 03 RN-F14 y G-31; 07 §5 (20 patrones y la tabla) y §6 (las sesiones de
   4 y 5 días y el tempo y el descanso por patrón); 05.2 (los patrones y la división); 02 §9 (la plantilla 2.0.0).
+
+## ADR-113 · El volumen ajustado sin vacíos: descanso por tramos y RPE sin RIR — aceptada (2026-11-11)
+Contexto: P14.5 (P-26; RN-F03, RN-F05; ADR-106). `ADJUSTED_VOLUME` 1.0.0 dejaba «sin factor» un descanso entre dos filas de la tabla
+(100 s, 150 s), uno de menos de 45 s y una serie con RPE y sin RIR, hasta que Jeremy dijera otra cosa. Rodrigo respondió el
+2026-11-11: el descanso por tramos (hasta 45 s = 1.15, de 46 a 60 s = 1.10, de 61 a 75 s = 1.05, de 76 a 179 s = 1.00 y 180 s o
+más = 0.95), con RPE y sin RIR el RIR es 10 − RPE entre 0 y 5, y un RPE con decimal sigue la fórmula de Jeremy.
+Decisión:
+- `ADJUSTED_VOLUME` 1.1.0 (motor 1.14.0), con las mismas tablas versionadas (`training.volume_factor_table` no cambia):
+  - el descanso: cada fila vale hasta su valor, la «o más» desde el suyo y, entre la última fila y la «o más», la última. Así
+    salen los tramos de Rodrigo de la tabla de Jeremy, sin escribirlos aparte;
+  - el RIR: la fila exacta, la «o más» o, entre dos filas, la recta entre ellas, que con la tabla de Jeremy es su fórmula
+    (1.0 + (3 − RIR) × 0.1). RPE 8.5 = RIR 1.5 = 1.15;
+  - con RPE y sin RIR, el RIR es 10 − RPE entre 0 y 5 (RN-F05); con los dos, manda el RIR. Un RPE fuera de 0 a 10 da NC-ENG-412.
+- Sin RIR ni RPE, o sin descanso prescrito, la serie sigue «sin factor», nunca como 1.
+- La API pasa el RPE de cada serie al motor, en el resumen diario y en el volumen de la semana por grupo. Los días ya resumidos
+  con 1.0.0 conservan su valor hasta que un registro los vuelva a calcular, como cualquier proyección (ADR-087).
+Consecuencias:
+- Motor: cada tramo en su borde (30, 45, 46, 60, 61, 75, 76, 100, 150, 179, 180 y 240 s), RPE 8, 10 y 4, RPE 8.5 y 5.5, y el RPE
+  fuera de rango. API: una serie con solo RPE y 100 s suma al ajustado del grupo. La integración ve la versión 1.1.0.
+- Para Notion (/notion-sync de P14.5): 07 §10 y §15 (P-26 resuelta del todo), 02 §9 (`ADJUSTED_VOLUME` 1.1.0) y el caso dorado
+  propuesto G-42.

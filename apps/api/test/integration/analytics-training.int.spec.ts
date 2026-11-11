@@ -233,7 +233,7 @@ describe('RF-33 · la semana del macrociclo contra lo programado', () => {
         unfactoredSets: 1,
       }),
     ]);
-    expect(result.methods.adjustedVolume).toEqual({ code: 'ADJUSTED_VOLUME', version: '1.0.0' });
+    expect(result.methods.adjustedVolume).toEqual({ code: 'ADJUSTED_VOLUME', version: '1.1.0' });
     // P-23, P-24 (ADR-108): el panel de fatiga de la semana en curso, con los umbrales globales de Jeremy. Sin semanas previas, la
     // carga queda «sin base»; con sueño de 7 h y fatiga 2, verde.
     expect(week?.fatigue).toMatchObject({
