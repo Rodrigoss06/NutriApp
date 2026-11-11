@@ -185,7 +185,7 @@ describe('Criterio 5 de P14 · G-39 · RN-G16 · el control de las semanas cerra
     const { program, reviews: list } = await reviews();
     expect(program).toMatchObject({ programId, totalWeeks: 3 });
     expect(list.map((r) => r.weekNo)).toEqual([1, 2]);
-    expect(list[0]?.method).toEqual({ code: 'WEEKLY_REVIEW_JV', version: '3.0.0' });
+    expect(list[0]?.method).toEqual({ code: 'WEEKLY_REVIEW_JV', version: '3.1.0' });
   });
 
   it('rendimiento promedio 88 % y factor 1.1: ROJO, 0.825, descarga; fatiga 4.2 y factor 1.0: ÁMBAR, 0.90, ajustar', async () => {

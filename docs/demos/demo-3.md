@@ -149,7 +149,8 @@ En el celular del paciente de prueba:
 El coach decide Mantener, Ajustar o Descargar y escribe una nota. Si ajusta o descarga, queda la versión siguiente del
 programa en borrador, y la publica el coach (RN-F17, RN-F12).
 
-**Qué decir:** el semáforo es una sugerencia y decide el coach. El estrés promedio está en el resumen, pero no cambia el semáforo:
+**Qué decir:** el semáforo es una sugerencia y decide el coach. La alimentación de Mateo sale del check-in de cada domingo, que
+el paciente completa del domingo al martes (P-21, P-22). El estrés promedio está en el resumen, pero no cambia el semáforo:
 decide el control semanal (P-25). Los umbrales son de la organización y se cambian en
 Ajustes › Umbrales del entrenamiento (07 §11).
 
@@ -194,7 +195,7 @@ del evaluador (RN-C06).
 | El control de las 4 semanas, el volumen ajustado por RIR y descanso, y el panel de fatiga y recuperación                                                                                                                                                                          | La fatiga por grupo muscular (PR 4)                                       |
 | El 1RM de Epley y el porcentaje                                                                                                                                                                                                                                                   | La prescripción de la hoja (PR 9)                                         |
 | Las sesiones (12), el sueño, el rendimiento y la alimentación por semana                                                                                                                                                                                                          | El informe mensual y las fotos                                            |
-| Peso, cintura, cadera y grasa                                                                                                                                                                                                                                                     | El expediente de documentos y el check-in semanal                         |
+| Peso, cintura, cadera y grasa                                                                                                                                                                                                                                                     | El expediente de documentos                                               |
 
 Dos diferencias de datos de la hoja:
 

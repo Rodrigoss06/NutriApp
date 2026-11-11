@@ -1,5 +1,6 @@
 import { Inject, Injectable } from '@nestjs/common';
 import type { WeekCheckin, WeekCheckinSource } from '../../training/index.js';
+import { WEEKLY_CHECKIN_STORE, type WeeklyCheckinStore } from './ports/weekly-checkin.ports.js';
 import { TrackingApi } from './tracking-api.js';
 
 /**
@@ -8,7 +9,16 @@ import { TrackingApi } from './tracking-api.js';
  */
 @Injectable()
 export class TrackingWeekCheckins implements WeekCheckinSource {
-  constructor(@Inject(TrackingApi) private readonly tracking: TrackingApi) {}
+  constructor(
+    @Inject(TrackingApi) private readonly tracking: TrackingApi,
+    @Inject(WEEKLY_CHECKIN_STORE) private readonly weekly: WeeklyCheckinStore,
+  ) {}
+
+  /** El check-in del domingo de la semana (P-22, ADR-109): manda sobre la alimentación de los días. */
+  async weeklyNutrition(patientId: string, from: string, to: string): Promise<number | null> {
+    const checkins = await this.weekly.activeBetween(patientId, from, to);
+    return checkins.at(-1)?.nutritionCompliancePct ?? null;
+  }
 
   async checkins(patientId: string, from: string, to: string): Promise<readonly WeekCheckin[]> {
     const days = await this.tracking.dailyFacts(patientId, from, to);

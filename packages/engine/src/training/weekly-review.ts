@@ -39,6 +39,11 @@ export interface WeeklyReviewInput {
   /** El factor de volumen de la semana en el macrociclo (07 §7). */
   readonly plannedVolumeFactor: number;
   readonly thresholds: WeeklyReviewThresholds;
+  /**
+   * La alimentación que el asesorado declaró en el check-in del domingo, de 0 a 100 (P-21, P-22; ADR-109): si está, manda sobre el
+   * promedio de los días. Sin check-in no se envía, así los controles que ya existen conservan sus insumos y su hash.
+   */
+  readonly weeklyNutritionCompliancePct?: number | null;
 }
 
 /** Los agregados de la semana (07 §10). Un promedio sin ningún dato es null. */
@@ -189,7 +194,12 @@ export function weeklyDecision(
 }
 
 /** Los rangos de cada día (RN-G11, 05.2), la semana de 7 días, el factor de 07 §7 y umbrales de 07 §11. */
-function inputIssues({ days, plannedVolumeFactor, thresholds }: WeeklyReviewInput): Issue[] {
+function inputIssues({
+  days,
+  plannedVolumeFactor,
+  thresholds,
+  weeklyNutritionCompliancePct,
+}: WeeklyReviewInput): Issue[] {
   const dayIssue = { rule: 'RN-G16', severity: 'ERROR', code: 'NC-ENG-409' } as const;
   const issues: Issue[] = days.flatMap((day) =>
     outOfRange(
@@ -207,6 +217,13 @@ function inputIssues({ days, plannedVolumeFactor, thresholds }: WeeklyReviewInpu
       ],
       dayIssue,
     ),
+  );
+  const weekly = weeklyNutritionCompliancePct ?? null;
+  issues.push(
+    ...outOfRange([['La alimentación del check-in', weekly, [0, 100], true]], {
+      ...dayIssue,
+      code: 'NC-ENG-410',
+    }),
   );
   if (days.length > DAYS_PER_WEEK) {
     issues.push({ ...dayIssue, message: 'Una semana tiene 7 días como máximo.' });
@@ -242,7 +259,7 @@ function inputIssues({ days, plannedVolumeFactor, thresholds }: WeeklyReviewInpu
  */
 export const WEEKLY_REVIEW_JV = defineMethod<WeeklyReviewInput, WeeklyReview>({
   code: 'WEEKLY_REVIEW_JV',
-  version: '3.0.0',
+  version: '3.1.0',
   kind: 'TRAINING',
   population: 'ALL',
   requiredInputs: ['days', 'plannedVolumeFactor', 'thresholds'],
@@ -250,7 +267,10 @@ export const WEEKLY_REVIEW_JV = defineMethod<WeeklyReviewInput, WeeklyReview>({
   citation: 'JV Fitness, plantilla de periodización V3: hojas CONTROL SEMANAL y DASHBOARD (2026)',
   validity: [],
   compute: (input) => {
-    const aggregates = weeklyAggregates(input.days);
+    const fromDays = weeklyAggregates(input.days);
+    const weekly = input.weeklyNutritionCompliancePct ?? null;
+    const aggregates =
+      weekly === null ? fromDays : { ...fromDays, avgNutritionCompliancePct: weekly };
     return {
       outputs: {
         aggregates,

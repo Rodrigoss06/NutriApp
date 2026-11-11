@@ -18,6 +18,7 @@ import {
   logHydrationSchema,
   logMetricSchema,
   logNoteSchema,
+  logWeeklyCheckinSchema,
   logWorkoutSchema,
   todayActionSchema,
   type Checkin,
@@ -33,6 +34,7 @@ import {
   type MeTraining,
   type NoteLog,
   type Readiness,
+  type WeeklyCheckin,
   type WorkoutLog,
 } from '@nutricoach/contracts';
 import { isErr, type DomainError, type SecurityContext } from '@nutricoach/shared-kernel';
@@ -48,6 +50,8 @@ import {
 import { DayScheduleCommands } from '../../../application/commands/day-schedule.commands.js';
 import { RecordCommands, type Logged } from '../../../application/commands/record.commands.js';
 import { TrainingLogCommands } from '../../../application/commands/training-log.commands.js';
+import { WeeklyCheckinCommands } from '../../../application/commands/weekly-checkin.commands.js';
+import type { StoredWeeklyCheckin } from '../../../application/ports/weekly-checkin.ports.js';
 import type {
   StoredCheckin,
   StoredFoodLog,
@@ -138,6 +142,17 @@ const scheduleOf = ({ today, tomorrow, options }: ScheduleView): DaySchedule => 
   options,
 });
 
+/** El check-in de la semana: sin el valor del peso ni el texto, que son su medida y su nota (ADR-109). */
+const weeklyCheckinOf = (checkin: StoredWeeklyCheckin): WeeklyCheckin => ({
+  id: checkin.id,
+  weekDate: checkin.weekDate,
+  loggedOn: checkin.loggedOn,
+  nutritionCompliancePct: checkin.nutritionCompliancePct,
+  withWeight: checkin.metricLogId !== null,
+  withComment: checkin.noteId !== null,
+  createdAt: checkin.createdAt.toISOString(),
+});
+
 /** 201 si quedó registrado ahora; 200 si es un reintento con el mismo clientId y vuelve lo de la primera vez (RN-G08). */
 function respond<T, R>(response: Response, logged: Logged<T>, map: (value: T) => R): R {
   response.status(logged.replayed ? 200 : 201);
@@ -155,6 +170,7 @@ export class MeTrackingController {
     private readonly training: TrainingLogCommands,
     private readonly queries: MeQueries,
     private readonly schedules: DayScheduleCommands,
+    private readonly weekly: WeeklyCheckinCommands,
   ) {}
 
   @Get('today')
@@ -166,6 +182,10 @@ export class MeTrackingController {
       sessions: view.sessions ? [...view.sessions] : null,
       readiness: view.readiness && readinessOf(view.readiness),
       schedule: scheduleOf(view.schedule),
+      weeklyCheckin: view.weeklyCheckin && {
+        ...view.weeklyCheckin,
+        done: view.weeklyCheckin.done && weeklyCheckinOf(view.weeklyCheckin.done),
+      },
     };
   }
 
@@ -376,6 +396,25 @@ export class MeTrackingController {
     );
     if (isErr(result)) throw problem(result.error);
     return respond(response, result.value, checkinOf);
+  }
+
+  /**
+   * El check-in de la semana (P-21, P-22; ADR-109): del domingo al martes siguiente, con la alimentación de la semana y, si quiere,
+   * su peso y un comentario para su equipo. Otra vez en el plazo, lo corrige (RN-G12).
+   */
+  @Post('weekly-checkins')
+  @PatientOnly()
+  async logWeeklyCheckin(
+    @Req() request: ContextualRequest,
+    @Res({ passthrough: true }) response: Response,
+    @Body() body: unknown,
+  ): Promise<WeeklyCheckin> {
+    const result = await this.weekly.log(
+      contextOf(request),
+      parseBody(logWeeklyCheckinSchema, body),
+    );
+    if (isErr(result)) throw problem(result.error);
+    return respond(response, result.value, weeklyCheckinOf);
   }
 
   @Post('checkins/:id/void')

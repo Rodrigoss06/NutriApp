@@ -220,6 +220,8 @@ class MemoryReviews implements WeeklyReviewStore {
 
 let reviews: MemoryReviews;
 let checkins: WeekCheckin[];
+/** Los check-in del domingo: su domingo y su alimentación (ADR-109). */
+let weeklies: { weekDate: string; pct: number }[];
 let events: DomainEvent[];
 let audits: AuditEntry[];
 let nextId: number;
@@ -298,6 +300,10 @@ const sources = () => {
   registry.register({
     checkins: (_p, from, to) =>
       Promise.resolve(checkins.filter((c) => c.localDate >= from && c.localDate <= to)),
+    weeklyNutrition: (_p, from, to) =>
+      Promise.resolve(
+        weeklies.findLast((w) => w.weekDate >= from && w.weekDate <= to)?.pct ?? null,
+      ),
   });
   return registry;
 };
@@ -314,6 +320,7 @@ beforeEach(() => {
     checkin('2026-10-30', { performancePct: 88 }),
     ...[4, 4, 5, 4, 4].map((fatigue, i) => checkin(`2026-11-0${String(2 + i)}`, { fatigue })),
   ];
+  weeklies = [];
   events = [];
   audits = [];
   nextId = 0;
@@ -355,6 +362,19 @@ describe('RN-G16 · el control de las semanas cerradas', () => {
       'SUPERSEDED',
       'CURRENT',
     ]);
+  });
+
+  it('P-22 · el check-in del domingo manda en la alimentación; sin él, los insumos no cambian y el control tampoco', async () => {
+    await service().reviewProgram(ORG, 'program-1');
+    const before = reviews.rows.find((r) => r.weekNo === 1);
+    expect(before?.inputs).not.toHaveProperty('weeklyNutritionCompliancePct');
+
+    // El domingo de la semana 1 declara 70 %: llega tarde (el martes) y reemplaza ese control.
+    weeklies.push({ weekDate: '2026-11-01', pct: 70 });
+    expect(await service().reviewProgram(ORG, 'program-1')).toBe(1);
+    const week1 = reviews.rows.filter((r) => r.weekNo === 1);
+    expect(week1.map((r) => r.status)).toEqual(['SUPERSEDED', 'CURRENT']);
+    expect(week1[1]?.inputs).toMatchObject({ weeklyNutritionCompliancePct: 70 });
   });
 
   it('sin programa, sin paciente, archivado o sin umbrales no calcula', async () => {

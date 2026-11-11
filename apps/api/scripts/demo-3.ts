@@ -1419,7 +1419,8 @@ async function importMateoMonth(
         programId: trained ? programId : null,
         weekNo: trained ? logged.weekNo : null,
         sessionId: trained ? session.id : null,
-        nutritionCompliancePct: logged.nutritionCompliancePct,
+        // La alimentación va en el check-in del domingo (P-21, P-22; ADR-109), no en el registro de cada día.
+        nutritionCompliancePct: null,
         performancePlanned: trained ? 100 : null,
         performanceActual: trained ? logged.performancePct : null,
       });
@@ -1429,7 +1430,39 @@ async function importMateoMonth(
   await insertRows(db, 'tracking.workout_log', WORKOUT_COLUMNS, workouts);
   await insertRows(db, 'tracking.set_log', SET_COLUMNS, sets);
   await insertCheckins(db, organizationId, mateoId, checkins);
+  // El check-in de cada domingo con la alimentación de la hoja: 78, 82, 88 y 92 % (ADR-109). La semana de 7 días que empieza un
+  // martes tiene su domingo en el sexto día.
+  await insertRows(
+    db,
+    'tracking.weekly_checkin',
+    WEEKLY_CHECKIN_COLUMNS,
+    mateo.weeks.map((logged) => {
+      const weekStart = addDays(mateo.program.startDate, 7 * (logged.weekNo - 1));
+      const sunday = addDays(weekStart, (7 - isoWeekday(weekStart)) % 7);
+      return [
+        uuidv7(),
+        organizationId,
+        mateoId,
+        sunday,
+        uuidv7(),
+        sunday,
+        logged.nutritionCompliancePct,
+        limaInstant(sunday, 21, 30),
+      ];
+    }),
+  );
 }
+
+const WEEKLY_CHECKIN_COLUMNS = [
+  ['id', 'uuid'],
+  ['organization_id', 'uuid'],
+  ['patient_id', 'uuid'],
+  ['week_date', 'date'],
+  ['client_id', 'uuid'],
+  ['logged_on', 'date'],
+  ['nutrition_compliance_pct', 'smallint'],
+  ['created_at', 'timestamptz'],
+] as const;
 
 async function seedMateo(
   api: Demo3Api,

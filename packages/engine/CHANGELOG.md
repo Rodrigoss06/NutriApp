@@ -3,6 +3,13 @@
 Cambiar una fórmula o una constante sube la versión del método afectado y la del motor (02 §9).
 Los resultados guardados conservan la versión con que se calcularon (RN-D01, RN-D08).
 
+## 1.12.0 — 2026-11-10
+
+- `WEEKLY_REVIEW_JV` 3.1.0: la alimentación que el asesorado declara en el check-in del domingo (P14.5, PR 5a; P-21 y P-22,
+  respuestas de Jeremy; ADR-109) manda sobre el promedio de los días, en el agregado y en el semáforo. Llega como
+  `weeklyNutritionCompliancePct`, de 0 a 100 y entero (NC-ENG-410 fuera de rango). Sin check-in no se envía y todo sigue igual:
+  los controles que ya existen conservan sus insumos y su hash. G-39 sigue igual.
+
 ## 1.11.0 — 2026-11-10
 
 - Nuevo método `FATIGUE_PANEL_JV` 1.0.0: el panel de fatiga y recuperación de la hoja piloto de JV Fitness (P14.5, PR 3; P-23 y

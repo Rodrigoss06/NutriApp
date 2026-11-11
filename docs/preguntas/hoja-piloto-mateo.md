@@ -86,6 +86,11 @@ promedio. Tu hoja muestra un solo valor por semana: sueño 6.4 h, estrés 3, fat
 > - alimentación %, de 0 a 100 %;
 > - peso corporal;
 > - comentarios.
+>
+> **Decisiones de Rodrigo (2026-11-10), para el PR 5.** La alimentación sale del registro diario y pasa al check-in del domingo; el
+> control semanal toma ese valor y los registros diarios ya guardados se conservan. El check-in se completa del domingo al martes
+> siguiente, y los comentarios llegan al coach como una nota sin leer. Por defecto, hasta que Rodrigo diga otra cosa: el peso se
+> pide solo si la app permite el peso en casa, y enviarlo otra vez dentro del plazo lo corrige.
 
 **P-22 · De dónde sale el «Rendimiento %»** (informe mensual, «Evolución semanal»: 80, 80, 100 y 100)
 
@@ -210,7 +215,7 @@ RIR 2, por 1.1, da 1,782. Solo vemos algunos valores: RIR 2 = 1.1, RIR 3 = 1.0, 
 >    - compuestos guiados y poleas (jalón, prensa): 1.0, 1.0, 0.8 y 0.9;
 >    - aislamiento y brazos: 0.9, 0.7, 0.5 y 0.8;
 >    - movilidad y cardio: 0.
->    **Fórmulas:**
+>      **Fórmulas:**
 >    - «Fatiga entrenamiento» es el volumen ajustado del grupo, ponderado: 1.0 el músculo primario y 0.5 el secundario;
 >    - el «Estado» lo compara con «Base 3 sem.» con los umbrales de P-23: verde hasta +15 %, ámbar de +15 % a +30 % y rojo más
 >      de +30 %;

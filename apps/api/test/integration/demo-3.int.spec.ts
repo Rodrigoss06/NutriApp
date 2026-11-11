@@ -162,7 +162,9 @@ describe('Demo 3 · Mateo, el alumno ficticio de la hoja de Jeremy', () => {
       value === undefined ? null : Math.round(value * 10) / 10;
     expect(month.map((week) => shown(week?.avgSleepHours))).toEqual([6.4, 6.8, 7.1, 7.4]);
     expect(month.map((week) => shown(week?.avgPerformancePct))).toEqual([80, 80, 100, 100]);
+    // La alimentación sale del check-in de cada domingo, no del registro diario (P-21, P-22; ADR-109).
     expect(month.map((week) => shown(week?.avgNutritionCompliancePct))).toEqual([78, 82, 88, 92]);
+    expect(await count('tracking.weekly_checkin', mateoId)).toBe(4);
     expect(month.map((week) => week?.sessions)).toEqual([3, 3, 3, 3]);
     // El estrés de la hoja, en el resumen del control: solo informa (P-25; P14.5, PR 6a; ADR-107).
     expect(

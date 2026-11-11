@@ -2,6 +2,7 @@ import { z } from 'zod';
 import { upToDecimals } from '../decimals.js';
 import { MEAL_SLOTS, PLAN_MODALITIES } from '../nutrition/plan.js';
 import { dayScheduleSchema } from './schedule.js';
+import { meWeeklyCheckinSchema } from './weekly-checkin.js';
 
 const isoDate = z.iso.date();
 const decimals = (digits: number) =>
@@ -445,6 +446,8 @@ export const meTodaySchema = z.object({
   readiness: readinessSchema.nullable(),
   /** Hoy y mañana con sus cambios, y si hoy puede decir «no entreno hoy», «mover a mañana» o deshacerlo (P-20.3). */
   schedule: dayScheduleSchema,
+  /** El check-in de la semana, abierto del domingo al martes (P-21, ADR-109); de miércoles a sábado, null. */
+  weeklyCheckin: meWeeklyCheckinSchema.nullable(),
 });
 export type MeToday = z.infer<typeof meTodaySchema>;
 

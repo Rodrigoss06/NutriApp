@@ -2790,3 +2790,49 @@ Consecuencias:
 - Para Notion (/notion-sync de P14.5): 02 §9 (`FATIGUE_PANEL_JV`), 03 (una regla del panel, RN-G18, y G-43), 05.2
   (`training.fatigue_panel_threshold`), 05.3 (la columna `fatigue` y las alertas de `patient_overview`), 04 RF-33 y RF-34, y
   07 §10 y §15 (P-23 a P-25 y P-33 resueltas).
+
+## ADR-109 · El check-in de la semana por la API — aceptada (2026-11-10)
+Contexto: P14.5, PR 5a (fase B; P-21 y P-22, respondidas por Jeremy el 2026-11-09; RN-G11, RN-G12, RN-G13; ADR-098). Jeremy
+quiere el registro diario corto de hoy y, el domingo, un check-in de 2 minutos con la alimentación de la semana (0 a 100 %), el peso
+y comentarios. Rodrigo decidió el 2026-11-10:
+- la alimentación sale del registro diario y pasa al domingo, y el control semanal toma ese valor; los registros diarios ya
+  guardados se conservan;
+- el check-in se completa del domingo al martes siguiente;
+- los comentarios llegan al coach como una nota sin leer, como las demás notas de la app.
+Mientras Rodrigo no diga otra cosa, también:
+- el check-in pide el peso solo si la app del paciente permite el peso en casa (content), como el resto de la app;
+- enviarlo otra vez dentro del plazo lo corrige, como el registro diario (RN-G12).
+Decisión:
+- `tracking.weekly_checkin` (migración `202611100400_tracking_weekly_checkin`):
+  - el domingo de la semana, el día en que lo envió y la alimentación;
+  - el id de su peso (`tracking.metric_log`) y de su nota (`tracking.note_log`), sin FK porque son particionadas (ADR-024);
+  - uno vigente por domingo. Corregirlo anula el anterior, nunca lo borra;
+  - RLS de la organización, del equipo de atención, del paciente (solo lo suyo) y de la cuenta, como `tracking.day_change`.
+- `POST /me/weekly-checkins` (`@PatientOnly`, con Idempotency-Key y clientId, RN-G08). En una transacción:
+  - el domingo debe ser el del check-in abierto hoy, en la fecha local del paciente: NC-TRK-019 si no es domingo y NC-TRK-020
+    si ya cerró o no llegó;
+  - el peso es su medida BODY_WEIGHT del día en que lo envía, con las reglas del peso en casa (WEIGHT_LOG_DISABLED si la app no
+    lo permite; de 20 a 300 kg, RN-C04);
+  - el comentario es una nota del paciente sin leer: su equipo la ve en Seguimiento y en la alerta de Inicio (RN-G13);
+  - una corrección anula el peso anterior. La nota anterior queda, porque una nota no se anula;
+  - el evento `tracking.weeklycheckin.logged`. Los tipos de evento solo admiten letras: `contexto.agregado.hecho`.
+- `GET /me/today` trae `weeklyCheckin` del domingo al martes, con el martes de cierre, si pide el peso y el que ya envió.
+- Motor 1.12.0, `WEEKLY_REVIEW_JV` 3.1.0: `weeklyNutritionCompliancePct` manda sobre el promedio de los días.
+  - Sin check-in no se envía: los controles que ya existen conservan sus insumos y su hash y no se reemplazan.
+  - Un check-in tardío (lunes o martes) reemplaza el control de esa semana al recalcularse, como cualquier registro tardío.
+  - training lo lee con `WeekCheckinSource.weeklyNutrition`, que da tracking.
+- `demo:3`: la alimentación de Mateo va en sus 4 check-in de domingo (78, 82, 88 y 92 %), y su control da lo mismo.
+- Pruebas de integración: el arnés acepta un reloj fijo y entrega los eventos por el id (UUID v7, hora real) y no por
+  `occurred_at`, que sale de ese reloj.
+- La app y el panel llegan en el PR 5b.
+Consecuencias:
+- Dominio: el plazo del domingo al martes y el domingo de cada semana. Motor: el check-in manda, sin él nada cambia, y su rango.
+- Integración `weekly-checkin.int.spec.ts`, con el reloj en el último domingo:
+  - con peso y comentario, la medida y la nota sin leer;
+  - el reintento sin duplicar;
+  - la corrección del lunes;
+  - el miércoles cerrado;
+  - sin el peso en casa;
+  - lo que lee el control semanal.
+- Para Notion (/notion-sync de P14.5): 03 RN-G11 (el check-in del domingo), 05.2 (`tracking.weekly_checkin`), 02 §8 (el evento),
+  02 §9 (`WEEKLY_REVIEW_JV` 3.1.0), 04 RF-29 y RF-42, y 07 §9, §10 y §15 (P-21 y P-22 resueltas).
