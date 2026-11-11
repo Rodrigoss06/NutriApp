@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { saveAthleteProfileSchema } from './athlete-profile.js';
+import { saveAthleteProfileSchema, whatsappLinkResponseSchema } from './athlete-profile.js';
 
 const PROFILE = {
   objective: 'HYPERTROPHY',
@@ -21,5 +21,21 @@ describe('RN-G17 · ADR-080 · la anticoncepción hormonal del perfil', () => {
     expect(accepts(true)).toBe(true);
     expect(accepts(false)).toBe(true);
     expect(accepts('ORAL')).toBe(false);
+  });
+});
+
+describe('P-35 · el seguimiento asistido por WhatsApp', () => {
+  it('se activa por alumno en su perfil; sin decirlo, queda apagado', () => {
+    expect(saveAthleteProfileSchema.parse(PROFILE).whatsappFollowUp).toBe(false);
+    expect(
+      saveAthleteProfileSchema.parse({ ...PROFILE, whatsappFollowUp: true }).whatsappFollowUp,
+    ).toBe(true);
+  });
+
+  it('el enlace solo abre un chat de wa.me por https', () => {
+    const accepts = (url: string) => whatsappLinkResponseSchema.safeParse({ url }).success;
+    expect(accepts('https://wa.me/51987654321')).toBe(true);
+    expect(accepts('http://wa.me/51987654321')).toBe(false);
+    expect(accepts('https://example.com/51987654321')).toBe(false);
   });
 });

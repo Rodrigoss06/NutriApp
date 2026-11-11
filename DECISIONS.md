@@ -3025,3 +3025,35 @@ Consecuencias:
   Cuádriceps 2,058) y la semana 3 en ámbar. E2E `analitica.spec.ts`: la tabla de Luis «sin base».
 - Para Notion (/notion-sync de P14.5): 02 §9 (`MUSCLE_FATIGUE_JV`), 03 (la regla del panel, RN-G18, con la fatiga por grupo), 05.2
   (las tres columnas de `training.fatigue_panel_threshold`), 04 RF-33 y 07 §10 y §15 (P-27 resuelta, menos los coeficientes).
+
+## ADR-116 · El seguimiento asistido por WhatsApp: la etiqueta y el chat con wa.me — aceptada (2026-11-11)
+Contexto: P14.5, PR 9d (P-35, respondida por Jeremy el 2026-11-10; RF-41, RN-B03; ADR-075, ADR-098 y ADR-114). La hoja piloto escribe «Seguimiento
+asistido por WhatsApp» en la fila «Revisión» del macrociclo. Jeremy dijo que es una modalidad de acompañamiento fuera de la app: la
+etiqueta y un botón que abra el chat del alumno con un enlace wa.me, sin integrar ninguna API de mensajería. Rodrigo decidió el
+2026-11-11:
+- se activa por alumno, en su perfil de entrenamiento;
+- la etiqueta va en una línea arriba del macrociclo, sin tocar la columna «Revisión», porque de ella depende el control semanal;
+- el botón, para el coach, abre wa.me con el teléfono del alumno. Si al teléfono le falta el código de país, la app pide agregarlo
+  en vez de suponer +51.
+Después confirmó las dos elecciones de este PR: el código de país solo cuenta si el teléfono empieza con «+» o «00», y la etiqueta
+queda en el panel del coach, sin la ficha PDF de la rutina ni la app del paciente.
+Decisión:
+- `training.athlete_profile.whatsapp_follow_up` (migración `202611110400_training_athlete_whatsapp`), por revisión como el resto del
+  perfil; las revisiones que ya existen quedan sin activar. El formulario del perfil lo muestra en «Acompañamiento».
+- `GET /patients/:id/athlete-profile/whatsapp` (`patients.read`) da `{ url }` con `https://wa.me/<dígitos>`:
+  - solo con el seguimiento activado en el perfil vigente; si no, 409 NC-TRA-026 y el teléfono ni se descifra;
+  - el teléfono trae su código de país si empieza con «+» o «00»; se quitan espacios, guiones, puntos y paréntesis, y quedan de 8 a
+    15 dígitos (E.164). Si no, 409 NC-TRA-028, que pide agregarlo en la ficha. Sin teléfono, 409 NC-TRA-027;
+  - el teléfono se descifra con `ClinicalApi.patientPhone`, y cada pedido deja un READ de `clinical.patient.phone` en la auditoría.
+    La ficha del paciente sigue sin devolver el teléfono (`hasPhone`).
+- Web: «Seguimiento asistido por WhatsApp» con el botón «Abrir WhatsApp», arriba del macrociclo del programa y del control semanal.
+  La pestaña se abre al tocar y luego va al enlace, para que el navegador no la bloquee. Si falta el teléfono o su código de país,
+  la línea lo dice y lleva a la ficha.
+- No entran: la etiqueta en la ficha PDF de la rutina ni en la app del paciente, y ningún mensaje enviado por la app.
+Consecuencias:
+- API: la regla del enlace (con el código de país, sin él, inválido, sin teléfono y sin activar) y la integración de punta a punta:
+  apagado, activado, sin código de país, con él y 3 lecturas en la auditoría.
+- Contratos: el perfil con el seguimiento, apagado por defecto, y el enlace solo por https a wa.me.
+- E2E `programa.spec.ts`: la línea arriba del macrociclo y, sin teléfono, el aviso con el enlace a la ficha.
+- Para Notion (/notion-sync de P14.5): 05.2 (la columna de `training.athlete_profile`), 04 RF-41 (el perfil) y 07 §2 y §15
+  (P-35 resuelta).

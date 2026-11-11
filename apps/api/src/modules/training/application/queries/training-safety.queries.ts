@@ -3,8 +3,10 @@ import {
   AUDIT_PORT,
   UNIT_OF_WORK,
   type AuditPort,
+  type DomainError,
   type Id,
   type PatientId,
+  type Result,
   type SecurityContext,
   type UnitOfWork,
 } from '@nutricoach/shared-kernel';
@@ -14,6 +16,7 @@ import {
   type AthleteProfileRecord,
   type AthleteProfileStore,
 } from '../ports/training.ports.js';
+import { whatsappLink } from '../../domain/whatsapp.js';
 import { TrainingSafety, type TrainingSafetyView } from '../training-safety.js';
 
 /** El perfil de entrenamiento y las tres llaves. Leen datos de salud: cada lectura deja un READ (RN-B03). */
@@ -45,6 +48,23 @@ export class TrainingSafetyQueries {
     return this.#read(context, patientId, 'training.athlete_profile', () =>
       this.safety.of(patientId),
     );
+  }
+
+  /**
+   * El enlace wa.me del alumno (P-35), solo con el seguimiento por WhatsApp activado en su perfil vigente: sin él, el teléfono ni
+   * se descifra. Cada pedido queda en la auditoría, también si falta el código de país. undefined si no se ve al paciente.
+   */
+  async whatsappLink(
+    context: SecurityContext,
+    patientId: string,
+  ): Promise<Result<string, DomainError> | undefined> {
+    return this.#read(context, patientId, 'clinical.patient.phone', async () => {
+      const enabled = (await this.profiles.latest(patientId))?.whatsappFollowUp ?? false;
+      return whatsappLink(
+        enabled ? ((await this.clinical.patientPhone(patientId)) ?? null) : null,
+        enabled,
+      );
+    });
   }
 
   async #read<T>(

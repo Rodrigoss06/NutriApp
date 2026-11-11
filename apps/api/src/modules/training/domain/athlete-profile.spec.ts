@@ -21,6 +21,7 @@ const INPUT: AthleteProfileInput = {
   testTargets: { WALK_6MIN: 500 },
   notes: null,
   hormonalContraception: null,
+  whatsappFollowUp: false,
 };
 const REFERENCES = {
   equipmentCodes: new Set(['FULL_GYM']),

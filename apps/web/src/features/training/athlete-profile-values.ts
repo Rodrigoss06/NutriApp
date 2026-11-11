@@ -26,6 +26,8 @@ export interface ProfileValues {
   readonly notes: string;
   /** Sí, no o sin dato (NONE): solo con MENSTRUAL_TRACKING vigente (RN-G17, ADR-080). */
   readonly hormonalContraception: 'YES' | 'NO' | 'NONE';
+  /** «Seguimiento asistido por WhatsApp» (P-35). */
+  readonly whatsappFollowUp: boolean;
 }
 
 const text = (value: number | null): string => (value === null ? '' : String(value));
@@ -58,6 +60,7 @@ export function valuesOf(current: AthleteProfile | null): ProfileValues {
         : current?.hormonalContraception === false
           ? 'NO'
           : 'NONE',
+    whatsappFollowUp: current?.whatsappFollowUp ?? false,
   };
 }
 
@@ -120,6 +123,7 @@ export function parseProfile(
       menstrualTrackingActive && values.hormonalContraception !== 'NONE'
         ? values.hormonalContraception === 'YES'
         : null,
+    whatsappFollowUp: values.whatsappFollowUp,
   });
   if (parsed.success) return { ok: true, body: parsed.data };
   const problems: Partial<Record<keyof ProfileValues, string>> = {};

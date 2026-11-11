@@ -25,6 +25,8 @@ export interface AthleteProfileInput {
   readonly notes: string | null;
   /** Sí, no o sin dato; solo con MENSTRUAL_TRACKING vigente (RN-G17). */
   readonly hormonalContraception: boolean | null;
+  /** «Seguimiento asistido por WhatsApp» (P-35). */
+  readonly whatsappFollowUp: boolean;
 }
 
 export const PROFILE_REVISION_CONFLICT = domainError({

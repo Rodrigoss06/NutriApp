@@ -2195,6 +2195,7 @@ model AthleteProfile {
   recordedBy            String            @map("recorded_by") @db.Uuid
   recordedAt            DateTime          @default(now()) @map("recorded_at") @db.Timestamptz(6)
   hormonalContraception Boolean?          @map("hormonal_contraception")
+  whatsappFollowUp      Boolean           @default(false) @map("whatsapp_follow_up")
   trainingPrograms      TrainingProgram[]
 
   @@unique([patientId, revision])

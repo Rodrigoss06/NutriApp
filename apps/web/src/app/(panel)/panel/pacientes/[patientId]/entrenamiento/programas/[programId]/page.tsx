@@ -1,4 +1,5 @@
 import type {
+  AthleteProfileResponse,
   NutritionPlan,
   NutritionPlanListResponse,
   ProgramDetail,
@@ -34,13 +35,14 @@ export default async function ProgramPage({
 }) {
   const { patientId, programId } = await params;
   const path = `/patients/${encodeURIComponent(patientId)}`;
-  const [patient, program, programs, safety, members, dayProfiles] = await Promise.all([
+  const [patient, program, programs, safety, members, dayProfiles, profile] = await Promise.all([
     getPatient(patientId),
     serverApi<ProgramDetail>(`/training-programs/${encodeURIComponent(programId)}`),
     serverApi<ProgramListResponse>(`${path}/training-programs`),
     serverApi<TrainingSafetyResponse>(`${path}/training-safety`),
     getMembers(),
     dayProfilesOf(path),
+    serverApi<AthleteProfileResponse>(`${path}/athlete-profile`),
   ]);
   const base = `/panel/pacientes/${patientId}/entrenamiento/programas`;
   if (!patient.ok) return null;
@@ -69,6 +71,7 @@ export default async function ProgramPage({
       archived={patient.data.status === 'ARCHIVED'}
       base={base}
       dayProfiles={dayProfiles}
+      whatsappFollowUp={profile.ok && profile.data.current?.whatsappFollowUp === true}
     />
   );
 }

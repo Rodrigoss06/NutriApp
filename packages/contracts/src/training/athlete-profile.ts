@@ -63,6 +63,8 @@ const athleteProfileFields = {
   notes: optionalText,
   /** Anticoncepción hormonal: sí, no o sin dato. Solo con MENSTRUAL_TRACKING vigente (RN-G17, ADR-080). */
   hormonalContraception: z.boolean().nullable().default(null),
+  /** «Seguimiento asistido por WhatsApp» (P-35): el coach acompaña por WhatsApp, fuera de la app. */
+  whatsappFollowUp: z.boolean().default(false),
 };
 
 /** PUT /api/v1/patients/:id/athlete-profile. */
@@ -92,6 +94,7 @@ export const athleteProfileSchema = z.object({
   testTargets: z.record(z.string(), z.number()),
   notes: z.string().nullable(),
   hormonalContraception: z.boolean().nullable(),
+  whatsappFollowUp: z.boolean(),
   recordedBy: z.uuid(),
   recordedAt: z.iso.datetime(),
 });
@@ -99,6 +102,15 @@ export type AthleteProfile = z.infer<typeof athleteProfileSchema>;
 
 export const athleteProfileResponseSchema = z.object({ current: athleteProfileSchema.nullable() });
 export type AthleteProfileResponse = z.infer<typeof athleteProfileResponseSchema>;
+
+/**
+ * GET /api/v1/patients/:id/athlete-profile/whatsapp (P-35): el enlace wa.me que abre el chat del alumno, solo con el seguimiento
+ * por WhatsApp activado. Sin teléfono o sin su código de país, un problema que pide agregarlo: nunca se supone +51.
+ */
+export const whatsappLinkResponseSchema = z.object({
+  url: z.url({ protocol: /^https$/, hostname: /^wa\.me$/ }),
+});
+export type WhatsappLinkResponse = z.infer<typeof whatsappLinkResponseSchema>;
 
 /**
  * GET /api/v1/patients/:id/training-safety: las tres llaves (RN-F15). Sin perfil, el alta médica cuenta como pendiente.

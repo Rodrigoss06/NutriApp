@@ -28,7 +28,10 @@ const NO_ANSWERS = {
   S08: false,
 };
 
-/** Perfil de hipertrofia, principiante, 4 días, con alta y cribado en verde: las llaves abiertas. */
+/**
+ * Perfil de hipertrofia, principiante, 4 días, con alta y cribado en verde: las llaves abiertas. Con el seguimiento asistido por
+ * WhatsApp (P-35).
+ */
 async function openKeysByApi(ownerEmail: string, patientId: string) {
   const owner = await apiAs(ownerEmail);
   const profile = await owner.put(`/api/v1/patients/${patientId}/athlete-profile`, {
@@ -39,6 +42,7 @@ async function openKeysByApi(ownerEmail: string, patientId: string) {
       daysPerWeek: 4,
       equipmentCodes: ['FULL_GYM'],
       medicalClearance: 'CLEARED',
+      whatsappFollowUp: true,
     },
   });
   expect(profile.status(), 'guardar el perfil').toBe(200);
@@ -261,6 +265,15 @@ test.describe('P12 · Programa de entrenamiento', () => {
     // El macrociclo trae la fase de cada semana con la versión de la tabla (RN-F13).
     await page.getByText('Macrociclo: 12 semanas').click();
     await expect(page.getByText(/Tabla de fases vigente desde/)).toBeVisible();
+    // P-35: la línea de WhatsApp va arriba del macrociclo. Sin teléfono, el botón pide agregarlo en la ficha: no hay enlace.
+    await expect(page.getByText('Seguimiento asistido por WhatsApp')).toBeVisible();
+    const whatsapp = page.getByRole('button', { name: 'Abrir WhatsApp' });
+    const noPhone = page.getByText('El alumno no tiene teléfono. Agrégalo en su ficha.');
+    await expect(async () => {
+      await whatsapp.click({ timeout: 2_000 });
+      await expect(noPhone).toBeVisible({ timeout: 2_000 });
+    }).toPass({ timeout: 15_000 });
+    await expect(page.getByRole('link', { name: 'Ir a la ficha' })).toBeVisible();
     expect(await seriousViolations(page)).toEqual([]);
 
     // Sustituir: de su mismo patrón, con nota, y queda aprobado. Superior A empieza con el empuje horizontal (P-34, ADR-112).

@@ -3,6 +3,7 @@ import {
   saveAthleteProfileSchema,
   type AthleteProfileResponse,
   type TrainingSafetyResponse,
+  type WhatsappLinkResponse,
 } from '@nutricoach/contracts';
 import { isErr, type DomainError, type SecurityContext } from '@nutricoach/shared-kernel';
 import {
@@ -20,12 +21,20 @@ import {
 import { AthleteProfileCommands } from '../../../application/commands/athlete-profile.commands.js';
 import { TrainingSafetyQueries } from '../../../application/queries/training-safety.queries.js';
 import { PROFILE_REVISION_CONFLICT } from '../../../domain/athlete-profile.js';
+import {
+  PHONE_MISSING,
+  PHONE_WITHOUT_COUNTRY_CODE,
+  WHATSAPP_NOT_ENABLED,
+} from '../../../domain/whatsapp.js';
 
 const STATUS_BY_CODE: Readonly<Record<string, number>> = {
   [PATIENT_NOT_FOUND.code]: 404,
   [PATIENT_ARCHIVED.code]: 409,
   [PROFILE_REVISION_CONFLICT.code]: 409,
   [WRITE_ACCESS_REQUIRED.code]: 403,
+  [WHATSAPP_NOT_ENABLED.code]: 409,
+  [PHONE_MISSING.code]: 409,
+  [PHONE_WITHOUT_COUNTRY_CODE.code]: 409,
 };
 
 const problem = (error: DomainError) =>
@@ -81,10 +90,28 @@ export class TrainingSafetyController {
         testTargets: { ...profile.testTargets },
         notes: profile.notes,
         hormonalContraception: profile.hormonalContraception,
+        whatsappFollowUp: profile.whatsappFollowUp,
         recordedBy: profile.recordedBy,
         recordedAt: profile.recordedAt.toISOString(),
       },
     };
+  }
+
+  /**
+   * El enlace wa.me que abre el chat del alumno (P-35): sin integrar mensajería. Sin el seguimiento por WhatsApp activado, sin
+   * teléfono o sin su código de país, 409 con lo que falta. La lectura del teléfono queda en la auditoría.
+   */
+  @Get('athlete-profile/whatsapp')
+  @RequirePermission('patients.read')
+  @Header('Cache-Control', 'no-store')
+  async whatsapp(
+    @Req() request: ContextualRequest,
+    @Param('patientId', ParseUUIDPipe) patientId: string,
+  ): Promise<WhatsappLinkResponse> {
+    const link = await this.queries.whatsappLink(contextOf(request), patientId);
+    if (link === undefined) throw notFound();
+    if (isErr(link)) throw problem(link.error);
+    return { url: link.value };
   }
 
   /** Cada guardado es una revisión nueva sobre expectedRevision; si alguien guardó antes, 409. */
