@@ -80,11 +80,12 @@ describe('RN-D02 · los textos de los casos dorados son los de la V3', () => {
     expect(REVIEW_KIND_LABELS.CONTROL).toBe('Control y ajuste');
   });
 
-  it('G-31: las cuatro divisiones', () => {
+  it('G-31: las divisiones de 2, 3, 4 y 5 días, y la de 5 días de la plantilla 1.0.0 (ADR-112)', () => {
     expect(Object.values(ROUTINE_SPLIT_LABELS)).toEqual([
       'Cuerpo completo',
       'Cuerpo completo A/B/C',
       'Superior / inferior',
+      'Superior / inferior + acondicionamiento',
       'Push / pull / legs + complementos',
     ]);
   });

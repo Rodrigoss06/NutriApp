@@ -84,13 +84,14 @@ describe('RN-F14 · RN-F13 · la propuesta como programa', () => {
   });
 
   it('cada bloque lleva el ejercicio de la tabla, su patrón y nada aprobado', () => {
+    // Con 4 días, Superior A empieza con el empuje horizontal (P-34, ADR-112).
     const block = proposed().mesocycles[0]?.weeks[0]?.sessions[0]?.exercises[0];
 
     expect(block).toMatchObject({
       position: 1,
-      exerciseId: 'SQUAT-BEGINNER',
-      suggestedExerciseId: 'SQUAT-BEGINNER',
-      movementPattern: 'SQUAT',
+      exerciseId: 'HORIZONTAL_PUSH-BEGINNER',
+      suggestedExerciseId: 'HORIZONTAL_PUSH-BEGINNER',
+      movementPattern: 'HORIZONTAL_PUSH',
       approvedBy: null,
       approvedAt: null,
     });
@@ -109,8 +110,9 @@ describe('RN-F14 · RN-F13 · la propuesta como programa', () => {
       repsMin: 8,
       repsMax: 12,
       loadValue: 2,
+      // El empuje horizontal: 3-1-1 y 90 s (P-34).
       restSeconds: 90,
-      tempo: '2-1-2',
+      tempo: '3-1-1',
       setType: 'WORKING',
     });
     expect(setsOf(3).map((set) => set.setNo)).toEqual([1, 2, 3]);

@@ -2799,7 +2799,7 @@ y comentarios. Rodrigo decidió el 2026-11-10:
   guardados se conservan;
 - el check-in se completa del domingo al martes siguiente;
 - los comentarios llegan al coach como una nota sin leer, como las demás notas de la app.
-Mientras Rodrigo no diga otra cosa, también:
+Rodrigo lo confirmó el 2026-11-11:
 - el check-in pide el peso solo si la app del paciente permite el peso en casa (content), como el resto de la app;
 - enviarlo otra vez dentro del plazo lo corrige, como el registro diario (RN-G12).
 Decisión:
@@ -2901,3 +2901,45 @@ Consecuencias:
     está en bisagra y la extensión de rodilla en sentadilla.
 - Para Notion (/notion-sync de P14.5): 07 §5 (18 patrones y la tabla), 05.2 (los patrones y los equipos) y RN-I02 (los ejercicios
   provisionales de la hoja).
+
+## ADR-112 · La propuesta con las sesiones de la hoja: superior, inferior y acondicionamiento — aceptada (2026-11-11)
+Contexto: P14.5, PR 9b (P-34, respondida por Jeremy el 2026-11-10; RN-F14; ADR-098 y ADR-111). RN-F14 y el caso dorado G-31 dan
+push/pull/legs con 5 días y los mismos valores en todos los bloques: 3 × 8–12, RIR 2, tempo 2-1-2 y 90 s. La hoja piloto trae, con
+4 días, Superior A, Inferior A, Superior B e Inferior B; con 5, lo mismo con Acondicionamiento; el tempo y el descanso de cada patrón;
+y bloques de flexión y de extensión de rodilla. Rodrigo decidió el 2026-11-11 seguir la hoja en los tres puntos.
+Decisión:
+- Plantilla de la propuesta 2.0.0 (motor 1.13.0):
+  - 2 días o menos, cuerpo completo; 3, cuerpo completo A, B y C: los días 1 a 3 de la V3, sin cambios en sus bloques;
+  - 4 días, `UPPER_LOWER`: Superior A, Inferior A, Superior B e Inferior B, con los bloques de la hoja en su orden;
+  - 5 días, `UPPER_LOWER_CONDITIONING`: lo mismo, con Acondicionamiento el día 3, como la hoja (miércoles);
+  - «Brazos» son dos bloques, Bíceps y Tríceps (ADR-111): Superior B tiene 6 y las demás sesiones de la hoja, 5.
+- El tempo y el descanso salen del patrón (`PATTERN_BASE`), con los valores de la hoja: sentadilla 3-1-1 y 120 s; bisagra,
+  unilateral y empuje horizontal 3-1-1 y 90 s; extensión de cadera 2-1-2 y 120 s; tracción horizontal 2-1-2 y 90 s; empuje y
+  tracción verticales, flexión y extensión de rodilla 2-1-2 y 75 s; hombro, brazos, pantorrilla y antirrotación 2-1-2 y 60 s;
+  tronco anti-extensión «Controlado» y 60 s; movilidad de hombro 2-1-2 y 45 s; movilidad torácica y estabilidad lumbar
+  «Controlado» y 45 s; cardio «Continuo» y 0 s. La única excepción es la de la hoja: el press Pallof del acondicionamiento es
+  «Isométrico» y con 45 s.
+- Las series, las repeticiones y el RIR base siguen en 3 × 8–12 y RIR 2, y la semana cambia las series y el RIR (RN-F13): la
+  respuesta de Rodrigo fue sobre el tempo y el descanso. La hoja da 2 series a los bloques accesorios y otros rangos (10–15,
+  12–15, «/lado», minutos y segundos): queda por confirmar.
+- La flexión y la extensión de rodilla son patrones (migración `202611110100_training_pilot_template`, que también suma
+  `UPPER_LOWER_CONDITIONING` al CHECK de `training.program.split`). El curl femoral en máquina y con banda (HG09, HG10) y la
+  extensión de rodilla (SQ10) pasan a esos patrones; no estaban en la tabla patrón × nivel. Sus 6 filas son provisionales: el
+  mismo ejercicio en los tres niveles hasta que Jeremy dé los suyos.
+- `PUSH_PULL_LEGS` queda en los contratos y en la base para los programas que ya la guardaron. Los programas propuestos con la
+  plantilla 1.0.0 conservan su `template_version` y su estructura: nada se recalcula (RN-D08).
+- G-31 con 5 días pasa a `UPPER_LOWER_CONDITIONING`. El criterio 4 de P12 compara la hoja PRESCRIPCION de la V3 con la propuesta
+  de 3 días (sus 24 primeras filas); con 4 días, la integración compara las sesiones de la hoja piloto.
+- Lo que muestra la prescripción («/lado», «s/lado», «esfuerzo suave (RPE 5–6)», la etiqueta y el botón de WhatsApp) y la versión
+  nueva de la ficha de rutina llegan en el PR 9c.
+Consecuencias:
+- Pruebas:
+  - motor: las divisiones y los nombres, los bloques de 4 y 5 días, el tempo y el descanso de cada patrón, los 20 patrones entre
+    las plantillas, G-31 y el criterio 4 de P12;
+  - API: la propuesta como programa;
+  - integración: el catálogo con 20 patrones, la tabla con 60 filas y el criterio de P12 con 4 días;
+  - E2E: la propuesta de 4 días, con sus 21 bloques, se aprueba o se sustituye y se publica.
+- Por confirmar con Jeremy: los ejercicios por nivel de la flexión y de la extensión de rodilla, y las series y las repeticiones
+  de cada bloque de la hoja.
+- Para Notion (/notion-sync de P14.5, antes de fusionar): 03 RN-F14 y G-31; 07 §5 (20 patrones y la tabla) y §6 (las sesiones de
+  4 y 5 días y el tempo y el descanso por patrón); 05.2 (los patrones y la división); 02 §9 (la plantilla 2.0.0).

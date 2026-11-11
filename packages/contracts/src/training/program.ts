@@ -26,6 +26,8 @@ export const ROUTINE_SPLIT_CODES = [
   'FULL_BODY',
   'FULL_BODY_ABC',
   'UPPER_LOWER',
+  'UPPER_LOWER_CONDITIONING',
+  /** La división de 5 días de la plantilla 1.0.0: queda para los programas que ya la guardaron (ADR-112). */
   'PUSH_PULL_LEGS',
 ] as const;
 export const TRAINING_INTENSITY_CODES = [
