@@ -5,9 +5,11 @@ import {
   fatigueWeeks,
   loadChangeText,
   mesocycleGroups,
+  muscleFatigueInOrder,
   musclesInOrder,
   muscleWeekNo,
   oneRmKey,
+  recoveryText,
 } from './training-view';
 
 const week = (weekNo: number, mesocycleId: string, started: boolean): TrainingWeek => ({
@@ -32,6 +34,7 @@ const week = (weekNo: number, mesocycleId: string, started: boolean): TrainingWe
   cardioCompliancePct: null,
   muscles: [],
   fatigue: null,
+  muscleFatigue: null,
 });
 
 const method = { code: 'TONNAGE', version: '1.0.0' };
@@ -44,6 +47,7 @@ describe('RF-33 · la analítica de rutina en pantalla', () => {
       tonnage: method,
       adjustedVolume: method,
       fatiguePanel: method,
+      muscleFatigue: method,
       fractionalSets: method,
       compliance: method,
       sfr: method,
@@ -161,5 +165,44 @@ describe('P-26 · el volumen ajustado en pantalla (ADR-106)', () => {
     expect(loadChangeText(panel)).toBe('+18.3 %');
     expect(loadChangeText({ loadChangePct: -40.6 })).toBe('−40.6 %');
     expect(loadChangeText({ loadChangePct: null })).toBeNull();
+  });
+});
+
+describe('P-27 · la fatiga por grupo muscular en pantalla (ADR-115)', () => {
+  const row = (
+    muscleCode: string,
+    trainingFatigueKg: number | null,
+    baseVolumeKg: number | null,
+  ) => ({
+    muscleCode,
+    trainingFatigueKg,
+    baseVolumeKg,
+    changePct: null,
+    state: 'NO_DATA' as const,
+    recoveryHours: null,
+  });
+
+  it('primero los grupos con más fatiga; después los que solo están en la base, por su base', () => {
+    const names = new Map([
+      ['CHEST', 'Pecho'],
+      ['TRICEPS', 'Tríceps'],
+      ['LATS', 'Dorsal'],
+    ]);
+    expect(
+      muscleFatigueInOrder(
+        [
+          row('TRICEPS', null, 709.5),
+          row('CALVES', 300, null),
+          row('CHEST', null, 1419),
+          row('LATS', 1620, 1590),
+        ],
+        names,
+      ).map((m) => m.name),
+    ).toEqual(['Dorsal', 'CALVES', 'Pecho', 'Tríceps']);
+  });
+
+  it('la recuperación estimada en horas; sin color, una raya', () => {
+    expect(recoveryText(60)).toBe('60 h');
+    expect(recoveryText(null)).toBe('—');
   });
 });

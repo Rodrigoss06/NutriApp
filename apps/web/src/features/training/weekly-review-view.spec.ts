@@ -35,6 +35,7 @@ const week = (weekNo: number, changes: Partial<TrainingWeek> = {}): TrainingWeek
     cardioCompliancePct: null,
     muscles: [],
     fatigue: null,
+    muscleFatigue: null,
     ...changes,
   };
 };

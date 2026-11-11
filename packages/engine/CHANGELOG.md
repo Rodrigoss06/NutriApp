@@ -3,6 +3,18 @@
 Cambiar una fórmula o una constante sube la versión del método afectado y la del motor (02 §9).
 Los resultados guardados conservan la versión con que se calcularon (RN-D01, RN-D08).
 
+## 1.15.0 — 2026-11-11
+
+- `MUSCLE_FATIGUE_JV` 1.0.0 (P14.5, PR 4; P-27, respuesta de Jeremy del 2026-11-10 y decisiones de Rodrigo del 2026-11-11;
+  ADR-115), la fatiga por grupo muscular de una semana:
+  - «Fatiga entrenamiento»: el volumen ajustado del grupo, con 1.0 para el principal y 0.5 para el secundario;
+  - «Base 3 sem.»: el promedio del grupo en las semanas previas que entran en la carga del panel (P-24), con 0 en la que no se
+    entrenó;
+  - estado con los umbrales de P-23 (ámbar sobre +15 % y rojo sobre +30 %) y recuperación estimada de 48, 60 y 72 h;
+  - sin volumen, «faltan datos»; sin base o con la base en 0, «sin base»;
+  - NC-ENG-415 (insumos fuera de rango) y NC-ENG-416 (umbrales cruzados).
+- `FATIGUE_PANEL_JV` no cambia: su regla de la carga se exporta como `loadLightOf` para que ambos comparen igual.
+
 ## 1.14.0 — 2026-11-11
 
 - `ADJUSTED_VOLUME` 1.1.0 (P14.5; P-26, respuestas de Rodrigo del 2026-11-11; ADR-113):

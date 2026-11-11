@@ -38,6 +38,7 @@ const WEEK = {
     },
   ],
   fatigue: null,
+  muscleFatigue: null,
 };
 
 // La semana 3 de Mateo en la hoja piloto: +18 % sobre su promedio y estrés 3, ámbar.
@@ -56,6 +57,31 @@ const PANEL = {
   overall: 'AMBER',
 };
 
+// La semana 5 de una hoja como la de Mateo: el pecho y el tríceps con base, y sin entrenar esa semana.
+const MUSCLE_FATIGUE = {
+  thresholdId: '019a2000-0000-7000-8000-000000000003',
+  inputsHash: 'b'.repeat(64),
+  baseWeeks: 3,
+  muscles: [
+    {
+      muscleCode: 'CHEST',
+      trainingFatigueKg: null,
+      baseVolumeKg: 1419,
+      changePct: null,
+      state: 'NO_DATA',
+      recoveryHours: null,
+    },
+    {
+      muscleCode: 'QUADRICEPS',
+      trainingFatigueKg: 2600,
+      baseVolumeKg: 2000,
+      changePct: 30,
+      state: 'AMBER',
+      recoveryHours: 60,
+    },
+  ],
+};
+
 describe('RF-33 · contrato de la analítica de rutina', () => {
   it('G-25 · una semana con 12 de 16 series de pecho: 75 %', () => {
     expect(trainingWeekSchema.parse(WEEK).muscles[0]?.compliancePct).toBe(75);
@@ -72,6 +98,20 @@ describe('RF-33 · contrato de la analítica de rutina', () => {
     expect(trainingWeekSchema.parse({ ...WEEK, fatigue: firstWeek }).fatigue?.load).toBe('NO_BASE');
     expect(
       trainingWeekSchema.safeParse({ ...WEEK, fatigue: { ...PANEL, overall: 'NO_BASE' } }).success,
+    ).toBe(false);
+  });
+
+  it('P-27 · la fatiga por grupo muscular: el estado admite «sin base» y «faltan datos», y la recuperación en horas', () => {
+    const parsed = trainingWeekSchema.parse({ ...WEEK, muscleFatigue: MUSCLE_FATIGUE });
+    expect(parsed.muscleFatigue?.muscles.map((muscle) => muscle.state)).toEqual([
+      'NO_DATA',
+      'AMBER',
+    ]);
+    expect(
+      trainingWeekSchema.safeParse({
+        ...WEEK,
+        muscleFatigue: { ...MUSCLE_FATIGUE, baseWeeks: -1 },
+      }).success,
     ).toBe(false);
   });
 
@@ -99,6 +139,7 @@ describe('RF-33 · contrato de la analítica de rutina', () => {
         tonnage: METHOD,
         adjustedVolume: METHOD,
         fatiguePanel: METHOD,
+        muscleFatigue: METHOD,
         fractionalSets: METHOD,
         compliance: METHOD,
         sfr: METHOD,

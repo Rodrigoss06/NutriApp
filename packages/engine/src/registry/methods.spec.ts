@@ -18,9 +18,9 @@ const BASICS = [SITES.BASIC_WEIGHT, SITES.BASIC_HEIGHT, SITES.BASIC_SITTING_HEIG
 const adult = { sex: 'M', ageYears: 28, population: 'ADULT' };
 
 describe('02 §9 · registro de métodos de la versión 1.0', () => {
-  it('registra los 47 códigos (39 de 02 §9, TEE_PAL, PRI_JV, READINESS_JV, WEEKLY_REVIEW_JV, MACROS_DAY_PROFILE, STARCH_BY_DAY_PROFILE, ADJUSTED_VOLUME y FATIGUE_PANEL_JV), cada uno bajo su propio código', () => {
+  it('registra los 48 códigos (39 de 02 §9, TEE_PAL, PRI_JV, READINESS_JV, WEEKLY_REVIEW_JV, MACROS_DAY_PROFILE, STARCH_BY_DAY_PROFILE, ADJUSTED_VOLUME, FATIGUE_PANEL_JV y MUSCLE_FATIGUE_JV), cada uno bajo su propio código', () => {
     expect(Object.keys(METHODS).sort()).toEqual([...METHOD_CODES].sort());
-    expect(METHOD_CODES).toHaveLength(47);
+    expect(METHOD_CODES).toHaveLength(48);
     for (const [code, method] of Object.entries(METHODS)) expect(method.code).toBe(code);
   });
 

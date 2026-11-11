@@ -44,6 +44,7 @@ import {
   COMPLIANCE,
   FATIGUE_PANEL_JV,
   FRACTIONAL_SETS,
+  MUSCLE_FATIGUE_JV,
   ONERM_BRZYCKI1993,
   ONERM_EPLEY1985,
   PRI_JV,
@@ -107,6 +108,7 @@ export const METHODS: Readonly<Record<MethodCode, AnyMethod>> = Object.freeze({
   WEEKLY_REVIEW_JV,
   ADJUSTED_VOLUME,
   FATIGUE_PANEL_JV,
+  MUSCLE_FATIGUE_JV,
 } satisfies Record<MethodCode, unknown>);
 
 /**

@@ -2,6 +2,7 @@ import {
   methodLabel,
   type FatiguePanelWeek,
   type LoadLight,
+  type MuscleFatigueWeek,
   type TrainingAnalytics,
   type TrainingMuscleWeek,
   type TrainingWeek,
@@ -23,8 +24,11 @@ import {
   fatigueWeeks,
   loadChangeText,
   mesocycleGroups,
+  muscleFatigueInOrder,
   musclesInOrder,
   muscleWeekNo,
+  recoveryText,
+  signedPctText,
 } from './training-view';
 
 const ONE_DECIMAL = new Intl.NumberFormat('es-PE', { maximumFractionDigits: 1 });
@@ -313,6 +317,74 @@ function MusclesTable({
 }
 
 /**
+ * La fatiga por grupo muscular de la semana elegida (P14.5, PR 4; P-27; ADR-115): el volumen ajustado del grupo contra su promedio de
+ * las 3 semanas previas, con su estado y la recuperación estimada. Solo informa: decide el control semanal (P-25).
+ */
+function MuscleFatigueTable({
+  fatigue,
+  names,
+  weekNo,
+}: {
+  fatigue: MuscleFatigueWeek | null;
+  names: ReadonlyMap<string, string>;
+  weekNo: number;
+}) {
+  if (!fatigue) {
+    return (
+      <p className="text-sm text-muted-foreground">
+        La fatiga por grupo muscular aparece cuando la semana {weekNo} empieza.
+      </p>
+    );
+  }
+  if (fatigue.muscles.length === 0) {
+    return (
+      <p className="text-sm text-muted-foreground">
+        La semana {weekNo} no tiene volumen ajustado, ni las 3 semanas anteriores.
+      </p>
+    );
+  }
+  const caption = `Fatiga por grupo muscular de la semana ${String(weekNo)}`;
+  return (
+    <StatTable
+      label={caption}
+      caption={caption}
+      rows={muscleFatigueInOrder(fatigue.muscles, names)}
+      rowKey={(muscle) => muscle.muscleCode}
+      columns={[
+        { key: 'name', header: 'Grupo', cell: (muscle) => muscle.name },
+        {
+          key: 'fatigue',
+          header: 'Fatiga entrenamiento',
+          numeric: true,
+          cell: (muscle) =>
+            muscle.trainingFatigueKg === null ? '—' : `${load(muscle.trainingFatigueKg)} kg`,
+        },
+        {
+          key: 'base',
+          header: 'Base 3 sem.',
+          numeric: true,
+          cell: (muscle) =>
+            muscle.baseVolumeKg === null ? '—' : `${load(muscle.baseVolumeKg)} kg`,
+        },
+        {
+          key: 'state',
+          header: 'Estado',
+          cell: (muscle) => (
+            <FatigueLight light={muscle.state} detail={signedPctText(muscle.changePct)} />
+          ),
+        },
+        {
+          key: 'recovery',
+          header: 'Recuperación est.',
+          numeric: true,
+          cell: (muscle) => recoveryText(muscle.recoveryHours),
+        },
+      ]}
+    />
+  );
+}
+
+/**
  * RF-33: tonelaje, series fraccionadas por grupo y semana contra lo programado, 1RM estimado en el tiempo, estímulo y
  * fatiga y cumplimiento, todo agrupado por mesociclo. Lo programado es la última versión publicada del programa
  * (RN-F12); lo hecho, lo que registró el paciente. Cada número con su método (RN-D02).
@@ -369,6 +441,7 @@ export function TrainingAnalyticsView({
             methods.tonnage,
             methods.adjustedVolume,
             methods.fatiguePanel,
+            methods.muscleFatigue,
             methods.fractionalSets,
             methods.compliance,
             methods.rpe,
@@ -416,6 +489,20 @@ export function TrainingAnalyticsView({
         >
           <WeekChips weeks={analytics.weeks} current={weekNo} hrefOf={query} />
           <MusclesTable muscles={muscleWeek.muscles} names={muscleNames} weekNo={weekNo} />
+          <div className="flex flex-col gap-2">
+            <h3 className="font-semibold">Fatiga por grupo muscular</h3>
+            <p className="text-sm text-muted-foreground">
+              La fatiga de entrenamiento es el volumen ajustado del grupo. Se compara con su
+              promedio en las 3 semanas previas que tienen volumen, donde una semana sin ese grupo
+              cuenta 0. La recuperación estimada depende del estado. Solo informa: decide el control
+              semanal.
+            </p>
+            <MuscleFatigueTable
+              fatigue={muscleWeek.muscleFatigue}
+              names={muscleNames}
+              weekNo={weekNo}
+            />
+          </div>
         </Section>
       ) : null}
       <Section

@@ -2989,3 +2989,39 @@ Consecuencias:
   documento con el split squat unilateral. Web: la app con «/lado» y el esfuerzo suave.
 - Para Notion (/notion-sync de P14.5): 05.3 (la plantilla TRAINING 1.1.0), 07 §6 (cómo se escribe la prescripción) y 02 §4 (lo
   que congela el snapshot del programa).
+
+## ADR-115 · La fatiga por grupo muscular, sin los coeficientes por familia — aceptada (2026-11-11)
+Contexto: P14.5, PR 4 (fase B; P-27, respondida por Jeremy el 2026-11-10; RN-F06, RN-G16; RF-33; ADR-106 y ADR-108). La hoja piloto
+trae la tabla «Fatiga por grupo muscular — semana seleccionada»: volumen ajustado, F. muscular, F. neural, Carga axial, D. técnica,
+Recuperación est., Fatiga entrenamiento, Base 3 sem. y Estado. Jeremy dio la fórmula de la fatiga, del estado y de la recuperación,
+y cuatro coeficientes por familia de ejercicio, pero no cómo se reparten por grupo cuando lo trabajan varias familias. Rodrigo
+decidió el 2026-11-11:
+- 1.0 para el músculo principal y 0.5 para el secundario, sin coeficientes por ejercicio. La base de Mateo en la semana 5 sale
+  Pecho 1,419 y Tríceps 709.5, no los 1,461.6 y 312.2 de la hoja;
+- el PR va sin las cuatro columnas de coeficientes, y se le pregunta a Jeremy cómo se calculan por grupo;
+- la base de cada grupo usa las mismas semanas previas que la carga del panel, y una de ellas sin ese grupo cuenta 0.
+Decisión:
+- Motor 1.15.0, `MUSCLE_FATIGUE_JV` 1.0.0, por semana del macrociclo y grupo muscular:
+  - «Fatiga entrenamiento»: el volumen ajustado del grupo (principal 1.0 y secundario 0.5, ADR-106);
+  - «Base 3 sem.»: su promedio en las previas, hasta 3, que tienen volumen (P-24), con 0 en la que el grupo no se entrenó;
+  - estado con los umbrales de la carga del panel (P-23: ámbar sobre +15 % y rojo sobre +30 %), comparando sin dividir;
+  - «Recuperación est.»: 48 h en verde, 60 h en ámbar y 72 h en rojo;
+  - sin volumen en la semana, «faltan datos», como la semana 5 de la hoja; sin previas, o con la base en 0, «sin base»; ninguno
+    de los dos estima la recuperación;
+  - NC-ENG-415 (insumos fuera de rango) y NC-ENG-416 (umbrales cruzados). La regla de la carga es una sola (`loadLightOf`).
+- Las horas van en `training.fatigue_panel_threshold` (migración `202611110300_training_muscle_fatigue`), versionadas con los demás
+  umbrales del panel: `muscle_recovery_green_hours`, `muscle_recovery_amber_hours` y `muscle_recovery_red_hours`.
+- Analítica: `GET /patients/:id/analytics/training` da `weeks[].muscleFatigue` (la versión de los umbrales, el hash, las semanas de
+  la base y cada grupo) en las semanas que empezaron, con el método en `methods.muscleFatigue`. Sale del volumen semanal por
+  grupo que ya existe: no hay tabla nueva ni hace falta `analytics:rebuild`.
+- Web: en Analítica › Rutina, «Fatiga por grupo muscular» debajo de las series por grupo, con la misma semana elegida: grupo,
+  fatiga, base, estado con su cambio y recuperación estimada. Primero los grupos con más fatiga.
+- No entran: las cuatro columnas de coeficientes (P-27.1, pregunta nueva para Jeremy) ni una columna de «volumen ajustado» aparte,
+  porque con 1.0 y 0.5 es la misma cifra que la fatiga. Tampoco cambia el control semanal (P-25) ni hay alerta en Inicio.
+Consecuencias:
+- Motor: la base de 1,419 y 709.5, la semana sin el grupo en 0, las previas sin volumen fuera, los bordes de +15 % y +30 %, «faltan
+  datos», «sin base», el orden y los errores.
+- Integración `demo-3.int.spec.ts`: la semana 5 de Mateo por HTTP (Pecho 1,419; Tríceps y Deltoides anterior 709.5; Dorsal 1,590 y
+  Cuádriceps 2,058) y la semana 3 en ámbar. E2E `analitica.spec.ts`: la tabla de Luis «sin base».
+- Para Notion (/notion-sync de P14.5): 02 §9 (`MUSCLE_FATIGUE_JV`), 03 (la regla del panel, RN-G18, con la fatiga por grupo), 05.2
+  (las tres columnas de `training.fatigue_panel_threshold`), 04 RF-33 y 07 §10 y §15 (P-27 resuelta, menos los coeficientes).

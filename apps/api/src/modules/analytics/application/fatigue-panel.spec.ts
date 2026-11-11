@@ -14,6 +14,9 @@ const JV: FatiguePanelThresholdRow = {
   fatigueAmberMin: 3,
   loadAmberAbovePct: 15,
   loadRedAbovePct: 30,
+  muscleRecoveryGreenHours: 48,
+  muscleRecoveryAmberHours: 60,
+  muscleRecoveryRedHours: 72,
 };
 
 /** Siete días iguales: el registro diario de la hoja trae un valor por semana. */
