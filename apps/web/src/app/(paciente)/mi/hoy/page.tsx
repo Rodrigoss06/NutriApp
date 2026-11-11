@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { DayLog } from '@/features/patient-app/day-log';
 import { hasSchedule } from '@/features/patient-app/day-schedule';
 import { DayScheduleCard } from '@/features/patient-app/day-schedule-card';
+import { WeeklyCheckinCard } from '@/features/patient-app/weekly-checkin-card';
 import { DaySummary } from '@/features/patient-app/day-summary';
 import { IndicationCard } from '@/features/patient-app/indication-card';
 import { MealLogger } from '@/features/patient-app/meal-logger';
@@ -86,6 +87,7 @@ export default async function Page() {
       {(sections.has('TRAINING') || nutrition) && hasSchedule(today.data.schedule) ? (
         <DayScheduleCard schedule={today.data.schedule} />
       ) : null}
+      {today.data.weeklyCheckin ? <WeeklyCheckinCard checkin={today.data.weeklyCheckin} /> : null}
       {day.ok && (nutrition || sections.has('HYDRATION')) ? (
         <section aria-labelledby="registrado-hoy" className="flex flex-col gap-2">
           <h2 id="registrado-hoy" className="text-lg font-semibold">

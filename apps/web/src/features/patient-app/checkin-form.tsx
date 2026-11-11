@@ -191,18 +191,7 @@ export function CheckinForm({
         ) : null}
       </fieldset>
 
-      <fieldset className="flex flex-col gap-4 rounded-xl border border-border bg-card p-4">
-        <legend className="px-1 font-semibold">Tu alimentación</legend>
-        <MeasureField
-          control={form.control}
-          name="nutritionCompliancePct"
-          label="Cuánto de tu plan cumpliste"
-          unit="%"
-          integer
-          problems={problems}
-        />
-      </fieldset>
-
+      {/* La alimentación se declara en el check-in del domingo, no cada día (P-21, P-22; ADR-110). */}
       <details className="rounded-xl border border-border bg-card p-4">
         <summary className="flex min-h-touch cursor-pointer items-center font-semibold">
           Más datos, si los tienes
