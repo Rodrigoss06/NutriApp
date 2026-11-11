@@ -28,6 +28,7 @@ const set = (
     reps: number | null;
     loadKg: number | null;
     rir: number | null;
+    rpe: number | null;
     restSeconds: number | null;
   }> = {},
 ) => ({
@@ -35,6 +36,7 @@ const set = (
   reps: 12,
   loadKg: 45,
   rir: 2,
+  rpe: null,
   restSeconds: 120,
   ...overrides,
 });
@@ -59,7 +61,7 @@ describe('P14.5 · volumen ajustado = volumen × factor RIR × factor descanso (
       adjustedVolumeKg: expect.closeTo(594, 9) as number,
     });
     expect(result.methodCode).toBe('ADJUSTED_VOLUME');
-    expect(result.methodVersion).toBe('1.0.0');
+    expect(result.methodVersion).toBe('1.1.0');
   });
 
   it('RIR 5 o más vale 0.8, y 180 s o más vale 0.95', () => {
@@ -68,23 +70,59 @@ describe('P14.5 · volumen ajustado = volumen × factor RIR × factor descanso (
     expect(result.outputs.adjustedVolumeKg).toBeCloseTo(540 * 0.8 * 0.95, 9);
   });
 
-  it('un RIR o un descanso sin factor queda «sin factor», nunca como 1', () => {
+  it('sin RIR ni RPE, o sin descanso prescrito, queda «sin factor», nunca como 1', () => {
     const result = run([
       set('sin-rir', { rir: null }),
-      set('descanso-raro', { restSeconds: 100 }),
       set('sin-descanso', { restSeconds: null }),
       set('ok'),
     ]);
     expect(result.outputs.sets.map((row) => row.adjustedVolumeKg)).toEqual([
       null,
       null,
-      null,
       expect.closeTo(594, 9),
     ]);
-    expect(result.outputs.sets[1]).toMatchObject({ rirFactor: 1.1, restFactor: null });
-    expect(result.outputs.volumeKg).toBe(2_160);
+    expect(result.outputs.sets[0]).toMatchObject({ rirFactor: null, restFactor: 1 });
+    expect(result.outputs.volumeKg).toBe(1_620);
     expect(result.outputs.adjustedVolumeKg).toBeCloseTo(594, 9);
-    expect(result.outputs.unfactoredSets).toBe(3);
+    expect(result.outputs.unfactoredSets).toBe(2);
+  });
+
+  // ADR-113 · respuesta de Rodrigo (2026-11-11): por tramos, ningún descanso cae en un vacío.
+  it.each([
+    [30, 1.15],
+    [45, 1.15],
+    [46, 1.1],
+    [60, 1.1],
+    [61, 1.05],
+    [75, 1.05],
+    [76, 1],
+    [100, 1],
+    [150, 1],
+    [179, 1],
+    [180, 0.95],
+    [240, 0.95],
+  ])('el descanso por tramos: %i s vale %d', (restSeconds, factor) => {
+    expect(run([set('a', { restSeconds })]).outputs.sets[0]?.restFactor).toBe(factor);
+  });
+
+  it('RN-F05 · con RPE y sin RIR, el RIR es 10 − RPE entre 0 y 5: RPE 8 = RIR 2 = 1.1', () => {
+    const factorOf = (rpe: number) =>
+      run([set('a', { rir: null, rpe })]).outputs.sets[0]?.rirFactor;
+    expect(factorOf(8)).toBe(1.1);
+    expect(factorOf(10)).toBe(1.3);
+    expect(factorOf(4)).toBe(0.8);
+    // Con el RIR registrado, manda el RIR.
+    expect(run([set('a', { rir: 3, rpe: 9 })]).outputs.sets[0]?.rirFactor).toBe(1);
+  });
+
+  it('un RPE con decimal sigue la fórmula de Jeremy: RPE 8.5 = RIR 1.5 = 1.15', () => {
+    const [row] = run([set('a', { rir: null, rpe: 8.5 })]).outputs.sets;
+    expect(row?.rirFactor).toBeCloseTo(1.15, 12);
+    expect(row?.adjustedVolumeKg).toBeCloseTo(540 * 1.15, 9);
+    expect(run([set('a', { rir: null, rpe: 5.5 })]).outputs.sets[0]?.rirFactor).toBeCloseTo(
+      0.85,
+      12,
+    );
   });
 
   it('sin carga (peso corporal sin lastre, movilidad o cardio) aporta 0 kg, con o sin factor', () => {
@@ -123,5 +161,6 @@ describe('P14.5 · volumen ajustado = volumen × factor RIR × factor descanso (
       }),
     ).toEqual(['NC-ENG-411']);
     expect(error([set('a', { reps: -1 })], JV_FACTORS)).toEqual(['NC-ENG-412']);
+    expect(error([set('a', { rpe: 10.5 })], JV_FACTORS)).toEqual(['NC-ENG-412']);
   });
 });

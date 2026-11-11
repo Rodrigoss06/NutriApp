@@ -3,6 +3,16 @@
 Cambiar una fórmula o una constante sube la versión del método afectado y la del motor (02 §9).
 Los resultados guardados conservan la versión con que se calcularon (RN-D01, RN-D08).
 
+## 1.14.0 — 2026-11-11
+
+- `ADJUSTED_VOLUME` 1.1.0 (P14.5; P-26, respuestas de Rodrigo del 2026-11-11; ADR-113):
+  - el descanso va por tramos: cada fila vale hasta su valor, la «o más» desde el suyo y, entre la última fila y la «o más», la
+    última. Con la tabla de Jeremy: hasta 45 s = 1.15, de 46 a 60 s = 1.10, de 61 a 75 s = 1.05, de 76 a 179 s = 1.00 y 180 s o
+    más = 0.95;
+  - el RIR entre dos filas sigue la recta entre ellas, que es la fórmula de Jeremy (RIR 1.5 = 1.15);
+  - con RPE y sin RIR, el RIR es 10 − RPE entre 0 y 5 (RN-F05): RPE 8 = RIR 2 = 1.1. Un RPE fuera de 0 a 10 da NC-ENG-412.
+  - Sin RIR ni RPE, o sin descanso prescrito, la serie sigue «sin factor». Las tablas no cambian.
+
 ## 1.13.0 — 2026-11-11
 
 - Plantilla de la propuesta de rutina 2.0.0 (RN-F14; P14.5, PR 9b; P-34, respuesta de Jeremy y decisiones de Rodrigo del

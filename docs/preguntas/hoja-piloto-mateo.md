@@ -200,11 +200,11 @@ RIR 2, por 1.1, da 1,782. Solo vemos algunos valores: RIR 2 = 1.1, RIR 3 = 1.0, 
 > **Respuesta (2026-11-11, por Rodrigo), para lo que la tabla no traía:**
 >
 > - un descanso entre dos filas toma el escalón inferior: 150 s = 1.00, el de 120 s. Escrito por tramos: hasta 45 s = 1.15,
->   de 46 a 60 s = 1.10, de 61 a 75 s = 1.05, de 76 a 179 s = 1.00 y 180 s o más = 0.95. Por aclarar: los tramos y el escalón
->   inferior no dan lo mismo entre 46 y 89 s (50 s: 1.10 por tramos, 1.15 por escalón inferior; 70 s: 1.05 o 1.10; 80 s: 1.00
->   o 1.05);
+>   de 46 a 60 s = 1.10, de 61 a 75 s = 1.05, de 76 a 179 s = 1.00 y 180 s o más = 0.95. Entre 46 y 89 s los tramos y el
+>   escalón inferior no daban lo mismo: valen los tramos (Rodrigo, 2026-11-11). 50 s = 1.10, 70 s = 1.05 y 80 s = 1.00;
 > - menos de 45 s (30 s) = 1.15, como 45 s;
-> - una serie con RPE y sin RIR: RIR = 10 − RPE, entre 0 y 5. RPE 8 = RIR 2 = 1.1.
+> - una serie con RPE y sin RIR: RIR = 10 − RPE, entre 0 y 5. RPE 8 = RIR 2 = 1.1. Con decimal, la fórmula de Jeremy
+>   (Rodrigo, 2026-11-11): RPE 8.5 = RIR 1.5 = 1.15. Lo sigue el motor 1.14.0 (ADR-113).
 
 **P-27 · Fatiga por grupo muscular** (panel, «Fatiga por grupo muscular»)
 
@@ -277,7 +277,15 @@ RIR 2, por 1.1, da 1,782. Solo vemos algunos valores: RIR 2 = 1.1, RIR 3 = 1.0, 
 > cierre de mesociclo de 4 semanas. Sí al consentimiento propio de datos sensibles. Se guardan mientras la cuenta esté activa y 12
 > meses después de la baja, o se borran si revoca.
 >
-> **Rodrigo (2026-11-11):** hay texto de consentimiento para las fotos.
+> **Rodrigo (2026-11-11):** el texto del consentimiento de las fotos:
+>
+> «Autorizo de manera libre, previa y expresa la carga, almacenamiento y visualización de mis fotografías corporales de progreso
+> en la plataforma, con la única finalidad de que mi entrenador realice el seguimiento de mi evolución física. Estas imágenes son
+> estrictamente confidenciales, no se compartirán con terceros ni se usarán con fines comerciales, y se conservarán únicamente
+> mientras mi expediente esté activo o hasta que revoque este consentimiento.»
+>
+> Por aclarar antes del PR 6b: el texto dice que se conservan mientras el expediente esté activo; la respuesta de arriba suma 12
+> meses después de la baja.
 
 ## Documentos, asistencias y prescripción
 
@@ -378,6 +386,9 @@ RIR 2, por 1.1, da 1,782. Solo vemos algunos valores: RIR 2 = 1.1, RIR 3 = 1.0, 
 > 2. Las series y las repeticiones de cada bloque. La hoja da 3 series a los primeros bloques y 2 a los accesorios, y rangos
 >    distintos: curl femoral 10–15, pantorrilla 12–15, hombro 12–15. ¿Son valores base de la propuesta? Por ahora sigue
 >    3 × 8–12, como RN-F14.
+>
+> **Respuesta (2026-11-11, por Rodrigo):** de acuerdo con las dos, por ahora: la máquina en los tres niveles de rodilla y
+> 3 × 8–12.
 
 ## Otros
 

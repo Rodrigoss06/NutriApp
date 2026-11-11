@@ -1,6 +1,6 @@
 import { defineMethod } from '../registry/run-method.js';
 
-/** Una fila de una tabla de factores: el valor desde el que vale y, si `orMore`, también para todo lo que es mayor. */
+/** Una fila de una tabla de factores: su valor y su factor; si `orMore`, vale también para todo lo que es mayor. */
 export interface VolumeFactorRow {
   readonly from: number;
   readonly factor: number;
@@ -20,6 +20,8 @@ export interface AdjustedVolumeSet {
   readonly reps: number | null;
   readonly loadKg: number | null;
   readonly rir: number | null;
+  /** Con RPE y sin RIR, el RIR es 10 − RPE, entre 0 y 5 (RN-F05; P-26). */
+  readonly rpe: number | null;
   /** El descanso prescrito de la serie. */
   readonly restSeconds: number | null;
 }
@@ -48,17 +50,55 @@ export interface AdjustedVolumeOutput {
   readonly unfactoredSets: number;
 }
 
-/** El factor de un valor: la fila exacta o la última «o más» que lo alcanza; si no, null («sin factor»). */
-function factorOf(rows: readonly VolumeFactorRow[], value: number | null): number | null {
-  if (value === null) return null;
-  const exact = rows.find((row) => row.from === value);
-  if (exact) return exact.factor;
+/** La fila «o más» más alta que alcanza el valor, si hay una. */
+function openRow(rows: readonly VolumeFactorRow[], value: number): VolumeFactorRow | null {
   let open: VolumeFactorRow | null = null;
   for (const row of rows) {
     if (row.orMore && row.from <= value && (open === null || row.from > open.from)) open = row;
   }
-  return open?.factor ?? null;
+  return open;
 }
+
+const closedRows = (rows: readonly VolumeFactorRow[]): readonly VolumeFactorRow[] =>
+  rows.filter((row) => !row.orMore).toSorted((a, b) => a.from - b.from);
+
+/**
+ * El factor RIR: la fila exacta, la «o más» que lo alcanza o, entre dos filas, la recta entre ellas, que es la fórmula de Jeremy
+ * (1.0 + (3 − RIR) × 0.1): RIR 1.5 = 1.15. Fuera de la tabla, null («sin factor»).
+ */
+function rirFactorOf(rows: readonly VolumeFactorRow[], rir: number | null): number | null {
+  if (rir === null) return null;
+  const exact = rows.find((row) => row.from === rir);
+  if (exact) return exact.factor;
+  const open = openRow(rows, rir);
+  if (open) return open.factor;
+  // La recta llega hasta la fila «o más»: RIR 4.5 queda entre 4 (0.9) y 5 o más (0.8), en 0.85.
+  const sorted = rows.toSorted((a, b) => a.from - b.from);
+  const upper = sorted.findIndex((row) => row.from > rir);
+  const below = sorted[upper - 1];
+  const above = sorted[upper];
+  if (upper < 1 || !below || !above) return null;
+  return (
+    below.factor + ((rir - below.from) / (above.from - below.from)) * (above.factor - below.factor)
+  );
+}
+
+/**
+ * El factor del descanso, por tramos (P-26, respuesta de Rodrigo del 2026-11-11): cada fila vale hasta su valor, la «o más» desde
+ * el suyo, y entre la última fila y la «o más» vale la última. Con la tabla de Jeremy: hasta 45 s = 1.15, de 46 a 60 s = 1.10,
+ * de 61 a 75 s = 1.05, de 76 a 179 s = 1.00 y 180 s o más = 0.95. Solo una tabla vacía deja la serie «sin factor».
+ */
+function restFactorOf(rows: readonly VolumeFactorRow[], restSeconds: number | null): number | null {
+  if (restSeconds === null) return null;
+  const open = openRow(rows, restSeconds);
+  if (open) return open.factor;
+  const closed = closedRows(rows);
+  return (closed.find((row) => row.from >= restSeconds) ?? closed.at(-1))?.factor ?? null;
+}
+
+/** El RIR de la serie: el registrado o, con solo el RPE, 10 − RPE entre 0 y 5 (RN-F05). */
+const rirOf = (set: AdjustedVolumeSet): number | null =>
+  set.rir ?? (set.rpe === null ? null : Math.min(5, Math.max(0, 10 - set.rpe)));
 
 const badTable = (rows: readonly VolumeFactorRow[]): boolean =>
   rows.some(
@@ -70,19 +110,20 @@ const negative = (value: number | null): boolean =>
 
 /**
  * El volumen ajustado de la hoja piloto de JV Fitness (P14.5, P-26): por serie, repeticiones × carga × factor RIR × factor del
- * descanso prescrito, con las tablas como datos versionados. Un RIR o un descanso que la tabla no trae queda «sin factor», nunca
- * como 1: la serie no entra en el ajustado y se cuenta aparte. Sin carga (peso corporal sin lastre, movilidad o cardio) la
- * serie aporta 0 kg. La cadencia y la ejecución no cambian el volumen.
+ * descanso prescrito, con las tablas como datos versionados. 1.1.0 (ADR-113): el descanso va por tramos, el RIR entre dos filas
+ * sigue la fórmula y, con RPE y sin RIR, el RIR es 10 − RPE entre 0 y 5. Sin RIR ni RPE, o sin descanso prescrito, la serie
+ * queda «sin factor», nunca como 1: no entra en el ajustado y se cuenta aparte. Sin carga (peso corporal sin lastre, movilidad o
+ * cardio) la serie aporta 0 kg. La cadencia y la ejecución no cambian el volumen.
  */
 export const ADJUSTED_VOLUME = defineMethod<AdjustedVolumeInput, AdjustedVolumeOutput>({
   code: 'ADJUSTED_VOLUME',
-  version: '1.0.0',
+  version: '1.1.0',
   kind: 'TRAINING',
   population: 'ALL',
   requiredInputs: ['sets', 'factors'],
   requiredSites: [],
   citation:
-    'Hoja piloto de JV Fitness, registro de cargas (P-26, respuestas de Jeremy del 2026-11-10): volumen × factor RIR × factor descanso',
+    'Hoja piloto de JV Fitness, registro de cargas (P-26, respuestas de Jeremy del 2026-11-10 y de Rodrigo del 2026-11-11): volumen × factor RIR × factor descanso',
   validity: [
     {
       rule: 'RN-F03',
@@ -95,13 +136,16 @@ export const ADJUSTED_VOLUME = defineMethod<AdjustedVolumeInput, AdjustedVolumeO
       rule: 'RN-F03',
       severity: 'ERROR',
       code: 'NC-ENG-412',
-      message: 'Las repeticiones, la carga, el RIR y el descanso de una serie no son negativos.',
+      message:
+        'Las repeticiones, la carga, el RIR y el descanso de una serie no son negativos, y el RPE va de 0 a 10.',
       when: ({ sets }) =>
         sets.some(
           (set) =>
             negative(set.reps) ||
             negative(set.loadKg) ||
             negative(set.rir) ||
+            negative(set.rpe) ||
+            (set.rpe !== null && set.rpe > 10) ||
             negative(set.restSeconds),
         ),
     },
@@ -109,8 +153,8 @@ export const ADJUSTED_VOLUME = defineMethod<AdjustedVolumeInput, AdjustedVolumeO
   compute: ({ sets, factors }) => {
     const rows = sets.map((set): AdjustedVolumeRow => {
       const volumeKg = (set.reps ?? 0) * (set.loadKg ?? 0);
-      const rirFactor = factorOf(factors.rir, set.rir);
-      const restFactor = factorOf(factors.rest, set.restSeconds);
+      const rirFactor = rirFactorOf(factors.rir, rirOf(set));
+      const restFactor = restFactorOf(factors.rest, set.restSeconds);
       const adjustedVolumeKg =
         volumeKg === 0
           ? 0
