@@ -1,4 +1,7 @@
-/** Los 15 patrones de movimiento de la biblioteca (07 §5), con el mismo código que exercise.movement_pattern. */
+/**
+ * Los 18 patrones de movimiento de la biblioteca (07 §5), con el mismo código que exercise.movement_pattern: los 15 de la V3 y las
+ * movilidades de hombro y torácica y la estabilidad lumbar de la hoja piloto (P-34; ADR-111).
+ */
 export const MOVEMENT_PATTERNS = [
   'SQUAT',
   'HINGE',
@@ -15,6 +18,9 @@ export const MOVEMENT_PATTERNS = [
   'CORE_ANTI_ROTATION',
   'CALF',
   'CONDITIONING',
+  'SHOULDER_MOBILITY',
+  'THORACIC_MOBILITY',
+  'LUMBAR_STABILITY',
 ] as const;
 export type MovementPattern = (typeof MOVEMENT_PATTERNS)[number];
 

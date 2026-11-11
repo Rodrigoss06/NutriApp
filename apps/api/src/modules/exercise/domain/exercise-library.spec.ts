@@ -45,7 +45,7 @@ const messagesOf = (record: Partial<typeof ROW>) => {
 };
 
 describe('07 §5 · los códigos son los del motor', () => {
-  it('los 15 patrones y los 3 niveles', () => {
+  it('los 18 patrones (los 15 de la V3 y los 3 de la hoja piloto, P-34) y los 3 niveles', () => {
     expect(MOVEMENT_PATTERN_CODES).toEqual(MOVEMENT_PATTERNS);
     expect(TRAINING_LEVEL_CODES).toEqual(TRAINING_LEVELS);
   });

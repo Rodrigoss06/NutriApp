@@ -1,6 +1,6 @@
 import { z } from 'zod';
 
-/** Los 15 patrones de movimiento (07 §5), con el mismo código en el motor y en exercise.movement_pattern. */
+/** Los 18 patrones de movimiento (07 §5; P-34, ADR-111), con el mismo código en el motor y en exercise.movement_pattern. */
 export const MOVEMENT_PATTERNS = [
   'SQUAT',
   'HINGE',
@@ -17,6 +17,9 @@ export const MOVEMENT_PATTERNS = [
   'CORE_ANTI_ROTATION',
   'CALF',
   'CONDITIONING',
+  'SHOULDER_MOBILITY',
+  'THORACIC_MOBILITY',
+  'LUMBAR_STABILITY',
 ] as const;
 export type MovementPatternCode = (typeof MOVEMENT_PATTERNS)[number];
 

@@ -139,15 +139,20 @@ describe('RF-25 · RF-38 · la biblioteca base', () => {
     });
   });
 
-  it('el catálogo: los 15 patrones en orden, los grupos musculares y los equipos', async () => {
+  it('el catálogo: los 18 patrones en orden (los 3 de la hoja piloto al final), los grupos musculares y los equipos', async () => {
     const catalog = (await harness.get('/exercises/catalog', cookie)).body as {
       patterns: { code: string; name: string }[];
       muscles: { code: string; region: string }[];
       equipment: { code: string; name: string }[];
     };
 
-    expect(catalog.patterns).toHaveLength(15);
+    expect(catalog.patterns).toHaveLength(18);
     expect(catalog.patterns[0]).toEqual({ code: 'SQUAT', name: 'Sentadilla' });
+    expect(catalog.patterns.at(-1)).toEqual({
+      code: 'LUMBAR_STABILITY',
+      name: 'Estabilidad lumbar',
+    });
+    expect(catalog.equipment.map((e) => e.code)).toContain('FOAM_ROLLER');
     expect(catalog.muscles.map((m) => m.code)).toContain('HAMSTRINGS');
     expect(catalog.equipment.map((e) => e.code)).toContain('FULL_GYM');
   });
@@ -392,10 +397,11 @@ describe('RN-F14 · 07 §5 · la tabla patrón × nivel', () => {
   /** La tabla es de toda la organización: la cambian el dueño y el administrador. */
   const manager = () => org.staff.owner.cookie;
 
-  it('G-32: la de la V3, con 45 filas, en cada organización', async () => {
+  it('G-32: la de la V3, con sus 45 filas, y las 9 de la hoja piloto (P-34), en cada organización', async () => {
     const rows = await choices();
 
-    expect(rows).toHaveLength(45);
+    expect(rows).toHaveLength(54);
+    expect(choice(rows, 'LUMBAR_STABILITY', 'BEGINNER')?.exercise.name).toBe('Bird dog');
     expect(choice(rows, 'SQUAT', 'BEGINNER')?.exercise.name).toBe('Sentadilla goblet');
     expect(choice(rows, 'SQUAT', 'INTERMEDIATE')?.exercise.name).toBe('Prensa de piernas');
     expect(choice(rows, 'SQUAT', 'ADVANCED')?.exercise.name).toBe('Sentadilla trasera');

@@ -2858,3 +2858,46 @@ Decisión:
 Consecuencias:
 - Unitarias: lo que valida el formulario, el cuerpo del POST y el texto del plazo.
 - Guion de la Demo 3: el check-in en Hoy del paciente de prueba, si la demo cae de domingo a martes.
+
+## ADR-111 · Los patrones y los ejercicios de la prescripción de la hoja — aceptada (2026-11-10)
+Contexto: P14.5, PR 9a (fase B; P-34, respondida por Jeremy el 2026-11-10; RN-F11, RN-F14; ADR-098). La prescripción de la hoja
+piloto trae patrones que la biblioteca no tenía, y Jeremy dio sus ejercicios por nivel, solo con el nombre. Rodrigo decidió el
+2026-11-10:
+- se cargan como provisionales, con valores estándar, hasta que Jeremy los valide;
+- «Brazos» va en dos bloques, Bíceps y Tríceps;
+- con 3 días se usa la plantilla de cuerpo completo A, B y C de la V3.
+Decisión:
+- Tres patrones nuevos, después de los 15 de la V3 (migración `202611100500_exercise_pilot_patterns`):
+  - movilidad de hombro (`SHOULDER_MOBILITY`);
+  - movilidad torácica (`THORACIC_MOBILITY`);
+  - estabilidad lumbar (`LUMBAR_STABILITY`).
+  - Antirrotación, antiextensión, cardio y brazos ya existían.
+  - Los equipos nuevos son el rodillo de espuma y la bicicleta de aire.
+  - Los códigos son los mismos en el motor, los contratos, la API y la base.
+- Los ejercicios de Jeremy que faltaban, en `seeds/exercise/ejercicios-base.csv`, todos provisionales (RN-I02):
+  - movilidad de hombro: dislocaciones con banda, rotación externa en polea y CARs de hombro;
+  - movilidad torácica: open book en el suelo, extensión torácica en rodillo y rotación torácica en cuadrupedia;
+  - estabilidad lumbar: el bird dog, que pasa de antirrotación a este patrón como en la lista de Jeremy, el puente glúteo
+    unilateral y el hip thrust isométrico;
+  - el Pallof press en split stance, los intervalos en bicicleta de aire y el curl con barra Z;
+  - los alias «Pallof press isométrico» y «Extensión tras nuca» para dos ejercicios que ya estaban.
+  - Cada uno lleva músculo principal y secundarios, equipo, precaución, variantes y valores base estándar.
+  - «/lado» es un ejercicio unilateral con repeticiones, y «s/lado», uno unilateral medido en segundos: la biblioteca ya los
+    tenía.
+- La tabla patrón × nivel suma las 9 filas de los patrones nuevos, con los ejercicios de Jeremy de básico a avanzado.
+  - Las 45 filas de la V3 no cambian, tampoco en los patrones que ya existían.
+  - Las listas de Jeremy para antirrotación, antiextensión, cardio y brazos quedan como variantes en la biblioteca, porque
+    cambiar esas filas movería la propuesta de la V3 que ya se probó (G-32).
+- La plantilla de sesiones de la V3 no cambia: los patrones nuevos se eligen a mano en un bloque hasta el PR 9b.
+Consecuencias:
+- Pruebas:
+  - los 18 patrones en el motor, la API y la base;
+  - las 54 filas de la tabla;
+  - los ejercicios de Jeremy por nivel;
+  - el catálogo en la integración.
+- Para el PR 9b, a confirmar:
+  - con 5 días, Jeremy quiere torso-pierna más Acondicionamiento, pero RN-F14 y G-31 dicen push/pull/legs;
+  - los bloques «Flexión de rodilla» y «Extensión de rodilla» de la hoja no son patrones de la biblioteca: el curl femoral
+    está en bisagra y la extensión de rodilla en sentadilla.
+- Para Notion (/notion-sync de P14.5): 07 §5 (18 patrones y la tabla), 05.2 (los patrones y los equipos) y RN-I02 (los ejercicios
+  provisionales de la hoja).
