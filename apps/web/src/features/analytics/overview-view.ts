@@ -17,6 +17,8 @@ export const ALERT_LABELS = {
   READINESS_YELLOW: 'Semáforo del día en ámbar',
   WEEKLY_RED: 'Semana en rojo',
   WEEKLY_AMBER: 'Semana en ámbar',
+  FATIGUE_RED: 'Fatiga y recuperación en rojo',
+  FATIGUE_AMBER: 'Fatiga y recuperación en ámbar',
   PENDING_REVIEW: 'Control semanal sin decidir',
 } as const satisfies Record<OverviewAlert, string>;
 
@@ -28,6 +30,8 @@ export const ALERT_TONES = {
   READINESS_YELLOW: 'warning',
   WEEKLY_RED: 'danger',
   WEEKLY_AMBER: 'warning',
+  FATIGUE_RED: 'danger',
+  FATIGUE_AMBER: 'warning',
   PENDING_REVIEW: 'info',
 } as const satisfies Record<OverviewAlert, Tone>;
 
@@ -37,6 +41,9 @@ export function alertHref(patientId: string, alert: OverviewAlert): string {
   switch (alert) {
     case 'LOW_ADHERENCE':
       return `${base}/analitica`;
+    case 'FATIGUE_RED':
+    case 'FATIGUE_AMBER':
+      return `${base}/analitica/rutina`;
     case 'WEEKLY_RED':
     case 'WEEKLY_AMBER':
     case 'PENDING_REVIEW':

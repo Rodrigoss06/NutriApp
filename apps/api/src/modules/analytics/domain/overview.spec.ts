@@ -25,6 +25,7 @@ const quiet: OverviewInput = {
   adherence7dPct: 100,
   latestWeek: null,
   undecidedReviews: 0,
+  latestFatigueWeek: null,
 };
 
 const day = (targetKcal: number | null, kcalInRange: boolean | null) => ({
@@ -105,6 +106,18 @@ describe('RF-34 · las alertas del panel del profesional (ADR-086, ADR-093)', ()
     expect(overviewAlerts({ ...quiet, undecidedReviews: 1 })).toEqual(['PENDING_REVIEW']);
   });
 
+  it('RN-G16 · P-24 · el estado general del panel de fatiga de la última semana cerrada, por 7 días; solo informa (P-25)', () => {
+    const week = (weekEnd: string, overall: 'GREEN' | 'AMBER' | 'RED' | 'NO_DATA') => ({
+      ...quiet,
+      latestFatigueWeek: { weekEnd, overall },
+    });
+    expect(overviewAlerts(week('2026-11-01', 'RED'))).toEqual(['FATIGUE_RED']);
+    expect(overviewAlerts(week('2026-10-31', 'AMBER'))).toEqual(['FATIGUE_AMBER']);
+    expect(overviewAlerts(week('2026-10-30', 'RED'))).toEqual([]);
+    expect(overviewAlerts(week('2026-11-01', 'GREEN'))).toEqual([]);
+    expect(overviewAlerts(week('2026-11-01', 'NO_DATA'))).toEqual([]);
+  });
+
   it('varias a la vez, siempre en el mismo orden', () => {
     expect(
       overviewAlerts({
@@ -114,7 +127,15 @@ describe('RF-34 · las alertas del panel del profesional (ADR-086, ADR-093)', ()
         unreadNotes: 1,
         undecidedReviews: 2,
         latestWeek: { weekEnd: '2026-11-01', light: 'RED' },
+        latestFatigueWeek: { weekEnd: '2026-11-01', overall: 'AMBER' },
       }),
-    ).toEqual(['NO_RECENT_LOGS', 'LOW_ADHERENCE', 'UNREAD_NOTES', 'WEEKLY_RED', 'PENDING_REVIEW']);
+    ).toEqual([
+      'NO_RECENT_LOGS',
+      'LOW_ADHERENCE',
+      'UNREAD_NOTES',
+      'WEEKLY_RED',
+      'FATIGUE_AMBER',
+      'PENDING_REVIEW',
+    ]);
   });
 });

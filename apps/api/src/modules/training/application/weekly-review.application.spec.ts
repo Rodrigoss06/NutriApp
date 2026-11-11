@@ -212,6 +212,10 @@ class MemoryReviews implements WeeklyReviewStore {
   volumeFactorVersions() {
     return Promise.resolve([]);
   }
+  /** Ni el panel de fatiga (ADR-108). */
+  fatiguePanelThresholdVersions() {
+    return Promise.resolve([]);
+  }
 }
 
 let reviews: MemoryReviews;

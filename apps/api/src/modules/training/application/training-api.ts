@@ -4,6 +4,7 @@ import type { WeeklyLight } from '../domain/weekly-review.js';
 import { PROGRAM_STORE, type ProgramStore } from './ports/program.ports.js';
 import {
   WEEKLY_REVIEW_STORE,
+  type FatiguePanelThresholdRow,
   type VolumeFactorsRow,
   type WeeklyReviewStore,
 } from './ports/weekly-review.ports.js';
@@ -47,6 +48,16 @@ export class TrainingApi {
    */
   volumeFactorVersions(organizationId: string): Promise<readonly VolumeFactorsRow[]> {
     return this.reviews.volumeFactorVersions(organizationId);
+  }
+
+  /**
+   * Las versiones de los umbrales del panel de fatiga (P-23, ADR-108): las de la organización y las globales, de la más vieja a la
+   * más nueva. La vigente de una semana la elige quien las usa.
+   */
+  fatiguePanelThresholdVersions(
+    organizationId: string,
+  ): Promise<readonly FatiguePanelThresholdRow[]> {
+    return this.reviews.fatiguePanelThresholdVersions(organizationId);
   }
 
   /** Su estado: así quien lo pide sabe si es un borrador o algo que no existe. null si no existe o no se ve. */

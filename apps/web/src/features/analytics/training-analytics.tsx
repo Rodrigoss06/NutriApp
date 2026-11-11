@@ -1,5 +1,7 @@
 import {
   methodLabel,
+  type FatiguePanelWeek,
+  type LoadLight,
   type TrainingAnalytics,
   type TrainingMuscleWeek,
   type TrainingWeek,
@@ -14,7 +16,16 @@ import { weekLabel } from './diet-view';
 import { ProgramPicker } from './program-picker';
 import { StatTable } from './stat-table';
 import { OneRmChart, TrainingWeekCharts } from './training-charts';
-import { adjustedText, mesocycleGroups, musclesInOrder, muscleWeekNo } from './training-view';
+import {
+  adjustedText,
+  FATIGUE_LIGHT_LABELS,
+  FATIGUE_LIGHT_TONES,
+  fatigueWeeks,
+  loadChangeText,
+  mesocycleGroups,
+  musclesInOrder,
+  muscleWeekNo,
+} from './training-view';
 
 const ONE_DECIMAL = new Intl.NumberFormat('es-PE', { maximumFractionDigits: 1 });
 /** Series fraccionadas (RN-F06): 1 por músculo principal y 0.5 por secundario, sin ceros de relleno. */
@@ -101,6 +112,96 @@ function WeeksTable({ weeks, caption }: { weeks: readonly TrainingWeek[]; captio
           cell: (week) => load(week.srpeLoad),
         },
         { key: 'cardio', header: 'Cardio', numeric: true, cell: cardioText },
+      ]}
+    />
+  );
+}
+
+function FatigueLight({ light, detail }: { light: LoadLight; detail?: string | null }) {
+  return (
+    <span className="flex flex-wrap items-center gap-1">
+      <StatusBadge tone={FATIGUE_LIGHT_TONES[light]}>{FATIGUE_LIGHT_LABELS[light]}</StatusBadge>
+      {detail ? <span className="text-xs text-muted-foreground tabular-nums">{detail}</span> : null}
+    </span>
+  );
+}
+
+/**
+ * El panel de fatiga y recuperación de la hoja piloto (P14.5, PR 3; P-23 y P-24; ADR-108), semana a semana. Los promedios llegan
+ * sin redondear y se redondean aquí (RN-D09). Solo informa: decide el control semanal (P-25).
+ */
+function FatiguePanelTable({
+  weeks,
+}: {
+  weeks: readonly (TrainingWeek & { readonly fatigue: FatiguePanelWeek })[];
+}) {
+  const caption = 'Panel de fatiga y recuperación por semana';
+  return (
+    <StatTable
+      label={caption}
+      caption={caption}
+      rows={weeks}
+      rowKey={(week) => String(week.weekNo)}
+      columns={[
+        {
+          key: 'week',
+          header: 'Semana',
+          cell: (week) => `S${String(week.weekNo)} · ${weekLabel(week.weekStart, week.weekEnd)}`,
+        },
+        {
+          key: 'stress',
+          header: 'Estrés',
+          numeric: true,
+          cell: (week) => scale(week.fatigue.avgStress),
+        },
+        {
+          key: 'sleep',
+          header: 'Sueño',
+          numeric: true,
+          cell: (week) =>
+            week.fatigue.avgSleepHours === null ? '—' : `${scale(week.fatigue.avgSleepHours)} h`,
+        },
+        {
+          key: 'fatigue',
+          header: 'Fatiga percibida',
+          numeric: true,
+          cell: (week) => scale(week.fatigue.avgFatigue),
+        },
+        {
+          key: 'adjusted',
+          header: 'Volumen ajustado',
+          numeric: true,
+          cell: (week) => adjustedText(week.fatigue.adjustedVolumeKg, week.unfactoredSets),
+        },
+        {
+          key: 'base',
+          header: 'Prom. 3 sem.',
+          numeric: true,
+          cell: (week) =>
+            week.fatigue.baseVolumeKg === null ? '—' : `${load(week.fatigue.baseVolumeKg)} kg`,
+        },
+        {
+          key: 'load',
+          header: 'Carga',
+          cell: (week) => (
+            <FatigueLight light={week.fatigue.load} detail={loadChangeText(week.fatigue)} />
+          ),
+        },
+        {
+          key: 'recovery',
+          header: 'Recuperación',
+          cell: (week) => <FatigueLight light={week.fatigue.recovery} />,
+        },
+        {
+          key: 'perceived',
+          header: 'Fatiga',
+          cell: (week) => <FatigueLight light={week.fatigue.perceivedFatigue} />,
+        },
+        {
+          key: 'overall',
+          header: 'Estado general',
+          cell: (week) => <FatigueLight light={week.fatigue.overall} />,
+        },
       ]}
     />
   );
@@ -267,6 +368,7 @@ export function TrainingAnalyticsView({
           {[
             methods.tonnage,
             methods.adjustedVolume,
+            methods.fatiguePanel,
             methods.fractionalSets,
             methods.compliance,
             methods.rpe,
@@ -299,6 +401,14 @@ export function TrainingAnalyticsView({
           </div>
         ))}
       </Section>
+      {fatigueWeeks(analytics.weeks).length > 0 ? (
+        <Section
+          title="Panel de fatiga y recuperación"
+          description="La recuperación sale del estrés y el sueño promedio de la semana; la carga compara su volumen ajustado con el promedio de las 3 semanas previas que tienen volumen; el estado general es el peor de los tres. Solo informa: decide el control semanal."
+        >
+          <FatiguePanelTable weeks={fatigueWeeks(analytics.weeks)} />
+        </Section>
+      ) : null}
       {weekNo !== null && muscleWeek ? (
         <Section
           title="Series por grupo muscular"

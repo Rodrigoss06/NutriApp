@@ -2,6 +2,8 @@ import type { TrainingAnalytics, TrainingWeek } from '@nutricoach/contracts';
 import { describe, expect, it } from 'vitest';
 import {
   adjustedText,
+  fatigueWeeks,
+  loadChangeText,
   mesocycleGroups,
   musclesInOrder,
   muscleWeekNo,
@@ -29,6 +31,7 @@ const week = (weekNo: number, mesocycleId: string, started: boolean): TrainingWe
   cardioMinutesDone: null,
   cardioCompliancePct: null,
   muscles: [],
+  fatigue: null,
 });
 
 const method = { code: 'TONNAGE', version: '1.0.0' };
@@ -40,6 +43,7 @@ describe('RF-33 · la analítica de rutina en pantalla', () => {
     methods: {
       tonnage: method,
       adjustedVolume: method,
+      fatiguePanel: method,
       fractionalSets: method,
       compliance: method,
       sfr: method,
@@ -132,5 +136,30 @@ describe('P-26 · el volumen ajustado en pantalla (ADR-106)', () => {
     expect(adjustedText(1_782, 0)).toBe('1,782 kg');
     expect(adjustedText(594, 2)).toBe('594 kg · 2 sin factor');
     expect(adjustedText(null, null)).toBe('—');
+  });
+
+  it('P-23 · P-24 · el panel de fatiga: solo las semanas con panel, y el cambio de la carga con su signo', () => {
+    const panel = {
+      thresholdId: 't',
+      inputsHash: 'h',
+      avgStress: 3,
+      avgSleepHours: 7.1,
+      avgFatigue: 3,
+      adjustedVolumeKg: 6336,
+      baseVolumeKg: 5355,
+      loadChangePct: 18.319,
+      load: 'AMBER',
+      recovery: 'AMBER',
+      perceivedFatigue: 'AMBER',
+      overall: 'AMBER',
+    } as const;
+    expect(
+      fatigueWeeks([{ ...week(1, 'b', true), fatigue: panel }, week(2, 'b', false)]).map(
+        (w) => w.weekNo,
+      ),
+    ).toEqual([1]);
+    expect(loadChangeText(panel)).toBe('+18.3 %');
+    expect(loadChangeText({ loadChangePct: -40.6 })).toBe('−40.6 %');
+    expect(loadChangeText({ loadChangePct: null })).toBeNull();
   });
 });

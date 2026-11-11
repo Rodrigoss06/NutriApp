@@ -12,6 +12,8 @@ export const OVERVIEW_ALERTS = [
   'READINESS_YELLOW',
   'WEEKLY_RED',
   'WEEKLY_AMBER',
+  'FATIGUE_RED',
+  'FATIGUE_AMBER',
   'PENDING_REVIEW',
 ] as const;
 export type OverviewAlert = (typeof OVERVIEW_ALERTS)[number];

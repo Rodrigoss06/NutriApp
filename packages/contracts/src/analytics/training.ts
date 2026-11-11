@@ -26,6 +26,35 @@ export const trainingMuscleWeekSchema = z.object({
 });
 export type TrainingMuscleWeek = z.infer<typeof trainingMuscleWeekSchema>;
 
+/** Verde, ámbar, rojo y «faltan datos»; la carga suma «sin base» (P-23, P-24). */
+export const FATIGUE_LIGHTS = ['GREEN', 'AMBER', 'RED', 'NO_DATA'] as const;
+export type FatigueLight = (typeof FATIGUE_LIGHTS)[number];
+export const LOAD_LIGHTS = [...FATIGUE_LIGHTS, 'NO_BASE'] as const;
+export type LoadLight = (typeof LOAD_LIGHTS)[number];
+
+/**
+ * El panel de fatiga y recuperación de una semana (P14.5, PR 3; P-23 y P-24; ADR-108): solo informa, decide el control semanal
+ * (P-25). Los promedios y el cambio llegan sin redondear (RN-D09).
+ */
+export const fatiguePanelWeekSchema = z.object({
+  /** La versión de los umbrales vigente al empezar la semana. */
+  thresholdId: z.string(),
+  inputsHash: z.string(),
+  avgStress: amount,
+  avgSleepHours: amount,
+  avgFatigue: amount,
+  adjustedVolumeKg: amount,
+  /** «Prom. 3 sem.»: las previas con volumen; null sin ninguna. */
+  baseVolumeKg: amount,
+  loadChangePct: amount,
+  load: z.enum(LOAD_LIGHTS),
+  recovery: z.enum(FATIGUE_LIGHTS),
+  perceivedFatigue: z.enum(FATIGUE_LIGHTS),
+  /** El peor de los tres; «sin base» no suma alerta. */
+  overall: z.enum(FATIGUE_LIGHTS),
+});
+export type FatiguePanelWeek = z.infer<typeof fatiguePanelWeekSchema>;
+
 /** Una semana del macrociclo (RN-F01, RN-F08): lo programado y, si ya empezó, lo hecho. */
 export const trainingWeekSchema = z.object({
   weekNo: z.int().positive(),
@@ -51,6 +80,8 @@ export const trainingWeekSchema = z.object({
   cardioMinutesDone: amount,
   cardioCompliancePct: amount,
   muscles: z.array(trainingMuscleWeekSchema),
+  /** null si la semana no empezó o no hay umbrales vigentes. */
+  fatigue: fatiguePanelWeekSchema.nullable(),
 });
 export type TrainingWeek = z.infer<typeof trainingWeekSchema>;
 
@@ -87,6 +118,7 @@ export const trainingAnalyticsSchema = z.object({
   methods: z.object({
     tonnage: methodRef,
     adjustedVolume: methodRef,
+    fatiguePanel: methodRef,
     fractionalSets: methodRef,
     compliance: methodRef,
     sfr: methodRef,

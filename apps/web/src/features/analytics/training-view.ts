@@ -1,5 +1,7 @@
 import {
   formatNumber,
+  type FatiguePanelWeek,
+  type LoadLight,
   type OneRmSeries,
   type TrainingAnalytics,
   type TrainingMuscleWeek,
@@ -17,6 +19,38 @@ export function adjustedText(
   if (adjustedVolumeKg === null) return '—';
   const kg = `${formatNumber(adjustedVolumeKg, 'trainingLoad')} kg`;
   return unfactoredSets ? `${kg} · ${String(unfactoredSets)} sin factor` : kg;
+}
+
+/** El color del panel de fatiga (P-23, P-24): con ícono y texto, nunca solo color. */
+export const FATIGUE_LIGHT_LABELS = {
+  GREEN: 'Verde',
+  AMBER: 'Ámbar',
+  RED: 'Rojo',
+  NO_DATA: 'Faltan datos',
+  NO_BASE: 'Sin base',
+} as const satisfies Record<LoadLight, string>;
+
+export const FATIGUE_LIGHT_TONES = {
+  GREEN: 'success',
+  AMBER: 'warning',
+  RED: 'danger',
+  NO_DATA: 'info',
+  NO_BASE: 'info',
+} as const satisfies Record<LoadLight, 'success' | 'warning' | 'danger' | 'info'>;
+
+/** El cambio de la carga frente a su base, con su signo: «+18.3 %», «−40.6 %». Sin base o sin volumen, nada. */
+export function loadChangeText(fatigue: Pick<FatiguePanelWeek, 'loadChangePct'>): string | null {
+  const change = fatigue.loadChangePct;
+  if (change === null) return null;
+  const text = `${formatNumber(Math.abs(change), 'percent')} %`;
+  return change < 0 ? `−${text}` : `+${text}`;
+}
+
+/** Las semanas del panel: las que ya empezaron y tienen umbrales vigentes, en orden. */
+export function fatigueWeeks(
+  weeks: readonly TrainingWeek[],
+): (TrainingWeek & { readonly fatigue: FatiguePanelWeek })[] {
+  return weeks.flatMap((week) => (week.fatigue ? [{ ...week, fatigue: week.fatigue }] : []));
 }
 
 export interface MesocycleGroup {

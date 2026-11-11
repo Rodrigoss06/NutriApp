@@ -20,6 +20,7 @@ const patient = (values: Partial<OverviewPatient> = {}): OverviewPatient => ({
 describe('RF-34 · las alertas en Inicio', () => {
   it('cada alerta lleva a la pantalla donde se atiende', () => {
     expect(alertHref(ID, 'LOW_ADHERENCE')).toBe(`/panel/pacientes/${ID}/analitica`);
+    expect(alertHref(ID, 'FATIGUE_AMBER')).toBe(`/panel/pacientes/${ID}/analitica/rutina`);
     expect(alertHref(ID, 'PENDING_REVIEW')).toBe(
       `/panel/pacientes/${ID}/entrenamiento/control-semanal`,
     );

@@ -4,7 +4,11 @@ import { AssessmentApi } from '../../assessment/index.js';
 import { ClinicalApi } from '../../clinical/index.js';
 import { TrackingApi } from '../../tracking/index.js';
 import { TrainingApi } from '../../training/index.js';
+import { addDays } from '../domain/diet-weeks.js';
+import { PANEL_BASE_WEEKS } from '../domain/fatigue-panel.js';
 import { adherencePct, adherenceWindows, overviewAlerts } from '../domain/overview.js';
+import { programCalendar } from '../domain/program-calendar.js';
+import { fatiguePanelOf, panelWeeks } from './fatigue-panel.js';
 import { localDateIn } from './local-date.js';
 import { ANALYTICS_STORE, type AnalyticsStore } from './ports/analytics.ports.js';
 
@@ -40,6 +44,7 @@ export class OverviewProjection {
       await this.training.reviewOverview(patientId),
       await this.assessment.lastClosedEvaluationAt(patientId),
     ];
+    const latestFatigueWeek = await this.#latestFatigueWeek(organizationId, patientId, today);
     const adherence7dPct = adherencePct(days.filter((day) => day.localDate >= window.from7d));
     const lastWeight = days.findLast((day) => day.bodyWeightKg !== null);
     await this.store.replaceOverview(organizationId, {
@@ -59,8 +64,34 @@ export class OverviewProjection {
         adherence7dPct,
         latestWeek: reviews.latest,
         undecidedReviews: reviews.undecided,
+        latestFatigueWeek,
       }),
       updatedAt: now,
     });
+  }
+
+  /**
+   * El estado general del panel de fatiga de la última semana cerrada del programa vigente (P-24, ADR-108), con sus 3 previas para
+   * la base. Si cerró hace más de 7 días ya no alerta, y no se lee nada más.
+   */
+  async #latestFatigueWeek(
+    organizationId: string,
+    patientId: string,
+    today: string,
+  ): Promise<{ weekEnd: string; overall: 'GREEN' | 'AMBER' | 'RED' | 'NO_DATA' } | null> {
+    const programId = await this.tracking.activeProgramId(patientId);
+    const published = programId === null ? null : await this.training.publishedProgram(programId);
+    if (!published || published.patientId !== patientId) return null;
+    const snapshot =
+      (await this.training.latestPublishedOfLineage(published.lineageId)) ?? published;
+    const closed = programCalendar(snapshot).filter((week) => week.weekEnd < today);
+    const last = closed.at(-1);
+    if (!last || last.weekEnd < addDays(today, -7)) return null;
+    const window = closed.slice(-1 - PANEL_BASE_WEEKS);
+    const from = window[0]?.weekStart ?? last.weekStart;
+    const days = await this.store.dailySummaries(patientId, from, last.weekEnd);
+    const versions = await this.training.fatiguePanelThresholdVersions(organizationId);
+    const row = fatiguePanelOf(panelWeeks(window, days, today), versions).get(last.weekNo);
+    return row ? { weekEnd: last.weekEnd, overall: row.overall } : null;
   }
 }

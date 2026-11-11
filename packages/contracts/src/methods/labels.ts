@@ -49,6 +49,7 @@ export const METHOD_LABELS = {
   READINESS_JV: 'Recuperación e indicación del día (JV Fitness)',
   WEEKLY_REVIEW_JV: 'Control semanal (JV Fitness)',
   ADJUSTED_VOLUME: 'Volumen ajustado (RIR y descanso, JV Fitness)',
+  FATIGUE_PANEL_JV: 'Panel de fatiga y recuperación (JV Fitness)',
 } as const satisfies Record<string, string>;
 
 export type LabeledMethodCode = keyof typeof METHOD_LABELS;

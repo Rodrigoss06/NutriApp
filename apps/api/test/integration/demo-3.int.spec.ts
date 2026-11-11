@@ -156,14 +156,14 @@ describe('Demo 3 · Mateo, el alumno ficticio de la hoja de Jeremy', () => {
       .filter(({ weekNo }) => weekNo <= 4)
       .sort((a, b) => a.weekNo - b.weekNo)
       .map(({ aggregates }) => aggregates);
-    // La evolución semanal de la hoja: sueño, rendimiento y alimentación, y 11 de 12 sesiones. Los promedios llegan sin
-    // redondear (RN-D09): se redondean aquí, al comparar.
+    // La evolución semanal de la hoja: sueño, rendimiento y alimentación, y las 12 sesiones (el 22/10 asistió, P-33). Los
+    // promedios llegan sin redondear (RN-D09): se redondean aquí, al comparar.
     const shown = (value: number | undefined) =>
       value === undefined ? null : Math.round(value * 10) / 10;
     expect(month.map((week) => shown(week?.avgSleepHours))).toEqual([6.4, 6.8, 7.1, 7.4]);
     expect(month.map((week) => shown(week?.avgPerformancePct))).toEqual([80, 80, 100, 100]);
     expect(month.map((week) => shown(week?.avgNutritionCompliancePct))).toEqual([78, 82, 88, 92]);
-    expect(month.map((week) => week?.sessions)).toEqual([3, 3, 2, 3]);
+    expect(month.map((week) => week?.sessions)).toEqual([3, 3, 3, 3]);
     // El estrés de la hoja, en el resumen del control: solo informa (P-25; P14.5, PR 6a; ADR-107).
     expect(
       reviews
@@ -194,15 +194,60 @@ describe('Demo 3 · Mateo, el alumno ficticio de la hoja de Jeremy', () => {
       'Acumulación',
       'Acumulación',
     ]);
-    expect(month.map(({ sessionsDone }) => sessionsDone)).toEqual([3, 3, 2, 3]);
-    // El volumen de la hoja (series × repeticiones × kg); la semana 3 sin la sentadilla del 22/10, que fue ausencia.
-    expect(month.map(({ tonnageKg }) => tonnageKg)).toEqual([5220, 5490, 3420, 3750]);
+    expect(month.map(({ sessionsDone }) => sessionsDone)).toEqual([3, 3, 3, 3]);
+    // El volumen de la hoja (series × repeticiones × kg), con la sentadilla del 22/10 en la semana 3 (P-33).
+    expect(month.map(({ tonnageKg }) => tonnageKg)).toEqual([5220, 5490, 5760, 3750]);
     const bench = training.oneRm.find(({ exerciseName }) => exerciseName === 'Press banca');
     expect(bench?.formula).toBe('ONERM_EPLEY1985');
     // 12 × 40 kg → 56.0 kg, como el registro de cargas de la hoja.
     expect(bench?.points.map(({ estimated1rmKg }) => Math.round(estimated1rmKg * 10) / 10)).toEqual(
       [56, 59.5, 63, 46.7],
     );
+  });
+
+  it('P14.5 · RN-G16 · P-23 y P-24 · el panel de fatiga reproduce las semanas de la hoja: ámbar, rojo, ámbar y verde', async () => {
+    const training = await get<{
+      methods: { fatiguePanel: { code: string; version: string } };
+      weeks: {
+        weekNo: number;
+        fatigue: {
+          adjustedVolumeKg: number | null;
+          baseVolumeKg: number | null;
+          loadChangePct: number | null;
+          load: string;
+          recovery: string;
+          perceivedFatigue: string;
+          overall: string;
+        } | null;
+      }[];
+    }>(`/patients/${mateoId}/analytics/training`);
+    expect(training.methods.fatiguePanel).toEqual({ code: 'FATIGUE_PANEL_JV', version: '1.0.0' });
+    // Las semanas 1 a 5: la 5 ya cerró y no tiene registros.
+    const panel = training.weeks.filter(({ weekNo }) => weekNo <= 5).map(({ fatigue }) => fatigue);
+    expect(panel.map((week) => week?.adjustedVolumeKg)).toEqual([5220, 5490, 6336, 3375, null]);
+    expect(panel.map((week) => week?.baseVolumeKg)).toEqual([null, 5220, 5355, 5682, 5067]);
+    expect(panel.map((week) => week?.load)).toEqual([
+      'NO_BASE',
+      'GREEN',
+      'AMBER',
+      'GREEN',
+      'NO_DATA',
+    ]);
+    expect(panel.map((week) => week?.recovery)).toEqual([
+      'AMBER',
+      'RED',
+      'AMBER',
+      'GREEN',
+      'NO_DATA',
+    ]);
+    expect(panel.map((week) => week?.overall)).toEqual([
+      'AMBER',
+      'RED',
+      'AMBER',
+      'GREEN',
+      'NO_DATA',
+    ]);
+    expect(panel[2]?.loadChangePct).toBeCloseTo(18.3, 1);
   });
 
   it('RF-35 · peso, cintura, cadera y grasa de la comparativa física de la hoja', async () => {
@@ -266,22 +311,19 @@ describe('Demo 3 · Mateo, el alumno ficticio de la hoja de Jeremy', () => {
       { day: '2026-10-06', kcal: 2510, kind: 'TRAINING', profile: 'TRAINING' },
       // Miércoles sin sesión: Descanso.
       { day: '2026-10-07', kcal: 2230, kind: 'REST', profile: 'REST' },
-      // La ausencia del 22/10 no cambia la meta: nadie reprogramó la sesión (P-20.3).
+      // El 22/10 tiene su sesión: Entrenamiento (P-20.4, P-33).
       { day: '2026-10-22', kcal: 2510, kind: 'TRAINING', profile: 'TRAINING' },
     ]);
   });
 
-  it('RN-G14 · un registro diario por día, con su recuperación; la ausencia queda como sesión no hecha', async () => {
+  it('RN-G14 · un registro diario por día, con su recuperación, y las 12 sesiones hechas (el 22/10 asistió, P-33)', async () => {
     expect(await count('tracking.daily_checkin', mateoId)).toBe(28);
     expect(await count('tracking.daily_readiness', mateoId)).toBe(28);
     const { rows } = await pool('owner').query<{ outcome: string; count: string }>(
       `SELECT outcome, count(*) FROM tracking.workout_log WHERE patient_id = $1 GROUP BY outcome ORDER BY outcome`,
       [mateoId],
     );
-    expect(rows).toEqual([
-      { outcome: 'COMPLETED', count: '11' },
-      { outcome: 'SKIPPED', count: '1' },
-    ]);
+    expect(rows).toEqual([{ outcome: 'COMPLETED', count: '12' }]);
   });
 });
 

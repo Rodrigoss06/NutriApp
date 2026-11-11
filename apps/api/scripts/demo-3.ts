@@ -1121,8 +1121,8 @@ interface LoggedSession {
 }
 
 /**
- * El mes de Mateo con source IMPORT: las metas de entrenamiento de cada día, los entrenos de la hoja con sus series (la ausencia
- * del 22/10 queda como sesión no hecha, con su motivo) y un registro diario por día con los valores de su semana.
+ * El mes de Mateo con source IMPORT: las metas de entrenamiento de cada día, los entrenos de la hoja con sus series (una ausencia
+ * quedaría como sesión no hecha, con su motivo; el 22/10 asistió, P-33) y un registro diario por día con los valores de su semana.
  */
 /**
  * La meta de un día de Mateo (RN-G03): la del perfil que pide su programa (07 §2, P-20.4). Un día con sesión es Entrenamiento,
