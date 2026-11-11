@@ -1,6 +1,11 @@
 import { z } from 'zod';
 import { upToDecimals } from '../decimals.js';
-import { MOVEMENT_PATTERNS, TRAINING_LEVELS } from '../exercise/library.js';
+import {
+  EXERCISE_BASE_MEASURES,
+  EXERCISE_MODALITIES,
+  MOVEMENT_PATTERNS,
+  TRAINING_LEVELS,
+} from '../exercise/library.js';
 import { dayProfileCodeSchema } from '../nutrition/plan.js';
 import { TRAINING_OBJECTIVE_CODES } from './athlete-profile.js';
 
@@ -246,6 +251,10 @@ const programDocumentExerciseSchema = z.object({
   harderVariant: exerciseRefSchema,
   mediaUrl: z.string().nullable(),
   instructions: z.string().nullable(),
+  /** Para escribir sus series (P-34, ADR-114): «/lado», segundos y esfuerzo suave. Un snapshot anterior no los trae. */
+  isUnilateral: z.boolean().default(false),
+  modality: z.enum(EXERCISE_MODALITIES).nullable().default(null),
+  baseMeasure: z.enum(EXERCISE_BASE_MEASURES).nullable().default(null),
   sets: z.array(programDocumentSetSchema),
 });
 

@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { upToDecimals } from '../decimals.js';
+import { EXERCISE_BASE_MEASURES, EXERCISE_MODALITIES } from '../exercise/library.js';
 import { MEAL_SLOTS, PLAN_MODALITIES } from '../nutrition/plan.js';
 import { dayScheduleSchema } from './schedule.js';
 import { meWeeklyCheckinSchema } from './weekly-checkin.js';
@@ -585,6 +586,10 @@ export const meTrainingSchema = z.object({
           instructions: z.string().nullable(),
           primaryMuscles: z.array(z.string()),
           secondaryMuscles: z.array(z.string()),
+          /** Del snapshot del programa, para escribir sus series (P-34, ADR-114). */
+          isUnilateral: z.boolean().default(false),
+          modality: z.enum(EXERCISE_MODALITIES).nullable().default(null),
+          baseMeasure: z.enum(EXERCISE_BASE_MEASURES).nullable().default(null),
           sets: z.array(prescribedSetViewSchema),
         }),
       ),

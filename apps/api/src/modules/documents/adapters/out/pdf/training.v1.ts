@@ -2,6 +2,7 @@ import {
   LOAD_KIND_LABELS,
   methodLabel,
   ONE_RM_FORMULA_LABELS,
+  prescriptionParts,
   REVIEW_KIND_LABELS,
   ROUTINE_SPLIT_LABELS,
   sessionDay,
@@ -32,9 +33,11 @@ import {
 } from './sheet-kit.js';
 
 /**
- * Ficha de la rutina, versión 1.0.0 (RN-H01, ADR-079): el programa con su fórmula de 1RM (RN-F04); el macrociclo con la versión de su
+ * Ficha de la rutina, versiones 1.0.0 y 1.1.0 (RN-H01, ADR-079): el programa con su fórmula de 1RM (RN-F04); el macrociclo con la versión de su
  * tabla de fases (RN-F13); cada semana con su plan de 7 días (07 §8), sus sesiones y las series por grupo muscular con su método
  * (RN-F06, RN-H04), con las semanas iguales juntas; y cada ejercicio una vez, con sus músculos, su precaución y sus variantes (RN-F11).
+ * La 1.1.0 (P-34, ADR-114) escribe las series con el texto de contracts: «/lado» en un unilateral, los segundos de una isometría y
+ * «esfuerzo suave (RPE 5–6)» en la movilidad y el cardio con RIR 4 o más. La 1.0.0 se sigue dibujando igual (RN-H02).
  */
 
 type Block = TrainingSheet['blocks'][number];
@@ -81,12 +84,39 @@ const cardioParts = ({ durationSeconds, distanceM, met }: TrainingSheetSet): rea
     met === null ? null : `${plain(met)} MET`,
   ].filter((part): part is string => part !== null);
 
+/** Cómo se escribe cada parte de una serie en cada versión de la plantilla. */
+interface SetTexts {
+  readonly reps: (set: TrainingSheetSet, exercise: Exercise) => string | null;
+  readonly load: (set: TrainingSheetSet, exercise: Exercise) => string | null;
+  readonly cardio: (set: TrainingSheetSet, exercise: Exercise) => readonly string[];
+}
+
+const V100_TEXTS: SetTexts = {
+  reps: (set) => repsText(set),
+  load: (set) => loadText(set),
+  cardio: (set) => cardioParts(set),
+};
+
+/** 1.1.0: el texto de contracts, con lo que el snapshot sabe del ejercicio (P-34, ADR-114). */
+const V110_TEXTS: SetTexts = {
+  reps: (set, exercise) => prescriptionParts(set, exercise, plain).reps,
+  load: (set, exercise) => prescriptionParts(set, exercise, plain).load,
+  cardio: (set, exercise) => {
+    const parts = prescriptionParts(set, exercise, plain);
+    return [
+      parts.duration,
+      parts.distance,
+      set.met === null ? null : `${plain(set.met)} MET`,
+    ].filter((part): part is string => part !== null);
+  },
+};
+
 /** Lo que pide una serie: «8 a 12 rep · RIR 2 · 90 s de descanso · tempo 2-1-2». */
-function setText(set: TrainingSheetSet): string {
+function setText(set: TrainingSheetSet, exercise: Exercise, texts: SetTexts): string {
   return [
-    repsText(set),
-    ...cardioParts(set),
-    loadText(set),
+    texts.reps(set, exercise),
+    ...texts.cardio(set, exercise),
+    texts.load(set, exercise),
     set.restSeconds === null ? null : `${String(set.restSeconds)} s de descanso`,
     set.tempo ? `tempo ${set.tempo}` : null,
   ]
@@ -100,7 +130,8 @@ const sameSet = (a: TrainingSheetSet, b: TrainingSheetSet): boolean =>
   );
 
 /** Las series iguales, en una línea: «3 series · 8 a 12 rep · …». Distintas, null: van en una tabla. */
-function setsLine(sets: readonly TrainingSheetSet[]): string | null {
+function setsLine(exercise: Exercise, texts: SetTexts): string | null {
+  const { sets } = exercise;
   const [first] = sets;
   if (!first) return 'sin series';
   if (!sets.every((set) => sameSet(set, first))) return null;
@@ -109,10 +140,10 @@ function setsLine(sets: readonly TrainingSheetSet[]): string | null {
     first.setType === 'WORKING'
       ? count
       : `${count} (${SET_TYPE_LABELS[first.setType].toLowerCase()})`;
-  return [kind, setText(first)].filter((part) => part !== '').join(' · ');
+  return [kind, setText(first, exercise, texts)].filter((part) => part !== '').join(' · ');
 }
 
-function setsTable(sets: readonly TrainingSheetSet[]): ReactElement {
+function setsTable(exercise: Exercise, texts: SetTexts): ReactElement {
   return table(
     [
       { label: 'Serie', flex: 0.6, numeric: true },
@@ -123,14 +154,14 @@ function setsTable(sets: readonly TrainingSheetSet[]): ReactElement {
       { label: 'Tempo', flex: 0.8 },
       { label: 'Cardio', flex: 1.3 },
     ],
-    sets.map((set) => [
+    exercise.sets.map((set) => [
       String(set.setNo),
       SET_TYPE_LABELS[set.setType],
-      repsText(set) ?? '—',
-      loadText(set) ?? '—',
+      texts.reps(set, exercise) ?? '—',
+      texts.load(set, exercise) ?? '—',
       set.restSeconds === null ? '—' : `${String(set.restSeconds)} s`,
       set.tempo ?? '—',
-      cardioParts(set).join(' · ') || '—',
+      texts.cardio(set, exercise).join(' · ') || '—',
     ]),
   );
 }
@@ -221,8 +252,8 @@ function macrocycle(sheet: TrainingSheet, frame: SheetFrame): ReactElement | nul
   );
 }
 
-function exerciseRow(exercise: Exercise, index: number): ReactElement {
-  const line = setsLine(exercise.sets);
+function exerciseRow(exercise: Exercise, index: number, texts: SetTexts): ReactElement {
+  const line = setsLine(exercise, texts);
   const name = `${String(index + 1)}. ${exercise.name}${
     exercise.supersetGroup ? ` (superserie ${exercise.supersetGroup})` : ''
   }`;
@@ -231,12 +262,17 @@ function exerciseRow(exercise: Exercise, index: number): ReactElement {
     { key: index, style: { marginTop: 3 }, wrap: false },
     h(Text, null, ...emphasis('', name, line === null ? '' : ` · ${line}`)),
     exercise.notes ? h(Text, { style: [styles.muted, { marginLeft: 10 }] }, exercise.notes) : null,
-    line === null ? h(View, { style: { marginTop: 2 } }, setsTable(exercise.sets)) : null,
+    line === null ? h(View, { style: { marginTop: 2 } }, setsTable(exercise, texts)) : null,
   );
 }
 
 /** Una sesión puede ser más larga que lo que queda de la página: se corta entre ejercicios. */
-function sessionBlock(session: TrainingSheetSession, frame: SheetFrame, key: number): ReactElement {
+function sessionBlock(
+  session: TrainingSheetSession,
+  frame: SheetFrame,
+  key: number,
+  texts: SetTexts,
+): ReactElement {
   return h(
     View,
     { key, style: [styles.ruled, { marginTop: 8 }] },
@@ -246,11 +282,16 @@ function sessionBlock(session: TrainingSheetSession, frame: SheetFrame, key: num
       `${session.name} · ${sessionDay(session)}`,
     ),
     session.notes ? h(Text, { style: styles.muted }, session.notes) : null,
-    ...session.exercises.map(exerciseRow),
+    ...session.exercises.map((exercise, index) => exerciseRow(exercise, index, texts)),
   );
 }
 
-function weekBlock(sheet: TrainingSheet, frame: SheetFrame, block: Block): ReactElement {
+function weekBlock(
+  sheet: TrainingSheet,
+  frame: SheetFrame,
+  block: Block,
+  texts: SetTexts,
+): ReactElement {
   const plan = weekPlan(block.sessions);
   const [method] = sheet.methods;
   return h(
@@ -279,7 +320,7 @@ function weekBlock(sheet: TrainingSheet, frame: SheetFrame, block: Block): React
           )
         : null,
     ),
-    ...block.sessions.map((session, index) => sessionBlock(session, frame, index)),
+    ...block.sessions.map((session, index) => sessionBlock(session, frame, index, texts)),
   );
 }
 
@@ -316,13 +357,17 @@ function exercises(sheet: TrainingSheet, frame: SheetFrame): ReactElement | null
   );
 }
 
-export function trainingV1(sheet: TrainingSheet, frame: SheetFrame): ReactElement<DocumentProps> {
+function trainingSheet(
+  sheet: TrainingSheet,
+  frame: SheetFrame,
+  texts: SetTexts,
+): ReactElement<DocumentProps> {
   return sheetDocument(
     frame,
     patientLine(sheet.patient),
     programCard(sheet),
     macrocycle(sheet, frame),
-    ...sheet.blocks.map((block) => weekBlock(sheet, frame, block)),
+    ...sheet.blocks.map((block) => weekBlock(sheet, frame, block, texts)),
     exercises(sheet, frame),
     h(
       View,
@@ -337,6 +382,14 @@ export function trainingV1(sheet: TrainingSheet, frame: SheetFrame): ReactElemen
     ),
   );
 }
+
+export const trainingV1 = (sheet: TrainingSheet, frame: SheetFrame): ReactElement<DocumentProps> =>
+  trainingSheet(sheet, frame, V100_TEXTS);
+
+export const trainingV110 = (
+  sheet: TrainingSheet,
+  frame: SheetFrame,
+): ReactElement<DocumentProps> => trainingSheet(sheet, frame, V110_TEXTS);
 
 /** El título y el subtítulo del encabezado: la versión y las fechas del programa. */
 export function trainingTitles(sheet: TrainingSheet): { title: string; subtitle: string } {

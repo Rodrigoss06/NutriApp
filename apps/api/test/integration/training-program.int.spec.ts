@@ -31,6 +31,9 @@ interface DocumentExercise {
   approvedAt: string | null;
   primaryMuscles: { code: string; name: string }[];
   secondaryMuscles: { code: string; name: string }[];
+  isUnilateral: boolean;
+  modality: string | null;
+  baseMeasure: string | null;
   sets: {
     setNo: number;
     repsMin: number | null;
@@ -626,6 +629,15 @@ describe('RN-F15 · RN-F14 · la propuesta', () => {
       week3?.sessions.flatMap((session) => session.exercises.map((e) => e.approvedAt)),
     ).toEqual(Array.from({ length: 21 }, () => null));
     expect(week3?.sessions[0]?.exercises[0]?.name).toBe(exercises.get('HORIZONTAL_PUSH'));
+    // P-34 · ADR-114: el documento lleva lo que necesita el texto de cada serie. El split squat es unilateral.
+    expect(week3?.sessions[0]?.exercises[0]).toMatchObject({
+      isUnilateral: false,
+      modality: 'STRENGTH',
+      baseMeasure: 'REPS',
+    });
+    expect(
+      week3?.sessions[1]?.exercises.find((e) => e.movementPattern === 'UNILATERAL')?.isUnilateral,
+    ).toBe(true);
     // Cada bloque con sus valores base y el tempo y el descanso de su patrón (P-34), no solo el primero.
     for (const exercise of week3?.sessions.flatMap((session) => session.exercises) ?? []) {
       const base = PATTERN_BASE[exercise.movementPattern as MovementPattern];

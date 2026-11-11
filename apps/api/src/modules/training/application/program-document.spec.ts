@@ -31,6 +31,9 @@ const exercise = (id: string, changes: Partial<ExerciseRecord> = {}) =>
     harderVariant: null,
     mediaUrl: null,
     instructions: null,
+    isUnilateral: false,
+    modality: 'STRENGTH',
+    baseMeasure: 'REPS',
     ...changes,
   }) as unknown as ExerciseRecord;
 

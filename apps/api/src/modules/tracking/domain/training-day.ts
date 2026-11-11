@@ -27,6 +27,10 @@ interface Named {
   readonly name: string;
 }
 
+/** Cómo se hace y se mide un ejercicio, del snapshot (P-34, ADR-114). */
+type Modality = 'STRENGTH' | 'CARDIO' | 'MOBILITY' | 'PLYOMETRIC';
+type BaseMeasure = 'REPS' | 'SECONDS' | 'MINUTES';
+
 export interface SnapshotExercise {
   readonly id: string;
   readonly exerciseId: string;
@@ -42,6 +46,10 @@ export interface SnapshotExercise {
   readonly instructions: string | null;
   readonly primaryMuscles: readonly { readonly code: string; readonly name: string }[];
   readonly secondaryMuscles: readonly { readonly code: string; readonly name: string }[];
+  /** Un snapshot anterior a la ficha de rutina 1.1.0 no los trae. */
+  readonly isUnilateral?: boolean;
+  readonly modality?: Modality;
+  readonly baseMeasure?: BaseMeasure;
   readonly sets: readonly SnapshotSet[];
 }
 
@@ -69,6 +77,10 @@ export interface SessionExerciseView {
   readonly instructions: string | null;
   readonly primaryMuscles: readonly string[];
   readonly secondaryMuscles: readonly string[];
+  /** Para escribir sus series: «/lado», segundos y esfuerzo suave (P-34, ADR-114). */
+  readonly isUnilateral: boolean;
+  readonly modality: Modality | null;
+  readonly baseMeasure: BaseMeasure | null;
   readonly sets: readonly SnapshotSet[];
 }
 
@@ -108,6 +120,9 @@ export function sessionView(session: SnapshotSession): SessionView {
       instructions: exercise.instructions,
       primaryMuscles: exercise.primaryMuscles.map(({ name }) => name),
       secondaryMuscles: exercise.secondaryMuscles.map(({ name }) => name),
+      isUnilateral: exercise.isUnilateral ?? false,
+      modality: exercise.modality ?? null,
+      baseMeasure: exercise.baseMeasure ?? null,
       sets: exercise.sets,
     })),
     plannedTonnageKg: plannedTonnageKg(session),

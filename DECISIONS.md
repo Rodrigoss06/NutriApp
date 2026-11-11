@@ -2964,3 +2964,28 @@ Consecuencias:
   fuera de rango. API: una serie con solo RPE y 100 s suma al ajustado del grupo. La integración ve la versión 1.1.0.
 - Para Notion (/notion-sync de P14.5): 07 §10 y §15 (P-26 resuelta del todo), 02 §9 (`ADJUSTED_VOLUME` 1.1.0) y el caso dorado
   propuesto G-42.
+
+## ADR-114 · Cómo se escribe la prescripción: «/lado», segundos y esfuerzo suave — aceptada (2026-11-11)
+Contexto: P14.5, PR 9c (P-34.4 y P-34.6, respondidas por Jeremy el 2026-11-10; RN-F12, RN-H01, RN-H02; ADR-111 y ADR-112). La hoja
+piloto escribe «10–12/lado» en los ejercicios unilaterales, «20–30 s/lado» en las isometrías y RIR 4 o 5 en la movilidad y el cardio,
+que para Jeremy solo indica un esfuerzo suave (RPE 5 a 6). La app escribía «8 a 12 rep», los minutos y el RIR, y el snapshot del
+programa no sabía si un ejercicio es unilateral ni cómo se mide.
+Decisión:
+- El snapshot del programa congela, de cada ejercicio, si es unilateral, su modalidad y cómo se mide (`isUnilateral`, `modality`,
+  `baseMeasure`), como sus músculos (RN-F12). Un programa publicado antes no los trae: se escribe como antes. `/me/training` los da
+  a la app.
+- Un solo texto en contracts (`prescriptionParts` y `prescriptionText`) para el panel, la app y la ficha:
+  - «8 a 12 rep/lado» en un unilateral;
+  - en segundos si el ejercicio se mide en segundos («30 s», «20 s/lado»); si no, en minutos, como el cardio (RN-F10);
+  - «esfuerzo suave (RPE 5–6)» con RIR 4 o más en la movilidad y el cardio; con RIR 3, o en fuerza, el RIR.
+- La ficha de rutina 1.1.0 (migración `202611110200_documents_training_template_110`) escribe las series así; sus secciones no
+  cambian. La 1.0.0 queda retirada y se sigue dibujando igual para lo que ya se generó con ella (RN-H02).
+- En el panel, la columna «Cardio» de las series pasa a «Tiempo», porque también lleva los segundos de una isometría.
+- El editor del programa sigue con su resumen de siempre mientras se arma: el texto nuevo es el de lo que se lee.
+- La etiqueta y el botón de WhatsApp (P-35) quedan para un PR aparte, cuando se decida dónde se activan.
+Consecuencias:
+- Contratos: el texto en cada caso (unilateral, isometría, cardio con RIR 5, movilidad con RIR 4 y 3, cargas y números).
+- API: el snapshot con los tres datos y la ficha 1.1.0 frente a la 1.0.0 (renderer); la integración ve la ficha 1.1.0 y el
+  documento con el split squat unilateral. Web: la app con «/lado» y el esfuerzo suave.
+- Para Notion (/notion-sync de P14.5): 05.3 (la plantilla TRAINING 1.1.0), 07 §6 (cómo se escribe la prescripción) y 02 §4 (lo
+  que congela el snapshot del programa).

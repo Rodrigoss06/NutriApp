@@ -31,6 +31,10 @@ export interface ProgramDocumentExercise extends Omit<PrescribedExercise, 'appro
   readonly harderVariant: ExerciseRecord['harderVariant'];
   readonly mediaUrl: string | null;
   readonly instructions: string | null;
+  /** Para escribir sus series (P-34, ADR-114): «/lado», segundos y esfuerzo suave. Un snapshot anterior no los trae. */
+  readonly isUnilateral?: boolean;
+  readonly modality?: ExerciseRecord['modality'];
+  readonly baseMeasure?: ExerciseRecord['baseMeasure'];
   readonly sets: readonly PrescribedSet[];
 }
 
@@ -107,6 +111,9 @@ export function programDocument(
           harderVariant: record.harderVariant,
           mediaUrl: record.mediaUrl,
           instructions: record.instructions,
+          isUnilateral: record.isUnilateral,
+          modality: record.modality,
+          baseMeasure: record.baseMeasure,
         };
       }),
     };

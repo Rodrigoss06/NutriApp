@@ -14,6 +14,7 @@ import {
 import { pngImage } from '../../../../../../test/support/images.js';
 import { pdfText, pdfTextItems } from '../../../../../../test/support/pdf-text.js';
 import type { MenuSheet, SheetMenuItem } from '../../../application/sheets/menu-sheet.js';
+import type { TrainingSheet } from '../../../application/sheets/training-sheet.js';
 import { ReactPdfRenderer } from './react-pdf.renderer.js';
 
 /** Un PNG de 1 × 1 píxel: el logo más chico posible. */
@@ -278,6 +279,73 @@ describe('RN-H01 · RN-H04 · la ficha de la rutina (ADR-079)', () => {
       }
       // La nota de la sustitución es de la aprobación: no va en la ficha.
       expect(text).not.toContain('Le molesta el hombro');
+    },
+  );
+});
+
+describe('RN-H01 · RN-H02 · P-34 · la ficha de la rutina 1.1.0 (ADR-114)', () => {
+  type SheetExercise = TrainingSheet['blocks'][number]['sessions'][number]['exercises'][number];
+  /** La rutina de la demo con un ejercicio cambiado en todas sus semanas. */
+  const withExercise = (
+    name: string,
+    changes: Partial<SheetExercise>,
+    setChanges: Partial<SheetExercise['sets'][number]> = {},
+  ): TrainingSheet => ({
+    ...DEMO_TRAINING_SHEET,
+    blocks: DEMO_TRAINING_SHEET.blocks.map((block) => ({
+      ...block,
+      sessions: block.sessions.map((session) => ({
+        ...session,
+        exercises: session.exercises.map((exercise) =>
+          exercise.name === name
+            ? {
+                ...exercise,
+                ...changes,
+                sets: exercise.sets.map((set) => ({ ...set, ...setChanges })),
+              }
+            : exercise,
+        ),
+      })),
+    })),
+  });
+  const render = (content: TrainingSheet, templateVersion: string) =>
+    renderer.render({
+      ...INPUT,
+      content,
+      templateVersion,
+      issuedAt: new Date('2026-10-31T15:00:00.000Z'),
+    });
+
+  it('«/lado» en un unilateral, con la 1.1.0; la 1.0.0 dibuja lo de siempre', SLOW, async () => {
+    const unilateral = withExercise('Sentadilla goblet', { isUnilateral: true });
+    expect(await pdfText(await render(unilateral, '1.1.0'))).toContain(
+      '1. Sentadilla goblet · 2 series · 8 a 12 rep/lado · RIR 3 · 90 s de descanso · tempo 2-1-2',
+    );
+    const old = await pdfText(await render(unilateral, '1.0.0'));
+    expect(old).toContain('1. Sentadilla goblet · 2 series · 8 a 12 rep · RIR 3');
+    expect(old).not.toContain('/lado');
+  });
+
+  it(
+    'una isometría en segundos por lado, y la movilidad con RIR 4 es un esfuerzo suave',
+    SLOW,
+    async () => {
+      const isometric = withExercise(
+        'Caminata inclinada',
+        { isUnilateral: true, baseMeasure: 'SECONDS', modality: 'STRENGTH' },
+        { durationSeconds: 30 },
+      );
+      expect(await pdfText(await render(isometric, '1.1.0'))).toContain(
+        '2. Caminata inclinada · 1 serie · 30 s/lado · 4.3 MET',
+      );
+      const mobility = withExercise(
+        'Sentadilla goblet',
+        { modality: 'MOBILITY' },
+        { loadValue: 4 },
+      );
+      expect(await pdfText(await render(mobility, '1.1.0'))).toContain(
+        '1. Sentadilla goblet · 2 series · 8 a 12 rep · esfuerzo suave (RPE 5–6) · 90 s de descanso',
+      );
     },
   );
 });

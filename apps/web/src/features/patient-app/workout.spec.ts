@@ -54,6 +54,9 @@ const exercise = (id: string, sets: PrescribedSet[]) => ({
   instructions: null,
   primaryMuscles: [],
   secondaryMuscles: [],
+  isUnilateral: false,
+  modality: null,
+  baseMeasure: null,
   sets,
 });
 const SESSION: TrainingSession = {
@@ -93,6 +96,26 @@ describe('RF-29 · lo prescrito de cada serie, como se dice', () => {
       '8 rep · Peso corporal · 90 s',
     );
     expect(prescribedText(CARDIO)).toBe('20 min · MET 6');
+    // P-34 · ADR-114: «/lado» en un unilateral y el esfuerzo suave en la movilidad, con el texto de contracts.
+    expect(
+      prescribedText(
+        { ...SET, repsMax: 12, loadKind: 'RIR', loadValue: 2 },
+        { isUnilateral: true, modality: 'STRENGTH', baseMeasure: 'REPS' },
+      ),
+    ).toBe('8 a 12 rep/lado · RIR 2 · 90 s');
+    expect(
+      prescribedText(
+        {
+          ...SET,
+          repsMin: null,
+          repsMax: null,
+          durationSeconds: 25,
+          loadKind: 'RIR',
+          loadValue: 4,
+        },
+        { isUnilateral: true, modality: 'MOBILITY', baseMeasure: 'SECONDS' },
+      ),
+    ).toBe('25 s/lado · esfuerzo suave (RPE 5–6) · 90 s');
   });
 
   it('se anota partiendo de lo prescrito: la parte alta del rango, los kg y el RIR indicados, sin marcar hecha', () => {

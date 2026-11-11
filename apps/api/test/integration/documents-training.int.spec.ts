@@ -188,7 +188,8 @@ describe('RF-24 · la ficha de la rutina se genera al publicar', () => {
       document: {
         kind: 'TRAINING',
         sourceType: 'TRAINING_PROGRAM',
-        templateVersion: '1.0.0',
+        // La ficha de rutina 1.1.0 (P-34, ADR-114): «/lado», segundos y esfuerzo suave.
+        templateVersion: '1.1.0',
         fileName: 'ficha-rutina.pdf',
       },
     });

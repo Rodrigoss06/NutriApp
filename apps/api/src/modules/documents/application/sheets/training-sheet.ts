@@ -20,6 +20,10 @@ export interface TrainingSheetSession {
     readonly name: string;
     readonly supersetGroup: string | null;
     readonly notes: string | null;
+    /** Para escribir sus series en la plantilla 1.1.0 (P-34, ADR-114); un snapshot anterior no los trae. */
+    readonly isUnilateral: boolean;
+    readonly modality: SnapshotExercise['modality'] | null;
+    readonly baseMeasure: SnapshotExercise['baseMeasure'] | null;
     readonly sets: readonly TrainingSheetSet[];
   }[];
 }
@@ -97,6 +101,9 @@ const sessionOf = (session: SnapshotSession): TrainingSheetSession => ({
     name: exercise.name,
     supersetGroup: exercise.supersetGroup,
     notes: exercise.notes,
+    isUnilateral: exercise.isUnilateral ?? false,
+    modality: exercise.modality ?? null,
+    baseMeasure: exercise.baseMeasure ?? null,
     sets: exercise.sets.map((set) => ({
       setNo: set.setNo,
       setType: set.setType,
