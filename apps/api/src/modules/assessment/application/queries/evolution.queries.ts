@@ -80,7 +80,8 @@ export interface EvolutionView {
   readonly bia: readonly BiaSeries[];
 }
 
-export type PatientEvolutionItem = 'WEIGHT' | 'WAIST' | 'SKINFOLD_SUM6' | 'FAT_PCT' | 'MUSCLE_MASS';
+export type PatientEvolutionItem =
+  'WEIGHT' | 'WAIST' | 'HIP' | 'SKINFOLD_SUM6' | 'FAT_PCT' | 'MUSCLE_MASS';
 
 export interface PatientEvolutionView {
   readonly evaluationCount: number;
@@ -197,6 +198,8 @@ export class EvolutionQueries {
         : undefined;
     const weight = site('BASIC_WEIGHT');
     const waist = site('GIRTH_WAIST');
+    // La cadera, como en la «Comparativa física» de la hoja de Jeremy (P14.5, PR 6a; ADR-107).
+    const hip = site('GIRTH_HIP');
     const fat = metric('FAT_PCT', principal.fat);
     const muscle = metric(MUSCLE_METRIC[principal.muscle ?? ''] ?? '', principal.muscle);
     const items: PatientEvolutionView['items'][number][] = [
@@ -217,6 +220,16 @@ export class EvolutionQueries {
               unit: 'cm',
               methodCode: CONSOLIDATION_METHOD,
               ...seriesOnly(waist),
+            },
+          ]
+        : []),
+      ...(hip
+        ? [
+            {
+              item: 'HIP' as const,
+              unit: 'cm',
+              methodCode: CONSOLIDATION_METHOD,
+              ...seriesOnly(hip),
             },
           ]
         : []),

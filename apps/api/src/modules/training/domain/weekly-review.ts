@@ -116,3 +116,16 @@ export function decisionProblem(
 
 /** Mantener no crea versión nueva; ajustar o descargar, sí, si queda una semana siguiente (ADR-086). */
 export const changesProgram = (decision: CoachDecision): boolean => decision !== 'KEEP';
+
+/**
+ * El estrés promedio de la semana, de 1 a 5, con los registros diarios que lo traen; sin ninguno, null. Solo informa: no cambia el
+ * semáforo ni la decisión (P-25; P14.5, PR 6a; ADR-107).
+ */
+export function averageStress(
+  checkins: readonly { readonly stress: number | null }[],
+): number | null {
+  const known = checkins.flatMap((checkin) => (checkin.stress === null ? [] : [checkin.stress]));
+  return known.length === 0
+    ? null
+    : known.reduce((total, value) => total + value, 0) / known.length;
+}

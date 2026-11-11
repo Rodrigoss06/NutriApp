@@ -21,14 +21,21 @@ import {
 } from '@nutricoach/shared-kernel';
 import { ClinicalApi, PATIENT_NOT_FOUND } from '../../../clinical/index.js';
 import type { ProgramStatus } from '../../domain/program.js';
-import { REVIEW_NOT_FOUND, type WeeklyReviewRecord } from '../../domain/weekly-review.js';
+import {
+  averageStress,
+  REVIEW_NOT_FOUND,
+  type WeeklyReviewRecord,
+} from '../../domain/weekly-review.js';
 import { PROGRAM_STORE, type ProgramStore } from '../ports/program.ports.js';
 import { WEEKLY_REVIEW_STORE, type WeeklyReviewStore } from '../ports/weekly-review.ports.js';
+import { WeekCheckinSources } from '../week-checkins.js';
 
 export interface WeeklyReviewView extends WeeklyReviewRecord {
   /** Del motor con los insumos guardados: el mismo resultado (RN-D01). */
   readonly aggregates: WeeklyAggregates | null;
   readonly reasons: readonly WeeklyReason[];
+  /** El estrés promedio de la semana, del registro diario: solo informa (P-25, ADR-107). */
+  readonly avgStress: number | null;
   readonly resultingProgramStatus: ProgramStatus | null;
   /** Cuántos controles anteriores de la misma semana quedaron reemplazados por registros tardíos. */
   readonly supersededCount: number;
@@ -56,6 +63,7 @@ export class WeeklyReviewQueries {
     @Inject(ClinicalApi) private readonly clinical: ClinicalApi,
     @Inject(WEEKLY_REVIEW_STORE) private readonly store: WeeklyReviewStore,
     @Inject(PROGRAM_STORE) private readonly programs: ProgramStore,
+    @Inject(WeekCheckinSources) private readonly sources: WeekCheckinSources,
   ) {}
 
   /** Del programa publicado del paciente, o del que se pida si es suyo. */
@@ -84,6 +92,9 @@ export class WeeklyReviewQueries {
           ...review,
           aggregates: run.ok ? run.result.outputs.aggregates : null,
           reasons: run.ok ? run.result.outputs.reasons : [],
+          avgStress: averageStress(
+            await this.sources.get().checkins(patientId, review.weekStart, review.weekEnd),
+          ),
           resultingProgramStatus: review.resultingProgramId
             ? await this.programs.status(review.resultingProgramId)
             : null,

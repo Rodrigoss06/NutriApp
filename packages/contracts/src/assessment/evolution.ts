@@ -87,6 +87,7 @@ export type EvolutionResponse = z.infer<typeof evolutionResponseSchema>;
 export const PATIENT_EVOLUTION_ITEMS = [
   'WEIGHT',
   'WAIST',
+  'HIP',
   'SKINFOLD_SUM6',
   'FAT_PCT',
   'MUSCLE_MASS',
@@ -96,13 +97,14 @@ export type PatientEvolutionItem = (typeof PATIENT_EVOLUTION_ITEMS)[number];
 export const PATIENT_EVOLUTION_LABELS: Readonly<Record<PatientEvolutionItem, string>> = {
   WEIGHT: 'Peso',
   WAIST: 'Cintura',
+  HIP: 'Cadera',
   SKINFOLD_SUM6: 'Suma de 6 pliegues',
   FAT_PCT: '% de grasa',
   MUSCLE_MASS: 'Masa muscular',
 };
 
 /**
- * GET /api/v1/me/evolution (RF-30): el peso, la cintura y la suma de 6 pliegues, con el cambio real o «sin cambio
+ * GET /api/v1/me/evolution (RF-30): el peso, la cintura, la cadera y la suma de 6 pliegues, con el cambio real o «sin cambio
  * significativo» (RN-C06), y el % de grasa y la masa muscular del método principal del paciente, cada uno con su método
  * (RN-D02). Sin interpretaciones clínicas.
  */

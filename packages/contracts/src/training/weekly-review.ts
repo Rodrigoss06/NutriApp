@@ -56,6 +56,11 @@ export const weeklyReviewSchema = z.object({
   method: z.object({ code: z.string(), version: z.string() }),
   light: z.enum(WEEKLY_LIGHTS),
   reasons: z.array(z.enum(WEEKLY_REASONS)),
+  /**
+   * El estrés promedio de la semana, de 1 a 5, del registro diario. Solo informa: no entra en el semáforo ni en la decisión (P-25;
+   * P14.5, PR 6a). Sin registros con estrés, null.
+   */
+  avgStress: z.number().min(1).max(5).nullable(),
   aggregates: weeklyAggregatesSchema.nullable(),
   plannedVolumeFactor: z.number(),
   suggestedVolumeFactor: amount,

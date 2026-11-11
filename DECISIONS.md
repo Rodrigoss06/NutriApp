@@ -2727,3 +2727,26 @@ Consecuencias:
 - Sigue el PR 4 (fatiga por grupo muscular, P-27), que usa este volumen ajustado por grupo.
 - Para Notion (/notion-sync de P14.5): 02 §9 (`ADJUSTED_VOLUME`), 03 (una regla del volumen ajustado y G-42), 05.2
   (`training.volume_factor_table`), 05.3 (las columnas de analytics) y 04 RF-33.
+
+## ADR-107 · La cadera en Progreso, la comparativa física y el estrés en el control semanal — aceptada (2026-11-10)
+Contexto: P14.5, PR 6a (fase A; RF-30, RF-35, RF-42; ADR-098). La hoja piloto muestra una «Comparativa física»: peso 80 → 79 kg,
+cintura 88 → 85 cm, cadera 100 → 99 cm y grasa por bioimpedancia 22 → 20.8 %. También muestra el estrés de cada semana. La app
+no tenía la cadera en Progreso, no juntaba esos cuatro números y no mostraba el estrés en el control.
+Decisión:
+- App del paciente, Progreso: la cadera, después de la cintura, con su CMD95 (RN-C06).
+  - La migración `202611100200_assessment_patient_evolution_hip` suma `GIRTH_HIP` a `app.patient_evolution_sites()`.
+  - La función sigue sirviendo solo a la sesión PATIENT, y solo para lo suyo.
+- Panel, Evaluaciones › Evolución: «Comparativa física», arriba.
+  - Peso, cintura y cadera, de la primera evaluación a la última, con su cambio frente al CMD95.
+  - El % de grasa de cada método y de cada equipo de bioimpedancia, por separado y sin CMD95 (RN-D03, RN-C05, RN-C08).
+  - Sale de la evolución que la API ya daba (el cambio total de cada serie); no hay cálculo nuevo.
+- Control semanal: el estrés promedio de la semana en el resumen, desde el registro diario.
+  - No entra en `WEEKLY_REVIEW_JV` ni en el semáforo: P-25 dice que el panel solo informa y decide el control.
+  - Cambiar los insumos del método habría reemplazado los controles ya decididos.
+  - tracking da el estrés en los registros de la semana (`WeekCheckin.stress`).
+Consecuencias:
+- Unitarias: la comparativa (el orden, la bioimpedancia aparte y nada con una sola evaluación) y el estrés promedio.
+- Integración: la cadera en `/me/evolution` (`evolution.int.spec.ts`) y el estrés de Mateo, 3, 4, 3 y 2, en su control semanal
+  (`demo-3.int.spec.ts`).
+- Guion de la Demo 3: la comparativa en Evolución, la cadera en Progreso y el estrés en el control.
+- Para Notion (/notion-sync de P14.5): 04 RF-30 (la cadera), RF-35 (la comparativa) y RF-42 (el estrés en el resumen).

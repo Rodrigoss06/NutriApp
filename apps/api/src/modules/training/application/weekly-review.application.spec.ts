@@ -74,6 +74,7 @@ const checkin = (localDate: string, values: Partial<WeekCheckin> = {}): WeekChec
   performancePct: 100,
   nutritionCompliancePct: 90,
   menstrualSymptoms: null,
+  stress: null,
   ...values,
 });
 
@@ -501,7 +502,8 @@ describe('P-06 · RN-F14 · las series de una propuesta con el factor nuevo', ()
 });
 
 describe('RF-42 · la lectura de los controles', () => {
-  const queries = () => new WeeklyReviewQueries(uow, audit, clinical(), reviews, programs());
+  const queries = () =>
+    new WeeklyReviewQueries(uow, audit, clinical(), reviews, programs(), sources());
 
   it('los vigentes por semana, con lo que dice el motor, los reemplazados y la versión que resultó', async () => {
     await service().reviewProgram(ORG, 'program-1');
@@ -519,6 +521,8 @@ describe('RF-42 · la lectura de los controles', () => {
     const [first, second, third] = result.value.reviews;
     expect(first?.reasons).toEqual(['PERFORMANCE']);
     expect(first?.aggregates?.avgPerformancePct).toBe(88);
+    // Sin estrés en el registro diario, sin promedio; solo informa (P-25, ADR-107).
+    expect(first?.avgStress).toBeNull();
     expect(second?.resultingProgramStatus).toBe('DRAFT');
     expect(third?.supersededCount).toBe(1);
     expect(audits.map((a) => a.resourceType)).toEqual(['training.weekly_review']);

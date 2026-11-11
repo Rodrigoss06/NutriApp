@@ -148,39 +148,33 @@ describe('ADR-080 · ADR-095 · las fichas vigentes en la app', () => {
     );
   });
 
-  // deliver('documents.sheets') genera también las fichas de los planes y programas que otros archivos publicaron antes en la
-  // misma base: con la suite completa en una máquina cargada pasa de 30 s, por eso este caso tiene más tiempo.
-  it(
-    'la pide por su nombre: la API elige el origen; si el worker no la tiene, 202 y luego está',
-    { timeout: 120_000 },
-    async () => {
-      const requested = await harness.post('/me/documents', { item: 'PLAN' }, luis);
-      expect([200, 202], JSON.stringify(requested.body)).toContain(requested.status);
-      await harness.deliver('documents.sheets');
+  it('la pide por su nombre: la API elige el origen; si el worker no la tiene, 202 y luego está', async () => {
+    const requested = await harness.post('/me/documents', { item: 'PLAN' }, luis);
+    expect([200, 202], JSON.stringify(requested.body)).toContain(requested.status);
+    await harness.deliver('documents.sheets');
 
-      const status = documentStatusSchema.parse(
-        (await harness.get('/me/documents/status?item=PLAN', luis)).body,
-      );
-      expect(status.status).toBe('READY');
-      if (status.status !== 'READY') return;
-      expect(status.document).toMatchObject({
-        kind: 'EXCHANGE_DIET',
-        sourceType: 'NUTRITION_PLAN',
-        sourceId: planId,
-      });
+    const status = documentStatusSchema.parse(
+      (await harness.get('/me/documents/status?item=PLAN', luis)).body,
+    );
+    expect(status.status).toBe('READY');
+    if (status.status !== 'READY') return;
+    expect(status.document).toMatchObject({
+      kind: 'EXCHANGE_DIET',
+      sourceType: 'NUTRITION_PLAN',
+      sourceId: planId,
+    });
 
-      // El paciente no envía un origen: el cuerpo solo admite el nombre de la ficha.
-      const forged = await harness.post(
-        '/me/documents',
-        { item: 'PLAN', sourceType: 'NUTRITION_PLAN', sourceId: planId },
-        ines,
-      );
-      expect(forged.status).toBe(400);
-      expect((await harness.post('/me/documents', { item: 'PLAN' }, ines)).status).toBe(404);
-      // Con una sola evaluación no hay evolución.
-      expect((await harness.post('/me/documents', { item: 'EVOLUTION' }, luis)).status).toBe(404);
-    },
-  );
+    // El paciente no envía un origen: el cuerpo solo admite el nombre de la ficha.
+    const forged = await harness.post(
+      '/me/documents',
+      { item: 'PLAN', sourceType: 'NUTRITION_PLAN', sourceId: planId },
+      ines,
+    );
+    expect(forged.status).toBe(400);
+    expect((await harness.post('/me/documents', { item: 'PLAN' }, ines)).status).toBe(404);
+    // Con una sola evaluación no hay evolución.
+    expect((await harness.post('/me/documents', { item: 'EVOLUTION' }, luis)).status).toBe(404);
+  });
 
   it('la descarga con su sesión, como adjunto; Inés no; queda auditada como exportación (RN-B03)', async () => {
     const status = documentStatusSchema.parse(

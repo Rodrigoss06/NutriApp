@@ -194,7 +194,14 @@ function SessionsSummary({ rows }: { rows: readonly MacrocycleRow[] }) {
   );
 }
 
-function AggregateList({ aggregates }: { aggregates: Aggregates }) {
+/** El resumen de la semana; el estrés promedio sale del registro diario y solo informa (P-25, ADR-107). */
+function AggregateList({
+  aggregates,
+  avgStress,
+}: {
+  aggregates: Aggregates;
+  avgStress: number | null;
+}) {
   const items: readonly (readonly [string, string, number | null])[] = [
     ['Días con sesión', String(aggregates.sessions), aggregates.sessions],
     ['Carga sRPE', `${load(aggregates.srpeLoad)} min × RPE`, aggregates.srpeLoad],
@@ -210,6 +217,7 @@ function AggregateList({ aggregates }: { aggregates: Aggregates }) {
       `${formatNumber(aggregates.avgFatigue, 'index')} de 5`,
       aggregates.avgFatigue,
     ],
+    ['Estrés promedio', `${formatNumber(avgStress, 'index')} de 5`, avgStress],
     [
       'Dolor muscular promedio',
       `${formatNumber(aggregates.avgSoreness, 'index')} de 5`,
@@ -380,7 +388,9 @@ function ReviewDetail({
             </dd>
           </div>
         </dl>
-        {review.aggregates ? <AggregateList aggregates={review.aggregates} /> : null}
+        {review.aggregates ? (
+          <AggregateList aggregates={review.aggregates} avgStress={review.avgStress} />
+        ) : null}
         <p className="flex flex-wrap items-center gap-x-3 gap-y-1">
           <MethodBadge
             label={methodLabel(review.method.code)}

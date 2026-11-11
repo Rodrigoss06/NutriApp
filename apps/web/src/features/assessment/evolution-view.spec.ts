@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest';
 import {
   evaluationsByMonth,
   metricName,
+  physicalComparison,
   seriesOptions,
   trendRange,
   trendRows,
@@ -121,5 +122,97 @@ describe('RF-35 · la evolución en pantalla', () => {
       ['2026-10', ['2026-10-13'], null],
       ['2026-09', ['2026-09-15'], null],
     ]);
+  });
+});
+
+describe('P14.5 · ADR-107 · la comparativa física: de la primera evaluación a la última', () => {
+  const withOverall = (
+    series: { points: EvolutionResponse['sites'][number]['points'] },
+    change: number,
+    measured: boolean,
+  ) => ({
+    points: series.points,
+    overall: {
+      change,
+      mdc95: measured ? 0.5 : null,
+      significance: measured ? ('CHANGE' as const) : null,
+    },
+  });
+  const MATEO: EvolutionResponse = {
+    ...EVOLUTION,
+    sites: [
+      {
+        siteCode: 'GIRTH_HIP',
+        name: 'Cadera',
+        family: 'GIRTH',
+        unit: 'cm',
+        ...withOverall(two(100, 99), -1, true),
+      },
+      {
+        siteCode: 'BASIC_WEIGHT',
+        name: 'Peso',
+        family: 'BASIC',
+        unit: 'kg',
+        ...withOverall(two(80, 79), -1, true),
+      },
+      {
+        siteCode: 'GIRTH_WAIST',
+        name: 'Cintura',
+        family: 'GIRTH',
+        unit: 'cm',
+        ...withOverall(two(88, 85), -3, true),
+      },
+      ...EVOLUTION.sites.slice(1),
+    ],
+    metrics: [],
+    bia: [
+      {
+        device: 'Marca Demo · BIA-200',
+        metric: 'FAT_PCT',
+        deviceLabel: '% Grasa',
+        unit: '%',
+        ...withOverall(two(22, 20.8), -1.2, false),
+      },
+    ],
+  };
+
+  it('peso, cintura y cadera con su CMD95, en ese orden, y la grasa por bioimpedancia aparte', () => {
+    expect(
+      physicalComparison(MATEO).map((row) => [
+        row.name,
+        row.first.value,
+        row.last.value,
+        row.change,
+      ]),
+    ).toEqual([
+      ['Peso', 80, 79, -1],
+      ['Cintura', 88, 85, -3],
+      ['Cadera', 100, 99, -1],
+      ['% de grasa por bioimpedancia (% Grasa)', 22, 20.8, -1.2],
+    ]);
+    expect(physicalComparison(MATEO).map((row) => row.significance)).toEqual([
+      'CHANGE',
+      'CHANGE',
+      'CHANGE',
+      null,
+    ]);
+  });
+
+  it('la grasa de cada método por separado, sin CMD95 (RN-D03, RN-C05); con una sola evaluación, nada', () => {
+    const fat = physicalComparison({
+      ...EVOLUTION,
+      metrics: EVOLUTION.metrics.map((metric) => ({
+        ...metric,
+        ...withOverall(metric, -0.8, false),
+      })),
+      bia: [],
+    }).map((row) => row.name);
+    expect(fat).toEqual([
+      '% de grasa (Durnin & Womersley (1974) + Siri)',
+      '% de grasa (Yuhasz (versión de Carter, 6 pliegues))',
+    ]);
+    expect(
+      physicalComparison({ ...EVOLUTION, sites: EVOLUTION.sites.slice(1), metrics: [], bia: [] }),
+    ).toEqual([]);
   });
 });

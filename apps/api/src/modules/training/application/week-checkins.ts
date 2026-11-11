@@ -14,6 +14,11 @@ export interface WeekCheckin {
   readonly performancePct: number | null;
   readonly nutritionCompliancePct: number | null;
   readonly menstrualSymptoms: number | null;
+  /**
+   * El estrés del registro diario, de 1 a 5. No entra en el control (P-25: decide el control semanal y el panel solo informa): se
+   * muestra en su resumen (P14.5, PR 6a; ADR-107).
+   */
+  readonly stress: number | null;
 }
 
 /** Los registros diarios vigentes de un rango, con los ajustes del profesional aplicados (RN-G02). Los da tracking. */

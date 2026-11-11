@@ -8,7 +8,7 @@ import { serverApi } from '@/lib/api/server';
 export const metadata: Metadata = { title: 'Progreso' };
 
 /**
- * Progreso (RF-30, ADR-091): el peso, la cintura y la suma de 6 pliegues de cada evaluación, con el cambio real o «sin cambio
+ * Progreso (RF-30, ADR-091, ADR-107): el peso, la cintura, la cadera y la suma de 6 pliegues de cada evaluación, con el cambio real o «sin cambio
  * significativo» (RN-C06), y el % de grasa y la masa muscular del método principal (RN-D05), cada uno con su método (RN-D02),
  * si el profesional dejó la sección a la vista. Sin interpretaciones clínicas.
  */

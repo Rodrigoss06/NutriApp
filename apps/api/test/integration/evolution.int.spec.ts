@@ -199,6 +199,7 @@ describe('RF-30 · ADR-091 · la evolución del paciente en su app', () => {
     expect(view.items.map((item) => item.item)).toEqual([
       'WEIGHT',
       'WAIST',
+      'HIP',
       'SKINFOLD_SUM6',
       'FAT_PCT',
       'MUSCLE_MASS',

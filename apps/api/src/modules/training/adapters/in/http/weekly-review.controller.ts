@@ -79,6 +79,7 @@ const reviewOf = (review: WeeklyReviewView): WeeklyReviewsResponse['reviews'][nu
   method: { code: review.methodCode, version: review.methodVersion },
   light: review.light,
   reasons: [...review.reasons],
+  avgStress: review.avgStress,
   aggregates: review.aggregates && { ...review.aggregates },
   plannedVolumeFactor: review.plannedVolumeFactor,
   suggestedVolumeFactor: review.suggestedVolumeFactor,

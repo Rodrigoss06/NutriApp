@@ -143,6 +143,7 @@ describe('Demo 3 · Mateo, el alumno ficticio de la hoja de Jeremy', () => {
     const { reviews } = await get<{
       reviews: {
         weekNo: number;
+        avgStress: number | null;
         aggregates: {
           sessions: number;
           avgSleepHours: number;
@@ -163,6 +164,13 @@ describe('Demo 3 · Mateo, el alumno ficticio de la hoja de Jeremy', () => {
     expect(month.map((week) => shown(week?.avgPerformancePct))).toEqual([80, 80, 100, 100]);
     expect(month.map((week) => shown(week?.avgNutritionCompliancePct))).toEqual([78, 82, 88, 92]);
     expect(month.map((week) => week?.sessions)).toEqual([3, 3, 2, 3]);
+    // El estrés de la hoja, en el resumen del control: solo informa (P-25; P14.5, PR 6a; ADR-107).
+    expect(
+      reviews
+        .filter(({ weekNo }) => weekNo <= 4)
+        .sort((a, b) => a.weekNo - b.weekNo)
+        .map(({ avgStress }) => avgStress),
+    ).toEqual([3, 4, 3, 2]);
   });
 
   it('RF-33 · RN-F04 · el 1RM de Epley y el tonelaje de la hoja', async () => {

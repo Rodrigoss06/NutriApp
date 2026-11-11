@@ -15,13 +15,14 @@ type Item = PatientEvolutionResponse['items'][number];
 const KINDS: Readonly<Record<Item['item'], NumberKind>> = {
   WEIGHT: 'mass',
   WAIST: 'length',
+  HIP: 'length',
   SKINFOLD_SUM6: 'length',
   FAT_PCT: 'percent',
   MUSCLE_MASS: 'mass',
 };
 
 /** Las medidas se comparan con el margen de error del evaluador (RN-C06); los números derivados, no (RN-C05). */
-const MEASURED: ReadonlySet<Item['item']> = new Set(['WEIGHT', 'WAIST', 'SKINFOLD_SUM6']);
+const MEASURED: ReadonlySet<Item['item']> = new Set(['WEIGHT', 'WAIST', 'HIP', 'SKINFOLD_SUM6']);
 
 /**
  * Un número de Progreso (RF-30, ADR-091): el último valor con su método (RN-D02), el cambio desde la primera evaluación y, en
