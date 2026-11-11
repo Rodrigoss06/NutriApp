@@ -196,6 +196,15 @@ RIR 2, por 1.1, da 1,782. Solo vemos algunos valores: RIR 2 = 1.1, RIR 3 = 1.0, 
 > 4. **Ejercicios sin peso:**
 >    - la movilidad, las isometrías por tiempo y el cardio aportan 0 kg de volumen y solo cuentan para cumplir la sesión;
 >    - la calistenia y el peso corporal suman sus series efectivas al grupo muscular, y tonelaje solo si registran lastre.
+>
+> **Respuesta (2026-11-11, por Rodrigo), para lo que la tabla no traía:**
+>
+> - un descanso entre dos filas toma el escalón inferior: 150 s = 1.00, el de 120 s. Escrito por tramos: hasta 45 s = 1.15,
+>   de 46 a 60 s = 1.10, de 61 a 75 s = 1.05, de 76 a 179 s = 1.00 y 180 s o más = 0.95. Por aclarar: los tramos y el escalón
+>   inferior no dan lo mismo entre 46 y 89 s (50 s: 1.10 por tramos, 1.15 por escalón inferior; 70 s: 1.05 o 1.10; 80 s: 1.00
+>   o 1.05);
+> - menos de 45 s (30 s) = 1.15, como 45 s;
+> - una serie con RPE y sin RIR: RIR = 10 − RPE, entre 0 y 5. RPE 8 = RIR 2 = 1.1.
 
 **P-27 · Fatiga por grupo muscular** (panel, «Fatiga por grupo muscular»)
 
@@ -223,6 +232,11 @@ RIR 2, por 1.1, da 1,782. Solo vemos algunos valores: RIR 2 = 1.1, RIR 3 = 1.0, 
 > 2. Fue un error de nombres en la fórmula del Excel: en la app, el jalón al pecho va a Dorsal y la sentadilla a Cuádriceps.
 > 3. Sí: los 17 grupos de la app, con 1.0 el primario y 0.5 el secundario. Así salen los promedios de «Base 3 sem.», como
 >    Pecho 1,461.6 y Tríceps 312.2.
+>
+> **Decisión de Rodrigo (2026-11-11), para el PR 4.** Vale la regla de 1.0 para el primario y 0.5 para el secundario, sin
+> coeficientes por ejercicio: un ejercicio nuevo no necesita sus propios decimales. Con Mateo, la «Base 3 sem.» de la semana 5
+> sale del press banca de las semanas 2 a 4 (1,419): Pecho 1,419 y Tríceps 709.5, no los 1,461.6 y 312.2 de la hoja, que salen
+> de otros coeficientes (1.03 y 0.22).
 
 ## Informe mensual
 
@@ -262,6 +276,8 @@ RIR 2, por 1.1, da 1,782. Solo vemos algunos valores: RIR 2 = 1.1, RIR 3 = 1.0, 
 > **Respuesta (2026-11-10, por Rodrigo).** Las suben los dos, alumno y coach: tres vistas (frontal, lateral y posterior) en cada
 > cierre de mesociclo de 4 semanas. Sí al consentimiento propio de datos sensibles. Se guardan mientras la cuenta esté activa y 12
 > meses después de la baja, o se borran si revoca.
+>
+> **Rodrigo (2026-11-11):** hay texto de consentimiento para las fotos.
 
 ## Documentos, asistencias y prescripción
 
@@ -346,6 +362,22 @@ RIR 2, por 1.1, da 1,782. Solo vemos algunos valores: RIR 2 = 1.1, RIR 3 = 1.0, 
 > **Decisiones de Rodrigo (2026-11-10), para el PR 9.** Con 3 días se usa la plantilla de cuerpo completo A, B y C de la V3. Los
 > ejercicios nuevos se cargan como provisionales, con valores estándar, hasta que Jeremy los valide. «Brazos» va en dos bloques,
 > Bíceps y Tríceps, como hoy en la app. El bird dog pasa al patrón de estabilidad lumbar, como en la lista de Jeremy.
+>
+> **Decisiones de Rodrigo (2026-11-11), para el PR 9b.**
+>
+> - Con 5 días, la división de Jeremy: Superior A, Inferior A, Superior B, Inferior B y Acondicionamiento. Cambia RN-F14 y el
+>   caso dorado G-31 (empuje, tracción y pierna) en Notion.
+> - «Flexión de rodilla» y «Extensión de rodilla» son dos patrones nuevos, cada uno con su ejercicio por nivel.
+> - El tempo y el descanso salen del patrón, como en la tabla de Jeremy, y no los fijos de RN-F14 (2-1-2 y 90 s): cambia RN-F14
+>   en Notion.
+>
+> **Por confirmar con Jeremy (ADR-112):**
+>
+> 1. Los ejercicios por nivel de la flexión y de la extensión de rodilla. Mientras tanto, el curl femoral en máquina y la
+>    extensión de rodilla en máquina, en los tres niveles.
+> 2. Las series y las repeticiones de cada bloque. La hoja da 3 series a los primeros bloques y 2 a los accesorios, y rangos
+>    distintos: curl femoral 10–15, pantorrilla 12–15, hombro 12–15. ¿Son valores base de la propuesta? Por ahora sigue
+>    3 × 8–12, como RN-F14.
 
 ## Otros
 

@@ -34,6 +34,8 @@ export const MOVEMENT_PATTERN_LABELS = {
   SHOULDER_MOBILITY: 'Movilidad de hombro',
   THORACIC_MOBILITY: 'Movilidad torácica',
   LUMBAR_STABILITY: 'Estabilidad lumbar',
+  KNEE_FLEXION: 'Flexión de rodilla',
+  KNEE_EXTENSION: 'Extensión de rodilla',
 } as const satisfies Record<string, string>;
 
 export const EXERCISE_MODALITY_LABELS = {
@@ -54,6 +56,7 @@ export const ROUTINE_SPLIT_LABELS = {
   FULL_BODY: 'Cuerpo completo',
   FULL_BODY_ABC: 'Cuerpo completo A/B/C',
   UPPER_LOWER: 'Superior / inferior',
+  UPPER_LOWER_CONDITIONING: 'Superior / inferior + acondicionamiento',
   PUSH_PULL_LEGS: 'Push / pull / legs + complementos',
 } as const satisfies Record<string, string>;
 

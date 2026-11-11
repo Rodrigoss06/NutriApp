@@ -9,7 +9,7 @@ import {
   weekSets,
   type PeriodizationPhase,
 } from './macrocycle.js';
-import { BASE_BLOCK, proposeRoutine } from './routine-proposal.js';
+import { BASE_BLOCK, PATTERN_BASE, proposeRoutine } from './routine-proposal.js';
 
 const PHASES = periodizationSeed.phases as readonly PeriodizationPhase[];
 const CHOICES = patternChoiceSeed();
@@ -151,8 +151,10 @@ describe('RN-F14 · una semana del macrociclo con la propuesta', () => {
       loadValue: 4,
       repsMin: BASE_BLOCK.repsMin,
       repsMax: BASE_BLOCK.repsMax,
-      tempo: BASE_BLOCK.tempo,
-      restSeconds: BASE_BLOCK.restSeconds,
+      // Superior A, bloque 1: empuje horizontal, con su tempo y su descanso (P-34).
+      pattern: 'HORIZONTAL_PUSH',
+      tempo: PATTERN_BASE.HORIZONTAL_PUSH.tempo,
+      restSeconds: PATTERN_BASE.HORIZONTAL_PUSH.restSeconds,
     });
   });
 

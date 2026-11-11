@@ -7,6 +7,7 @@ import {
   movementTestStatus,
   prescriptionStatus,
   PRI_JV,
+  PATTERN_BASE,
   proposeRoutine,
   READINESS_JV,
   routineSplit,
@@ -58,12 +59,14 @@ describe('G-30 · RN-F13 · macrociclo de 10 semanas', () => {
   });
 });
 
+// G-31 con 5 días: superior, inferior y acondicionamiento, la división de la hoja piloto (P-34, decisión de Rodrigo del
+// 2026-11-11; ADR-112). Antes, push/pull/legs: el cambio se lleva a 03 con /notion-sync.
 describe('G-31 · RN-F14 · división por días', () => {
   it.each([
     [2, 'FULL_BODY'],
     [3, 'FULL_BODY_ABC'],
     [4, 'UPPER_LOWER'],
-    [5, 'PUSH_PULL_LEGS'],
+    [5, 'UPPER_LOWER_CONDITIONING'],
   ])('%i días: %s', (days, split) => {
     expect(routineSplit(days)).toBe(split);
   });
@@ -397,14 +400,16 @@ describe('Criterio 4 de P12 · RN-F14 · la propuesta coincide con la hoja PRESC
     ['Inferior', 'CONDITIONING', 'Caminata inclinada'],
   ];
 
-  it('las 32 filas: sesión, patrón y ejercicio, con 3 series de 8 a 12, RIR 2, tempo 2-1-2 y 90 s', () => {
-    const proposal = proposeRoutine({ level: 'BEGINNER', daysPerWeek: 4 }, CHOICES);
-    const blocks = proposal.days.flatMap((day) =>
-      day.blocks.map((block) => ({ session: day.name, ...block })),
-    );
+  // Plantilla 2.0.0 (ADR-112): con 4 días van las sesiones de la hoja piloto, y la V3 queda para cuerpo completo. Sus 3 primeros
+  // días (24 filas) siguen iguales, con el tempo y el descanso de cada patrón (P-34) en vez de 2-1-2 y 90 s.
+  it('los 3 primeros días de la hoja (24 filas): patrón y ejercicio, con 3 series de 8 a 12 y RIR 2', () => {
+    const proposal = proposeRoutine({ level: 'BEGINNER', daysPerWeek: 3 }, CHOICES);
+    const blocks = proposal.days.flatMap((day) => day.blocks);
 
-    expect(proposal.split).toBe('UPPER_LOWER');
-    expect(blocks.map((b) => [b.session, b.pattern, b.suggested?.exerciseName])).toEqual(SHEET);
+    expect(proposal.split).toBe('FULL_BODY_ABC');
+    expect(blocks.map((b) => [b.pattern, b.suggested?.exerciseName])).toEqual(
+      SHEET.slice(0, 24).map(([, pattern, exercise]) => [pattern, exercise]),
+    );
     for (const block of blocks) {
       expect(block).toMatchObject({
         sets: 3,
@@ -412,8 +417,8 @@ describe('Criterio 4 de P12 · RN-F14 · la propuesta coincide con la hoja PRESC
         repsMax: 12,
         loadKind: 'RIR',
         loadValue: 2,
-        tempo: '2-1-2',
-        restSeconds: 90,
+        tempo: PATTERN_BASE[block.pattern].tempo,
+        restSeconds: PATTERN_BASE[block.pattern].restSeconds,
       });
     }
   });

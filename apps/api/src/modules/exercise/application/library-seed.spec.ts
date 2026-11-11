@@ -104,8 +104,8 @@ describe('RF-38 · RF-25 · el CSV de ejercicios base', () => {
 });
 
 describe('RN-F14 · la tabla patrón × nivel de la V3 y de la hoja piloto (07 §5, P-34)', () => {
-  it('apunta a ejercicios del archivo, con su nombre y de su patrón: 45 filas de la V3 y 9 de la hoja', () => {
-    expect(choices).toHaveLength(54);
+  it('apunta a ejercicios del archivo, con su nombre y de su patrón: 45 filas de la V3 y 15 de la hoja', () => {
+    expect(choices).toHaveLength(60);
     for (const choice of choices) {
       const exercise = byCode.get(choice.exerciseCode);
       expect(exercise?.name, choice.exerciseCode).toBe(choice.exerciseName);

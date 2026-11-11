@@ -20,6 +20,8 @@ export const MOVEMENT_PATTERN_CODES: readonly MovementPattern[] = [
   'SHOULDER_MOBILITY',
   'THORACIC_MOBILITY',
   'LUMBAR_STABILITY',
+  'KNEE_FLEXION',
+  'KNEE_EXTENSION',
 ];
 
 export const TRAINING_LEVEL_CODES: readonly TrainingLevel[] = [

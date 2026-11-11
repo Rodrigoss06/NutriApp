@@ -3,6 +3,19 @@
 Cambiar una fórmula o una constante sube la versión del método afectado y la del motor (02 §9).
 Los resultados guardados conservan la versión con que se calcularon (RN-D01, RN-D08).
 
+## 1.13.0 — 2026-11-11
+
+- Plantilla de la propuesta de rutina 2.0.0 (RN-F14; P14.5, PR 9b; P-34, respuesta de Jeremy y decisiones de Rodrigo del
+  2026-11-11; ADR-112):
+  - con 4 días, Superior A, Inferior A, Superior B e Inferior B, con los bloques de la hoja piloto; con 5, lo mismo con
+    Acondicionamiento el día 3 (`UPPER_LOWER_CONDITIONING`, antes `PUSH_PULL_LEGS`, que queda para los programas guardados);
+  - con 2 y 3 días, los días 1 a 3 de la V3, sin cambios en sus bloques;
+  - el tempo y el descanso salen del patrón (`PATTERN_BASE`), como la hoja: por ejemplo, sentadilla 3-1-1 y 120 s, curl femoral
+    2-1-2 y 75 s, movilidad 45 s. Las series, las repeticiones y el RIR base siguen en 3 × 8–12 y RIR 2;
+  - dos patrones nuevos, flexión y extensión de rodilla (20 en total).
+- G-31 con 5 días pasa a `UPPER_LOWER_CONDITIONING`. El criterio 4 de P12 compara la hoja de la V3 con la propuesta de 3 días
+  (sus 24 primeras filas). Los programas ya propuestos conservan su `template_version` 1.0.0.
+
 ## 1.12.0 — 2026-11-10
 
 - `WEEKLY_REVIEW_JV` 3.1.0: la alimentación que el asesorado declara en el check-in del domingo (P14.5, PR 5a; P-21 y P-22,

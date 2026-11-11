@@ -248,11 +248,11 @@ test.describe('P12 · Programa de entrenamiento', () => {
     const generate = page.getByRole('button', { name: 'Generar propuesta' });
     await expect(async () => {
       await generate.click({ timeout: 2_000 });
-      await expect(page.getByText('0 de 32 aprobados')).toBeVisible({ timeout: 5_000 });
+      await expect(page.getByText('0 de 21 aprobados')).toBeVisible({ timeout: 5_000 });
     }).toPass({ timeout: 30_000 });
 
     await expect(page.getByRole('heading', { level: 2, name: 'Hipertrofia' })).toBeVisible();
-    await expect(page.getByText('Faltan 32 ejercicios por aprobar.')).toBeVisible();
+    await expect(page.getByText('Faltan 21 ejercicios por aprobar.')).toBeVisible();
     await expect(page.getByRole('button', { name: 'Publicar programa' })).toBeDisabled();
     // Una propuesta no agrega ni quita mesociclos: salen del macrociclo.
     await expect(page.getByRole('form', { name: 'Agregar un mesociclo' })).toHaveCount(0);
@@ -263,14 +263,19 @@ test.describe('P12 · Programa de entrenamiento', () => {
     await expect(page.getByText(/Tabla de fases vigente desde/)).toBeVisible();
     expect(await seriousViolations(page)).toEqual([]);
 
-    // Sustituir: de su mismo patrón, con nota, y queda aprobado.
+    // Sustituir: de su mismo patrón, con nota, y queda aprobado. Superior A empieza con el empuje horizontal (P-34, ADR-112).
     const firstDay = page.getByRole('region', { name: 'Bloques del día 1' });
-    await firstDay.getByRole('button', { name: /^Sustituir Sentadilla goblet/ }).click();
-    const replacement = firstDay.getByRole('group', { name: 'Sustituir Sentadilla goblet' });
+    await firstDay.getByRole('button', { name: /^Sustituir Press en máquina/ }).click();
+    const replacement = firstDay.getByRole('group', { name: 'Sustituir Press en máquina' });
     await expect(
       replacement.getByRole('button', { name: 'Aprobar la sustitución' }),
     ).toBeDisabled();
-    await pickExercise(replacement, 'Ejercicio que lo sustituye', 'prensa', 'Prensa de piernas');
+    await pickExercise(
+      replacement,
+      'Ejercicio que lo sustituye',
+      'press con',
+      'Press con mancuernas',
+    );
     await replacement
       .getByRole('textbox', { name: 'Nota de la sustitución' })
       .fill('Prefiere máquina.');
@@ -278,22 +283,22 @@ test.describe('P12 · Programa de entrenamiento', () => {
       firstDay.getByText(/Semana 1: 2 series · 8 a 12 rep · RIR 3/).first(),
     ).toBeVisible();
     await replacement.getByRole('button', { name: 'Aprobar la sustitución' }).click();
-    await expect(page.getByText('1 de 32 aprobados')).toBeVisible();
+    await expect(page.getByText('1 de 21 aprobados')).toBeVisible();
     await expect(firstDay.getByText('Sustituido')).toBeVisible();
     await expect(firstDay.getByText('Nota: Prefiere máquina.')).toBeVisible();
 
     // Los demás, uno por uno; el botón desaparece al aprobarlo.
     const pending = page.getByRole('button', { name: /^Aprobar .*, día \d, orden \d$/ });
-    for (let approved = 1; approved < 32; approved += 1) {
+    for (let approved = 1; approved < 21; approved += 1) {
       await pending.first().click();
-      await expect(page.getByText(`${String(approved + 1)} de 32 aprobados`)).toBeVisible();
+      await expect(page.getByText(`${String(approved + 1)} de 21 aprobados`)).toBeVisible();
     }
     await expect(page.getByText('Faltan')).toHaveCount(0);
 
     await publish(page);
     await expect(page.getByRole('button', { name: /^Semana 12/ })).toBeVisible();
     await expect(page.getByText('Nota de la sustitución: Prefiere máquina.').first()).toBeVisible();
-    await expect(page.getByText('Prensa de piernas').first()).toBeVisible();
+    await expect(page.getByText('Press con mancuernas').first()).toBeVisible();
     expect(await seriousViolations(page)).toEqual([]);
   });
 

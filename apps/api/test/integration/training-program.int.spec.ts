@@ -1,6 +1,6 @@
 import { readFile } from 'node:fs/promises';
 import { programDetailSchema, programListResponseSchema } from '@nutricoach/contracts';
-import { ROUTINE_TEMPLATE_VERSION } from '@nutricoach/engine';
+import { PATTERN_BASE, ROUTINE_TEMPLATE_VERSION, type MovementPattern } from '@nutricoach/engine';
 import type { UserId } from '@nutricoach/shared-kernel';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { CatalogImporter } from '../../src/platform/index.js';
@@ -110,48 +110,15 @@ const NO_ANSWERS = {
   S08: false,
 };
 const SET = { repsMin: 8, repsMax: 12, loadKind: 'RIR', loadValue: 2, restSeconds: 90 };
-/** La plantilla de sesiones de la hoja PRESCRIPCION (07 §6), escrita aparte de la del motor para compararlas. */
-const TEMPLATE_V3 = [
-  [
-    'SQUAT',
-    'HORIZONTAL_PUSH',
-    'HORIZONTAL_PULL',
-    'HINGE',
-    'SHOULDER',
-    'CORE_ANTI_EXTENSION',
-    'BICEPS',
-    'TRICEPS',
-  ],
-  [
-    'HINGE',
-    'VERTICAL_PULL',
-    'VERTICAL_PUSH',
-    'UNILATERAL',
-    'HIP_EXTENSION',
-    'CORE_ANTI_ROTATION',
-    'CALF',
-    'CONDITIONING',
-  ],
-  [
-    'SQUAT',
-    'HORIZONTAL_PUSH',
-    'HORIZONTAL_PULL',
-    'HINGE',
-    'VERTICAL_PULL',
-    'SHOULDER',
-    'BICEPS',
-    'TRICEPS',
-  ],
-  [
-    'HINGE',
-    'UNILATERAL',
-    'HIP_EXTENSION',
-    'VERTICAL_PUSH',
-    'VERTICAL_PULL',
-    'CORE_ANTI_EXTENSION',
-    'CALF',
-    'CONDITIONING',
-  ],
+/**
+ * Con 4 días, las sesiones de la prescripción de la hoja piloto (P-34; plantilla 2.0.0, ADR-112), escritas aparte de las del motor
+ * para compararlas. Con 3 días o menos sigue la plantilla de la V3 (07 §6).
+ */
+const TEMPLATE_4_DAYS = [
+  ['HORIZONTAL_PUSH', 'HORIZONTAL_PULL', 'VERTICAL_PUSH', 'VERTICAL_PULL', 'CORE_ANTI_ROTATION'],
+  ['SQUAT', 'HIP_EXTENSION', 'KNEE_FLEXION', 'UNILATERAL', 'CALF'],
+  ['HORIZONTAL_PUSH', 'HORIZONTAL_PULL', 'VERTICAL_PULL', 'SHOULDER', 'BICEPS', 'TRICEPS'],
+  ['SQUAT', 'HINGE', 'KNEE_EXTENSION', 'KNEE_FLEXION', 'CORE_ANTI_EXTENSION'],
 ] as const;
 
 /** El ejercicio de cada patrón para un principiante, de la tabla de la V3 (07 §5). */
@@ -620,7 +587,7 @@ describe('RN-F15 · RN-F14 · la propuesta', () => {
     expect((blocked.body as Problem).details?.status).toBe('BLOCKED_PAIN');
   });
 
-  it('criterio de P12: 4 días de un principiante de hipertrofia, como la hoja PRESCRIPCION y la tabla de fases', async () => {
+  it('criterio de P12 con la plantilla 2.0.0: 4 días de un principiante de hipertrofia, con las sesiones de la hoja piloto y la tabla de fases', async () => {
     const patientId = await newPatient();
     await withOpenKeys(patientId);
 
@@ -641,28 +608,34 @@ describe('RN-F15 · RN-F14 · la propuesta', () => {
     // La semana 3 tiene factor 1: los valores base de la plantilla, con el RIR de su semana (ADR-070).
     const week3 = weeksOf(program)[2];
     expect(week3?.sessions.map((session) => session.name)).toEqual([
-      'Superior',
-      'Inferior',
-      'Superior',
-      'Inferior',
+      'Superior A',
+      'Inferior A',
+      'Superior B',
+      'Inferior B',
     ]);
-    // Los 32 bloques: el patrón de la plantilla, el ejercicio de la tabla y nada aprobado (07 §5 y §6).
+    // Los 21 bloques: el patrón de la plantilla, el ejercicio de la tabla y nada aprobado (07 §5 y §6).
     const exercises = await beginnerExercises();
     expect(
       week3?.sessions.map((session) => session.exercises.map((e) => e.movementPattern)),
-    ).toEqual(TEMPLATE_V3);
+    ).toEqual(TEMPLATE_4_DAYS);
     expect(week3?.sessions.map((session) => session.exercises.map((e) => e.name))).toEqual(
-      TEMPLATE_V3.map((day) => day.map((pattern) => exercises.get(pattern))),
+      TEMPLATE_4_DAYS.map((day) => day.map((pattern) => exercises.get(pattern))),
     );
-    expect(week3?.sessions.flatMap((session) => session.exercises)).toHaveLength(32);
+    expect(week3?.sessions.flatMap((session) => session.exercises)).toHaveLength(21);
     expect(
       week3?.sessions.flatMap((session) => session.exercises.map((e) => e.approvedAt)),
-    ).toEqual(Array.from({ length: 32 }, () => null));
-    expect(week3?.sessions[0]?.exercises[0]?.name).toBe('Sentadilla goblet');
-    // Cada bloque con sus valores base, no solo el primero.
+    ).toEqual(Array.from({ length: 21 }, () => null));
+    expect(week3?.sessions[0]?.exercises[0]?.name).toBe(exercises.get('HORIZONTAL_PUSH'));
+    // Cada bloque con sus valores base y el tempo y el descanso de su patrón (P-34), no solo el primero.
     for (const exercise of week3?.sessions.flatMap((session) => session.exercises) ?? []) {
+      const base = PATTERN_BASE[exercise.movementPattern as MovementPattern];
       expect(exercise.sets).toHaveLength(3);
-      expect(exercise.sets[0]).toMatchObject({ repsMin: 8, repsMax: 12, restSeconds: 90 });
+      expect(exercise.sets[0]).toMatchObject({
+        repsMin: 8,
+        repsMax: 12,
+        restSeconds: base.restSeconds,
+        tempo: base.tempo,
+      });
     }
     expect(week3?.sessions[0]?.exercises[0]?.sets).toHaveLength(3);
     expect(week3?.sessions[0]?.exercises[0]?.sets[0]).toMatchObject({
@@ -671,7 +644,7 @@ describe('RN-F15 · RN-F14 · la propuesta', () => {
       loadKind: 'RIR',
       loadValue: 2,
       restSeconds: 90,
-      tempo: '2-1-2',
+      tempo: '3-1-1',
     });
     expect(weeksOf(program)[3]).toMatchObject({
       weekNo: 4,
