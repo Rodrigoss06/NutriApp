@@ -262,7 +262,7 @@ function ExerciseRow({
           {exercise.sets.map((set, index) => (
             <SetRow
               key={`${String(set.setNo)}-${String(index)}`}
-              exerciseName={exercise.name}
+              exercise={exercise}
               set={set}
               draft={sets[index]}
               onChange={(changes) => {
@@ -335,19 +335,19 @@ function ExerciseGuide({ exercise }: { exercise: SessionExercise }) {
 }
 
 function SetRow({
-  exerciseName,
+  exercise,
   set,
   draft,
   onChange,
 }: {
-  exerciseName: string;
+  exercise: SessionExercise;
   set: PrescribedSet;
   draft: SetDraft | undefined;
   onChange: (changes: Partial<SetDraft>) => void;
 }) {
   if (!draft) return null;
   const label = setLabel(set);
-  const of = `${label} de ${exerciseName}`;
+  const of = `${label} de ${exercise.name}`;
   const cardio = isCardio(set);
   const kind = effortKind(set);
   return (
@@ -360,7 +360,7 @@ function SetRow({
       <div className="flex items-center justify-between gap-2">
         <p className="flex flex-col text-sm">
           <span className="font-medium">{label}</span>
-          <span className="text-muted-foreground">{prescribedText(set)}</span>
+          <span className="text-muted-foreground">{prescribedText(set, exercise)}</span>
         </p>
         <Button
           size="touch"

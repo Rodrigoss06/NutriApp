@@ -16,7 +16,7 @@ import {
   exchangeDietV120,
 } from './exchange-diet.v1.js';
 import { sheetColors, type SheetFrame } from './sheet-kit.js';
-import { trainingTitles, trainingV1 } from './training.v1.js';
+import { trainingTitles, trainingV1, trainingV110 } from './training.v1.js';
 import {
   weeklyMenuTitles,
   weeklyMenuV1,
@@ -84,6 +84,7 @@ const TEMPLATES: Readonly<Record<string, Template>> = {
     anthropometryTitles,
   ),
   'TRAINING@1.0.0': template<TrainingSheet>('TRAINING', trainingV1, trainingTitles),
+  'TRAINING@1.1.0': template<TrainingSheet>('TRAINING', trainingV110, trainingTitles),
   'EVOLUTION@1.0.0': template<EvolutionSheet>('EVOLUTION', evolutionV1, evolutionTitles),
 };
 

@@ -64,6 +64,9 @@ const exercise = (changes: Partial<Exercise> = {}): Exercise => ({
   harderVariant: null,
   mediaUrl: null,
   instructions: null,
+  isUnilateral: false,
+  modality: 'STRENGTH',
+  baseMeasure: 'REPS',
   sets: [SET],
   ...changes,
 });

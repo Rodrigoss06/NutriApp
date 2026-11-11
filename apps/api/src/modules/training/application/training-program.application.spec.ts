@@ -215,6 +215,9 @@ const exerciseRecord = (id: string) =>
     harderVariant: null,
     mediaUrl: null,
     instructions: null,
+    isUnilateral: false,
+    modality: 'STRENGTH',
+    baseMeasure: 'REPS',
   }) as unknown as ExerciseRecord;
 
 const CHOICES = MOVEMENT_PATTERNS.flatMap((pattern) =>

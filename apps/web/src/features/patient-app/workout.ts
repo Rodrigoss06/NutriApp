@@ -1,6 +1,7 @@
 import {
-  LOAD_KIND_LABELS,
   logWorkoutSchema,
+  prescriptionText,
+  type LoadKind,
   type LogWorkout,
   type MeTraining,
 } from '@nutricoach/contracts';
@@ -18,36 +19,19 @@ export const isCardio = (set: PrescribedSet): boolean =>
 export const effortKind = (set: PrescribedSet): 'RIR' | 'RPE' =>
   set.loadKind === 'RPE' ? 'RPE' : 'RIR';
 
-const number = (value: number): string => String(value);
-
-/** Lo prescrito de una serie como se dice: «8 a 12 rep · RIR 2 · 90 s» o «20 min · MET 6». */
-export function prescribedText(set: PrescribedSet): string {
-  const reps =
-    set.repsMin !== null && set.repsMax !== null && set.repsMin !== set.repsMax
-      ? `${number(set.repsMin)} a ${number(set.repsMax)} rep`
-      : set.repsMin !== null || set.repsMax !== null
-        ? `${number(set.repsMin ?? set.repsMax ?? 0)} rep`
-        : null;
-  const load =
-    set.loadKind === null || set.loadValue === null
-      ? set.loadKind === 'BODYWEIGHT'
-        ? LOAD_KIND_LABELS.BODYWEIGHT
-        : null
-      : set.loadKind === 'KG' || set.loadKind === 'PCT_1RM'
-        ? `${number(set.loadValue)} ${LOAD_KIND_LABELS[set.loadKind]}`
-        : set.loadKind === 'BODYWEIGHT'
-          ? LOAD_KIND_LABELS.BODYWEIGHT
-          : `${set.loadKind} ${number(set.loadValue)}`;
-  return [
-    reps,
-    set.durationSeconds !== null ? `${number(set.durationSeconds / 60)} min` : null,
-    set.distanceM !== null ? `${number(set.distanceM)} m` : null,
-    load,
-    set.met !== null ? `MET ${number(set.met)}` : null,
-    set.restSeconds !== null ? `${number(set.restSeconds)} s` : null,
-  ]
-    .filter(Boolean)
-    .join(' · ');
+/**
+ * Lo prescrito de una serie como se dice: «8 a 12 rep · RIR 2 · 90 s» o «20 min · MET 6», con el texto de contracts: «/lado» en
+ * un unilateral, los segundos de una isometría y «esfuerzo suave (RPE 5–6)» en la movilidad y el cardio (P-34, ADR-114).
+ */
+export function prescribedText(
+  set: PrescribedSet,
+  exercise: Pick<SessionExercise, 'isUnilateral' | 'modality' | 'baseMeasure'> = {
+    isUnilateral: false,
+    modality: null,
+    baseMeasure: null,
+  },
+): string {
+  return prescriptionText({ ...set, loadKind: set.loadKind as LoadKind | null }, exercise);
 }
 
 /** Lo que el paciente anota de una serie; parte de lo prescrito y lo corrige si hizo otra cosa. */

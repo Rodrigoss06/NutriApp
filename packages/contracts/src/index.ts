@@ -34,6 +34,7 @@ export * from './presentation/brand-tokens.js';
 export * from './training/athlete-profile.js';
 export * from './training/labels.js';
 export * from './training/program.js';
+export * from './training/prescription-text.js';
 export * from './training/week-plan.js';
 export * from './training/weekly-review.js';
 export * from './training/readiness-threshold.js';

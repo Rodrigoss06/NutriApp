@@ -1,5 +1,6 @@
 import {
   methodLabel,
+  prescriptionParts,
   sessionDay,
   SET_TYPE_LABELS,
   weekPlan,
@@ -8,27 +9,21 @@ import {
 import { MethodBadge } from '@nutricoach/ui';
 import { TableScroll } from '@/features/shell/table-scroll';
 import { formatTestValue } from './labels';
-import {
-  loadText,
-  muscleNames,
-  phaseSummary,
-  weekSetsByMuscle,
-  type ProgramWeek,
-} from './program-draft';
+import { muscleNames, phaseSummary, weekSetsByMuscle, type ProgramWeek } from './program-draft';
 
 type Exercise = ProgramWeek['sessions'][number]['exercises'][number];
 type PrescribedSet = Exercise['sets'][number];
 
-const repsOf = ({ repsMin, repsMax }: PrescribedSet): string => {
-  if (repsMin !== null && repsMax !== null && repsMin !== repsMax) {
-    return `${String(repsMin)} a ${String(repsMax)}`;
-  }
-  return formatTestValue(repsMin ?? repsMax);
+/**
+ * Las partes de una serie con el texto de contracts (P-34, ADR-114): «8 a 12 rep/lado» en un unilateral, «30 s/lado» en una
+ * isometría y «esfuerzo suave (RPE 5–6)» en la movilidad y el cardio con RIR 4 o más.
+ */
+const partsOf = (set: PrescribedSet, exercise: Exercise) =>
+  prescriptionParts(set, exercise, (value) => formatTestValue(value));
+const durationOf = (set: PrescribedSet, exercise: Exercise): string => {
+  const { duration, distance, met } = partsOf(set, exercise);
+  return [duration, distance, met].filter(Boolean).join(' · ') || '—';
 };
-const loadOf = ({ loadKind, loadValue }: PrescribedSet): string =>
-  loadText(loadKind, loadValue === null ? '' : formatTestValue(loadValue)) ?? '—';
-const minutesOf = ({ durationSeconds }: PrescribedSet): string =>
-  durationSeconds === null ? '—' : `${formatTestValue(durationSeconds / 60)} min`;
 
 /** El plan de la semana: los días de entrenamiento y de descanso (07 §8). */
 export function WeekPlan({ week }: { week: ProgramWeek }) {
@@ -101,7 +96,7 @@ function SetsTable({ exercise }: { exercise: Exercise }) {
         <caption className="sr-only">Series de {exercise.name}</caption>
         <thead className="bg-surface text-left text-muted-foreground">
           <tr>
-            {['Serie', 'Tipo', 'Repeticiones', 'Carga', 'Descanso', 'Tempo', 'Cardio'].map(
+            {['Serie', 'Tipo', 'Repeticiones', 'Carga', 'Descanso', 'Tempo', 'Tiempo'].map(
               (title) => (
                 <th key={title} scope="col" className="px-3 py-2 font-medium">
                   {title}
@@ -115,13 +110,13 @@ function SetsTable({ exercise }: { exercise: Exercise }) {
             <tr key={set.setNo} className="border-t border-border">
               <td className="px-3 py-2 tabular-nums">{set.setNo}</td>
               <td className="px-3 py-2">{SET_TYPE_LABELS[set.setType]}</td>
-              <td className="px-3 py-2 tabular-nums">{repsOf(set)}</td>
-              <td className="px-3 py-2 tabular-nums">{loadOf(set)}</td>
+              <td className="px-3 py-2 tabular-nums">{partsOf(set, exercise).reps ?? '—'}</td>
+              <td className="px-3 py-2 tabular-nums">{partsOf(set, exercise).load ?? '—'}</td>
               <td className="px-3 py-2 tabular-nums">
                 {set.restSeconds === null ? '—' : `${String(set.restSeconds)} s`}
               </td>
               <td className="px-3 py-2 tabular-nums">{set.tempo ?? '—'}</td>
-              <td className="px-3 py-2 tabular-nums">{minutesOf(set)}</td>
+              <td className="px-3 py-2 tabular-nums">{durationOf(set, exercise)}</td>
             </tr>
           ))}
         </tbody>
