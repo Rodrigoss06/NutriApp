@@ -235,6 +235,10 @@ RIR 2, por 1.1, da 1,782. Solo vemos algunos valores: RIR 2 = 1.1, RIR 3 = 1.0, 
 3. ¿Qué estados tiene el informe? Por ejemplo: borrador, por revisar y enviado. ¿El alumno lo ve en la app y en PDF?
    Ten en cuenta que sería una sexta ficha PDF: el contrato tiene cinco.
 
+> **Respuesta (2026-11-10, por Rodrigo).** Por mesociclo de 4 semanas. El coach escribe Logro, Limitante, Ajuste y Prioridad, y el
+> alumno escribe su Comentario desde la app. Estados: Borrador y Enviado. Solo como vista en la app, sin sexta ficha PDF, para
+> respetar las cinco fichas del contrato.
+
 **P-29 · Números del informe**
 
 1. **Volumen cumplido:** la hoja dice 95.2 %, pero las series dan 223 de 240 (92.9 %), y la semana 1, 56 de 60
@@ -244,12 +248,20 @@ RIR 2, por 1.1, da 1,782. Solo vemos algunos valores: RIR 2 = 1.1, RIR 3 = 1.0, 
 3. **Series planificadas** (60, 64, 68 y 48): ¿salen de la rutina completa? El registro de cargas trae un solo ejercicio
    por sesión.
 
+> **Respuesta (2026-11-10, por Rodrigo).** Volumen cumplido = series hechas ÷ series planificadas (223 ÷ 240 = 92.9 %). Un PR es un
+> 1RM estimado más alto que el anterior en el mismo ejercicio (en la hoja fue un ejemplo incompleto). Las series planificadas
+> salen de la rutina completa de la semana.
+
 **P-30 · Fotos de progreso** («Comparativa fotográfica»)
 
 1. ¿Las sube el alumno desde la app, el coach desde el panel, o los dos?
 2. ¿Son tres vistas, frontal, lateral y posterior, en cada evaluación o una vez al mes?
 3. Las fotos del cuerpo son datos sensibles. Proponemos un consentimiento propio, con el texto de tu abogado. ¿De
    acuerdo? ¿Cuánto tiempo se guardan?
+
+> **Respuesta (2026-11-10, por Rodrigo).** Las suben los dos, alumno y coach: tres vistas (frontal, lateral y posterior) en cada
+> cierre de mesociclo de 4 semanas. Sí al consentimiento propio de datos sensibles. Se guardan mientras la cuenta esté activa y 12
+> meses después de la baja, o se borran si revoca.
 
 ## Documentos, asistencias y prescripción
 
@@ -261,6 +273,9 @@ RIR 2, por 1.1, da 1,782. Solo vemos algunos valores: RIR 2 = 1.1, RIR 3 = 1.0, 
 3. ¿Qué estados hay además de «Pendiente»?
 4. Los videos de técnica serían enlaces: la app acepta archivos de hasta 5 MB.
 
+> **Respuesta (2026-11-10, por Rodrigo).** Enlaces externos, y archivos directos solo hasta 5 MB con el soporte que ya existe; los
+> videos, siempre por enlace. Las 8 categorías son fijas. Estados: Pendiente, Por revisar y Validado.
+
 **P-32 · Asistencias** («Asistencias · solo consulta»)
 
 1. La hoja dice: «el registro oficial, los saldos, las renovaciones y las congelaciones se gestionan únicamente desde
@@ -269,6 +284,14 @@ RIR 2, por 1.1, da 1,782. Solo vemos algunos valores: RIR 2 = 1.1, RIR 3 = 1.0, 
    quedan fuera. ¿Los necesitas?
 3. «Evento calendario» y «Enlace del evento», ¿son de Google Calendar? El calendario de la app llega en la etapa
    siguiente, con citas y sus estados.
+
+> **Respuesta (2026-11-10, por Rodrigo).**
+>
+> 1. El «panel central» es el panel del coach en esta misma plataforma; para el alumno, la tabla es de solo consulta.
+> 2. No se necesitan saldos, renovaciones, congelaciones ni pagos: no están en el contrato. Solo se registra la asistencia a las
+>    sesiones.
+> 3. No hace falta integrar Google Calendar: lo cubren el calendario propio de la app y sus citas en P15, o una URL externa
+>    opcional, sin sincronizar.
 
 **P-33 · Dos datos de Mateo que no cuadran**
 
@@ -319,6 +342,10 @@ RIR 2, por 1.1, da 1,782. Solo vemos algunos valores: RIR 2 = 1.1, RIR 3 = 1.0, 
 > 4. «10–12/lado» son repeticiones por lado y «20–30 s/lado», una isometría en segundos por lado.
 > 5. Sí: los tempos (3-1-1 y 2-1-2) y los descansos (120, 90, 75, 60 y 45 s) son los valores base de cada patrón.
 > 6. El RIR 4 y el RIR 5 de la movilidad y el cardio solo indican un esfuerzo suave (RPE 5 a 6) y no cambian el volumen.
+>
+> **Decisiones de Rodrigo (2026-11-10), para el PR 9.** Con 3 días se usa la plantilla de cuerpo completo A, B y C de la V3. Los
+> ejercicios nuevos se cargan como provisionales, con valores estándar, hasta que Jeremy los valide. «Brazos» va en dos bloques,
+> Bíceps y Tríceps, como hoy en la app. El bird dog pasa al patrón de estabilidad lumbar, como en la lista de Jeremy.
 
 ## Otros
 

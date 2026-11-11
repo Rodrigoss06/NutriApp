@@ -11,14 +11,38 @@ import {
 
 const CHOICES = patternChoiceSeed();
 
-describe('RN-F14 · tabla patrón × nivel de la V3 (07 §5)', () => {
-  it('tiene un ejercicio para cada uno de los 15 patrones en cada nivel', () => {
-    expect(CHOICES).toHaveLength(45);
+/** Los patrones de la hoja piloto (P-34, ADR-111): no están en la plantilla de la V3. */
+const PILOT_PATTERNS = ['SHOULDER_MOBILITY', 'THORACIC_MOBILITY', 'LUMBAR_STABILITY'];
+
+describe('RN-F14 · tabla patrón × nivel de la V3 y de la hoja piloto (07 §5, P-34)', () => {
+  it('tiene un ejercicio para cada uno de los 18 patrones en cada nivel: 45 filas de la V3 y 9 de la hoja', () => {
+    expect(CHOICES).toHaveLength(54);
+    expect(MOVEMENT_PATTERNS).toHaveLength(18);
     for (const pattern of MOVEMENT_PATTERNS) {
       for (const level of TRAINING_LEVELS) {
         expect(suggestedExercise(CHOICES, pattern, level)).not.toBeNull();
       }
     }
+  });
+
+  it('P-34 · los patrones nuevos de la hoja, de básico a avanzado, con los ejercicios de Jeremy', () => {
+    const names = (pattern: (typeof MOVEMENT_PATTERNS)[number]) =>
+      TRAINING_LEVELS.map((level) => suggestedExercise(CHOICES, pattern, level)?.exerciseName);
+    expect(names('SHOULDER_MOBILITY')).toEqual([
+      'Dislocaciones con banda',
+      'Rotación externa en polea',
+      'CARs de hombro',
+    ]);
+    expect(names('THORACIC_MOBILITY')).toEqual([
+      'Open book en el suelo',
+      'Extensión torácica en rodillo',
+      'Rotación torácica en cuadrupedia',
+    ]);
+    expect(names('LUMBAR_STABILITY')).toEqual([
+      'Bird dog',
+      'Puente glúteo unilateral',
+      'Hip thrust isométrico',
+    ]);
   });
 
   it('sin esa fila no sugiere nada', () => {
@@ -105,11 +129,13 @@ describe('RN-F14 · propuesta automática', () => {
     expect(days[0]?.blocks[0]?.suggested?.exerciseName).toBe('Sentadilla trasera');
   });
 
-  it('entre los cuatro días de la plantilla están los 15 patrones', () => {
+  it('entre los cuatro días de la plantilla están los 15 patrones de la V3', () => {
     const { days } = proposeRoutine({ level: 'BEGINNER', daysPerWeek: 4 }, CHOICES);
     const used = new Set(days.flatMap(({ blocks }) => blocks.map(({ pattern }) => pattern)));
 
-    expect([...used].sort()).toEqual([...MOVEMENT_PATTERNS].sort());
+    expect([...used].sort()).toEqual(
+      MOVEMENT_PATTERNS.filter((pattern) => !PILOT_PATTERNS.includes(pattern)).sort(),
+    );
   });
 
   it('un bloque sin fila en la tabla queda sin sugerencia: lo elige el coach', () => {

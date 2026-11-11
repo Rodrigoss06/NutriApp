@@ -22,7 +22,7 @@ Próxima demo: Demo 3 · Entrenamiento y app del paciente · semana 6
 | P12 Ejercicios y rutinas | ✅ | Rodrigo | #39 a #42 y #44 a #47 | 5 criterios en verde (integración y E2E en escritorio y celular): motor (ADR-070), biblioteca (ADR-071), anamnesis V2 (ADR-072), alergias (ADR-074), seguridad (ADR-075), programa por la API y en la web (ADR-077, ADR-078) y ficha de rutina (ADR-079) |
 | P13 App del paciente | ✅ | Rodrigo | #50 a #55 | 6 criterios en verde (integración y E2E en escritorio y celular): recuperación del día en el motor (ADR-080), registros por /me (ADR-081), Hoy y el plan (ADR-082), registro diario y entreno (ADR-083, ADR-084) y el profesional con los registros (ADR-085). Lighthouse móvil 97 en Hoy (local). La cola sin conexión (RF-31, deseable) queda fuera. /notion-sync aplicado (30 cambios en 11 páginas) |
 | P14 Analítica y evolución, Demo 3 | ✅ | Rodrigo | #57 a #68 | Plan aprobado (2026-11-05, ADR-086): 7 PR. PR 1 (motor, #57), PR 2a (dieta, #58), PR 2b (rutina, #59) y PR 3 (control semanal, #60) por la API; PR 4 (web de la analítica y del control semanal, #61, ADR-090) con E2E en escritorio y celular; PR 5a (evolución, tendencia por mes y ficha por la API, #62, ADR-091) y PR 5b (sus pantallas, #63, ADR-092); PR 6a (panel con alertas por la API y en Inicio, #64, ADR-093), PR 6b (material educativo, #65, ADR-094) y PR 6c (fichas en la app, #66, ADR-095); PR 7a (`seed:load` y p95, #67, ADR-096) y PR 7b (`demo:3` con Luis y Mateo, y guion, #68, ADR-097). Criterios 1 a 5 en verde: el 4, con el p95 de docs/demos/demo-3-p95.md. Etiqueta v0.3.0 (39f5b64); staging, pendiente de P4. /notion-sync aplicado (51 cambios en 14 páginas) |
-| P14.5 Hoja piloto de JV Fitness | 🟨 | Rodrigo | | Aprobado por Rodrigo (2026-11-08, ADR-098); prompt en Notion. PR 1a fusionado (#70, ADR-099). Jeremy respondió P-20 (ADR-100): perfiles de día por la API (PR 1c, #71, fusionado) y sus pantallas, fichas 1.1.0 y Mateo en `demo:3` (PR 1d, #72, fusionado, ADR-101); las porciones de cada perfil por la API (PR 1b, #73, fusionado, ADR-102) y sus pantallas (PR 1f, #74, fusionado); los cambios del día por la API (PR 1e, #75, fusionado, ADR-104); después sus pantallas (1g, #76, fusionado, ADR-105), y luego el PR 2 (volumen ajustado, #77, fusionado, ADR-106) y el 6a (cadera, comparativa y estrés, #78, fusionado, ADR-107); en la fase B, el PR 3 (panel de fatiga, #79, fusionado, ADR-108) el 5a (check-in de la semana por la API, #80, fusionado, ADR-109) y el 5b (sus pantallas, ADR-110). Jeremy respondió P-20.6 a P-27 y P-33 a P-37 (2026-11-09 y 2026-11-10): el PR 2 y la fase B (PR 3, 4, 5 y 9) ya tienen sus datos. La C, el acuerdo y la cotización por la cláusula 12 |
+| P14.5 Hoja piloto de JV Fitness | 🟨 | Rodrigo | | Aprobado por Rodrigo (2026-11-08, ADR-098); prompt en Notion. PR 1a fusionado (#70, ADR-099). Jeremy respondió P-20 (ADR-100): perfiles de día por la API (PR 1c, #71, fusionado) y sus pantallas, fichas 1.1.0 y Mateo en `demo:3` (PR 1d, #72, fusionado, ADR-101); las porciones de cada perfil por la API (PR 1b, #73, fusionado, ADR-102) y sus pantallas (PR 1f, #74, fusionado); los cambios del día por la API (PR 1e, #75, fusionado, ADR-104); después sus pantallas (1g, #76, fusionado, ADR-105), y luego el PR 2 (volumen ajustado, #77, fusionado, ADR-106) y el 6a (cadera, comparativa y estrés, #78, fusionado, ADR-107); en la fase B, el PR 3 (panel de fatiga, #79, fusionado, ADR-108) el 5a (check-in de la semana por la API, #80, fusionado, ADR-109) el 5b (sus pantallas, #81, fusionado, ADR-110) y el 9a (patrones y ejercicios de la prescripción de la hoja, ADR-111). Jeremy respondió P-20.6 a P-27 y P-33 a P-37 (2026-11-09 y 2026-11-10): el PR 2 y la fase B (PR 3, 4, 5 y 9) ya tienen sus datos. La C, el acuerdo y la cotización por la cláusula 12 |
 | P15 Marca, calendario, admin y migración | ⬜ | Rodrigo | | |
 | P16 Producción y entrega, Demo 4 | ⬜ | Rodrigo | | |
 
@@ -78,6 +78,8 @@ Leyenda: ⬜ pendiente · 🟨 en curso · ✅ terminado · ⛔ bloqueado
     motor 1.12.0).
   - PR 5b, sus pantallas (ADR-110): «Check-in de la semana» en Hoy, del domingo al martes, con «Corregir»; el registro diario deja
     de pedir la alimentación.
+  - PR 9a, el catálogo de la prescripción (P-34, ADR-111): movilidad de hombro, movilidad torácica y estabilidad lumbar, los
+    ejercicios de Jeremy por nivel (provisionales) y sus 9 filas en la tabla patrón × nivel.
 - P14 terminado (#57 a #68, etiqueta v0.3.0 en 39f5b64; plan aprobado el 2026-11-05, ADR-086), en 7 PR contra main. Plan de Rodrigo: completar la Demo 3 y, en ella, corregir
   cada punto faltante, como P4, para llevar bien la Demo 4 y cerrar el proyecto:
   - PR 1, motor: `WEEKLY_REVIEW_JV` 3.0.0 con los agregados, el semáforo, el factor ajustado y la decisión sugerida (RN-G16); G-39 en
@@ -206,12 +208,12 @@ Leyenda: ⬜ pendiente · 🟨 en curso · ✅ terminado · ⛔ bloqueado
 ## Siguiente paso
 - Antes de la Demo 3: la matriz manual de navegadores (RNF-19: Chrome, Edge, Safari y Firefox; la E2E cubre Chromium
   y WebKit), que no quedó registrada en las demos 1 y 2
-- P14.5, uno por vez contra main: del #71 al #80 (PR 1c, 1d, 1b, 1f, 1e, 1g, 2, 6a, 3 y 5a) están fusionados. Siguen, cada uno al
+- P14.5, uno por vez contra main: del #71 al #81 (PR 1c, 1d, 1b, 1f, 1e, 1g, 2, 6a, 3, 5a y 5b) están fusionados. Siguen, cada uno al
   fusionarse el anterior:
-  - el 5b (las pantallas del check-in, ADR-110);
-  - después, el 4 (fatiga por grupo muscular, cuando Jeremy confirme la «Base 3 sem.») y
-    el 9 (prescripción de la hoja).
-- /notion-sync de P14.5 con ADR-099 a ADR-110: P-20 resuelta en 07 §15, los perfiles en 07 §2 y §8, RN-E07, RN-E09,
+  - el 9a (catálogo de la prescripción, ADR-111);
+  - después, el 9b (la propuesta con los días de la hoja y su prescripción en la rutina y en su ficha: faltan los 5 días, los
+    bloques de rodilla y los valores base por patrón) y el 4 (fatiga por grupo muscular, cuando Jeremy confirme la «Base 3 sem.»).
+- /notion-sync de P14.5 con ADR-099 a ADR-111: P-20 resuelta en 07 §15, los perfiles en 07 §2 y §8, RN-E07, RN-E09,
   RN-G03 y RN-G05, el método nuevo en 02 §9, las tablas en 05.2 (con `tracking.day_change`), los eventos de los cambios del día
   en 02 §8, las plantillas 1.1.0 y 1.2.0 en 05.3, RF-24, RF-28 y RF-29 en 04 y el caso dorado G-41
 - Demo 3: lista con v0.3.0 y `pnpm demo:3` (guion en docs/demos/demo-3.md). Falta la semana del paciente de prueba desde su
@@ -237,7 +239,8 @@ Leyenda: ⬜ pendiente · 🟨 en curso · ✅ terminado · ⛔ bloqueado
 - [ ] Cuenta de Hetzner y dominio a nombre de Jeremy: bloquea P4
 - [ ] Hoja piloto «JV Fitness · Mi plan» (`docs/preguntas/hoja-piloto-mateo.md`): Jeremy respondió P-20 (2026-11-08), P-20.6 a
   P-25 (2026-11-09) y P-26, P-27 y P-33 a P-37 (2026-11-10). Nada de la fase A ni de la B queda bloqueado.
-  - Falta P-32 (asistencias: si el «panel central» es esta plataforma y si necesita saldos, renovaciones y congelaciones).
+  - P-32 resuelta (2026-11-10): el «panel central» es el panel del coach; sin saldos, renovaciones, congelaciones ni pagos. La
+    asistencia a las sesiones y el calendario con sus citas llegan en P15.
   - Para el volumen ajustado (ADR-106): un descanso entre dos valores de la tabla, uno de menos de 45 s y una serie con RPE y sin
     RIR quedan «sin factor» hasta que Jeremy diga otra cosa.
   - Para el PR 4 (P-27): la «Base 3 sem.» de la hoja no sale con 1.0 y 0.5. Sale solo del press banca de las semanas 2 a 4

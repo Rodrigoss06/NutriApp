@@ -31,6 +31,9 @@ export const MOVEMENT_PATTERN_LABELS = {
   CORE_ANTI_ROTATION: 'Tronco anti-rotación',
   CALF: 'Pantorrilla',
   CONDITIONING: 'Acondicionamiento',
+  SHOULDER_MOBILITY: 'Movilidad de hombro',
+  THORACIC_MOBILITY: 'Movilidad torácica',
+  LUMBAR_STABILITY: 'Estabilidad lumbar',
 } as const satisfies Record<string, string>;
 
 export const EXERCISE_MODALITY_LABELS = {

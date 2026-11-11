@@ -17,6 +17,9 @@ export const MOVEMENT_PATTERN_CODES: readonly MovementPattern[] = [
   'CORE_ANTI_ROTATION',
   'CALF',
   'CONDITIONING',
+  'SHOULDER_MOBILITY',
+  'THORACIC_MOBILITY',
+  'LUMBAR_STABILITY',
 ];
 
 export const TRAINING_LEVEL_CODES: readonly TrainingLevel[] = [
