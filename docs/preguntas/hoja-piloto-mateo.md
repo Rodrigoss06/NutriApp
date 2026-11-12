@@ -237,6 +237,29 @@ RIR 2, por 1.1, da 1,782. Solo vemos algunos valores: RIR 2 = 1.1, RIR 3 = 1.0, 
 > coeficientes por ejercicio: un ejercicio nuevo no necesita sus propios decimales. Con Mateo, la «Base 3 sem.» de la semana 5
 > sale del press banca de las semanas 2 a 4 (1,419): Pecho 1,419 y Tríceps 709.5, no los 1,461.6 y 312.2 de la hoja, que salen
 > de otros coeficientes (1.03 y 0.22).
+>
+> **Decisión de Rodrigo (2026-11-11), para el PR 4.** Va sin las cuatro columnas de coeficientes, hasta que Jeremy responda
+> P-27.1. La «Base 3 sem.» de cada grupo usa las mismas semanas previas que la carga del panel (las que tienen volumen, P-24), y
+> una de ellas en la que el grupo no se entrenó cuenta 0. Lo sigue `MUSCLE_FATIGUE_JV` 1.0.0 (motor 1.15.0, ADR-115).
+
+**P-27.1 · Las cuatro columnas de coeficientes, por grupo** (panel, «Fatiga por grupo muscular»: «F. muscular», «F. neural»,
+«Carga axial» y «D. técnica»)
+
+Nos diste los coeficientes por familia de ejercicio: pierna y cadera 1.2, 1.3, 1.3 y 1.2; torso libre 1.1, 1.1, 1.0 y 1.1; guiados y
+poleas 1.0, 1.0, 0.8 y 0.9; aislamiento y brazos 0.9, 0.7, 0.5 y 0.8; movilidad y cardio 0. La tabla los pide por grupo muscular, y
+un grupo puede recibir ejercicios de varias familias. En la semana 3 de Mateo, el pecho recibe el press banca (torso libre): 3 × 12 ×
+45 kg con RIR 2 y 120 s, 1,782 de volumen ajustado.
+
+1. ¿Qué número va en «F. muscular» de Pecho?
+   - a) El volumen ajustado de cada ejercicio por el coeficiente de su familia, sumado por grupo: 1,782 × 1.1 = 1,960.2.
+   - b) El coeficiente de las familias del grupo, promediado según su volumen: 1.1.
+   - c) Otra regla.
+2. ¿Esos coeficientes cambian el estado o la recuperación estimada, o solo se muestran?
+3. La tabla trae «Volumen ajustado» y «Fatiga entrenamiento». Con 1.0 para el principal y 0.5 para el secundario dan lo mismo:
+   Pecho 1,782 en la semana 3.
+   - a) «Volumen ajustado» es solo el del músculo principal, sin el 0.5.
+   - b) Son la misma cifra: basta una columna.
+   - c) Otra cosa.
 
 ## Informe mensual
 
@@ -284,8 +307,8 @@ RIR 2, por 1.1, da 1,782. Solo vemos algunos valores: RIR 2 = 1.1, RIR 3 = 1.0, 
 > estrictamente confidenciales, no se compartirán con terceros ni se usarán con fines comerciales, y se conservarán únicamente
 > mientras mi expediente esté activo o hasta que revoque este consentimiento.»
 >
-> Por aclarar antes del PR 6b: el texto dice que se conservan mientras el expediente esté activo; la respuesta de arriba suma 12
-> meses después de la baja.
+> **Rodrigo (2026-11-11):** manda el texto del consentimiento. Las fotos se conservan solo mientras el expediente esté activo o
+> hasta que el alumno revoque; no se guardan 12 meses después de la baja, como decía la respuesta de arriba (PR 6b).
 
 ## Documentos, asistencias y prescripción
 
@@ -399,6 +422,14 @@ WhatsApp fuera de la app? La app no se integra con WhatsApp; sí podemos mostrar
 
 > **Respuesta de Jeremy (2026-11-10).** Sí, es una modalidad de acompañamiento: la etiqueta en el macrociclo y un botón que abra
 > el chat del alumno con un enlace wa.me, sin integrar ninguna API de mensajería.
+>
+> **Decisión de Rodrigo (2026-11-11), para el PR 9d:**
+>
+> - se activa por alumno, en su perfil de atleta;
+> - la etiqueta va en una línea arriba del macrociclo, y la columna «Revisión» no cambia, porque de ella depende el control
+>   semanal;
+> - el botón, para el coach, abre wa.me con el teléfono del alumno. Si el teléfono no trae el código de país, la app pide
+>   agregarlo en vez de suponer +51.
 
 **P-36 · «La rutina se prescribe en Nutriplace»** (microciclo, «Uso»)
 

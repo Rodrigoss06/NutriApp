@@ -55,6 +55,32 @@ export const fatiguePanelWeekSchema = z.object({
 });
 export type FatiguePanelWeek = z.infer<typeof fatiguePanelWeekSchema>;
 
+/** Un grupo muscular en la fatiga por grupo de la semana (P14.5, PR 4; P-27; ADR-115). */
+export const muscleFatigueRowSchema = z.object({
+  muscleCode: z.string(),
+  /** «Fatiga entrenamiento»: el volumen ajustado del grupo, principal 1.0 y secundario 0.5; null si no se entrenó. */
+  trainingFatigueKg: amount,
+  /** «Base 3 sem.»: su promedio en las previas que tienen volumen, con 0 donde no se entrenó; null sin ninguna. */
+  baseVolumeKg: amount,
+  changePct: amount,
+  /** Sin volumen, «faltan datos»; sin base o con la base en 0, «sin base». */
+  state: z.enum(LOAD_LIGHTS),
+  /** «Recuperación est.» del color: 48, 60 o 72 h; null sin color. */
+  recoveryHours: z.number().nonnegative().nullable(),
+});
+export type MuscleFatigueRow = z.infer<typeof muscleFatigueRowSchema>;
+
+/** La fatiga por grupo muscular de una semana: solo informa, decide el control semanal (P-25). */
+export const muscleFatigueWeekSchema = z.object({
+  /** La versión de los umbrales del panel vigente al empezar la semana. */
+  thresholdId: z.string(),
+  inputsHash: z.string(),
+  /** Cuántas semanas previas entraron en la base (P-24). */
+  baseWeeks: count,
+  muscles: z.array(muscleFatigueRowSchema),
+});
+export type MuscleFatigueWeek = z.infer<typeof muscleFatigueWeekSchema>;
+
 /** Una semana del macrociclo (RN-F01, RN-F08): lo programado y, si ya empezó, lo hecho. */
 export const trainingWeekSchema = z.object({
   weekNo: z.int().positive(),
@@ -82,6 +108,8 @@ export const trainingWeekSchema = z.object({
   muscles: z.array(trainingMuscleWeekSchema),
   /** null si la semana no empezó o no hay umbrales vigentes. */
   fatigue: fatiguePanelWeekSchema.nullable(),
+  /** La fatiga por grupo muscular; null como el panel. */
+  muscleFatigue: muscleFatigueWeekSchema.nullable(),
 });
 export type TrainingWeek = z.infer<typeof trainingWeekSchema>;
 
@@ -119,6 +147,7 @@ export const trainingAnalyticsSchema = z.object({
     tonnage: methodRef,
     adjustedVolume: methodRef,
     fatiguePanel: methodRef,
+    muscleFatigue: methodRef,
     fractionalSets: methodRef,
     compliance: methodRef,
     sfr: methodRef,

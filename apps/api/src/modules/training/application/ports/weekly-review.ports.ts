@@ -53,7 +53,7 @@ export interface VolumeFactorsRow {
 
 /**
  * Una versión de los umbrales del panel de fatiga y recuperación (P-23, ADR-108): recuperación por estrés y sueño, fatiga percibida y
- * carga sobre el promedio de las 3 semanas previas.
+ * carga sobre el promedio de las 3 semanas previas. La fatiga por grupo muscular usa los de la carga y sus horas (P-27, ADR-115).
  */
 export interface FatiguePanelThresholdRow {
   readonly id: string;
@@ -68,6 +68,10 @@ export interface FatiguePanelThresholdRow {
   readonly fatigueAmberMin: number;
   readonly loadAmberAbovePct: number;
   readonly loadRedAbovePct: number;
+  /** «Recuperación est.» de cada grupo muscular según su color (P-27): 48, 60 y 72 h. */
+  readonly muscleRecoveryGreenHours: number;
+  readonly muscleRecoveryAmberHours: number;
+  readonly muscleRecoveryRedHours: number;
 }
 
 /**

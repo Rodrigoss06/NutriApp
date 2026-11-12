@@ -2415,6 +2415,9 @@ model FatiguePanelThreshold {
   fatigueAmberMin              Decimal  @default(3) @map("fatigue_amber_min") @db.Decimal(3, 1)
   loadAmberAbovePct            Decimal  @default(15) @map("load_amber_above_pct") @db.Decimal(5, 1)
   loadRedAbovePct              Decimal  @default(30) @map("load_red_above_pct") @db.Decimal(5, 1)
+  muscleRecoveryGreenHours     Int      @default(48) @map("muscle_recovery_green_hours") @db.SmallInt
+  muscleRecoveryAmberHours     Int      @default(60) @map("muscle_recovery_amber_hours") @db.SmallInt
+  muscleRecoveryRedHours       Int      @default(72) @map("muscle_recovery_red_hours") @db.SmallInt
 
   @@unique([organizationId, validFrom])
   @@map("fatigue_panel_threshold")

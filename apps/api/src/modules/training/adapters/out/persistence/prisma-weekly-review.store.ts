@@ -220,6 +220,9 @@ export class PrismaWeeklyReviewStore implements WeeklyReviewStore {
       fatigueAmberMin: Number(row.fatigueAmberMin),
       loadAmberAbovePct: Number(row.loadAmberAbovePct),
       loadRedAbovePct: Number(row.loadRedAbovePct),
+      muscleRecoveryGreenHours: row.muscleRecoveryGreenHours,
+      muscleRecoveryAmberHours: row.muscleRecoveryAmberHours,
+      muscleRecoveryRedHours: row.muscleRecoveryRedHours,
     }));
   }
 

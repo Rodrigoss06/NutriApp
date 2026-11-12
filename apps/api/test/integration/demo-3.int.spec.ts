@@ -252,6 +252,54 @@ describe('Demo 3 · Mateo, el alumno ficticio de la hoja de Jeremy', () => {
     expect(panel[2]?.loadChangePct).toBeCloseTo(18.3, 1);
   });
 
+  it('P14.5 · RN-G16 · P-27 · la fatiga por grupo muscular de la semana 5 compara con las semanas 2 a 4', async () => {
+    const training = await get<{
+      methods: { muscleFatigue: { code: string; version: string } };
+      weeks: {
+        weekNo: number;
+        muscleFatigue: {
+          baseWeeks: number;
+          muscles: {
+            muscleCode: string;
+            trainingFatigueKg: number | null;
+            baseVolumeKg: number | null;
+            state: string;
+            recoveryHours: number | null;
+          }[];
+        } | null;
+      }[];
+    }>(`/patients/${mateoId}/analytics/training`);
+    expect(training.methods.muscleFatigue).toEqual({ code: 'MUSCLE_FATIGUE_JV', version: '1.0.0' });
+    const fatigueOf = (weekNo: number) =>
+      training.weeks.find((week) => week.weekNo === weekNo)?.muscleFatigue;
+    const muscle = (weekNo: number, code: string) =>
+      fatigueOf(weekNo)?.muscles.find(({ muscleCode }) => muscleCode === code);
+    // 1.0 para el principal y 0.5 para el secundario (Rodrigo, 2026-11-11): el press banca de las semanas 2 a 4 da 1,419 al pecho
+    // y 709.5 al tríceps y al deltoides anterior, no los 1,461.6 y 312.2 de la hoja.
+    expect(fatigueOf(5)?.baseWeeks).toBe(3);
+    expect(muscle(5, 'CHEST')).toEqual({
+      muscleCode: 'CHEST',
+      trainingFatigueKg: null,
+      baseVolumeKg: 1419,
+      changePct: null,
+      state: 'NO_DATA',
+      recoveryHours: null,
+    });
+    expect(muscle(5, 'TRICEPS')?.baseVolumeKg).toBe(709.5);
+    expect(muscle(5, 'FRONT_DELTOID')?.baseVolumeKg).toBe(709.5);
+    // El jalón va a Dorsal y la sentadilla a Cuádriceps (P-27, punto 2): la base no queda vacía.
+    expect(muscle(5, 'LATS')?.baseVolumeKg).toBe(1590);
+    expect(muscle(5, 'QUADRICEPS')?.baseVolumeKg).toBe(2058);
+    // La semana 3, ámbar como la carga del panel: el pecho sube de 1,485 a 1,782 (+20 %), 60 h.
+    expect(muscle(3, 'CHEST')).toMatchObject({
+      trainingFatigueKg: 1782,
+      baseVolumeKg: 1485,
+      state: 'AMBER',
+      recoveryHours: 60,
+    });
+    expect(muscle(1, 'CHEST')?.state).toBe('NO_BASE');
+  });
+
   it('RF-35 · peso, cintura, cadera y grasa de la comparativa física de la hoja', async () => {
     const evolution = await get<{
       sites: { siteCode: string; points: { value: number }[] }[];

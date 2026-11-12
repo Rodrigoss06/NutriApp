@@ -131,6 +131,23 @@ En el celular del paciente de prueba:
 **Qué decir:** son las semanas de la hoja (P-23 y P-24). El panel solo informa: en la semana 3 sale ámbar y el control dice
 «Continuar plan», porque decide el control semanal (P-25). Los promedios se comparan sin redondear: un estrés de 2.6 es verde.
 
+**Fatiga por grupo muscular (P14.5, PR 4):** en «Series por grupo muscular», con la semana 5 elegida (`?semana=5`).
+
+| Grupo de Mateo     | Base 3 sem. (semanas 2 a 4) | Estado       |
+| ------------------ | --------------------------- | ------------ |
+| Cuádriceps         | 2,058                       | Faltan datos |
+| Dorsal             | 1,590                       | Faltan datos |
+| Pectoral           | 1,419                       | Faltan datos |
+| Glúteo             | 1,029                       | Faltan datos |
+| Bíceps             | 795                         | Faltan datos |
+| Tríceps            | 709.5                       | Faltan datos |
+| Deltoides anterior | 709.5                       | Faltan datos |
+
+**Qué decir:** cada serie da 1.0 al músculo principal y 0.5 al secundario, sin coeficientes por ejercicio (P-27). Por eso el
+pectoral (el «Pecho» de la hoja) da 1,419 y el tríceps 709.5, y no los 1,461.6 y 312.2 de la hoja. Dorsal y Cuádriceps tienen base: el jalón y la sentadilla cuentan.
+En la semana 3, todos los grupos salen en ámbar, con 60 h de recuperación estimada. Las cuatro columnas de coeficientes esperan la
+respuesta de Jeremy (P-27.1).
+
 ## 6 · Control semanal (RF-42) · Mateo y Luis · 6 min
 
 **Qué se hace**
@@ -194,7 +211,7 @@ del evaluador (RN-C06).
 | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------- |
 | Las metas por tipo de día, con las respuestas de Jeremy a P-20: mandan los gramos, así que son 2,510 y 2,230 kcal. Cada día de octubre lleva la de su perfil: Entrenamiento si tiene sesión y Descanso si no. Las comidas de Descanso: el mismo plan con menos almidones (P-20.5) | Las porciones exactas de Descanso de Mateo: las de la demo son de ejemplo |
 | El macrociclo V3 de las semanas 1 a 8                                                                                                                                                                                                                                             | «No entreno hoy» y «mover a mañana» (PR 1e)                               |
-| El control de las 4 semanas, el volumen ajustado por RIR y descanso, y el panel de fatiga y recuperación                                                                                                                                                                          | La fatiga por grupo muscular (PR 4)                                       |
+| El control de las 4 semanas, el volumen ajustado por RIR y descanso, y el panel de fatiga y recuperación                                                                                                                                                                          | Los coeficientes de la fatiga por grupo muscular (P-27.1)                 |
 | El 1RM de Epley y el porcentaje                                                                                                                                                                                                                                                   | La prescripción de la hoja (PR 9)                                         |
 | Las sesiones (12), el sueño, el rendimiento y la alimentación por semana                                                                                                                                                                                                          | El informe mensual y las fotos                                            |
 | Peso, cintura, cadera y grasa                                                                                                                                                                                                                                                     | El expediente de documentos                                               |

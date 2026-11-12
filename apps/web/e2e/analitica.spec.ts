@@ -126,6 +126,13 @@ test.describe('P14 · Analítica y control semanal', () => {
     await expect(panel.getByRole('row', { name: /^S1 ·/ })).toContainText('Sin base');
     await expect(panel.getByRole('row', { name: /^S1 ·/ })).toContainText('Rojo');
     await expect(page.getByText('Panel de fatiga y recuperación (JV Fitness)')).toBeVisible();
+    // P14.5, PR 4 (P-27): la fatiga por grupo muscular de la misma semana. Sin semanas previas, cada grupo queda «sin base» y sin
+    // recuperación estimada.
+    const muscleFatigue = page.getByRole('region', {
+      name: /Fatiga por grupo muscular de la semana 1/,
+    });
+    await expect(muscleFatigue.getByRole('row', { name: /^Cuádriceps/ })).toContainText('Sin base');
+    await expect(page.getByText('Fatiga por grupo muscular (JV Fitness)')).toBeVisible();
     expect(await seriousViolations(page)).toEqual([]);
 
     // La semana 1 ya cerró: Inicio avisa del panel en rojo, que solo informa (P-25).

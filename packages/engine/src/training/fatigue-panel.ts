@@ -67,10 +67,14 @@ const hasVolume = (value: number | null): value is number => value !== null && v
 const outside = (value: number | null, min: number, max: number): boolean =>
   value !== null && !(Number.isFinite(value) && value >= min && value <= max);
 
-function loadOf(
+/**
+ * La carga frente a su base (P-23): ámbar sobre +15 % y roja sobre +30 %. Sin volumen, «faltan datos»; sin base, «sin base».
+ * La usa también la fatiga por grupo muscular (MUSCLE_FATIGUE_JV).
+ */
+export function loadLightOf(
   volume: number | null,
   base: number | null,
-  thresholds: FatiguePanelThresholds,
+  thresholds: Pick<FatiguePanelThresholds, 'loadAmberAbovePct' | 'loadRedAbovePct'>,
 ): LoadLight {
   if (!hasVolume(volume)) return 'NO_DATA';
   if (base === null) return 'NO_BASE';
@@ -171,7 +175,7 @@ export const FATIGUE_PANEL_JV = defineMethod<FatiguePanelInput, FatiguePanelOutp
   compute: (input) => {
     const previous = input.previousVolumesKg.filter(hasVolume);
     const baseVolumeKg = previous.length === 0 ? null : mean(previous);
-    const load = loadOf(input.adjustedVolumeKg, baseVolumeKg, input.thresholds);
+    const load = loadLightOf(input.adjustedVolumeKg, baseVolumeKg, input.thresholds);
     const recovery = recoveryOf(input.avgStress, input.avgSleepHours, input.thresholds);
     const perceivedFatigue = fatigueOf(input.avgFatigue, input.thresholds);
     return {

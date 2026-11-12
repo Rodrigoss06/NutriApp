@@ -166,6 +166,7 @@ export class PatientAnalyticsController {
         tonnage: { ...view.methods.tonnage },
         adjustedVolume: { ...view.methods.adjustedVolume },
         fatiguePanel: { ...view.methods.fatiguePanel },
+        muscleFatigue: { ...view.methods.muscleFatigue },
         fractionalSets: { ...view.methods.fractionalSets },
         compliance: { ...view.methods.compliance },
         sfr: { ...view.methods.sfr },
@@ -177,6 +178,10 @@ export class PatientAnalyticsController {
         ...week,
         muscles: week.muscles.map((muscle) => ({ ...muscle })),
         fatigue: week.fatigue && { ...week.fatigue },
+        muscleFatigue: week.muscleFatigue && {
+          ...week.muscleFatigue,
+          muscles: week.muscleFatigue.muscles.map((muscle) => ({ ...muscle })),
+        },
       })),
       oneRm: view.oneRm.map((series) => ({
         ...series,

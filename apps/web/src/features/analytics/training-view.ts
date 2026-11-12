@@ -2,6 +2,7 @@ import {
   formatNumber,
   type FatiguePanelWeek,
   type LoadLight,
+  type MuscleFatigueRow,
   type OneRmSeries,
   type TrainingAnalytics,
   type TrainingMuscleWeek,
@@ -38,12 +39,43 @@ export const FATIGUE_LIGHT_TONES = {
   NO_BASE: 'info',
 } as const satisfies Record<LoadLight, 'success' | 'warning' | 'danger' | 'info'>;
 
-/** El cambio de la carga frente a su base, con su signo: «+18.3 %», «−40.6 %». Sin base o sin volumen, nada. */
-export function loadChangeText(fatigue: Pick<FatiguePanelWeek, 'loadChangePct'>): string | null {
-  const change = fatigue.loadChangePct;
+/** Un cambio frente a su base, con su signo: «+18.3 %», «−40.6 %». Sin base o sin volumen, nada. */
+export function signedPctText(change: number | null): string | null {
   if (change === null) return null;
   const text = `${formatNumber(Math.abs(change), 'percent')} %`;
   return change < 0 ? `−${text}` : `+${text}`;
+}
+
+/** El cambio de la carga del panel frente a su base. */
+export function loadChangeText(fatigue: Pick<FatiguePanelWeek, 'loadChangePct'>): string | null {
+  return signedPctText(fatigue.loadChangePct);
+}
+
+/** «Recuperación est.» de un grupo (P-27): «60 h»; sin color, una raya. */
+export function recoveryText(hours: number | null): string {
+  return hours === null ? '—' : `${String(hours)} h`;
+}
+
+export interface NamedMuscleFatigue extends MuscleFatigueRow {
+  readonly name: string;
+}
+
+/**
+ * La fatiga por grupo muscular de la semana con el nombre del catálogo (P-27; ADR-115): primero los que más fatiga tienen; después,
+ * los que solo están en la base, por su base.
+ */
+export function muscleFatigueInOrder(
+  rows: readonly MuscleFatigueRow[],
+  names: ReadonlyMap<string, string>,
+): NamedMuscleFatigue[] {
+  return rows
+    .map((row) => ({ ...row, name: names.get(row.muscleCode) ?? row.muscleCode }))
+    .sort(
+      (a, b) =>
+        (b.trainingFatigueKg ?? -1) - (a.trainingFatigueKg ?? -1) ||
+        (b.baseVolumeKg ?? -1) - (a.baseVolumeKg ?? -1) ||
+        a.name.localeCompare(b.name, 'es'),
+    );
 }
 
 /** Las semanas del panel: las que ya empezaron y tienen umbrales vigentes, en orden. */
