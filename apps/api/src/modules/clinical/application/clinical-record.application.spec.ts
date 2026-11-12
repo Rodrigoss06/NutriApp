@@ -666,7 +666,13 @@ describe('RF-06 · códigos de paciente para la auditoría', () => {
       await commands().updateCondition(responsible, id, resolved.value.id, { status: 'RESOLVED' });
     }
 
-    const found = await new ClinicalApi(patients, consents, sources, records).dietaryConditions(id);
+    const found = await new ClinicalApi(
+      patients,
+      consents,
+      sources,
+      records,
+      fakeEncryption,
+    ).dietaryConditions(id);
 
     expect(found.map((c) => [c.kind, c.label])).toEqual([
       ['ALLERGY', 'Maní'],
@@ -676,10 +682,13 @@ describe('RF-06 · códigos de paciente para la auditoría', () => {
 
   it('la API pública da el código de los pacientes que el contexto ve', async () => {
     const id = await registered();
-    const codes = await new ClinicalApi(patients, consents, sources, records).patientCodes([
-      id,
-      'no-existe',
-    ]);
+    const codes = await new ClinicalApi(
+      patients,
+      consents,
+      sources,
+      records,
+      fakeEncryption,
+    ).patientCodes([id, 'no-existe']);
     expect([...codes.entries()]).toEqual([[id, 'P-000001']]);
   });
 });
@@ -696,7 +705,8 @@ describe('RN-F15 · 07 §3.2 · el cribado previo al ejercicio', () => {
     S08: false,
   };
   const review = { decision: 'START', note: 'Con aval de su médico.' } as const;
-  const api = () => new ClinicalApi(patients, consents, new TimelineSources(), records);
+  const api = () =>
+    new ClinicalApi(patients, consents, new TimelineSources(), records, fakeEncryption);
 
   it('el motor decide el estado con sus versiones, y cada respuesta es una fila nueva', async () => {
     const id = await registered();

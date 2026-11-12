@@ -24,6 +24,7 @@ import {
 } from './program-draft';
 import { ProgramHeader } from './program-header';
 import { ProgramMacrocycle } from './program-macrocycle';
+import { WhatsappFollowUp } from './whatsapp-follow-up';
 import { ProgramPublishPanel, WeekSaveBar } from './program-publish';
 import { DuplicateWeek, MesocycleManager, WeekNav } from './program-structure';
 import { ProgramWeekView, WeekMuscleSets, WeekPlan } from './program-week-view';
@@ -46,6 +47,7 @@ export function ProgramEditor({
   archived,
   base,
   dayProfiles,
+  whatsappFollowUp = false,
 }: {
   initial: ProgramDetail;
   patientId: string;
@@ -58,6 +60,8 @@ export function ProgramEditor({
   base: string;
   /** Los perfiles de día del plan nutricional del paciente, para la sesión (P-20.4). */
   dayProfiles: readonly DayProfileOption[];
+  /** El seguimiento asistido por WhatsApp del perfil vigente (P-35): una línea arriba del macrociclo. */
+  whatsappFollowUp?: boolean;
 }) {
   const router = useRouter();
   const { program, write } = useProgram(initial);
@@ -146,6 +150,7 @@ export function ProgramEditor({
       {editable && program.origin === 'PROPOSAL' ? (
         <ProposalBlocks document={document} locked={dirty} write={write} />
       ) : null}
+      {whatsappFollowUp ? <WhatsappFollowUp patientId={patientId} /> : null}
       <ProgramMacrocycle program={program} defaultOpen={!isDraft} />
       {editable && program.origin === 'MANUAL' ? (
         <MesocycleManager document={document} locked={dirty} write={write} />

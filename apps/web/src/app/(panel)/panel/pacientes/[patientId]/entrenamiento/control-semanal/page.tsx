@@ -1,4 +1,8 @@
-import type { TrainingAnalytics, WeeklyReviewsResponse } from '@nutricoach/contracts';
+import type {
+  AthleteProfileResponse,
+  TrainingAnalytics,
+  WeeklyReviewsResponse,
+} from '@nutricoach/contracts';
 import { EmptyState, Notice } from '@nutricoach/ui';
 import { CalendarCheck } from 'lucide-react';
 import type { Metadata } from 'next';
@@ -6,6 +10,7 @@ import Link from 'next/link';
 import { getMembers, getPatient } from '@/features/patients/server';
 import { ComputeReviews } from '@/features/training/compute-reviews';
 import { WeeklyReviewBoard } from '@/features/training/weekly-review-board';
+import { WhatsappFollowUp } from '@/features/training/whatsapp-follow-up';
 import { macrocycleRows, selectedWeekNo } from '@/features/training/weekly-review-view';
 import { serverApi } from '@/lib/api/server';
 import { todayIn } from '@/lib/dates';
@@ -26,11 +31,12 @@ export default async function WeeklyReviewPage({
   const { patientId } = await params;
   const { semana } = await searchParams;
   const path = `/patients/${encodeURIComponent(patientId)}`;
-  const [patient, reviews, analytics, members] = await Promise.all([
+  const [patient, reviews, analytics, members, profile] = await Promise.all([
     getPatient(patientId),
     serverApi<WeeklyReviewsResponse>(`${path}/weekly-reviews`),
     serverApi<TrainingAnalytics>(`${path}/analytics/training`),
     getMembers(),
+    serverApi<AthleteProfileResponse>(`${path}/athlete-profile`),
   ]);
   if (!patient.ok) return null;
   if (!reviews.ok || !analytics.ok || !members.ok) {
@@ -70,6 +76,9 @@ export default async function WeeklyReviewPage({
         careTeam={patient.data.careTeam}
         members={members.data.members}
       />
+      {profile.ok && profile.data.current?.whatsappFollowUp ? (
+        <WhatsappFollowUp patientId={patientId} />
+      ) : null}
       <WeeklyReviewBoard
         rows={rows}
         weeks={analytics.data.weeks}

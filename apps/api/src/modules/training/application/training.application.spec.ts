@@ -47,6 +47,7 @@ const INPUT = {
   testTargets: {},
   notes: null,
   hormonalContraception: null,
+  whatsappFollowUp: false,
 } as const;
 const GREEN: LatestScreening = {
   id: '0192f0a0-0000-7000-8000-0000000000d1',

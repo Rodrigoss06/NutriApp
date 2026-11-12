@@ -1,8 +1,10 @@
 import { Inject, Injectable } from '@nestjs/common';
 import {
+  ENCRYPTION_PORT,
   err,
   ok,
   type DomainError,
+  type EncryptionPort,
   type Result,
   type SecurityContext,
 } from '@nutricoach/shared-kernel';
@@ -27,6 +29,7 @@ import {
   type PatientRecord,
   type PatientStore,
 } from './ports/clinical.ports.js';
+import { phoneAad } from './commands/patient.commands.js';
 import { TimelineSources, type TimelineSource } from './timeline-sources.js';
 
 /**
@@ -86,12 +89,25 @@ export class ClinicalApi {
     @Inject(CONSENT_STORE) private readonly consents: ConsentStore,
     @Inject(TimelineSources) private readonly timeline: TimelineSources,
     @Inject(CLINICAL_RECORD_STORE) private readonly records: ClinicalRecordStore,
+    @Inject(ENCRYPTION_PORT) private readonly encryption: EncryptionPort,
   ) {}
 
   /** ClinicalQueryPort.getPatientRef (02 §3); null si el contexto no ve al paciente (RN-A05). */
   async patientRef(patientId: string): Promise<PatientRef | null> {
     const patient = await this.patients.find(patientId);
     return patient ? refOf(patient) : null;
+  }
+
+  /**
+   * El teléfono del paciente, descifrado, para abrir su chat de WhatsApp (P-35). undefined si el contexto no lo ve (RN-A05) y null
+   * si no tiene. Quien lo pide deja la lectura en la auditoría.
+   */
+  async patientPhone(patientId: string): Promise<string | null | undefined> {
+    const patient = await this.patients.find(patientId);
+    if (!patient) return undefined;
+    return patient.phoneEnc
+      ? this.encryption.decrypt(patient.phoneEnc, phoneAad(patient.id))
+      : null;
   }
 
   /** El paciente como lo muestra su ficha PDF; null si el contexto no lo ve (RN-A05). Solo para documents. */

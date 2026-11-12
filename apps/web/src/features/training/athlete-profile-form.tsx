@@ -329,6 +329,21 @@ export function AthleteProfileForm({
         disabled={disabled}
         className="flex flex-col gap-4 rounded-lg border border-border bg-card p-4"
       >
+        <legend className="px-1 font-medium">Acompañamiento</legend>
+        <CheckboxField
+          label="Seguimiento asistido por WhatsApp"
+          {...form.register('whatsappFollowUp')}
+        />
+        <p className="text-sm text-muted-foreground">
+          Acompañas al alumno por WhatsApp, fuera de la app. El macrociclo lo indica y te deja abrir
+          su chat; la app no envía mensajes.
+        </p>
+      </fieldset>
+
+      <fieldset
+        disabled={disabled}
+        className="flex flex-col gap-4 rounded-lg border border-border bg-card p-4"
+      >
         <legend className="px-1 font-medium">Objetivos de las pruebas físicas</legend>
         <p className="text-sm text-muted-foreground">
           {problems.testTargets ?? 'Opcionales. Se muestran junto a cada prueba.'}

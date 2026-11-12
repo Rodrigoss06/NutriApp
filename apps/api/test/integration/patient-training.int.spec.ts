@@ -477,6 +477,52 @@ describe('RN-G17 · el ciclo menstrual, solo con MENSTRUAL_TRACKING', () => {
   });
 });
 
+describe('P-35 · el chat de WhatsApp del alumno, sin integrar mensajería', () => {
+  it('solo con el seguimiento activado en el perfil y el teléfono con su código de país; cada pedido queda en la auditoría', async () => {
+    const link = () => harness.get(`/patients/${patientId}/athlete-profile/whatsapp`, cookie);
+    const codeOf = (response: request.Response) => (response.body as Problem).code;
+    const setPhone = async (phone: string) => {
+      const patient = await harness.get(`/patients/${patientId}`, cookie);
+      const version = (patient.body as { version: number }).version;
+      const changed = await harness
+        .patch(`/patients/${patientId}`, { phone }, cookie)
+        .set('If-Match', String(version));
+      expect(changed.status, JSON.stringify(changed.body)).toBe(200);
+    };
+
+    const off = await link();
+    expect(off.status).toBe(409);
+    expect(codeOf(off)).toBe('NC-TRA-026');
+
+    const saved = await harness.put(
+      `/patients/${patientId}/athlete-profile`,
+      { ...PROFILE, whatsappFollowUp: true, expectedRevision: await profileRevision() },
+      cookie,
+    );
+    expect(saved.status, JSON.stringify(saved.body)).toBe(200);
+    const read = await harness.get(`/patients/${patientId}/athlete-profile`, cookie);
+    expect(read.body).toMatchObject({ current: { whatsappFollowUp: true } });
+
+    // Sin el código de país no se supone +51: se pide agregarlo (Rodrigo, 2026-11-11).
+    await setPhone('987 654 321');
+    const local = await link();
+    expect(local.status).toBe(409);
+    expect(codeOf(local)).toBe('NC-TRA-028');
+
+    await setPhone('+51 987 654 321');
+    const ok = await link();
+    expect(ok.status, JSON.stringify(ok.body)).toBe(200);
+    expect(ok.body).toEqual({ url: 'https://wa.me/51987654321' });
+
+    const [audited] = await owner<{ n: number }>(
+      `SELECT count(*)::int AS n FROM audit.audit_log
+       WHERE action = 'READ' AND resource_type = 'clinical.patient.phone' AND patient_id = $1`,
+      [patientId],
+    );
+    expect(audited?.n).toBe(3);
+  });
+});
+
 describe('07 §3.2 · el cribado desde la app', () => {
   it('lo responde ella; en verde no espera revisión, y el equipo lo ve', async () => {
     const answered = await harness.post('/me/screening', { answers: NO_ANSWERS }, patientCookie);

@@ -52,6 +52,7 @@ export class PrismaAthleteProfileStore implements AthleteProfileStore {
       testTargets: row.testTargets as Readonly<Record<string, number>>,
       notes: row.notes,
       hormonalContraception: row.hormonalContraception,
+      whatsappFollowUp: row.whatsappFollowUp,
       recordedBy: row.recordedBy as UserId,
       recordedAt: row.recordedAt,
     };
