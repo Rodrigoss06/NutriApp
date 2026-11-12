@@ -167,12 +167,15 @@ describe('RN-G17 · autorizar MENSTRUAL_TRACKING desde la app', () => {
           bodyMarkdown: 'Texto provisional.',
         },
       },
+      // Las fotos de progreso también se autorizan desde la app (RN-G20); sin su texto en la prueba, sin documento.
+      { purpose: 'PROGRESS_PHOTOS', active: false, grantedAt: null, document: null },
     ]);
 
     documents = [];
     active.set('MENSTRUAL_TRACKING', { id: 'vigente', grantedAt: NOW });
     expect(await service().myConsents(context)).toEqual([
       { purpose: 'MENSTRUAL_TRACKING', active: true, grantedAt: NOW, document: null },
+      { purpose: 'PROGRESS_PHOTOS', active: false, grantedAt: null, document: null },
     ]);
   });
 });

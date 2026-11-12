@@ -3139,3 +3139,48 @@ Consecuencias:
   paciente lo lee en su app y comenta; el coach ve el comentario. axe en cada pantalla.
 - Para Notion (/notion-sync de P14.5): 04 (las pantallas del informe) y 05.2 (el paciente ve el resumen del control dentro del
   informe enviado).
+
+## ADR-119 · Las fotos de progreso por la API: consentimiento propio, tres vistas por mesociclo y borrado al archivar o revocar — aceptada (2026-11-12)
+Contexto: P14.5, fase C, PR 6b-1 (P-30; RN-G20 nueva; ADR-098). Va fuera del contrato, con su cotización. Rodrigo decidió:
+- el 2026-11-10: las suben el alumno y el coach, tres vistas en cada cierre de mesociclo;
+- el 2026-11-11: consentimiento propio con el texto del abogado. Las fotos se conservan solo mientras el expediente esté activo y se
+  borran en el acto al archivar al alumno o cuando revoca, sin días de gracia;
+- el 2026-11-12: la comparativa va en su propia sección; las fotos se suben desde la última semana del mesociclo; y el
+  consentimiento lo registra el alumno desde la app o el coach en consulta.
+Decisión:
+- Consentimiento `PROGRESS_PHOTOS` (migración `202611120100_training_progress_photos`):
+  - finalidad nueva y opcional, con el texto del abogado como versión 1.0;
+  - el alumno la autoriza o la retira desde la app, como la del ciclo menstrual, y el equipo la registra en consulta;
+  - no se reutiliza IMAGES, porque su texto conserva la evidencia hasta que el paciente pida suprimirla.
+- `training.progress_photo`:
+  - una foto por vista (frontal, lateral y posterior) y por mesociclo de la línea del programa;
+  - subir otra la reemplaza: el archivo anterior se marca borrado y sus bytes se descartan;
+  - RLS del equipo; el alumno lee y sube las suyas, pero no las borra (`patient_no_delete`, migración
+    `202611120200_training_progress_photo_no_delete`).
+- Subir:
+  - JPEG o PNG de hasta 5 MB, según sus bytes (ADR-038), al programa publicado;
+  - desde la última semana del mesociclo, en la fecha local del alumno;
+  - exige HEALTH_DATA y PROGRESS_PHOTOS vigentes;
+  - el alumno no lee `training.program`, porque su app lee la copia vigente: su programa publicado, solo el suyo, lo busca el
+    sistema antes de abrir la transacción del alumno.
+- Ver: solo con el alumno activo y su consentimiento vigente. Cada foto sale por la API como adjunto y con nosniff, y cada lectura
+  queda en la auditoría.
+- Borrar: desde que se archiva al alumno o se revoca el consentimiento, la API deja de servir las fotos. El consumidor
+  `training.progress-photos` (de `clinical.patient.archived` y `clinical.consent.revoked`) borra las filas, marca borrados los
+  archivos, descarta sus bytes y deja la entrada en la auditoría. Reactivar al alumno no las recupera.
+- `platform.file_object`: el alumno lee los archivos de sus fotos y escribe solo archivos de fotos, los que sube y el que reemplaza.
+- API:
+  - para el equipo: `GET /patients/:id/progress-photos`, `POST /patients/:id/progress-photos/:position/:view` (multipart, campo
+    «photo») y `GET /progress-photos/:id/file`;
+  - para el alumno: `GET /me/progress-photos`, `POST /me/progress-photos/:position/:view` y `GET /me/progress-photos/:id/file`;
+  - errores NC-TRA-036 a NC-TRA-040 y NC-CLI-033.
+Consecuencias:
+- Unitarias: cuándo se suben, las vistas y los tipos; la subida, el reemplazo, el borrado y las lecturas.
+- Integración (`progress-photos.int.spec.ts`):
+  - sin consentimiento no se suben; el coach sube la frontal del mesociclo que cierra; el siguiente todavía no; un PDF tampoco;
+  - la lectura sale como adjunto y queda auditada; fuera del equipo no se ve;
+  - el alumno sube la suya y el reemplazo borra el archivo anterior;
+  - al revocar dejan de verse en el acto y el consumidor las borra, y al archivar, también.
+- 6b-2: las pantallas para subir y comparar en el panel y en la app, el consentimiento en la app, la E2E y el guion.
+- Para Notion (/notion-sync de P14.5): 05.1 (la finalidad `PROGRESS_PHOTOS`), 05.2 (`training.progress_photo`), 05.3 (la política del
+  paciente en `platform.file_object`), 03 (RN-G20 y RN-B01) y 02 §8 (`training.photo.uploaded`).

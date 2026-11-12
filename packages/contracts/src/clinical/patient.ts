@@ -32,6 +32,7 @@ export const CONSENT_PURPOSES = [
   'ANONYMIZED_RESEARCH',
   'MARKETING',
   'MENSTRUAL_TRACKING',
+  'PROGRESS_PHOTOS',
 ] as const;
 export const CONSENT_CHANNELS = ['APP', 'IN_PERSON_DIGITAL', 'PAPER_SCANNED'] as const;
 
@@ -173,8 +174,8 @@ export type Consent = z.infer<typeof consentSchema>;
 export const consentListResponseSchema = z.object({ consents: z.array(consentSchema) });
 export type ConsentListResponse = z.infer<typeof consentListResponseSchema>;
 
-/** Las finalidades que el paciente autoriza o retira desde su app (RN-G17): por ahora, el seguimiento del ciclo menstrual. */
-export const SELF_SERVICE_CONSENT_PURPOSES = ['MENSTRUAL_TRACKING'] as const;
+/** Las finalidades que el paciente autoriza o retira desde su app: el ciclo menstrual (RN-G17) y las fotos de progreso (RN-G20). */
+export const SELF_SERVICE_CONSENT_PURPOSES = ['MENSTRUAL_TRACKING', 'PROGRESS_PHOTOS'] as const;
 
 /** GET /api/v1/me/consents: cada finalidad opcional, si está vigente y su texto vigente. */
 export const meConsentsSchema = z.object({

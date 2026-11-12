@@ -76,6 +76,20 @@ export class FileRegistry {
     return this.storage.discard(key);
   }
 
+  /**
+   * Marca borrado un archivo visible en la transacción activa y devuelve su clave, para descartar los bytes después de confirmar.
+   * Solo para lo que se borra por regla, como las fotos de progreso (RN-G20): la evidencia de un consentimiento nunca se borra.
+   */
+  async retire(fileId: string, at: Date): Promise<string | null> {
+    const row = await this.db.tx.fileObject.findFirst({
+      where: { id: fileId, deletedAt: null },
+      select: { storageKey: true },
+    });
+    if (!row) return null;
+    await this.db.tx.fileObject.updateMany({ where: { id: fileId }, data: { deletedAt: at } });
+    return row.storageKey;
+  }
+
   /** Lee un archivo visible con el contexto de la transacción activa (RLS). */
   async read(fileId: string): Promise<{ content: Buffer; mimeType: string } | null> {
     const row = await this.db.tx.fileObject.findFirst({

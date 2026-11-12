@@ -436,6 +436,8 @@ describe('RN-G17 · el ciclo menstrual, solo con MENSTRUAL_TRACKING', () => {
     const before = meConsentsSchema.parse((await harness.get('/me/consents', patientCookie)).body);
     expect(before.consents).toEqual([
       expect.objectContaining({ purpose: 'MENSTRUAL_TRACKING', active: false }),
+      // Las fotos de progreso también se autorizan desde la app (RN-G20; P14.5, PR 6b).
+      expect.objectContaining({ purpose: 'PROGRESS_PHOTOS', active: false }),
     ]);
     expect(before.consents[0]?.document?.version).toBe('0.1-provisional');
 

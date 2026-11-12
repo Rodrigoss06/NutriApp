@@ -50,7 +50,11 @@ async function documents(cookie: string): Promise<Record<string, string>> {
   const { documents: list } = response.body as {
     documents: { id: string; purpose: string; provisional: boolean }[];
   };
-  expect(list.every((d) => d.provisional)).toBe(true);
+  // Los textos de la plataforma son provisionales hasta P16; el de las fotos de progreso ya es el del abogado (RN-G20, ADR-119).
+  expect(list.filter((d) => d.purpose !== 'PROGRESS_PHOTOS').every((d) => d.provisional)).toBe(
+    true,
+  );
+  expect(list.find((d) => d.purpose === 'PROGRESS_PHOTOS')?.provisional).toBe(false);
   return Object.fromEntries(list.map((d) => [d.purpose, d.id]));
 }
 

@@ -13,6 +13,7 @@ import {
   HEALTH_DATA_REQUIRED,
   IMAGES_CONSENT_REQUIRED,
   MENSTRUAL_TRACKING_REQUIRED,
+  PROGRESS_PHOTOS_REQUIRED,
   PATIENT_ARCHIVED,
   PATIENT_NOT_FOUND,
   WRITE_ACCESS_REQUIRED,
@@ -164,6 +165,13 @@ export class ClinicalApi {
     return (await this.consents.active(patientId, 'MENSTRUAL_TRACKING'))
       ? ok(undefined)
       : err(MENSTRUAL_TRACKING_REQUIRED);
+  }
+
+  /** Las fotos de progreso necesitan su consentimiento propio vigente, para guardarlas y para verlas (RN-G20, P-30). */
+  async ensureProgressPhotosConsent(patientId: string): Promise<Result<void, DomainError>> {
+    return (await this.consents.active(patientId, 'PROGRESS_PHOTOS'))
+      ? ok(undefined)
+      : err(PROGRESS_PHOTOS_REQUIRED);
   }
 
   /** La evidencia necesita el consentimiento de imágenes vigente (RN-B01, 07 §4). */

@@ -17,7 +17,8 @@ export type TrainingEventType =
   | 'training.report.created'
   | 'training.report.updated'
   | 'training.report.sent'
-  | 'training.report.commented';
+  | 'training.report.commented'
+  | 'training.photo.uploaded';
 
 export function trainingEvent<TPayload extends { patientId: string }>(
   type: TrainingEventType,

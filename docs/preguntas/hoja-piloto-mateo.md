@@ -319,6 +319,10 @@ un grupo puede recibir ejercicios de varias familias. En la semana 3 de Mateo, e
 > **Rodrigo (2026-11-11):** manda el texto del consentimiento. Las fotos se conservan solo mientras el expediente esté activo o
 > hasta que el alumno revoque; no se guardan 12 meses después de la baja, como decía la respuesta de arriba (PR 6b). Se borran en
 > el acto al archivar al alumno o cuando revoca el consentimiento, sin días de gracia; reactivarlo no las recupera.
+>
+> **Rodrigo (2026-11-12), para el PR 6b:** la comparativa fotográfica va en su propia sección (Entrenamiento › Fotos en el panel y
+> Progreso › Fotos en la app), no dentro del informe; las fotos de un mesociclo se suben desde su última semana en adelante; y el
+> consentimiento lo registra el alumno desde la app o el coach en consulta.
 
 ## Documentos, asistencias y prescripción
 
