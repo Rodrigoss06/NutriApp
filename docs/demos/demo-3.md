@@ -236,6 +236,18 @@ del evaluador (RN-C06).
 - La rutina de Mateo en la demo tiene un ejercicio por sesión, como su registro de cargas: por eso da 36 de 36 series y no
   223 de 240. El 92.9 % de la hoja es el caso dorado G-44 del motor.
 
+**Fotos de progreso (P14.5, PR 6b):** en la misma ficha, Entrenamiento › Fotos.
+
+1. Sin el consentimiento de fotos, la pantalla lo pide: se registra en Consentimientos, con el texto del abogado, o lo
+   autoriza el alumno desde su app (Progreso › Fotos de progreso).
+2. Subir la frontal, la lateral y la posterior del «Mesociclo 1»: sus fotos se suben desde su última semana. Las del
+   «Mesociclo 2», desde el 24/11.
+3. La comparativa por vista pone la foto del primer mesociclo frente a la del último; con una sola, pide otra.
+
+**Qué decir:** las fotos llevan su propio consentimiento y cada vez que alguien ve una queda en la auditoría. Se borran en el
+acto si el alumno retira su autorización o si se archiva su ficha, y reactivarla no las recupera. Las de la hoja de Jeremy
+dicen «Sin foto»: en la demo se suben en vivo.
+
 ## 10 · La hoja de Jeremy frente a la app · Mateo · 5 min
 
 | Coincide                                                                                                                                                                                                                                                                          | Difiere o falta (P14.5)                                                   |

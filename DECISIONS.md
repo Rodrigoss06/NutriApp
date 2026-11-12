@@ -3184,3 +3184,34 @@ Consecuencias:
 - 6b-2: las pantallas para subir y comparar en el panel y en la app, el consentimiento en la app, la E2E y el guion.
 - Para Notion (/notion-sync de P14.5): 05.1 (la finalidad `PROGRESS_PHOTOS`), 05.2 (`training.progress_photo`), 05.3 (la política del
   paciente en `platform.file_object`), 03 (RN-G20 y RN-B01) y 02 §8 (`training.photo.uploaded`).
+
+## ADR-120 · Las pantallas de las fotos de progreso, en el panel y en la app — aceptada (2026-11-12)
+Contexto: P14.5, fase C, PR 6b-2 (P-30; RN-G20; ADR-119). Las fotos ya tenían su API. Faltaban las pantallas, la E2E y el guion.
+Rodrigo decidió el 2026-11-12 que la comparativa va en su propia sección: Entrenamiento › Fotos en el panel y Progreso › Fotos en
+la app.
+Decisión:
+- Panel, Entrenamiento › Fotos (pestaña nueva):
+  - sin el consentimiento vigente, un aviso que lleva a Consentimientos y recuerda que las fotos se borran al revocar o al
+    archivar;
+  - la comparativa por vista: la foto del primer mesociclo frente a la del último, en orden de fechas, también entre programas.
+    Con una sola, pide otra;
+  - las tres vistas de cada mesociclo del programa publicado, con «Subir» o «Reemplazar». Las sube quien escribe en el
+    expediente, desde la última semana del mesociclo («Desde el …» antes de eso).
+- App, Progreso › Fotos de progreso: el enlace sale aunque Progreso no muestre la evolución, porque las fotos van con su propia
+  autorización. La pantalla trae:
+  - la autorización con el texto del abogado, para autorizarla o retirarla. Retirarla pide confirmación: las fotos se borran y
+    no se recuperan;
+  - las tres vistas de cada mesociclo para subirlas, y la comparativa.
+- Subir: el navegador achica la foto hasta 2048 px de lado mayor (en JPEG) antes de subirla, para que las del celular entren en
+  los 5 MB; una chica en JPEG o PNG va tal cual. Cada foto se ve con `<img>` desde la API, con la sesión, y cada lectura queda
+  auditada.
+- Guion de la Demo 3: las fotos en la sección 9, subidas en vivo.
+Consecuencias:
+- Unitarias de la web: la comparativa entre mesociclos y programas, las vistas de cada mesociclo, desde cuándo se suben, la ruta de
+  cada foto y el tamaño al achicarla.
+- E2E `fotos.spec.ts`, en escritorio y en el celular:
+  - Luis autoriza con el texto del abogado y sube su frontal;
+  - el coach la ve en la comparativa y sube la lateral;
+  - Luis retira la autorización y las fotos desaparecen;
+  - axe en cada pantalla.
+- Para Notion (/notion-sync de P14.5): 04 (las pantallas de las fotos).
