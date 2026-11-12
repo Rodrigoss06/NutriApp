@@ -3057,3 +3057,59 @@ Consecuencias:
 - E2E `programa.spec.ts`: la línea arriba del macrociclo y, sin teléfono, el aviso con el enlace a la ficha.
 - Para Notion (/notion-sync de P14.5): 05.2 (la columna de `training.athlete_profile`), 04 RF-41 (el perfil) y 07 §2 y §15
   (P-35 resuelta).
+
+## ADR-117 · El informe del mesociclo por la API: volumen cumplido, récords, resumen semanal y comparativa — aceptada (2026-11-11)
+Contexto: P14.5, fase C, PR 7a (P-28 y P-29; RN-G19 nueva; ADR-098). Va fuera del contrato, con la cotización por la cláusula décimo
+segunda (`docs/cotizaciones/fase-c-hoja-piloto.md`, 61 h). La hoja piloto trae un «Informe mensual · evolución integral». Rodrigo
+respondió el 2026-11-10 y el 2026-11-11:
+- es uno por mesociclo de 4 semanas, solo en la app (sin sexta ficha PDF), con los estados Borrador y Enviado;
+- el coach escribe Logro, Limitante, Ajuste y Prioridad, y el alumno su Comentario desde la app;
+- el volumen cumplido son las series hechas ÷ las planificadas de la rutina completa (223 ÷ 240 = 92.9 %);
+- un récord es un 1RM estimado más alto que el mejor anterior de ese ejercicio. La primera vez no cuenta, y cada ejercicio cuenta
+  una vez por semana;
+- el borrador se edita antes, pero se envía solo cuando cierra la cuarta semana del mesociclo;
+- además trae el sueño, el estrés, la fatiga, el rendimiento, la alimentación y la decisión del control semanal de cada semana, y la
+  comparativa física, como la hoja.
+También aceptó estas decisiones por defecto: enviado es final; el alumno escribe y cambia su comentario cuando quiere; no hay aviso
+por correo; y la demo de Mateo queda como está.
+Decisión:
+- Motor: `MESOCYCLE_REPORT_JV` 1.0.0 (motor 1.16.0, RN-G19):
+  - volumen cumplido: series hechas × 100 ÷ planificadas, por semana y en el mesociclo; sin series planificadas, sin dato;
+  - récords: el 1RM estimado tiene que superar el mejor que el ejercicio tenía hasta ese día, en toda la historia del alumno y con
+    su fórmula (RN-F04). Cada ejercicio cuenta una vez por semana, con su récord más alto;
+  - los promedios de cada semana, de su control vigente, y su promedio en las semanas con dato. Con la hoja dan 6.9 h, 3.0, 3.0,
+    90 % y 85 %.
+  - G-44: el mes de Mateo da 223 ÷ 240 = 92.9 % (semana 1: 93.3 %) y récords 0, 3, 3 y 0 con sus 1RM;
+  - NC-ENG-417 y NC-ENG-418.
+- Tabla `training.mesocycle_report` (migración `202611110500_training_mesocycle_report`):
+  - una fila por mesociclo de la línea del programa, por su posición, con RLS del equipo de atención;
+  - el alumno ve solo los informes enviados;
+  - un disparador impide cambiar lo enviado, que el alumno cree informes o toque lo del coach, y que el coach escriba el comentario.
+- Enviar exige que el mesociclo haya cerrado y los cuatro textos:
+  - cerrado quiere decir que su último día ya pasó en la fecha local del alumno, como el control semanal (07 §10); en los mesociclos
+    de JV es la cuarta semana;
+  - enviarlo congela un snapshot (esquema 1, con su hash) con el resultado del motor, el control de cada semana (semáforo, acción
+    sugerida y decisión del coach) y la evolución hasta el último día del mesociclo, solo con lo de la comparativa física;
+  - el borrador se calcula cada vez que se lee.
+- De dónde salen los números:
+  - lo planificado, de la última versión publicada de la línea del programa, como la analítica (RN-F12);
+  - lo hecho, de los entrenos de la línea dentro de las fechas del mesociclo. Cuenta en la semana de su sesión (ADR-083), sin
+    calentamiento ni cardio;
+  - los 1RM, del read model de analytics;
+  - analytics da esos datos a training con `MesocycleReportSources`, sin ciclos entre módulos (02 §4).
+- API:
+  - para el equipo: `GET` y `POST /patients/:id/mesocycle-reports`, `GET /mesocycle-reports/:id`, `PUT /mesocycle-reports/:id` y
+    `POST /mesocycle-reports/:id/send`, los dos últimos con If-Match;
+  - para el alumno: `GET /me/mesocycle-reports`, `GET /me/mesocycle-reports/:id` y `PUT /me/mesocycle-reports/:id/comment`;
+  - errores NC-TRA-029 a NC-TRA-035;
+  - cada lectura queda en la auditoría, y cada escritura por sus eventos `training.report.*`. Escribir exige HEALTH_DATA vigente
+    (RN-B01).
+Consecuencias:
+- Unitarias: G-44 y la regla de los récords en el motor; en el dominio, el envío, los textos, lo planificado y lo hecho; y qué 1RM
+  entran.
+- Integración (`demo-3.int.spec.ts`):
+  - el informe de Mateo con sus números, el envío y la base que impide cambiarlo;
+  - la app del alumno con su comentario, y la RLS.
+- 7b: las pantallas del panel y de la app, la E2E y el guion de la Demo 3.
+- Para Notion (/notion-sync de P14.5): 03 (RN-G19 y G-44), 02 §8 (`training.report.*`) y §9 (`MESOCYCLE_REPORT_JV`), 05.2
+  (`training.mesocycle_report`) y 04 (el informe, fuera del contrato).

@@ -210,6 +210,18 @@ export const AUDITED_EVENTS: Readonly<Record<string, AuditMapping>> = {
     resourceType: 'training.program',
     fields: () => ['status'],
   },
+  'training.report.created': { action: 'CREATE', resourceType: 'training.mesocycle_report' },
+  'training.report.updated': {
+    action: 'UPDATE',
+    resourceType: 'training.mesocycle_report',
+    fields: (p) => namesOf(p.fields),
+  },
+  'training.report.sent': { action: 'PUBLISH', resourceType: 'training.mesocycle_report' },
+  'training.report.commented': {
+    action: 'UPDATE',
+    resourceType: 'training.mesocycle_report',
+    fields: (p) => namesOf(p.fields),
+  },
   'nutrition.prescription.created': {
     action: 'CREATE',
     resourceType: 'nutrition.energy_prescription',

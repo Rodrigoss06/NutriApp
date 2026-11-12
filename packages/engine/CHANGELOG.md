@@ -3,6 +3,19 @@
 Cambiar una fórmula o una constante sube la versión del método afectado y la del motor (02 §9).
 Los resultados guardados conservan la versión con que se calcularon (RN-D01, RN-D08).
 
+## 1.16.0 — 2026-11-11
+
+- `MESOCYCLE_REPORT_JV` 1.0.0 (P14.5, PR 7a; P-28 y P-29, respuestas de Rodrigo del 2026-11-10 y del 2026-11-11; ADR-117), el informe
+  de un mesociclo:
+  - volumen cumplido: series hechas × 100 ÷ planificadas de la rutina completa, por semana y en el mesociclo; sin series
+    planificadas, sin dato;
+  - récords (RN-G19): un 1RM estimado más alto que el mejor que el ejercicio tenía hasta ese día; la primera vez no cuenta y cada
+    ejercicio cuenta una vez por semana, con su récord más alto;
+  - el sueño, el estrés, la fatiga, el rendimiento y la alimentación de cada semana, del control semanal, y su promedio en las
+    semanas con dato, como la hoja (6.4, 6.8, 7.1 y 7.4 h dan 6.9 h);
+  - NC-ENG-417 (semanas fuera de orden o de rango) y NC-ENG-418 (los 1RM de los ejercicios).
+- G-44: el mes de Mateo da 223 ÷ 240 = 92.9 % y récords en las semanas 2 y 3.
+
 ## 1.15.0 — 2026-11-11
 
 - `MUSCLE_FATIGUE_JV` 1.0.0 (P14.5, PR 4; P-27, respuesta de Jeremy del 2026-11-10 y decisiones de Rodrigo del 2026-11-11;

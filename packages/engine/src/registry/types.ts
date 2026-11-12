@@ -48,6 +48,7 @@ export const METHOD_CODES = [
   'ADJUSTED_VOLUME',
   'FATIGUE_PANEL_JV',
   'MUSCLE_FATIGUE_JV',
+  'MESOCYCLE_REPORT_JV',
 ] as const;
 
 export type MethodCode = (typeof METHOD_CODES)[number];

@@ -288,6 +288,15 @@ un grupo puede recibir ejercicios de varias familias. En la semana 3 de Mateo, e
 > **Respuesta (2026-11-10, por Rodrigo).** Volumen cumplido = series hechas ÷ series planificadas (223 ÷ 240 = 92.9 %). Un PR es un
 > 1RM estimado más alto que el anterior en el mismo ejercicio (en la hoja fue un ejemplo incompleto). Las series planificadas
 > salen de la rutina completa de la semana.
+>
+> **Rodrigo (2026-11-11), para el PR 7:**
+>
+> - Un récord es un 1RM estimado más alto que el mejor anterior de ese ejercicio. La primera vez que se hace un ejercicio no cuenta,
+>   y cada ejercicio cuenta una sola vez por semana. El press banca de Mateo (56.0, 59.5, 63.0 y 46.7 kg) da récord en las semanas
+>   2 y 3.
+> - El borrador se edita antes, pero el informe pasa a Enviado solo cuando cierra la cuarta semana del mesociclo.
+> - Además de lo cotizado, el informe trae el resumen de cada semana (sueño, estrés, fatiga, rendimiento, alimentación y la decisión
+>   del control semanal) y la comparativa física, como la hoja. La cotización pasa a 61 h (S/ 3,355).
 
 **P-30 · Fotos de progreso** («Comparativa fotográfica»)
 
@@ -308,7 +317,8 @@ un grupo puede recibir ejercicios de varias familias. En la semana 3 de Mateo, e
 > mientras mi expediente esté activo o hasta que revoque este consentimiento.»
 >
 > **Rodrigo (2026-11-11):** manda el texto del consentimiento. Las fotos se conservan solo mientras el expediente esté activo o
-> hasta que el alumno revoque; no se guardan 12 meses después de la baja, como decía la respuesta de arriba (PR 6b).
+> hasta que el alumno revoque; no se guardan 12 meses después de la baja, como decía la respuesta de arriba (PR 6b). Se borran en
+> el acto al archivar al alumno o cuando revoca el consentimiento, sin días de gracia; reactivarlo no las recupera.
 
 ## Documentos, asistencias y prescripción
 

@@ -228,6 +228,7 @@ export * from './adjusted-volume.js';
 export * from './fatigue-panel.js';
 export * from './macrocycle.js';
 export * from './muscle-fatigue.js';
+export * from './mesocycle-report.js';
 export * from './performance-profile.js';
 export * from './readiness.js';
 export * from './weekly-review.js';

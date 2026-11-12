@@ -1,12 +1,17 @@
 import { readFile } from 'node:fs/promises';
+import {
+  mesocycleReportSchema,
+  mesocycleReportsResponseSchema,
+  patientMesocycleReportsResponseSchema,
+} from '@nutricoach/contracts';
 import type { UserId } from '@nutricoach/shared-kernel';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { seedDemo2, type DemoApi } from '../../scripts/demo-2.js';
 import { lastWeek, seedDemo3, type Demo3Options, type Demo3Report } from '../../scripts/demo-3.js';
 import { AnalyticsRebuild } from '../../src/modules/analytics/index.js';
 import { CatalogImporter } from '../../src/platform/index.js';
-import { ApiHarness, type StaffOrganization } from './support/api-harness.js';
-import { id, pool } from './support/database.js';
+import { ApiHarness, PASSWORD, type StaffOrganization } from './support/api-harness.js';
+import { errorCode, id, PG, pool, withContext } from './support/database.js';
 import { luisWithPrescription } from './support/luis.js';
 
 /**
@@ -374,6 +379,297 @@ describe('Demo 3 · Mateo, el alumno ficticio de la hoja de Jeremy', () => {
       [mateoId],
     );
     expect(rows).toEqual([{ outcome: 'COMPLETED', count: '12' }]);
+  });
+});
+
+describe('P14.5 · RN-G19 · P-28 y P-29 · el informe del primer mesociclo de Mateo', () => {
+  const MESOCYCLE_2_END = '2026-11-30';
+  let reportId: string;
+  let programId: string;
+  let patientCookie: string;
+
+  const staff = () => org.staff.responsible.cookie;
+  const report = async (path = `/mesocycle-reports/${reportId}`, cookie = staff()) => {
+    const response = await harness.get(path, cookie);
+    expect(response.status, JSON.stringify(response.body)).toBe(200);
+    return mesocycleReportSchema.parse(response.body);
+  };
+  const owner = async (sql: string, params: unknown[]) => pool('owner').query(sql, params);
+
+  it('sus dos mesociclos: el primero, del 06/10 al 02/11, ya cerró; ninguno tiene informe', async () => {
+    const list = mesocycleReportsResponseSchema.parse(
+      await get(`/patients/${mateoId}/mesocycle-reports`),
+    );
+    programId = list.program?.programId ?? '';
+    expect(list.program?.name).toBe('Full Body');
+    expect(
+      list.mesocycles.map(({ position, name, startDate, endDate, closed, report: r }) => [
+        position,
+        name,
+        startDate,
+        endDate,
+        closed,
+        r,
+      ]),
+    ).toEqual([
+      [1, 'Mesociclo 1', '2026-10-06', '2026-11-02', true, null],
+      [2, 'Mesociclo 2', '2026-11-03', MESOCYCLE_2_END, today > MESOCYCLE_2_END, null],
+    ]);
+  });
+
+  it('el borrador: uno por mesociclo; otra vez, 409', async () => {
+    const created = await harness.post(
+      `/patients/${mateoId}/mesocycle-reports`,
+      { programId, mesocyclePosition: 1 },
+      staff(),
+    );
+    expect(created.status, JSON.stringify(created.body)).toBe(201);
+    reportId = (created.body as { id: string }).id;
+    expect(created.body).toEqual({ id: reportId, version: 0 });
+    const again = await harness.post(
+      `/patients/${mateoId}/mesocycle-reports`,
+      { programId, mesocyclePosition: 1 },
+      staff(),
+    );
+    expect(again.status).toBe(409);
+    expect(again.body).toMatchObject({ code: 'NC-TRA-030', rule: 'RN-G19' });
+  });
+
+  it('G-44 con la demo · 9 de 9 series cada semana, récords en las semanas 2 y 3 y los promedios de la hoja', async () => {
+    const { status, closed, body } = await report();
+    expect({ status, closed }).toEqual({ status: 'DRAFT', closed: true });
+    expect(body?.program.oneRmMethod).toEqual({ code: 'ONERM_EPLEY1985', version: '1.0.0' });
+    const numbers = body?.numbers;
+    expect(numbers?.method).toEqual({ code: 'MESOCYCLE_REPORT_JV', version: '1.0.0' });
+    expect(
+      numbers?.weeks.map(({ plannedSets, doneSets, volumePct, sessionsDone, records }) => [
+        plannedSets,
+        doneSets,
+        volumePct,
+        sessionsDone,
+        records,
+      ]),
+    ).toEqual([
+      [9, 9, 100, 3, 0],
+      [9, 9, 100, 3, 3],
+      [9, 9, 100, 3, 3],
+      [9, 9, 100, 3, 0],
+    ]);
+    expect(numbers?.total).toEqual({
+      plannedSets: 36,
+      doneSets: 36,
+      volumePct: 100,
+      sessionsPlanned: 12,
+      sessionsDone: 12,
+      records: 6,
+    });
+    expect(numbers?.averages.sleepHours).toBeCloseTo(6.925, 9);
+    expect(numbers?.averages).toMatchObject({
+      stress: 3,
+      fatigue: 3,
+      performancePct: 90,
+      nutritionPct: 85,
+    });
+    expect(
+      numbers?.records
+        .filter(({ weekNo }) => weekNo === 2)
+        .map(({ exerciseName, estimated1rmKg, previousBestKg }) => [
+          exerciseName,
+          estimated1rmKg,
+          previousBestKg,
+        ]),
+    ).toEqual([
+      ['Press banca', 59.5, 56],
+      ['Sentadilla trasera', 87.5, 84],
+      ['Jalón al pecho', 66.5, 63],
+    ]);
+    expect(body?.reviews.map(({ light }) => light)).toEqual(['RED', 'RED', 'GREEN', 'GREEN']);
+    const weight = body?.evolution?.sites.find(({ siteCode }) => siteCode === 'BASIC_WEIGHT');
+    expect(weight?.points.map(({ value }) => value)).toEqual([80, 79]);
+    expect(body?.evolution?.skinfoldSum6).toBeNull();
+  });
+
+  it('los textos con If-Match; se envía con los cuatro, y enviado queda congelado', async () => {
+    const draft = {
+      achievement: 'Cumplió 12 de 12 sesiones.',
+      limitation: null,
+      adjustment: null,
+      priority: null,
+    };
+    const saved = await harness
+      .put(`/mesocycle-reports/${reportId}`, draft, staff())
+      .set('If-Match', '0');
+    expect(saved.status, JSON.stringify(saved.body)).toBe(200);
+    expect(saved.body).toEqual({ id: reportId, version: 1 });
+    const stale = await harness
+      .put(`/mesocycle-reports/${reportId}`, draft, staff())
+      .set('If-Match', '0');
+    expect(stale.status).toBe(409);
+    expect(stale.body).toMatchObject({ code: 'NC-TRA-035' });
+
+    const incomplete = await harness
+      .post(`/mesocycle-reports/${reportId}/send`, undefined, staff())
+      .set('If-Match', '1');
+    expect(incomplete.status).toBe(422);
+    expect(incomplete.body).toMatchObject({ code: 'NC-TRA-034', rule: 'RN-G19' });
+
+    const complete = await harness
+      .put(
+        `/mesocycle-reports/${reportId}`,
+        {
+          achievement: 'Cumplió 12 de 12 sesiones.',
+          limitation: 'Sueño y estrés elevados durante la semana 2.',
+          adjustment: 'Mantener tres sesiones.',
+          priority: 'Consolidar hábitos de sueño.',
+        },
+        staff(),
+      )
+      .set('If-Match', '1');
+    expect(complete.status, JSON.stringify(complete.body)).toBe(200);
+    const sent = await harness
+      .post(`/mesocycle-reports/${reportId}/send`, undefined, staff())
+      .set('If-Match', '2');
+    expect(sent.status, JSON.stringify(sent.body)).toBe(200);
+    expect(sent.body).toEqual({ id: reportId, version: 3 });
+
+    const frozen = await report();
+    expect(frozen).toMatchObject({
+      status: 'SENT',
+      version: 3,
+      priority: 'Consolidar hábitos de sueño.',
+    });
+    expect(frozen.body?.numbers?.total.records).toBe(6);
+    const edit = await harness
+      .put(`/mesocycle-reports/${reportId}`, { ...draft, achievement: 'Otro' }, staff())
+      .set('If-Match', '3');
+    expect(edit.status).toBe(409);
+    expect(edit.body).toMatchObject({ code: 'NC-TRA-033' });
+    // La base lo impide aunque se salte la API (RN-D08).
+    await expect(
+      owner(`UPDATE training.mesocycle_report SET achievement = 'Otro' WHERE id = $1`, [reportId]),
+    ).rejects.toThrow(/ya se envió/);
+  });
+
+  it('el segundo mesociclo todavía no cierra: su borrador no se envía', async () => {
+    const created = await harness.post(
+      `/patients/${mateoId}/mesocycle-reports`,
+      { programId, mesocyclePosition: 2 },
+      staff(),
+    );
+    expect(created.status, JSON.stringify(created.body)).toBe(201);
+    const second = (created.body as { id: string }).id;
+    const texts = { achievement: 'a', limitation: 'b', adjustment: 'c', priority: 'd' };
+    expect(
+      (await harness.put(`/mesocycle-reports/${second}`, texts, staff()).set('If-Match', '0'))
+        .status,
+    ).toBe(200);
+    const send = await harness
+      .post(`/mesocycle-reports/${second}/send`, undefined, staff())
+      .set('If-Match', '1');
+    if (today > MESOCYCLE_2_END) {
+      expect(send.status).toBe(200);
+    } else {
+      expect(send.status).toBe(409);
+      expect(send.body).toMatchObject({ code: 'NC-TRA-032', rule: 'RN-G19' });
+    }
+  });
+
+  it('el alumno ve solo lo enviado en su app y escribe su comentario; el coach lo lee', async () => {
+    const email = `mateo-${id()}@demo.test`;
+    const invited = await harness.post(`/patients/${mateoId}/invitation`, { email }, staff());
+    expect(invited.status, JSON.stringify(invited.body)).toBeLessThan(300);
+    const token = await harness.invitationTokenFor(email);
+    const inspected = await harness.post('/invitations/inspect', { token });
+    const accepted = await harness.post('/invitations/accept', {
+      token,
+      password: PASSWORD,
+      acceptedConsentDocumentIds: (inspected.body as { consents: { id: string }[] }).consents.map(
+        (consent) => consent.id,
+      ),
+    });
+    expect(accepted.status, JSON.stringify(accepted.body)).toBe(200);
+    const raw = accepted.headers['set-cookie'] as unknown as string[] | undefined;
+    patientCookie = raw?.find((c) => c.startsWith('nc_session='))?.split(';')[0] ?? '';
+
+    const mine = await harness.get('/me/mesocycle-reports', patientCookie);
+    expect(mine.status, JSON.stringify(mine.body)).toBe(200);
+    const { reports } = patientMesocycleReportsResponseSchema.parse(mine.body);
+    expect(reports.map(({ id: reportOf, mesocycleName }) => [reportOf, mesocycleName])).toEqual(
+      today > MESOCYCLE_2_END
+        ? expect.arrayContaining([[reportId, 'Mesociclo 1']])
+        : [[reportId, 'Mesociclo 1']],
+    );
+    const seen = await report(`/me/mesocycle-reports/${reportId}`, patientCookie);
+    expect(seen.body?.numbers?.total.volumePct).toBe(100);
+
+    const comment = await harness
+      .put(
+        `/me/mesocycle-reports/${reportId}/comment`,
+        { comment: '  Me siento con más energía y mejor control de la rutina.  ' },
+        patientCookie,
+      )
+      .set('Idempotency-Key', `test:${id()}`);
+    expect(comment.status, JSON.stringify(comment.body)).toBe(200);
+    expect(comment.body).toMatchObject({
+      studentComment: 'Me siento con más energía y mejor control de la rutina.',
+    });
+    expect((await report()).studentComment).toBe(
+      'Me siento con más energía y mejor control de la rutina.',
+    );
+  });
+
+  it('RLS · el alumno no ve borradores ni cambia lo del coach; el coach no escribe el comentario', async () => {
+    const [draft] = (
+      await owner(
+        `INSERT INTO training.mesocycle_report (id, organization_id, patient_id, program_lineage_id, mesocycle_position, created_by)
+         SELECT $1, organization_id, patient_id, program_lineage_id, 9, created_by FROM training.mesocycle_report WHERE id = $2
+         RETURNING id`,
+        [id(), reportId],
+      )
+    ).rows as { id: string }[];
+    const asPatient = { orgId: org.organizationId, role: 'PATIENT' as const, patientId: mateoId };
+    await withContext('user', asPatient, async (client) => {
+      const { rows } = await client.query<{ id: string }>(
+        `SELECT id FROM training.mesocycle_report WHERE patient_id = $1`,
+        [mateoId],
+      );
+      expect(rows.map((row) => row.id)).not.toContain(draft?.id);
+      expect(rows.map((row) => row.id)).toContain(reportId);
+      expect(
+        await errorCode(
+          client,
+          `UPDATE training.mesocycle_report SET achievement = 'x' WHERE id = $1`,
+          [reportId],
+        ),
+      ).toBe('23514');
+      expect(
+        await errorCode(
+          client,
+          `INSERT INTO training.mesocycle_report (id, organization_id, patient_id, program_lineage_id, mesocycle_position, created_by)
+           VALUES ($1, $2, $3, $4, 10, $3)`,
+          [id(), org.organizationId, mateoId, id()],
+        ),
+      ).toBe(PG.insufficientPrivilege);
+    });
+    const { responsible } = org.staff;
+    await withContext(
+      'user',
+      {
+        orgId: org.organizationId,
+        role: 'PROFESSIONAL',
+        userId: responsible.userId,
+        memberId: responsible.memberId,
+      },
+      async (client) => {
+        expect(
+          await errorCode(
+            client,
+            `UPDATE training.mesocycle_report SET student_comment = 'x', student_commented_at = now() WHERE id = $1`,
+            [reportId],
+          ),
+        ).toBe(PG.insufficientPrivilege);
+      },
+    );
   });
 });
 

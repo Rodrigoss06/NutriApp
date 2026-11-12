@@ -4,7 +4,11 @@ import type { EvaluationLevel, SiteFamily, SiteUnit } from '../domain/assessment
 import { effectivePreferences } from '../domain/calculation-plan.js';
 import { CalculationService, shownResults } from './calculation.service.js';
 import { consolidate } from './data-quality.js';
-import { EvolutionQueries, type EvolutionSheetSource } from './queries/evolution.queries.js';
+import {
+  EvolutionQueries,
+  type EvolutionSheetSource,
+  type EvolutionView,
+} from './queries/evolution.queries.js';
 import { ResultsAssembly, type ResultsView } from './results-assembly.js';
 import {
   CALCULATION_STORE,
@@ -103,6 +107,19 @@ export class AssessmentApi {
    */
   evolutionSheet(evaluationId: string): Promise<EvolutionSheetSource | null> {
     return this.evolution.sheetSource(evaluationId);
+  }
+
+  /**
+   * La evolución hasta un día, incluido, para el informe del mesociclo (P-28; ADR-117): la de la última evaluación cerrada vigente
+   * medida hasta ese día, con las anteriores. null si no hay ninguna. En la transacción de quien llama; sin auditar: audita quien
+   * lee el informe.
+   */
+  async evolutionUntil(patientId: string, untilLocalDate: string): Promise<EvolutionView | null> {
+    const last = (await this.evaluations.listByPatient(patientId)).find(
+      (evaluation) => evaluation.status === 'CLOSED' && evaluation.localDate <= untilLocalDate,
+    );
+    if (!last) return null;
+    return (await this.evolution.sheetSource(last.id))?.view ?? null;
   }
 
   /** Las evaluaciones cerradas vigentes del paciente (antropometría y bioimpedancia), de la más reciente a la más antigua. */

@@ -8,4 +8,5 @@ export type {
   EvolutionSheetSource,
   EvolutionView,
 } from './application/queries/evolution.queries.js';
+export { evolutionOf } from './adapters/in/http/evolution.controller.js';
 export { AssessmentModule } from './assessment.module.js';
