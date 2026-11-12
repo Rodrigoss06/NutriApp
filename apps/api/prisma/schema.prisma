@@ -1238,18 +1238,19 @@ model FeatureFlag {
 
 /// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
 model FileObject {
-  id             String    @id @db.Uuid
-  organizationId String?   @map("organization_id") @db.Uuid
-  storageDriver  String    @map("storage_driver")
-  storageKey     String    @unique @map("storage_key")
-  mimeType       String    @map("mime_type")
-  sizeBytes      BigInt    @map("size_bytes")
+  id             String          @id @db.Uuid
+  organizationId String?         @map("organization_id") @db.Uuid
+  storageDriver  String          @map("storage_driver")
+  storageKey     String          @unique @map("storage_key")
+  mimeType       String          @map("mime_type")
+  sizeBytes      BigInt          @map("size_bytes")
   sha256         Bytes
-  originalName   String?   @map("original_name")
+  originalName   String?         @map("original_name")
   purpose        String
-  uploadedBy     String?   @map("uploaded_by") @db.Uuid
-  createdAt      DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
-  deletedAt      DateTime? @map("deleted_at") @db.Timestamptz(6)
+  uploadedBy     String?         @map("uploaded_by") @db.Uuid
+  createdAt      DateTime        @default(now()) @map("created_at") @db.Timestamptz(6)
+  deletedAt      DateTime?       @map("deleted_at") @db.Timestamptz(6)
+  progressPhotos ProgressPhoto[]
 
   @@map("file_object")
   @@schema("platform")
@@ -2476,5 +2477,26 @@ model MesocycleReport {
   @@unique([programLineageId, mesocyclePosition])
   @@index([organizationId, patientId, programLineageId], map: "mesocycle_report_by_patient")
   @@map("mesocycle_report")
+  @@schema("training")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model ProgressPhoto {
+  id                String     @id @db.Uuid
+  organizationId    String     @map("organization_id") @db.Uuid
+  patientId         String     @map("patient_id") @db.Uuid
+  programLineageId  String     @map("program_lineage_id") @db.Uuid
+  mesocyclePosition Int        @map("mesocycle_position") @db.SmallInt
+  view              String
+  fileId            String     @map("file_id") @db.Uuid
+  uploadedBy        String     @map("uploaded_by") @db.Uuid
+  uploadedByRole    String     @map("uploaded_by_role")
+  uploadedAt        DateTime   @default(now()) @map("uploaded_at") @db.Timestamptz(6)
+  fileObject        FileObject @relation(fields: [fileId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@unique([programLineageId, mesocyclePosition, view])
+  @@index([organizationId, patientId], map: "progress_photo_by_patient")
+  @@map("progress_photo")
   @@schema("training")
 }

@@ -178,6 +178,16 @@ export class MesocycleReportBuilder {
     return snapshot && mesocycle ? { snapshot, mesocycle } : null;
   }
 
+  /** El mesociclo de esa posición en el programa publicado del alumno; null si no tiene programa o no está. */
+  async publishedMesocycle(
+    patientId: string,
+    position: number,
+  ): Promise<{ lineageId: string; snapshot: ProgramSnapshot; mesocycle: ReportMesocycle } | null> {
+    const published = await this.reviews.publishedProgramOf(patientId);
+    const found = published ? await this.mesocycleOf(published.lineageId, position) : null;
+    return published && found ? { lineageId: published.lineageId, ...found } : null;
+  }
+
   async build(
     snapshot: ProgramSnapshot,
     mesocycle: ReportMesocycle,

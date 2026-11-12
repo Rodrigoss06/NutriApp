@@ -19,11 +19,16 @@ export type ConsentPurpose =
   | 'IMAGES'
   | 'ANONYMIZED_RESEARCH'
   | 'MARKETING'
-  | 'MENSTRUAL_TRACKING';
+  | 'MENSTRUAL_TRACKING'
+  | 'PROGRESS_PHOTOS';
 
-/** Las finalidades opcionales que el paciente autoriza o retira él mismo desde la app (RN-G17, 07 §9). */
+/**
+ * Las finalidades opcionales que el paciente autoriza o retira él mismo desde la app: el ciclo menstrual (RN-G17, 07 §9) y las
+ * fotos de progreso (RN-G20; P14.5, PR 6b). El equipo también las registra en consulta.
+ */
 export const SELF_SERVICE_PURPOSES = [
   'MENSTRUAL_TRACKING',
+  'PROGRESS_PHOTOS',
 ] as const satisfies readonly ConsentPurpose[];
 export type ConsentChannel = 'APP' | 'IN_PERSON_DIGITAL' | 'PAPER_SCANNED';
 export type ActorRole = 'OWNER' | 'ADMIN' | 'PROFESSIONAL';
@@ -179,6 +184,13 @@ export const MENSTRUAL_TRACKING_REQUIRED = domainError({
   rule: 'RN-G17',
   message: 'El ciclo menstrual solo se registra con su autorización vigente.',
 });
+/** Las fotos de progreso necesitan su consentimiento propio vigente (RN-G20, P-30; P14.5, PR 6b). */
+export const PROGRESS_PHOTOS_REQUIRED = domainError({
+  code: 'NC-CLI-033',
+  rule: 'RN-G20',
+  message: 'Las fotos de progreso solo se guardan y se ven con su consentimiento vigente.',
+});
+
 /** Fotos, videos y enlaces de evidencia necesitan autorización previa (07 §4). */
 export const IMAGES_CONSENT_REQUIRED = domainError({
   code: 'NC-CLI-031',

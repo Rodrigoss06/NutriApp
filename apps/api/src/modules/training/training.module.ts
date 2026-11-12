@@ -13,9 +13,19 @@ import {
   MesocycleReportController,
   PatientMesocycleReportsController,
 } from './adapters/in/http/mesocycle-report.controller.js';
+import { ProgressPhotosConsumer } from './adapters/in/events/progress-photos.consumer.js';
+import {
+  MeProgressPhotosController,
+  PatientProgressPhotosController,
+  ProgressPhotoController,
+} from './adapters/in/http/progress-photo.controller.js';
 import { WeeklyReviewController } from './adapters/in/http/weekly-review.controller.js';
 import { WeeklyReviewsJob } from './adapters/in/jobs/weekly-reviews.job.js';
 import { PrismaMesocycleReportStore } from './adapters/out/persistence/prisma-mesocycle-report.store.js';
+import { PrismaProgressPhotoStore } from './adapters/out/persistence/prisma-progress-photo.store.js';
+import { ProgressPhotoCommands } from './application/commands/progress-photo.commands.js';
+import { PROGRESS_PHOTO_STORE } from './application/ports/progress-photo.ports.js';
+import { ProgressPhotoQueries } from './application/queries/progress-photo.queries.js';
 import { PrismaWeeklyReviewStore } from './adapters/out/persistence/prisma-weekly-review.store.js';
 import { MesocycleReportCommands } from './application/commands/mesocycle-report.commands.js';
 import { MesocycleReportBuilder } from './application/mesocycle-report-builder.js';
@@ -57,6 +67,9 @@ import { TrainingSafety } from './application/training-safety.js';
     PatientMesocycleReportsController,
     MesocycleReportController,
     MeMesocycleReportsController,
+    PatientProgressPhotosController,
+    ProgressPhotoController,
+    MeProgressPhotosController,
   ],
   providers: [
     AthleteProfileCommands,
@@ -81,6 +94,10 @@ import { TrainingSafety } from './application/training-safety.js';
     MesocycleReportCommands,
     MesocycleReportQueries,
     { provide: MESOCYCLE_REPORT_STORE, useClass: PrismaMesocycleReportStore },
+    ProgressPhotoCommands,
+    ProgressPhotoQueries,
+    ProgressPhotosConsumer,
+    { provide: PROGRESS_PHOTO_STORE, useClass: PrismaProgressPhotoStore },
   ],
   exports: [TrainingApi, WeekCheckinSources, MesocycleReportSources],
 })
