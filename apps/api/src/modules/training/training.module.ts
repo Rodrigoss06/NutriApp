@@ -8,9 +8,20 @@ import {
 } from './adapters/in/http/program.controller.js';
 import { TrainingSafetyController } from './adapters/in/http/training-safety.controller.js';
 import { ReadinessThresholdController } from './adapters/in/http/readiness-threshold.controller.js';
+import {
+  MeMesocycleReportsController,
+  MesocycleReportController,
+  PatientMesocycleReportsController,
+} from './adapters/in/http/mesocycle-report.controller.js';
 import { WeeklyReviewController } from './adapters/in/http/weekly-review.controller.js';
 import { WeeklyReviewsJob } from './adapters/in/jobs/weekly-reviews.job.js';
+import { PrismaMesocycleReportStore } from './adapters/out/persistence/prisma-mesocycle-report.store.js';
 import { PrismaWeeklyReviewStore } from './adapters/out/persistence/prisma-weekly-review.store.js';
+import { MesocycleReportCommands } from './application/commands/mesocycle-report.commands.js';
+import { MesocycleReportBuilder } from './application/mesocycle-report-builder.js';
+import { MesocycleReportSources } from './application/mesocycle-report-sources.js';
+import { MESOCYCLE_REPORT_STORE } from './application/ports/mesocycle-report.ports.js';
+import { MesocycleReportQueries } from './application/queries/mesocycle-report.queries.js';
 import { WeeklyReviewCommands } from './application/commands/weekly-review.commands.js';
 import { WEEKLY_REVIEW_STORE } from './application/ports/weekly-review.ports.js';
 import { WeeklyReviewQueries } from './application/queries/weekly-review.queries.js';
@@ -43,6 +54,9 @@ import { TrainingSafety } from './application/training-safety.js';
     ProgramController,
     WeeklyReviewController,
     ReadinessThresholdController,
+    PatientMesocycleReportsController,
+    MesocycleReportController,
+    MeMesocycleReportsController,
   ],
   providers: [
     AthleteProfileCommands,
@@ -62,8 +76,13 @@ import { TrainingSafety } from './application/training-safety.js';
     ReadinessThresholds,
     WeeklyReviewsJob,
     { provide: WEEKLY_REVIEW_STORE, useClass: PrismaWeeklyReviewStore },
+    MesocycleReportSources,
+    MesocycleReportBuilder,
+    MesocycleReportCommands,
+    MesocycleReportQueries,
+    { provide: MESOCYCLE_REPORT_STORE, useClass: PrismaMesocycleReportStore },
   ],
-  exports: [TrainingApi, WeekCheckinSources],
+  exports: [TrainingApi, WeekCheckinSources, MesocycleReportSources],
 })
 export class TrainingModule implements OnModuleInit {
   constructor(

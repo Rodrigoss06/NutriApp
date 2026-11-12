@@ -5,6 +5,12 @@ export type {
   VolumeFactorsRow,
 } from './application/ports/weekly-review.ports.js';
 export type { ProgramSnapshot } from './application/program-document.js';
+export { MesocycleReportSources } from './application/mesocycle-report-sources.js';
+export type {
+  MesocycleReportSource,
+  ReportOneRmPoint,
+} from './application/ports/mesocycle-report.ports.js';
+export type { ReportWorkout } from './domain/mesocycle-report.js';
 export { TrainingModule } from './training.module.js';
 export {
   WeekCheckinSources,

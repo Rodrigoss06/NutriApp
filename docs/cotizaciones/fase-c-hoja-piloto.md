@@ -17,17 +17,17 @@ las preguntas P-28 a P-31 (`docs/preguntas/hoja-piloto-mateo.md`).
 
 | PR | Función | Qué incluye | Horas |
 |---|---|---|---|
-| 7 | Informe por mesociclo (P-28, P-29) | Un informe por cada mesociclo de 4 semanas. El coach escribe Logro, Limitante, Ajuste y Prioridad, y el alumno su Comentario desde la app. Estados Borrador y Enviado. Volumen cumplido (series hechas ÷ planificadas) y récords (1RM estimado más alto que el anterior en el mismo ejercicio). Se ve en la app; no es una sexta ficha PDF | 19 |
-| 6b | Fotos de progreso (P-30) | Tres vistas (frontal, lateral y posterior) en cada cierre de mesociclo, que suben el alumno y el coach. Consentimiento propio de datos sensibles, con el texto del abogado del cliente. Cada lectura queda auditada. Se guardan mientras la cuenta esté activa y 12 meses después de la baja; se borran si el alumno revoca el consentimiento. Comparativa por vista | 21 |
+| 7 | Informe por mesociclo (P-28, P-29) | Un informe por cada mesociclo de 4 semanas. El coach escribe Logro, Limitante, Ajuste y Prioridad, y el alumno su Comentario desde la app. Estados Borrador y Enviado: se envía cuando cierra la cuarta semana. Volumen cumplido (series hechas ÷ planificadas) y récords (1RM estimado más alto que el mejor anterior del mismo ejercicio). Por semana, el sueño, el estrés, la fatiga, el rendimiento, la alimentación y la decisión del control semanal, y la comparativa física, como la hoja. Se ve en la app; no es una sexta ficha PDF | 22 |
+| 6b | Fotos de progreso (P-30) | Tres vistas (frontal, lateral y posterior) en cada cierre de mesociclo, que suben el alumno y el coach. Consentimiento propio de datos sensibles, con el texto del abogado del cliente. Cada lectura queda auditada. Se guardan solo mientras el expediente del alumno esté activo: se borran en el acto al archivarlo o si revoca el consentimiento. Comparativa por vista | 21 |
 | 8 | Expediente de documentos (P-31) | Enlaces externos y archivos de hasta 5 MB; los videos, solo por enlace. Las 8 categorías fijas de la hoja. Estados Pendiente, Por revisar y Validado. En el panel y en la app | 14 |
 | — | Común | Migraciones, documentación, pruebas de punta a punta y el mes de Mateo Prueba con estas funciones en la demo | 4 |
-| | **Total** | | **58** |
+| | **Total** | | **61** |
 
 Cada función lleva su parte en la API y sus pantallas, con pruebas automáticas, como el resto del sistema.
 
 ## 2. Precio y pago
 
-- **Precio:** S/ 3,190 netos (58 horas × S/ 55).
+- **Precio:** S/ 3,355 netos (61 horas × S/ 55).
 - **Pago:** uno solo, al final, cuando se entreguen las tres funciones. En efectivo y contra el recibo 004, firmado por ambas
   partes, como los pagos del contrato.
 

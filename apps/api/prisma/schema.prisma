@@ -2447,3 +2447,34 @@ model WeeklyCheckin {
   @@map("weekly_checkin")
   @@schema("tracking")
 }
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model MesocycleReport {
+  id                    String    @id @db.Uuid
+  organizationId        String    @map("organization_id") @db.Uuid
+  patientId             String    @map("patient_id") @db.Uuid
+  programLineageId      String    @map("program_lineage_id") @db.Uuid
+  mesocyclePosition     Int       @map("mesocycle_position") @db.SmallInt
+  status                String    @default("DRAFT")
+  achievement           String?
+  limitation            String?
+  adjustment            String?
+  priority              String?
+  studentComment        String?   @map("student_comment")
+  studentCommentedAt    DateTime? @map("student_commented_at") @db.Timestamptz(6)
+  snapshot              Json?
+  snapshotSchemaVersion Int?      @map("snapshot_schema_version") @db.SmallInt
+  snapshotHash          Bytes?    @map("snapshot_hash")
+  sentAt                DateTime? @map("sent_at") @db.Timestamptz(6)
+  sentBy                String?   @map("sent_by") @db.Uuid
+  createdBy             String    @map("created_by") @db.Uuid
+  createdAt             DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt             DateTime  @default(now()) @map("updated_at") @db.Timestamptz(6)
+  version               Int       @default(0)
+
+  @@unique([programLineageId, mesocyclePosition])
+  @@index([organizationId, patientId, programLineageId], map: "mesocycle_report_by_patient")
+  @@map("mesocycle_report")
+  @@schema("training")
+}

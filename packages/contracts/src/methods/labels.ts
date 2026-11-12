@@ -51,6 +51,7 @@ export const METHOD_LABELS = {
   ADJUSTED_VOLUME: 'Volumen ajustado (RIR y descanso, JV Fitness)',
   FATIGUE_PANEL_JV: 'Panel de fatiga y recuperación (JV Fitness)',
   MUSCLE_FATIGUE_JV: 'Fatiga por grupo muscular (JV Fitness)',
+  MESOCYCLE_REPORT_JV: 'Informe del mesociclo (JV Fitness)',
 } as const satisfies Record<string, string>;
 
 export type LabeledMethodCode = keyof typeof METHOD_LABELS;

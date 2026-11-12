@@ -13,7 +13,11 @@ export type TrainingEventType =
   | 'training.program.published'
   | 'training.program.superseded'
   | 'training.review.decided'
-  | 'training.threshold.changed';
+  | 'training.threshold.changed'
+  | 'training.report.created'
+  | 'training.report.updated'
+  | 'training.report.sent'
+  | 'training.report.commented';
 
 export function trainingEvent<TPayload extends { patientId: string }>(
   type: TrainingEventType,
