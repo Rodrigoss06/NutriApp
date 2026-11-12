@@ -25,7 +25,11 @@ export type ClinicalEventType =
   | 'clinical.goal.changed'
   | 'clinical.note.written'
   | 'clinical.screening.recorded'
-  | 'clinical.screening.reviewed';
+  | 'clinical.screening.reviewed'
+  | 'clinical.document.added'
+  | 'clinical.document.replaced'
+  | 'clinical.document.reviewed'
+  | 'clinical.document.deleted';
 
 export function clinicalEvent<TPayload extends { patientId: string }>(
   type: ClinicalEventType,

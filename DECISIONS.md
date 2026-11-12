@@ -3249,7 +3249,7 @@ Decisión:
 - Web: en Analítica › Rutina, cuatro columnas al final de «Fatiga por grupo muscular»: «Fatiga muscular», «Fatiga neural», «Carga
   axial» y «Demanda técnica», con 2 decimales (`fatigueCoefficient`: con 1, un promedio de 1.02 se vería 1.0), y una nota de que
   son referencia.
-- Lo que sale del orden de la regla y no de la respuesta queda por confirmar con Rodrigo: los saltos de tobillo (pliometría de
+- Lo que sale del orden de la regla y no de la respuesta lo confirmó Rodrigo el 2026-11-12: los saltos de tobillo (pliometría de
   pantorrilla) van a «aislamiento y brazos», el burpee (pliometría de acondicionamiento) a «movilidad y cardio» y la banda elástica
   cuenta como libre (el jalón con banda es «torso libre»). Cambiar cualquiera es una línea de `fatigueFamilyOf` y sube la versión.
 - La familia es la del ejercicio en la biblioteca al proyectar: si una organización cambia el patrón o el equipo de un ejercicio
@@ -3266,3 +3266,54 @@ Consecuencias:
 - Para Notion (/notion-sync de P14.5): 02 §9 (`MUSCLE_FATIGUE_JV` 1.1.0), 03 (la regla del panel, RN-G18, con los coeficientes y
   la familia de cada ejercicio), 05.2 (`family_coefficients`), 05.3 (`family_adjusted_volume_kg`), 04 RF-33 y 07 §10 y §15
   (P-27.1 y P-27.2 resueltas).
+
+## ADR-122 · El expediente de documentos por la API: pedidos, revisión, consentimientos y borrado lógico — aceptada (2026-11-12)
+Contexto: P14.5, fase C, PR 8a (P-31, respondida por Rodrigo el 2026-11-10; RN-A05, RN-B01, RN-B03). La cotización lo describe así
+(14 h): enlaces externos y archivos de hasta 5 MB, los videos solo por enlace, las 8 categorías fijas de la hoja, estados Pendiente,
+Por revisar y Validado, en el panel y en la app. Rodrigo aprobó el plan el 2026-11-12 (8a y 8b) y decidió:
+- suben el coach y el alumno; el coach puede pedir un documento sin contenido para que lo suba el alumno; Pendiente → Por revisar →
+  Validado; lo que agrega el coach con su archivo o enlace entra Validado;
+- el coach borra cualquiera y el alumno solo los suyos mientras estén Por revisar, con auditoría;
+- consentimiento: el de datos de salud y, como pide 07 («Privacidad»: fotos y videos con autorización previa), también el de
+  imágenes para las fotos y los enlaces, donde van los videos. Un PDF solo pide el de datos de salud.
+Decisión:
+- Vive en clinical, porque es parte del expediente: en 02, documents son solo las cinco fichas PDF. La tabla es
+  `clinical.record_document` y las rutas, `record-documents`: `patient_document` ya es el índice único del documento de identidad
+  en `clinical.patient`, y `/documents` son las fichas.
+- `clinical.record_document` (migración `202611120400_clinical_record_documents`):
+  - categoría (las 8), título de hasta 120 caracteres, estado, y el contenido: un enlace https de hasta 2,000 caracteres o un
+    archivo de `platform.file_object`, nunca los dos; sin contenido solo puede estar Pendiente;
+  - quién lo creó, quién puso el contenido vigente, la nota del coach al devolverlo, quién lo revisó, quién lo borró y `version`
+    para If-Match;
+  - RLS de la organización, del equipo de atención y del alumno (solo lo suyo), y dos políticas restrictivas: el alumno inserta
+    solo «Por revisar» y nunca deja algo validado. Solo se actualizan las columnas de estado, contenido, revisión y borrado; nadie
+    borra filas;
+  - la política del alumno sobre `platform.file_object` suma los archivos de sus documentos (`purpose = 'RECORD_DOCUMENT'`),
+    para leerlos y para marcar borrado el que reemplaza o borra.
+- Reglas (RN-G21, propuesta para 03): `statusOnAdd`, `statusOnContent` (el contenido del coach queda validado; el alumno no cambia
+  lo validado), `statusOnReview` (solo lo que está por revisar), `canDeleteDocument` y `needsImagesConsent`. Códigos NC-CLI-034
+  (no encontrado), 035 (falta el contenido), 036 (enlace y archivo), 037 (archivo no admitido), 038 (el alumno no puede cambiarlo
+  ni borrarlo), 039 (no está por revisar) y 040 (versión vieja).
+- Archivos (ADR-038): PDF, JPEG o PNG por sus bytes, escritos antes de la transacción y descartados si falla. El reemplazado se
+  marca borrado mientras el documento todavía lo nombra, y sus bytes se descartan al confirmar. La descarga sale como adjunto, con
+  un nombre hecho del título («contrato-firmado.pdf»), y queda auditada, igual que ver la lista.
+- Borrar es lógico: el archivo se borra, el enlace se vacía y la fila queda oculta con quién y cuándo. La auditoría lo registra
+  como UPDATE de `deleted_at`, porque `AUDIT_ACTIONS` no tiene DELETE. Borrar no pide HEALTH_DATA: no guarda datos de salud.
+- Eventos `clinical.document.added`, `replaced`, `reviewed` y `deleted`, a la auditoría: nunca el título ni el enlace.
+- Rutas: `/patients/:id/record-documents` (lista; pedir o agregar, en JSON o en multipart con «file»), `/record-documents/:id/content`
+  (reemplazar, If-Match), `/record-documents/:id/review` (validar o devolver con nota, If-Match), `DELETE /record-documents/:id`
+  (If-Match) y `/record-documents/:id/file`; y las de `/me/record-documents`, sin revisar. Toda escritura en `/me` lleva
+  Idempotency-Key, como exige el interceptor para POST, PUT y DELETE.
+- La lista trae los consentimientos vigentes, para que las pantallas avisen antes de subir.
+- Al archivar al alumno, los documentos se quedan con el expediente y no se escriben más (`PATIENT_ARCHIVED`). La exportación de
+  P15 (RF-07) los incluye con esta misma consulta y sus archivos; si la exportación vive fuera de clinical, se agrega entonces un
+  método a `ClinicalApi`.
+Consecuencias:
+- Dominio: los estados, quién puede cada paso y qué pide cada contenido. Unitarias con dobles: el pedido, el PDF validado, el
+  enlace y la foto sin IMAGES, enlace y archivo juntos, el video, el equipo sin escritura, HEALTH_DATA, archivado, el flujo
+  completo con la nota, lo validado bloqueado, las versiones, otro alumno, el borrado y la auditoría.
+- Integración `record-documents.int.spec.ts`, por HTTP: el flujo completo, IMAGES, los 400, 409, 415, 422 y 428, el 404 fuera
+  del equipo, la descarga auditada, el borrado lógico con su auditoría, y la RLS como alumno (no inserta validado, no valida, no
+  borra filas). El `put` del harness ahora acepta ir sin cuerpo, para el multipart.
+- Para Notion (/notion-sync de P14.5): 02 (clinical: tabla, rutas y eventos), 03 (RN-G21 nueva), 04 (el requisito del
+  expediente), 05.1 (`clinical.record_document`) y 05.3 (la política de `platform.file_object`).

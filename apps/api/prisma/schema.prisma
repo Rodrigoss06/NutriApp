@@ -527,6 +527,7 @@ model Patient {
   goals                 Goal[]
   performanceProfiles   PerformanceProfile[]
   preExerciseScreenings PreExerciseScreening[]
+  recordDocuments       RecordDocument[]
 
   @@unique([organizationId, documentNumberBidx], map: "patient_document", where: raw("(document_number_bidx IS NOT NULL)"))
   @@unique([organizationId, code])
@@ -1239,19 +1240,20 @@ model FeatureFlag {
 
 /// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
 model FileObject {
-  id             String          @id @db.Uuid
-  organizationId String?         @map("organization_id") @db.Uuid
-  storageDriver  String          @map("storage_driver")
-  storageKey     String          @unique @map("storage_key")
-  mimeType       String          @map("mime_type")
-  sizeBytes      BigInt          @map("size_bytes")
-  sha256         Bytes
-  originalName   String?         @map("original_name")
-  purpose        String
-  uploadedBy     String?         @map("uploaded_by") @db.Uuid
-  createdAt      DateTime        @default(now()) @map("created_at") @db.Timestamptz(6)
-  deletedAt      DateTime?       @map("deleted_at") @db.Timestamptz(6)
-  progressPhotos ProgressPhoto[]
+  id              String           @id @db.Uuid
+  organizationId  String?          @map("organization_id") @db.Uuid
+  storageDriver   String           @map("storage_driver")
+  storageKey      String           @unique @map("storage_key")
+  mimeType        String           @map("mime_type")
+  sizeBytes       BigInt           @map("size_bytes")
+  sha256          Bytes
+  originalName    String?          @map("original_name")
+  purpose         String
+  uploadedBy      String?          @map("uploaded_by") @db.Uuid
+  createdAt       DateTime         @default(now()) @map("created_at") @db.Timestamptz(6)
+  deletedAt       DateTime?        @map("deleted_at") @db.Timestamptz(6)
+  recordDocuments RecordDocument[]
+  progressPhotos  ProgressPhoto[]
 
   @@map("file_object")
   @@schema("platform")
@@ -2501,4 +2503,35 @@ model ProgressPhoto {
   @@index([organizationId, patientId], map: "progress_photo_by_patient")
   @@map("progress_photo")
   @@schema("training")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model RecordDocument {
+  id             String      @id @db.Uuid
+  organizationId String      @map("organization_id") @db.Uuid
+  patientId      String      @map("patient_id") @db.Uuid
+  category       String
+  title          String
+  status         String
+  linkUrl        String?     @map("link_url")
+  fileId         String?     @map("file_id") @db.Uuid
+  reviewNote     String?     @map("review_note")
+  createdBy      String      @map("created_by") @db.Uuid
+  createdByRole  String      @map("created_by_role")
+  createdAt      DateTime    @default(now()) @map("created_at") @db.Timestamptz(6)
+  contentBy      String?     @map("content_by") @db.Uuid
+  contentByRole  String?     @map("content_by_role")
+  contentAt      DateTime?   @map("content_at") @db.Timestamptz(6)
+  reviewedBy     String?     @map("reviewed_by") @db.Uuid
+  reviewedAt     DateTime?   @map("reviewed_at") @db.Timestamptz(6)
+  deletedBy      String?     @map("deleted_by") @db.Uuid
+  deletedAt      DateTime?   @map("deleted_at") @db.Timestamptz(6)
+  version        Int         @default(1)
+  fileObject     FileObject? @relation(fields: [fileId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  patient        Patient     @relation(fields: [patientId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@index([organizationId, patientId, createdAt], map: "record_document_by_patient", where: raw("(deleted_at IS NULL)"))
+  @@map("record_document")
+  @@schema("clinical")
 }
