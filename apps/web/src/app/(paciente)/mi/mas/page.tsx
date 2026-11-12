@@ -4,6 +4,7 @@ import type {
   MeScreening,
   MeToday,
   MySheets as MySheetsResponse,
+  PatientMesocycleReportsResponse,
 } from '@nutricoach/contracts';
 import { Notice } from '@nutricoach/ui';
 import type { Metadata } from 'next';
@@ -21,17 +22,19 @@ import { serverApi } from '@/lib/api/server';
 export const metadata: Metadata = { title: 'Más' };
 
 /**
- * Más: escribir a tu equipo (RN-G13), el material que te asignó (RF-30), tus fichas vigentes en PDF (ADR-095), tu peso si está
+ * Más: escribir a tu equipo (RN-G13), el material que te asignó (RF-30), los informes de tus mesociclos (RN-G19), tus fichas
+ * vigentes en PDF (ADR-095), tu peso si está
  * habilitado, el seguimiento del ciclo menstrual (RN-G17) y el cribado de
  * seguridad (07 §3.2) si su sección está a la vista, instalar la app (RF-27) y salir.
  */
 export default async function Page() {
-  const [today, app, consents, screening, sheets] = await Promise.all([
+  const [today, app, consents, screening, sheets, reports] = await Promise.all([
     serverApi<MeToday>('/me/today'),
     serverApi<MeApp>('/me/app'),
     serverApi<MeConsents>('/me/consents'),
     serverApi<MeScreening>('/me/screening'),
     serverApi<MySheetsResponse>('/me/documents'),
+    serverApi<PatientMesocycleReportsResponse>('/me/mesocycle-reports'),
   ]);
   if (!today.ok || !app.ok || !consents.ok || !screening.ok) {
     return <Notice tone="danger" title="No pudimos cargar esta sección" />;
@@ -66,6 +69,19 @@ export default async function Page() {
             className="flex min-h-touch items-center text-brand-text underline"
           >
             Guías, artículos y videos de tu equipo
+          </Link>
+        </section>
+      ) : null}
+      {reports.ok && reports.data.reports.length > 0 ? (
+        <section aria-labelledby="informes" className="flex flex-col gap-2">
+          <h2 id="informes" className="text-lg font-semibold">
+            Informes
+          </h2>
+          <Link
+            href="/mi/informes"
+            className="flex min-h-touch items-center text-brand-text underline"
+          >
+            Los informes de cada mesociclo que te envió tu coach
           </Link>
         </section>
       ) : null}

@@ -3113,3 +3113,29 @@ Consecuencias:
 - 7b: las pantallas del panel y de la app, la E2E y el guion de la Demo 3.
 - Para Notion (/notion-sync de P14.5): 03 (RN-G19 y G-44), 02 §8 (`training.report.*`) y §9 (`MESOCYCLE_REPORT_JV`), 05.2
   (`training.mesocycle_report`) y 04 (el informe, fuera del contrato).
+
+## ADR-118 · Las pantallas del informe del mesociclo, en el panel y en la app — aceptada (2026-11-11)
+Contexto: P14.5, fase C, PR 7b (P-28 y P-29; RN-G19; ADR-117). El informe ya tenía su API. Faltaban las pantallas del panel y de la
+app, la E2E y el guion de la Demo 3.
+Decisión:
+- Panel, Entrenamiento › Informes (pestaña nueva): cada mesociclo del programa vigente, con su momento (cerrado, en curso o por
+  empezar), el estado de su informe y «Crear informe». El informe muestra:
+  - el resumen: volumen cumplido, sesiones, récords y los promedios de sueño, estrés, fatiga, rendimiento y alimentación, con su
+    método;
+  - cada semana, con el semáforo, la acción sugerida y la decisión del coach de su control semanal;
+  - los récords, con el 1RM de antes y el nuevo y su fórmula, y la comparativa física, con el mismo componente de Evolución;
+  - en borrador, los cuatro textos con «Guardar borrador» (If-Match) y «Enviar informe», con confirmación. Enviar se habilita
+    con el mesociclo cerrado, sin cambios por guardar y con los cuatro textos. Al abrir el borrador se controlan las semanas
+    cerradas que falten, como en el control semanal;
+  - enviado, los textos en solo lectura y el comentario del paciente (con la palabra que elige la organización).
+- App, Más › Informes: los enviados, del más reciente al más antiguo, con «Falta tu comentario». En cada uno, lo que dice el
+  coach, su comentario y el mismo informe. El comentario se cambia cuando quiera, con una Idempotency-Key en cada envío.
+- El paciente ve el semáforo y la decisión de cada semana dentro del informe enviado, porque Rodrigo pidió el resumen semanal
+  para que cuadre con la hoja. El control semanal en sí sigue sin verse en la app (05.2).
+- Guion de la Demo 3: la sección 9, con los números de Mateo.
+Consecuencias:
+- Unitarias de la web: el resumen redondeado al presentar (RN-D09), cada semana con su control y el momento de cada mesociclo.
+- E2E `informe.spec.ts`, en escritorio y en el celular: el coach crea el informe del mesociclo cerrado, lo escribe y lo envía; el
+  paciente lo lee en su app y comenta; el coach ve el comentario. axe en cada pantalla.
+- Para Notion (/notion-sync de P14.5): 04 (las pantallas del informe) y 05.2 (el paciente ve el resumen del control dentro del
+  informe enviado).
