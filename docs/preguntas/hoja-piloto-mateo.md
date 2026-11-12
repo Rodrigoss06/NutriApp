@@ -291,9 +291,9 @@ Hay patrones que la lista no nombra: el core, el empuje de cadera, la pantorrill
 > 4. Sentadilla, Bisagra, Unilateral o Extensión de cadera con otro equipo o con el peso corporal: «pierna y cadera»; Empuje o
 >    Tracción, horizontal o vertical: «torso libre».
 >
-> **Por confirmar con Rodrigo**, porque salen del orden y no de la respuesta: en la biblioteca base, los saltos de tobillo
-> (pliometría con patrón Pantorrilla) quedan en «aislamiento y brazos» y el burpee (pliometría con patrón Acondicionamiento) en 0.
-> La banda elástica cuenta como equipo libre: el jalón con banda es «torso libre».
+> **Confirmado por Rodrigo (2026-11-12)**, aunque salía del orden y no de la respuesta: en la biblioteca base, los saltos de
+> tobillo (pliometría con patrón Pantorrilla) quedan en «aislamiento y brazos» y el burpee (pliometría con patrón
+> Acondicionamiento) en 0. La banda elástica cuenta como equipo libre: el jalón con banda es «torso libre».
 
 ## Informe mensual
 
@@ -370,6 +370,12 @@ Hay patrones que la lista no nombra: el core, el empuje de cadera, la pantorrill
 
 > **Respuesta (2026-11-10, por Rodrigo).** Enlaces externos, y archivos directos solo hasta 5 MB con el soporte que ya existe; los
 > videos, siempre por enlace. Las 8 categorías son fijas. Estados: Pendiente, Por revisar y Validado.
+>
+> **Decisiones de Rodrigo (2026-11-12), para el PR 8 (ADR-122).** Suben el coach y el alumno: el coach puede pedir un documento sin
+> contenido («Pendiente») y lo que agrega con su archivo o enlace entra «Validado»; lo que sube el alumno queda «Por revisar», y el
+> coach lo valida o lo devuelve a «Pendiente» con una nota. El coach borra cualquiera y el alumno solo los suyos mientras estén
+> «Por revisar», con auditoría. Todo documento pide el consentimiento de datos de salud; las fotos y los enlaces, donde van los
+> videos, también el de imágenes, como pide 07 («Privacidad»: fotos y videos con autorización previa). Un PDF no lo pide.
 
 **P-32 · Asistencias** («Asistencias · solo consulta»)
 

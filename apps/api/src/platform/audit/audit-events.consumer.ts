@@ -135,6 +135,23 @@ export const AUDITED_EVENTS: Readonly<Record<string, AuditMapping>> = {
     resourceType: 'clinical.pre_exercise_screening',
     fields: () => ['review_decision', 'review_note'],
   },
+  // El expediente de documentos (ADR-122): nunca el título ni el enlace, solo qué cambió. Borrar es lógico.
+  'clinical.document.added': { action: 'CREATE', resourceType: 'clinical.record_document' },
+  'clinical.document.replaced': {
+    action: 'UPDATE',
+    resourceType: 'clinical.record_document',
+    fields: () => ['status', 'link_url', 'file_id'],
+  },
+  'clinical.document.reviewed': {
+    action: 'UPDATE',
+    resourceType: 'clinical.record_document',
+    fields: () => ['status', 'review_note'],
+  },
+  'clinical.document.deleted': {
+    action: 'UPDATE',
+    resourceType: 'clinical.record_document',
+    fields: () => ['deleted_at'],
+  },
   'assessment.evaluation.created': { action: 'CREATE', resourceType: 'assessment.evaluation' },
   'assessment.evaluation.updated': {
     action: 'UPDATE',

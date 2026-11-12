@@ -150,11 +150,10 @@ export class ApiHarness {
     );
   }
 
-  put(path: string, body: object, cookie?: string): request.Test {
-    return this.#with(
-      request(this.app.getHttpServer()).put(`/api/v1${path}`).set('Origin', ORIGIN).send(body),
-      cookie,
-    );
+  /** Sin cuerpo, para un PUT en multipart con su archivo (`attach`). */
+  put(path: string, body: object | undefined, cookie?: string): request.Test {
+    const req = request(this.app.getHttpServer()).put(`/api/v1${path}`).set('Origin', ORIGIN);
+    return this.#with(body === undefined ? req : req.send(body), cookie);
   }
 
   delete(path: string, cookie?: string): request.Test {
