@@ -55,6 +55,18 @@ export const fatiguePanelWeekSchema = z.object({
 });
 export type FatiguePanelWeek = z.infer<typeof fatiguePanelWeekSchema>;
 
+/**
+ * Los cuatro coeficientes de la hoja piloto en un grupo (P-27.1; ADR-121): los de cada familia de ejercicio que lo trabajó,
+ * promediados según el volumen ajustado que le dio. Sin redondear (RN-D09).
+ */
+export const fatigueCoefficientsSchema = z.object({
+  muscularFatigue: z.number().nonnegative(),
+  neuralFatigue: z.number().nonnegative(),
+  axialLoad: z.number().nonnegative(),
+  technicalDemand: z.number().nonnegative(),
+});
+export type FatigueCoefficients = z.infer<typeof fatigueCoefficientsSchema>;
+
 /** Un grupo muscular en la fatiga por grupo de la semana (P14.5, PR 4; P-27; ADR-115). */
 export const muscleFatigueRowSchema = z.object({
   muscleCode: z.string(),
@@ -67,6 +79,8 @@ export const muscleFatigueRowSchema = z.object({
   state: z.enum(LOAD_LIGHTS),
   /** «Recuperación est.» del color: 48, 60 o 72 h; null sin color. */
   recoveryHours: z.number().nonnegative().nullable(),
+  /** Fatiga muscular, fatiga neural, carga axial y demanda técnica; null si no se entrenó. Solo informan (P-27.1). */
+  coefficients: fatigueCoefficientsSchema.nullable(),
 });
 export type MuscleFatigueRow = z.infer<typeof muscleFatigueRowSchema>;
 

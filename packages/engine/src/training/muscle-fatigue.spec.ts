@@ -1,11 +1,16 @@
 import { describe, expect, it } from 'vitest';
 import { runMethod } from '../registry/run-method.js';
 import {
+  FATIGUE_FAMILIES,
+  fatigueFamilyOf,
   MUSCLE_FATIGUE_JV,
+  type FamilyCoefficients,
+  type FatigueFamily,
   type MuscleFatigueInput,
   type MuscleFatigueThresholds,
   type MuscleVolume,
 } from './muscle-fatigue.js';
+import { MOVEMENT_PATTERNS } from './routine-proposal.js';
 
 // P-27, respuesta de Jeremy (2026-11-10): el estado con los umbrales de P-23 (ámbar sobre +15 % y rojo sobre +30 % de la base) y
 // la recuperación estimada en 48, 60 y 72 h.
@@ -17,14 +22,56 @@ const JV: MuscleFatigueThresholds = {
   recoveryRedHours: 72,
 };
 
+// P-27, respuesta de Jeremy (2026-11-10): fatiga muscular, fatiga neural, carga axial y demanda técnica de cada familia.
+const COEFFICIENTS: FamilyCoefficients[] = [
+  {
+    family: 'LEG_HIP',
+    muscularFatigue: 1.2,
+    neuralFatigue: 1.3,
+    axialLoad: 1.3,
+    technicalDemand: 1.2,
+  },
+  {
+    family: 'FREE_TORSO',
+    muscularFatigue: 1.1,
+    neuralFatigue: 1.1,
+    axialLoad: 1.0,
+    technicalDemand: 1.1,
+  },
+  {
+    family: 'GUIDED',
+    muscularFatigue: 1.0,
+    neuralFatigue: 1.0,
+    axialLoad: 0.8,
+    technicalDemand: 0.9,
+  },
+  {
+    family: 'ISOLATION',
+    muscularFatigue: 0.9,
+    neuralFatigue: 0.7,
+    axialLoad: 0.5,
+    technicalDemand: 0.8,
+  },
+  {
+    family: 'MOBILITY_CARDIO',
+    muscularFatigue: 0,
+    neuralFatigue: 0,
+    axialLoad: 0,
+    technicalDemand: 0,
+  },
+];
+
 const muscles = (volumes: Readonly<Record<string, number | null>>): MuscleVolume[] =>
   Object.entries(volumes).map(([muscleCode, adjustedVolumeKg]) => ({
     muscleCode,
     adjustedVolumeKg,
   }));
 
-const fatigue = (input: Omit<MuscleFatigueInput, 'thresholds'>, thresholds = JV) => {
-  const run = runMethod(MUSCLE_FATIGUE_JV, { ...input, thresholds });
+type FatigueCase = Omit<MuscleFatigueInput, 'thresholds' | 'coefficients'> &
+  Partial<Pick<MuscleFatigueInput, 'coefficients'>>;
+
+const fatigue = (input: FatigueCase, thresholds = JV) => {
+  const run = runMethod(MUSCLE_FATIGUE_JV, { coefficients: COEFFICIENTS, ...input, thresholds });
   if (!run.ok) throw new Error(JSON.stringify(run.errors));
   return run.result;
 };
@@ -53,11 +100,12 @@ describe('RN-G16 · P-27 · fatiga por grupo muscular de la hoja piloto', () => 
       changePct: 0,
       state: 'GREEN',
       recoveryHours: 48,
+      coefficients: null,
     });
     expect(rowOf(result, 'TRICEPS')?.baseVolumeKg).toBe(709.5);
     expect(result.outputs.baseWeeks).toBe(3);
     expect(result.methodCode).toBe('MUSCLE_FATIGUE_JV');
-    expect(result.methodVersion).toBe('1.0.0');
+    expect(result.methodVersion).toBe('1.1.0');
   });
 
   it('una semana previa con volumen en la que el grupo no se entrenó cuenta como 0: Cuádriceps (2,000 + 2,400 + 0) ÷ 3', () => {
@@ -109,6 +157,7 @@ describe('RN-G16 · P-27 · fatiga por grupo muscular de la hoja piloto', () => 
       changePct: null,
       state: 'NO_DATA',
       recoveryHours: null,
+      coefficients: null,
     });
   });
 
@@ -143,8 +192,12 @@ describe('RN-G16 · P-27 · fatiga por grupo muscular de la hoja piloto', () => 
   });
 
   it('insumos fuera de rango o umbrales cruzados dan su código', () => {
-    const error = (input: Omit<MuscleFatigueInput, 'thresholds'>, thresholds = JV) => {
-      const run = runMethod(MUSCLE_FATIGUE_JV, { ...input, thresholds });
+    const error = (input: FatigueCase, thresholds = JV) => {
+      const run = runMethod(MUSCLE_FATIGUE_JV, {
+        coefficients: COEFFICIENTS,
+        ...input,
+        thresholds,
+      });
       return run.ok ? null : run.errors.map((issue) => issue.code);
     };
     expect(error({ muscles: muscles({ CHEST: -1 }), previousWeeks: [] })).toEqual(['NC-ENG-415']);
@@ -160,5 +213,217 @@ describe('RN-G16 · P-27 · fatiga por grupo muscular de la hoja piloto', () => 
     expect(error({ muscles: [], previousWeeks: [] }, { ...JV, loadAmberAbovePct: 40 })).toEqual([
       'NC-ENG-416',
     ]);
+  });
+});
+
+// P-27.1, respuestas de Rodrigo (2026-11-12): en cada grupo, el coeficiente de las familias que lo trabajaron, promediado según el
+// volumen que cada una le dio (con 1.0 y 0.5). Solo se muestran: no cambian el estado ni la recuperación estimada.
+describe('RN-G16 · P-27.1 · coeficientes por grupo muscular', () => {
+  const trained = (
+    muscleCode: string,
+    families: Readonly<Partial<Record<FatigueFamily, number>>>,
+  ): MuscleVolume => {
+    const list = Object.entries(families).map(([family, adjustedVolumeKg]) => ({
+      family: family as FatigueFamily,
+      adjustedVolumeKg,
+    }));
+    return {
+      muscleCode,
+      adjustedVolumeKg: list.reduce((total, item) => total + item.adjustedVolumeKg, 0),
+      families: list,
+    };
+  };
+
+  it('Pecho en la semana 3 de Mateo: solo el press banca (torso libre), 1,782 kg, da 1.1, 1.1, 1.0 y 1.1', () => {
+    const result = fatigue({
+      muscles: [trained('CHEST', { FREE_TORSO: 1782 })],
+      previousWeeks: [],
+    });
+    expect(rowOf(result, 'CHEST')?.coefficients).toEqual({
+      muscularFatigue: 1.1,
+      neuralFatigue: 1.1,
+      axialLoad: 1.0,
+      technicalDemand: 1.1,
+    });
+  });
+
+  it('con varias familias pesa el volumen de cada una: Tríceps 891 del press banca (0.5) y 600 de polea (aislamiento)', () => {
+    const result = fatigue({
+      muscles: [trained('TRICEPS', { FREE_TORSO: 891, ISOLATION: 600 })],
+      previousWeeks: [],
+    });
+    const coefficients = rowOf(result, 'TRICEPS')?.coefficients;
+    expect(coefficients?.muscularFatigue).toBeCloseTo((891 * 1.1 + 600 * 0.9) / 1491, 12);
+    expect(coefficients?.neuralFatigue).toBeCloseTo((891 * 1.1 + 600 * 0.7) / 1491, 12);
+    expect(coefficients?.axialLoad).toBeCloseTo((891 * 1.0 + 600 * 0.5) / 1491, 12);
+    expect(coefficients?.technicalDemand).toBeCloseTo((891 * 1.1 + 600 * 0.8) / 1491, 12);
+  });
+
+  it('movilidad y cardio pesan con 0: 500 kg de movilidad y 500 de aislamiento dan la mitad del aislamiento', () => {
+    const result = fatigue({
+      muscles: [trained('ROTATOR_CUFF', { MOBILITY_CARDIO: 500, ISOLATION: 500 })],
+      previousWeeks: [],
+    });
+    const coefficients = rowOf(result, 'ROTATOR_CUFF')?.coefficients;
+    expect(coefficients?.muscularFatigue).toBeCloseTo(0.45, 12);
+    expect(coefficients?.neuralFatigue).toBeCloseTo(0.35, 12);
+    expect(coefficients?.axialLoad).toBeCloseTo(0.25, 12);
+    expect(coefficients?.technicalDemand).toBeCloseTo(0.4, 12);
+  });
+
+  it('sin volumen en la semana, solo en la base o sin familias, no hay coeficientes', () => {
+    const result = fatigue({
+      muscles: [
+        { muscleCode: 'CHEST', adjustedVolumeKg: null, families: [] },
+        { muscleCode: 'GLUTES', adjustedVolumeKg: 800 },
+        {
+          muscleCode: 'LATS',
+          adjustedVolumeKg: 400,
+          families: [{ family: 'GUIDED', adjustedVolumeKg: 0 }],
+        },
+      ],
+      previousWeeks: PREVIOUS,
+    });
+    expect(result.outputs.muscles.map((row) => [row.muscleCode, row.coefficients])).toEqual([
+      ['CHEST', null],
+      ['GLUTES', null],
+      ['LATS', null],
+      ['TRICEPS', null],
+      ['QUADRICEPS', null],
+    ]);
+  });
+
+  it('P-27.1 · solo informan: el estado y la recuperación estimada son los mismos con coeficientes o sin ellos', () => {
+    const withFamilies = fatigue({
+      muscles: [trained('CHEST', { LEG_HIP: 1100, FREE_TORSO: 600 })],
+      previousWeeks: PREVIOUS,
+    });
+    // 1,700 sobre la base de 1,419 es +19.8 %: ámbar, con 60 h, con los coeficientes altos de pierna y cadera o sin ellos.
+    const without = fatigue({ muscles: muscles({ CHEST: 1700 }), previousWeeks: PREVIOUS });
+    const row = rowOf(withFamilies, 'CHEST');
+    expect(row?.coefficients).not.toBeNull();
+    expect(row).toMatchObject({ state: 'AMBER', recoveryHours: 60 });
+    expect({ ...row, coefficients: null }).toEqual(rowOf(without, 'CHEST'));
+  });
+
+  it('una familia repetida o sin coeficientes, o un coeficiente o un volumen negativo, da NC-ENG-419', () => {
+    const error = (input: FatigueCase) => {
+      const run = runMethod(MUSCLE_FATIGUE_JV, {
+        coefficients: COEFFICIENTS,
+        ...input,
+        thresholds: JV,
+      });
+      return run.ok ? null : run.errors.map((issue) => issue.code);
+    };
+    const chest = (families: MuscleVolume['families']): MuscleVolume[] => [
+      { muscleCode: 'CHEST', adjustedVolumeKg: 1000, families },
+    ];
+    expect(
+      error({
+        muscles: chest([
+          { family: 'GUIDED', adjustedVolumeKg: 500 },
+          { family: 'GUIDED', adjustedVolumeKg: 500 },
+        ]),
+        previousWeeks: [],
+      }),
+    ).toEqual(['NC-ENG-419']);
+    expect(
+      error({ muscles: chest([{ family: 'GUIDED', adjustedVolumeKg: -1 }]), previousWeeks: [] }),
+    ).toEqual(['NC-ENG-419']);
+    expect(
+      error({
+        muscles: chest([{ family: 'GUIDED', adjustedVolumeKg: 500 }]),
+        previousWeeks: [],
+        coefficients: COEFFICIENTS.filter((row) => row.family !== 'GUIDED'),
+      }),
+    ).toEqual(['NC-ENG-419']);
+    expect(
+      error({ muscles: [], previousWeeks: [], coefficients: [...COEFFICIENTS, ...COEFFICIENTS] }),
+    ).toEqual(['NC-ENG-419']);
+    const [first, ...others] = COEFFICIENTS as [FamilyCoefficients, ...FamilyCoefficients[]];
+    expect(
+      error({
+        muscles: [],
+        previousWeeks: [],
+        coefficients: [{ ...first, axialLoad: -0.1 }, ...others],
+      }),
+    ).toEqual(['NC-ENG-419']);
+    expect(
+      error({
+        muscles: [],
+        previousWeeks: [],
+        coefficients: [{ ...first, family: 'OTRA' as FamilyCoefficients['family'] }, ...others],
+      }),
+    ).toEqual(['NC-ENG-419']);
+  });
+});
+
+// P-27.2, respuesta de Rodrigo (2026-11-12): la familia de cada ejercicio sale de su patrón y su equipo. Los ejemplos son de la
+// biblioteca base (seeds/exercise/ejercicios-base.csv).
+describe('RN-G16 · P-27.2 · la familia de cada ejercicio, por patrón y equipo', () => {
+  const family = (pattern: string | null, equipmentCode: string | null, modality = 'STRENGTH') =>
+    fatigueFamilyOf({ pattern, equipmentCode, modality });
+
+  it('los compuestos de pierna y cadera libres o con el peso corporal: sentadilla trasera, peso muerto, hip thrust, zancada', () => {
+    expect(family('SQUAT', 'BARBELL')).toBe('LEG_HIP');
+    expect(family('HINGE', 'KETTLEBELL')).toBe('LEG_HIP');
+    expect(family('HIP_EXTENSION', 'BARBELL')).toBe('LEG_HIP');
+    expect(family('UNILATERAL', 'BODYWEIGHT')).toBe('LEG_HIP');
+    expect(family('UNILATERAL', 'BOX')).toBe('LEG_HIP');
+  });
+
+  it('la pliometría de esos patrones también: la sentadilla con salto es «pierna y cadera»', () => {
+    expect(family('SQUAT', 'BODYWEIGHT', 'PLYOMETRIC')).toBe('LEG_HIP');
+  });
+
+  it('los empujes y tracciones libres son «torso libre»: press banca, dominada, remo con mancuerna', () => {
+    expect(family('HORIZONTAL_PUSH', 'BARBELL')).toBe('FREE_TORSO');
+    expect(family('VERTICAL_PULL', 'PULLUP_BAR')).toBe('FREE_TORSO');
+    expect(family('HORIZONTAL_PULL', 'DUMBBELL')).toBe('FREE_TORSO');
+    expect(family('VERTICAL_PUSH', 'BODYWEIGHT')).toBe('FREE_TORSO');
+  });
+
+  it('un patrón compuesto con máquina o polea es «guiados y poleas»: prensa, jalón al pecho, remo en polea', () => {
+    expect(family('SQUAT', 'MACHINE')).toBe('GUIDED');
+    expect(family('VERTICAL_PULL', 'CABLE')).toBe('GUIDED');
+    expect(family('HORIZONTAL_PULL', 'CABLE')).toBe('GUIDED');
+    expect(family('HIP_EXTENSION', 'MACHINE')).toBe('GUIDED');
+  });
+
+  it('la banda elástica y un ejercicio sin equipo cuentan como libres: el jalón con banda es «torso libre»', () => {
+    expect(family('VERTICAL_PULL', 'BAND')).toBe('FREE_TORSO');
+    expect(family('SQUAT', null)).toBe('LEG_HIP');
+  });
+
+  it('bíceps, tríceps, hombro, pantorrilla, rodilla y tronco son «aislamiento y brazos» con cualquier equipo', () => {
+    expect(family('BICEPS', 'MACHINE')).toBe('ISOLATION');
+    expect(family('TRICEPS', 'CABLE')).toBe('ISOLATION');
+    expect(family('SHOULDER', 'DUMBBELL')).toBe('ISOLATION');
+    expect(family('CALF', 'MACHINE')).toBe('ISOLATION');
+    expect(family('KNEE_EXTENSION', 'MACHINE')).toBe('ISOLATION');
+    expect(family('KNEE_FLEXION', 'BAND')).toBe('ISOLATION');
+    expect(family('CORE_ANTI_EXTENSION', 'AB_WHEEL')).toBe('ISOLATION');
+    expect(family('CORE_ANTI_ROTATION', 'CABLE')).toBe('ISOLATION');
+    expect(family('LUMBAR_STABILITY', 'BODYWEIGHT')).toBe('ISOLATION');
+    // Los saltos de tobillo: pliometría con patrón de pantorrilla.
+    expect(family('CALF', 'BODYWEIGHT', 'PLYOMETRIC')).toBe('ISOLATION');
+  });
+
+  it('movilidad y cardio, por modalidad o por patrón, van con 0: bicicleta, rotación externa en polea, burpee', () => {
+    expect(family('CONDITIONING', 'BIKE', 'CARDIO')).toBe('MOBILITY_CARDIO');
+    expect(family('CONDITIONING', null, 'CARDIO')).toBe('MOBILITY_CARDIO');
+    expect(family('SHOULDER_MOBILITY', 'CABLE', 'MOBILITY')).toBe('MOBILITY_CARDIO');
+    expect(family('THORACIC_MOBILITY', 'FOAM_ROLLER', 'MOBILITY')).toBe('MOBILITY_CARDIO');
+    expect(family('CONDITIONING', 'BODYWEIGHT', 'PLYOMETRIC')).toBe('MOBILITY_CARDIO');
+    expect(family('HIP_EXTENSION', 'BAND', 'MOBILITY')).toBe('MOBILITY_CARDIO');
+    expect(family(null, null, 'CARDIO')).toBe('MOBILITY_CARDIO');
+  });
+
+  it('cada uno de los 20 patrones tiene familia; un ejercicio sin patrón, o con uno que no existe, no', () => {
+    for (const pattern of MOVEMENT_PATTERNS) {
+      expect(FATIGUE_FAMILIES).toContain(family(pattern, 'DUMBBELL'));
+    }
+    expect(family(null, 'BARBELL')).toBeNull();
+    expect(family('OTRO', 'BARBELL')).toBeNull();
   });
 });

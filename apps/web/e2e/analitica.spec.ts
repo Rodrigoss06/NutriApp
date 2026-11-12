@@ -132,6 +132,13 @@ test.describe('P14 · Analítica y control semanal', () => {
       name: /Fatiga por grupo muscular de la semana 1/,
     });
     await expect(muscleFatigue.getByRole('row', { name: /^Cuádriceps/ })).toContainText('Sin base');
+    // P-27.1, P-27.2 (ADR-121): la sentadilla goblet es «pierna y cadera», con sus cuatro coeficientes: 1.20, 1.30, 1.30 y 1.20.
+    await expect(
+      muscleFatigue.getByRole('columnheader', { name: 'Demanda técnica' }),
+    ).toBeVisible();
+    await expect(muscleFatigue.getByRole('row', { name: /^Cuádriceps/ })).toContainText(
+      /1\.20.*1\.30.*1\.30.*1\.20/,
+    );
     await expect(page.getByText('Fatiga por grupo muscular (JV Fitness)')).toBeVisible();
     expect(await seriousViolations(page)).toEqual([]);
 

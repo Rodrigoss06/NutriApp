@@ -1,3 +1,4 @@
+import type { FamilyCoefficients } from '@nutricoach/engine';
 import type { CoachDecision, WeeklyReviewRecord } from '../../domain/weekly-review.js';
 
 /** Los umbrales de 07 §11, versionados por organización (RN-G15): los valores de una fila de training.readiness_threshold. */
@@ -53,7 +54,8 @@ export interface VolumeFactorsRow {
 
 /**
  * Una versión de los umbrales del panel de fatiga y recuperación (P-23, ADR-108): recuperación por estrés y sueño, fatiga percibida y
- * carga sobre el promedio de las 3 semanas previas. La fatiga por grupo muscular usa los de la carga y sus horas (P-27, ADR-115).
+ * carga sobre el promedio de las 3 semanas previas. La fatiga por grupo muscular usa los de la carga, sus horas (P-27, ADR-115) y
+ * los coeficientes de cada familia de ejercicio (P-27.1, ADR-121).
  */
 export interface FatiguePanelThresholdRow {
   readonly id: string;
@@ -72,6 +74,8 @@ export interface FatiguePanelThresholdRow {
   readonly muscleRecoveryGreenHours: number;
   readonly muscleRecoveryAmberHours: number;
   readonly muscleRecoveryRedHours: number;
+  /** Fatiga muscular, fatiga neural, carga axial y demanda técnica de cada familia (P-27): solo informan. */
+  readonly familyCoefficients: readonly FamilyCoefficients[];
 }
 
 /**

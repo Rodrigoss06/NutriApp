@@ -1,5 +1,6 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { TransactionHost } from '@nestjs-cls/transactional';
+import { FATIGUE_FAMILIES, type FamilyCoefficients, type FatigueFamily } from '@nutricoach/engine';
 import type { Db } from '../../../../../platform/index.js';
 import type {
   FatiguePanelThresholdRow,
@@ -34,6 +35,39 @@ function factorRows(value: unknown): VolumeFactorsRow['rir'] {
 }
 const num = (value: { toString(): string } | null): number | null =>
   value === null ? null : Number(value);
+
+const FAMILIES: ReadonlySet<string> = new Set(FATIGUE_FAMILIES);
+
+/**
+ * Los coeficientes guardados (P-27.1): la columna asegura que es una lista; cada fila se lee con sus tipos y una que no los tiene
+ * no entra. El motor rechaza una familia repetida o un coeficiente negativo (NC-ENG-419).
+ */
+function coefficientRows(value: unknown): readonly FamilyCoefficients[] {
+  if (!Array.isArray(value)) return [];
+  return value.flatMap((item: unknown) => {
+    if (item === null || typeof item !== 'object') return [];
+    const { family, muscularFatigue, neuralFatigue, axialLoad, technicalDemand } = item as Record<
+      string,
+      unknown
+    >;
+    return typeof family === 'string' &&
+      FAMILIES.has(family) &&
+      typeof muscularFatigue === 'number' &&
+      typeof neuralFatigue === 'number' &&
+      typeof axialLoad === 'number' &&
+      typeof technicalDemand === 'number'
+      ? [
+          {
+            family: family as FatigueFamily,
+            muscularFatigue,
+            neuralFatigue,
+            axialLoad,
+            technicalDemand,
+          },
+        ]
+      : [];
+  });
+}
 
 type ReviewRow = Awaited<
   ReturnType<PrismaWeeklyReviewStore['db']['tx']['weeklyReview']['findFirstOrThrow']>
@@ -223,6 +257,7 @@ export class PrismaWeeklyReviewStore implements WeeklyReviewStore {
       muscleRecoveryGreenHours: row.muscleRecoveryGreenHours,
       muscleRecoveryAmberHours: row.muscleRecoveryAmberHours,
       muscleRecoveryRedHours: row.muscleRecoveryRedHours,
+      familyCoefficients: coefficientRows(row.familyCoefficients),
     }));
   }
 

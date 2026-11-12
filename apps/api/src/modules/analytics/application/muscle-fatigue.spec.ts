@@ -18,6 +18,44 @@ const JV: FatiguePanelThresholdRow = {
   muscleRecoveryGreenHours: 48,
   muscleRecoveryAmberHours: 60,
   muscleRecoveryRedHours: 72,
+  // P-27, respuesta de Jeremy (2026-11-10): los coeficientes de cada familia de ejercicio.
+  familyCoefficients: [
+    {
+      family: 'LEG_HIP',
+      muscularFatigue: 1.2,
+      neuralFatigue: 1.3,
+      axialLoad: 1.3,
+      technicalDemand: 1.2,
+    },
+    {
+      family: 'FREE_TORSO',
+      muscularFatigue: 1.1,
+      neuralFatigue: 1.1,
+      axialLoad: 1.0,
+      technicalDemand: 1.1,
+    },
+    {
+      family: 'GUIDED',
+      muscularFatigue: 1.0,
+      neuralFatigue: 1.0,
+      axialLoad: 0.8,
+      technicalDemand: 0.9,
+    },
+    {
+      family: 'ISOLATION',
+      muscularFatigue: 0.9,
+      neuralFatigue: 0.7,
+      axialLoad: 0.5,
+      technicalDemand: 0.8,
+    },
+    {
+      family: 'MOBILITY_CARDIO',
+      muscularFatigue: 0,
+      neuralFatigue: 0,
+      axialLoad: 0,
+      technicalDemand: 0,
+    },
+  ],
 };
 
 const startOf = (weekNo: number) => `2026-10-${String(6 + 7 * (weekNo - 1)).padStart(2, '0')}`;
@@ -30,11 +68,13 @@ const week = (weekNo: number, adjustedVolumeKg: number | null, started = true): 
   days: [],
 });
 
+// Todo sale del press banca, un compuesto libre de torso (P-27.2).
 const volumes = (weekNo: number, byMuscle: Readonly<Record<string, number | null>>) =>
   Object.entries(byMuscle).map(([muscleCode, adjustedVolumeKg]): MuscleWeekVolume => ({
     weekStart: startOf(weekNo),
     muscleCode,
     adjustedVolumeKg,
+    familyVolumes: adjustedVolumeKg === null ? null : [{ family: 'FREE_TORSO', adjustedVolumeKg }],
   }));
 
 // Una hoja como la de Mateo: el press banca de las semanas 2 a 4 promedia 1,419 al pecho y la mitad al tríceps; la 5 cerró sin
@@ -93,6 +133,41 @@ describe('RN-G16 · P-27 · la fatiga por grupo muscular de cada semana del macr
       recoveryHours: 60,
     });
     expect(third?.muscles[0]?.changePct).toBeCloseTo(13.21, 2);
+  });
+
+  it('P-27.1 · los coeficientes del grupo salen de sus familias en la semana y de la versión vigente: Pecho 1.1, 1.1, 1.0 y 1.1', () => {
+    const third = muscleFatigueOf(WEEKS, ROWS, [JV]).get(3);
+    expect(third?.muscles[0]?.coefficients).toEqual({
+      muscularFatigue: 1.1,
+      neuralFatigue: 1.1,
+      axialLoad: 1.0,
+      technicalDemand: 1.1,
+    });
+    // En la semana 5 no se entrenó: sin coeficientes, aunque la base sí los tuvo.
+    expect(muscleFatigueOf(WEEKS, ROWS, [JV]).get(5)?.muscles[0]?.coefficients).toBeNull();
+    // Otra versión de los coeficientes cambia los números, no el estado ni las horas.
+    const own = {
+      ...JV,
+      id: 'propia',
+      familyCoefficients: JV.familyCoefficients.map((row) =>
+        row.family === 'FREE_TORSO' ? { ...row, muscularFatigue: 1.5 } : row,
+      ),
+    };
+    const ownThird = muscleFatigueOf(WEEKS, ROWS, [own]).get(3);
+    expect(ownThird?.muscles[0]).toMatchObject({
+      state: 'GREEN',
+      recoveryHours: 48,
+      coefficients: { muscularFatigue: 1.5 },
+    });
+    expect(ownThird?.thresholdId).toBe('propia');
+  });
+
+  it('una fila escrita antes de la migración, sin familias, deja al grupo sin coeficientes y con su estado', () => {
+    const old = ROWS.map((row) => ({ ...row, familyVolumes: null }));
+    expect(muscleFatigueOf(WEEKS, old, [JV]).get(3)?.muscles[0]).toMatchObject({
+      state: 'GREEN',
+      coefficients: null,
+    });
   });
 
   it('la primera semana queda «sin base»; sin umbrales vigentes al empezar la semana, no hay fatiga por grupo', () => {

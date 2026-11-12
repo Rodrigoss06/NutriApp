@@ -1,3 +1,4 @@
+import type { FatigueFamily } from '@nutricoach/engine';
 import { describe, expect, it } from 'vitest';
 import type { DayFacts, DaySet } from '../../tracking/index.js';
 import type { FactorVersion } from '../domain/adjusted-volume.js';
@@ -117,6 +118,13 @@ const JV_FACTORS: FactorVersion = {
   ],
 };
 
+/** P-27.2: la sentadilla es «pierna y cadera», el press de banca «torso libre» y la prensa «guiados y poleas». */
+const FAMILIES: Readonly<Record<string, FatigueFamily>> = {
+  squat: 'LEG_HIP',
+  bench: 'FREE_TORSO',
+  'leg-press': 'GUIDED',
+};
+
 const rowsOf = (
   days: readonly DayFacts[],
   ids = new Set(['p-1']),
@@ -129,6 +137,7 @@ const rowsOf = (
     programId: 'p-2',
     factorsOn: () => JV_FACTORS,
     restOf: (_workout, set) => restOf(set),
+    familyOf: (exerciseId) => FAMILIES[exerciseId] ?? null,
   });
 
 describe('G-24 · RN-F06 · series fraccionadas de la semana contra lo programado', () => {
@@ -248,6 +257,67 @@ describe('P-26 · ADR-106 · volumen ajustado por grupo, repartido como las seri
     ).find((row) => row.muscleCode === 'QUADRICEPS');
     expect(quads?.adjustedVolumeKg).toBeCloseTo(1_188, 6);
     expect(quads?.unfactoredSets).toBe(2);
+  });
+});
+
+describe('P-27.2 · ADR-121 · el volumen ajustado de cada grupo, por la familia de sus ejercicios', () => {
+  const LEG_PRESS = [
+    { muscle: 'QUADRICEPS', weight: 1 },
+    { muscle: 'GLUTES', weight: 0.5 },
+  ];
+  const sets = [
+    // Sentadilla 3 × 12 × 45 kg con RIR 2 y 120 s: 1,782 al cuádriceps y al glúteo, y 891 al isquiosural.
+    ...['s-1', 's-2', 's-3'].map((id) => set(id, { reps: 12, loadKg: 45, rir: 2, tonnageKg: 540 })),
+    // Prensa 10 × 100 kg con RIR 2: 1,100 al cuádriceps y 550 al glúteo; la serie sin RIR no tiene factor ni familia.
+    set('p-1', {
+      exerciseId: 'leg-press',
+      muscleContributions: LEG_PRESS,
+      reps: 10,
+      loadKg: 100,
+      rir: 2,
+      tonnageKg: 1000,
+    }),
+    set('p-2', {
+      exerciseId: 'leg-press',
+      muscleContributions: LEG_PRESS,
+      reps: 10,
+      loadKg: 100,
+      tonnageKg: 1000,
+    }),
+    // Un ejercicio sin familia: suma al cuádriceps, no a sus familias.
+    set('x-1', {
+      exerciseId: 'sin-patron',
+      muscleContributions: [{ muscle: 'QUADRICEPS', weight: 1 }],
+      reps: 10,
+      loadKg: 50,
+      rir: 2,
+      tonnageKg: 500,
+    }),
+  ];
+  const familiesOf = (muscle: string) =>
+    rowsOf([day(sets)])
+      .find((row) => row.muscleCode === muscle)
+      ?.familyVolumes?.map(({ family, adjustedVolumeKg }) => [
+        family,
+        Math.round(adjustedVolumeKg * 1e6) / 1e6,
+      ]);
+
+  it('cada familia suma lo que dio al grupo, con 1.0 y 0.5, en el orden de las familias', () => {
+    expect(familiesOf('QUADRICEPS')).toEqual([
+      ['LEG_HIP', 1_782],
+      ['GUIDED', 1_100],
+    ]);
+    expect(familiesOf('GLUTES')).toEqual([
+      ['LEG_HIP', 1_782],
+      ['GUIDED', 550],
+    ]);
+    expect(familiesOf('HAMSTRINGS')).toEqual([['LEG_HIP', 891]]);
+    const quads = rowsOf([day(sets)]).find((row) => row.muscleCode === 'QUADRICEPS');
+    expect(quads?.adjustedVolumeKg).toBeCloseTo(1_782 + 1_100 + 550, 6);
+  });
+
+  it('un grupo programado y no entrenado no tiene familias', () => {
+    expect(rowsOf([day(sets)]).find((row) => row.muscleCode === 'CHEST')?.familyVolumes).toBeNull();
   });
 });
 

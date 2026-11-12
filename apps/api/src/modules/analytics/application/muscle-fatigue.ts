@@ -1,6 +1,7 @@
 import {
   MUSCLE_FATIGUE_JV,
   runMethod,
+  type FamilyVolume,
   type MuscleFatigueRow,
   type MuscleFatigueThresholds,
   type MuscleVolume,
@@ -10,11 +11,12 @@ import { versionOn } from '../domain/adjusted-volume.js';
 import { PANEL_BASE_WEEKS } from '../domain/fatigue-panel.js';
 import type { PanelWeekInput } from './fatigue-panel.js';
 
-/** El volumen ajustado de un grupo en una semana del programa, como lo guarda el volumen semanal (05.3). */
+/** El volumen ajustado de un grupo en una semana del programa, como lo guarda el volumen semanal (05.3), y por familia (P-27.2). */
 export interface MuscleWeekVolume {
   readonly weekStart: string;
   readonly muscleCode: string;
   readonly adjustedVolumeKg: number | null;
+  readonly familyVolumes: readonly FamilyVolume[] | null;
 }
 
 /**
@@ -40,17 +42,23 @@ const thresholdsOf = (row: FatiguePanelThresholdRow): MuscleFatigueThresholds =>
 /**
  * La fatiga por grupo muscular de cada semana que ya empezó, con el motor (MUSCLE_FATIGUE_JV) y los umbrales del panel vigentes al
  * empezar la semana. La base son las mismas 3 semanas previas que la carga del panel: el motor deja fuera las que no tienen volumen
- * (P-24). Una semana que no empezó, o sin umbrales vigentes, queda en null. Solo informa: decide el control semanal (P-25).
+ * (P-24). Los coeficientes de cada grupo salen de su volumen por familia en la semana y de los de esa versión (P-27.1); de las
+ * previas solo cuenta el volumen. Una semana que no empezó, o sin umbrales vigentes, queda en null. Solo informa: decide el control
+ * semanal (P-25).
  */
 export function muscleFatigueOf(
   weeks: readonly PanelWeekInput[],
   rows: readonly MuscleWeekVolume[],
   versions: readonly FatiguePanelThresholdRow[],
 ): Map<number, MuscleFatigueWeek | null> {
-  const musclesOf = (weekStart: string): MuscleVolume[] =>
+  const musclesOf = (weekStart: string, withFamilies: boolean): MuscleVolume[] =>
     rows
       .filter((row) => row.weekStart === weekStart)
-      .map((row) => ({ muscleCode: row.muscleCode, adjustedVolumeKg: row.adjustedVolumeKg }));
+      .map((row) => ({
+        muscleCode: row.muscleCode,
+        adjustedVolumeKg: row.adjustedVolumeKg,
+        ...(withFamilies ? { families: row.familyVolumes ?? [] } : {}),
+      }));
   const started = new Map(
     weeks.filter((week) => week.started).map((week) => [week.weekNo, week] as const),
   );
@@ -64,14 +72,15 @@ export function muscleFatigueOf(
         if (previous) {
           previousWeeks.push({
             adjustedVolumeKg: previous.adjustedVolumeKg,
-            muscles: musclesOf(previous.weekStart),
+            muscles: musclesOf(previous.weekStart, false),
           });
         }
       }
       const run = runMethod(MUSCLE_FATIGUE_JV, {
-        muscles: musclesOf(week.weekStart),
+        muscles: musclesOf(week.weekStart, true),
         previousWeeks,
         thresholds: thresholdsOf(version),
+        coefficients: version.familyCoefficients,
       });
       if (!run.ok) return [week.weekNo, null] as const;
       return [

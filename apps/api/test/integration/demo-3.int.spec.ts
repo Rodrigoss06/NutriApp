@@ -270,11 +270,12 @@ describe('Demo 3 · Mateo, el alumno ficticio de la hoja de Jeremy', () => {
             baseVolumeKg: number | null;
             state: string;
             recoveryHours: number | null;
+            coefficients: Record<string, number> | null;
           }[];
         } | null;
       }[];
     }>(`/patients/${mateoId}/analytics/training`);
-    expect(training.methods.muscleFatigue).toEqual({ code: 'MUSCLE_FATIGUE_JV', version: '1.0.0' });
+    expect(training.methods.muscleFatigue).toEqual({ code: 'MUSCLE_FATIGUE_JV', version: '1.1.0' });
     const fatigueOf = (weekNo: number) =>
       training.weeks.find((week) => week.weekNo === weekNo)?.muscleFatigue;
     const muscle = (weekNo: number, code: string) =>
@@ -289,6 +290,7 @@ describe('Demo 3 · Mateo, el alumno ficticio de la hoja de Jeremy', () => {
       changePct: null,
       state: 'NO_DATA',
       recoveryHours: null,
+      coefficients: null,
     });
     expect(muscle(5, 'TRICEPS')?.baseVolumeKg).toBe(709.5);
     expect(muscle(5, 'FRONT_DELTOID')?.baseVolumeKg).toBe(709.5);
@@ -303,6 +305,47 @@ describe('Demo 3 · Mateo, el alumno ficticio de la hoja de Jeremy', () => {
       recoveryHours: 60,
     });
     expect(muscle(1, 'CHEST')?.state).toBe('NO_BASE');
+  });
+
+  it('P14.5 · RN-G16 · P-27.1 · P-27.2 · los coeficientes de cada grupo, por la familia de sus ejercicios', async () => {
+    const training = await get<{
+      weeks: {
+        weekNo: number;
+        muscleFatigue: {
+          muscles: {
+            muscleCode: string;
+            state: string;
+            coefficients: Record<string, number> | null;
+          }[];
+        } | null;
+      }[];
+    }>(`/patients/${mateoId}/analytics/training`);
+    const coefficientsOf = (weekNo: number, code: string) => {
+      const row = training.weeks
+        .find((week) => week.weekNo === weekNo)
+        ?.muscleFatigue?.muscles.find(({ muscleCode }) => muscleCode === code);
+      return row?.coefficients
+        ? [
+            row.coefficients.muscularFatigue,
+            row.coefficients.neuralFatigue,
+            row.coefficients.axialLoad,
+            row.coefficients.technicalDemand,
+          ].map((value) => Math.round((value ?? Number.NaN) * 1e9) / 1e9)
+        : null;
+    };
+    // Semana 3: el press banca (empuje horizontal con barra) es «torso libre»; la sentadilla trasera, «pierna y cadera»; el jalón
+    // al pecho (tracción vertical en polea), «guiados y poleas». Cada grupo recibe una sola familia: sus coeficientes son los de ella.
+    expect(coefficientsOf(3, 'CHEST')).toEqual([1.1, 1.1, 1.0, 1.1]);
+    expect(coefficientsOf(3, 'TRICEPS')).toEqual([1.1, 1.1, 1.0, 1.1]);
+    expect(coefficientsOf(3, 'QUADRICEPS')).toEqual([1.2, 1.3, 1.3, 1.2]);
+    expect(coefficientsOf(3, 'LATS')).toEqual([1.0, 1.0, 0.8, 0.9]);
+    // Solo informan: el pecho sigue en ámbar como antes (P-27.1, punto 2). La semana 5 no se entrenó: sin coeficientes.
+    expect(
+      training.weeks
+        .find((week) => week.weekNo === 3)
+        ?.muscleFatigue?.muscles.find(({ muscleCode }) => muscleCode === 'CHEST')?.state,
+    ).toBe('AMBER');
+    expect(coefficientsOf(5, 'CHEST')).toBeNull();
   });
 
   it('RF-35 · peso, cintura, cadera y grasa de la comparativa física de la hoja', async () => {

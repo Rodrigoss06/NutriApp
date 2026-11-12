@@ -180,6 +180,7 @@ describe('P-27 · la fatiga por grupo muscular en pantalla (ADR-115)', () => {
     changePct: null,
     state: 'NO_DATA' as const,
     recoveryHours: null,
+    coefficients: null,
   });
 
   it('primero los grupos con más fatiga; después los que solo están en la base, por su base', () => {
