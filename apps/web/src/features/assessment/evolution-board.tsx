@@ -321,7 +321,7 @@ function comparisonValue(row: ComparisonRow, value: number): string {
  * La comparativa física de la hoja de Jeremy (P14.5, PR 6a; ADR-107): peso, cintura, cadera y grasa, de la primera evaluación a
  * la última, cada una con su comparación frente al CMD95 cuando es una medida (RN-C06).
  */
-function PhysicalComparison({ evolution }: { evolution: EvolutionResponse }) {
+export function PhysicalComparison({ evolution }: { evolution: EvolutionResponse }) {
   const rows = physicalComparison(evolution);
   if (rows.length === 0) {
     return (

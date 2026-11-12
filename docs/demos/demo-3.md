@@ -111,12 +111,12 @@ En el celular del paciente de prueba:
 
 **Qué debe aparecer**
 
-| En pantalla                                                             | Hoja de Jeremy                                                   |
-| ----------------------------------------------------------------------- | ---------------------------------------------------------------- |
-| Fases de las semanas 1 a 4: Adaptación, Base, Acumulación y Acumulación | Macrociclo, mesociclo 1                                          |
-| Sesiones hechas por semana: 3, 3, 3 y 3                                 | Registro de cargas: 12 sesiones. Ver la semana 3 en la sección 9 |
-| Tonelaje por semana: 5,220, 5,490, 5,760 y 3,750 kg                     | Volumen del registro de cargas                                   |
-| 1RM estimado de «Press banca» con Epley: 56.0, 59.5, 63.0 y 46.7 kg     | Registro de cargas: «1RM estimado»                               |
+| En pantalla                                                             | Hoja de Jeremy                                                    |
+| ----------------------------------------------------------------------- | ----------------------------------------------------------------- |
+| Fases de las semanas 1 a 4: Adaptación, Base, Acumulación y Acumulación | Macrociclo, mesociclo 1                                           |
+| Sesiones hechas por semana: 3, 3, 3 y 3                                 | Registro de cargas: 12 sesiones. Ver la semana 3 en la sección 10 |
+| Tonelaje por semana: 5,220, 5,490, 5,760 y 3,750 kg                     | Volumen del registro de cargas                                    |
+| 1RM estimado de «Press banca» con Epley: 56.0, 59.5, 63.0 y 46.7 kg     | Registro de cargas: «1RM estimado»                                |
 
 **Panel de fatiga y recuperación (P14.5, PR 3):** en la misma pestaña, debajo de las semanas.
 
@@ -205,7 +205,38 @@ Ajustes › Umbrales del entrenamiento (07 §11).
 **Qué decir:** la bioimpedancia nunca comparte serie con la antropometría (RN-C08). Cada cambio se compara con el CMD95
 del evaluador (RN-C06).
 
-## 9 · La hoja de Jeremy frente a la app · Mateo · 5 min
+## 9 · Informe del mesociclo (P14.5, fase C) · Mateo · 4 min
+
+**Qué se hace:**
+
+1. Ficha de Mateo › Entrenamiento › Informes: el «Mesociclo 1», del 06/10 al 02/11, está cerrado. «Crear informe».
+2. Leer los números, escribir los cuatro textos (los de la hoja sirven de ejemplo) y «Guardar borrador».
+3. «Enviar informe»: queda enviado y ya no cambia.
+4. Si se quiere mostrar la app: invitar a Mateo desde su ficha y abrir Más › Informes, donde escribe su comentario. El coach
+   lo ve en el mismo informe.
+
+**Qué debe aparecer**
+
+| En pantalla                                                                                     | Hoja de Jeremy                                         |
+| ----------------------------------------------------------------------------------------------- | ------------------------------------------------------ |
+| Volumen cumplido 100.0 % (36 de 36 series) y 12 de 12 sesiones                                  | 95.2 %; con sus series, 223 ÷ 240 = 92.9 % (P-29)      |
+| Récords: 6, en las semanas 2 y 3 (press banca, sentadilla trasera y jalón al pecho)             | La columna PR: 1 en la semana 1, un ejemplo incompleto |
+| Sueño 6.9 h, estrés 3.0 / 5, fatiga 3.0 / 5, rendimiento 90.0 % y alimentación 85.0 %           | Resumen ejecutivo                                      |
+| Semana a semana: rojo, rojo, verde y verde, con «Descarga 20–30 % y revisar» y «Continuar plan» | La decisión de cada semana                             |
+| Peso 80 → 79 kg, cintura 88 → 85 cm, cadera 100 → 99 cm y grasa por bioimpedancia 22.0 → 20.8 % | Comparativa física                                     |
+
+**Qué decir:**
+
+- Es uno por mesociclo de 4 semanas y se ve en la app, sin sexta ficha PDF (P-28). Va fuera del contrato, con su
+  cotización.
+- El coach escribe el logro, la limitante, el ajuste y la prioridad en el borrador, y lo envía cuando cierra la cuarta
+  semana. Enviado, los números quedan congelados.
+- Un récord es un 1RM estimado más alto que el mejor anterior del ejercicio. La primera vez no cuenta y cada ejercicio
+  cuenta una vez por semana.
+- La rutina de Mateo en la demo tiene un ejercicio por sesión, como su registro de cargas: por eso da 36 de 36 series y no
+  223 de 240. El 92.9 % de la hoja es el caso dorado G-44 del motor.
+
+## 10 · La hoja de Jeremy frente a la app · Mateo · 5 min
 
 | Coincide                                                                                                                                                                                                                                                                          | Difiere o falta (P14.5)                                                   |
 | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------- |
@@ -213,7 +244,7 @@ del evaluador (RN-C06).
 | El macrociclo V3 de las semanas 1 a 8                                                                                                                                                                                                                                             | «No entreno hoy» y «mover a mañana» (PR 1e)                               |
 | El control de las 4 semanas, el volumen ajustado por RIR y descanso, y el panel de fatiga y recuperación                                                                                                                                                                          | Los coeficientes de la fatiga por grupo muscular (P-27.1)                 |
 | El 1RM de Epley y el porcentaje                                                                                                                                                                                                                                                   | La prescripción de la hoja (PR 9)                                         |
-| Las sesiones (12), el sueño, el rendimiento y la alimentación por semana                                                                                                                                                                                                          | El informe mensual y las fotos                                            |
+| Las sesiones (12), el sueño, el rendimiento y la alimentación por semana, y el informe del mesociclo (sección 9)                                                                                                                                                                  | Las fotos de progreso (PR 6b)                                             |
 | Peso, cintura, cadera y grasa                                                                                                                                                                                                                                                     | El expediente de documentos                                               |
 
 Dos diferencias de datos de la hoja:
@@ -239,7 +270,7 @@ Las dos están respondidas en las preguntas para Jeremy (`docs/preguntas/hoja-pi
   lo ajusta.
 - La app del paciente dice de qué día son las porciones de hoy, y la ficha 1.2.0 las imprime.
 
-## 10 · Rendimiento (RNF-01, criterio 4 de P14) · 1 min
+## 11 · Rendimiento (RNF-01, criterio 4 de P14) · 1 min
 
 `docs/demos/demo-3-p95.md`: con 500 pacientes y dos años de historia, el peor p95 de la analítica es de 102 ms, frente
 a un máximo de 300 ms. Es una medición local. La de k6 sobre un servidor igual al de producción, con carga sostenida, va
