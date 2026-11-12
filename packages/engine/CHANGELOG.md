@@ -3,6 +3,19 @@
 Cambiar una fórmula o una constante sube la versión del método afectado y la del motor (02 §9).
 Los resultados guardados conservan la versión con que se calcularon (RN-D01, RN-D08).
 
+## 1.17.0 — 2026-11-12
+
+- `MUSCLE_FATIGUE_JV` 1.1.0 (P14.5; P-27.1 y P-27.2, respuestas de Rodrigo del 2026-11-12; ADR-121): los cuatro coeficientes de la
+  hoja por grupo muscular (fatiga muscular, fatiga neural, carga axial y demanda técnica):
+  - cada ejercicio va a una familia por su patrón y su equipo (`fatigueFamilyOf`): movilidad y cardio; bíceps, tríceps, hombro,
+    pantorrilla, rodilla y tronco en «aislamiento y brazos»; un compuesto con máquina o polea en «guiados y poleas»; los demás
+    compuestos en «pierna y cadera» o «torso libre»;
+  - en cada grupo, el coeficiente de sus familias promediado según el volumen ajustado que le dio cada una (1.0 y 0.5): el press
+    banca solo da a Pecho 1.1, 1.1, 1.0 y 1.1; movilidad y cardio pesan con 0;
+  - los coeficientes llegan como datos versionados (los de Jeremy del 2026-11-10) y solo informan: el estado y la recuperación
+    estimada no cambian;
+  - NC-ENG-419 (familias repetidas o sin coeficientes, coeficientes o volúmenes negativos).
+
 ## 1.16.0 — 2026-11-11
 
 - `MESOCYCLE_REPORT_JV` 1.0.0 (P14.5, PR 7a; P-28 y P-29, respuestas de Rodrigo del 2026-11-10 y del 2026-11-11; ADR-117), el informe

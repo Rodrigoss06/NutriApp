@@ -1,5 +1,6 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { TransactionHost } from '@nestjs-cls/transactional';
+import { FATIGUE_FAMILIES, type FamilyVolume } from '@nutricoach/engine';
 import type { Db } from '../../../../../platform/index.js';
 import type {
   AnalyticsStore,
@@ -20,6 +21,19 @@ const isoDate = (value: Date): string => value.toISOString().slice(0, 10);
 const asDate = (value: string): Date => new Date(`${value}T00:00:00Z`);
 const num = (value: { toString(): string } | null): number | null =>
   value === null ? null : Number(value);
+
+/** El volumen por familia se guarda como {familia: kg} (P-27.2); al leerlo, en el orden de las familias y sin lo que no es un número. */
+const familyColumn = (volumes: readonly FamilyVolume[]): Record<string, number> =>
+  Object.fromEntries(volumes.map((item) => [item.family, item.adjustedVolumeKg]));
+
+function familyVolumesOf(value: unknown): readonly FamilyVolume[] | null {
+  if (value === null || typeof value !== 'object' || Array.isArray(value)) return null;
+  const column = value as Record<string, unknown>;
+  return FATIGUE_FAMILIES.flatMap((family) => {
+    const adjustedVolumeKg = column[family];
+    return typeof adjustedVolumeKg === 'number' ? [{ family, adjustedVolumeKg }] : [];
+  });
+}
 
 /** Las claves de nutrients_missing en la base, en snake_case como las columnas (05.3). */
 const MISSING_COLUMN: Readonly<Record<SummaryNutrient | 'items', string>> = {
@@ -208,6 +222,9 @@ export class PrismaAnalyticsStore implements AnalyticsStore {
         tonnageKg: row.tonnageKg,
         adjustedVolumeKg: row.adjustedVolumeKg,
         unfactoredSets: row.unfactoredSets,
+        ...(row.familyVolumes === null
+          ? {}
+          : { familyAdjustedVolumeKg: familyColumn(row.familyVolumes) }),
         avgRpe: row.avgRpe,
         avgStimulus: row.avgStimulus,
         avgFatigue: row.avgFatigue,
@@ -241,6 +258,7 @@ export class PrismaAnalyticsStore implements AnalyticsStore {
       tonnageKg: num(row.tonnageKg),
       adjustedVolumeKg: num(row.adjustedVolumeKg),
       unfactoredSets: row.unfactoredSets,
+      familyVolumes: familyVolumesOf(row.familyAdjustedVolumeKg),
       avgRpe: num(row.avgRpe),
       avgStimulus: num(row.avgStimulus),
       avgFatigue: num(row.avgFatigue),

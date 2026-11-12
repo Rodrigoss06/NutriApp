@@ -261,6 +261,40 @@ un grupo puede recibir ejercicios de varias familias. En la semana 3 de Mateo, e
    - b) Son la misma cifra: basta una columna.
    - c) Otra cosa.
 
+> **Respuesta (2026-11-12, por Rodrigo).** 1: b, el coeficiente de las familias del grupo, promediado según su volumen (Pecho 1.1
+> en la semana 3). 2: solo se muestran como referencia; no cambian el estado ni la recuperación estimada. 3: b, son la misma
+> cifra y basta una columna, como quedó en el PR 4.
+
+**P-27.2 · A qué familia va cada ejercicio** (para los coeficientes de P-27.1)
+
+Los coeficientes van por familia, pero tus ejemplos separan ejercicios del mismo patrón: las dominadas (torso libre) y el jalón
+(guiados y poleas) son los dos tracción vertical, y la sentadilla (pierna y cadera) y la prensa (guiados) son los dos sentadilla.
+Hay patrones que la lista no nombra: el core, el empuje de cadera, la pantorrilla y la pliometría.
+
+- a) Por patrón y equipo: máquina o polea es «guiados y poleas»; sentadilla, bisagra, unilateral y empuje de cadera libres son
+  «pierna y cadera»; empujes y tracciones libres son «torso libre»; bíceps, tríceps, hombro, pantorrilla, extensión y flexión de
+  rodilla y core son «aislamiento y brazos»; movilidad y cardio, 0. La pliometría, «pierna y cadera».
+- b) Solo por patrón, sin mirar el equipo: el jalón quedaría en «torso libre», como las dominadas.
+- c) Cada ejercicio de la biblioteca con su familia, uno por uno: los propios de cada organización la eligen al crearlos.
+
+> **Respuesta (2026-11-12, por Rodrigo).** a, por patrón y equipo: movilidad y cardio en 0; bíceps, tríceps, hombro, pantorrilla,
+> extensión y flexión de rodilla y core en «aislamiento y brazos», con cualquier equipo; en los patrones compuestos, máquina o
+> polea en «guiados y poleas», y lo libre o con peso corporal en «pierna y cadera» (con la pliometría y el empuje de cadera) o en
+> «torso libre».
+>
+> **Cómo lo aplica el motor** (`MUSCLE_FATIGUE_JV` 1.1.0, motor 1.17.0, ADR-121), en este orden:
+>
+> 1. modalidad Cardio o Movilidad, o patrón Acondicionamiento, Movilidad de hombro o Movilidad torácica: «movilidad y cardio», 0;
+> 2. patrón Bíceps, Tríceps, Hombro, Pantorrilla, Extensión o Flexión de rodilla, o de tronco (Anti-extensión, Anti-rotación y
+>    Estabilidad lumbar): «aislamiento y brazos»;
+> 3. patrón compuesto con máquina o polea: «guiados y poleas»;
+> 4. Sentadilla, Bisagra, Unilateral o Extensión de cadera con otro equipo o con el peso corporal: «pierna y cadera»; Empuje o
+>    Tracción, horizontal o vertical: «torso libre».
+>
+> **Por confirmar con Rodrigo**, porque salen del orden y no de la respuesta: en la biblioteca base, los saltos de tobillo
+> (pliometría con patrón Pantorrilla) quedan en «aislamiento y brazos» y el burpee (pliometría con patrón Acondicionamiento) en 0.
+> La banda elástica cuenta como equipo libre: el jalón con banda es «torso libre».
+
 ## Informe mensual
 
 **P-28 · Cómo se arma y quién escribe**

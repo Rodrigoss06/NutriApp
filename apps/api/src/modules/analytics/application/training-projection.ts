@@ -1,6 +1,8 @@
 import { Inject, Injectable } from '@nestjs/common';
+import { fatigueFamilyOf, type FatigueFamily } from '@nutricoach/engine';
 import { CLOCK, type Clock } from '@nutricoach/shared-kernel';
 import { ClinicalApi } from '../../clinical/index.js';
+import { ExerciseApi } from '../../exercise/index.js';
 import { TrackingApi } from '../../tracking/index.js';
 import { TrainingApi, type ProgramSnapshot } from '../../training/index.js';
 import { factorsOn, prescribedRest } from '../domain/adjusted-volume.js';
@@ -12,7 +14,8 @@ import { weeklyMuscleRows } from './training-weeks.js';
 /**
  * El volumen semanal por grupo muscular de cada programa (05.3, RF-33): recalcula todas las semanas ya empezadas de la línea del
  * programa, con su última versión publicada como lo programado (RN-F12), y reemplaza esas filas. Corre en la transacción de quien
- * llama, como SYSTEM de la organización.
+ * llama, como SYSTEM de la organización. La familia de cada ejercicio (P-27.2) sale de la biblioteca: su patrón, su equipo y su
+ * modalidad de hoy, también si está archivado.
  */
 @Injectable()
 export class TrainingProjection {
@@ -21,8 +24,36 @@ export class TrainingProjection {
     @Inject(ClinicalApi) private readonly clinical: ClinicalApi,
     @Inject(TrackingApi) private readonly tracking: TrackingApi,
     @Inject(TrainingApi) private readonly training: TrainingApi,
+    @Inject(ExerciseApi) private readonly exercises: ExerciseApi,
     @Inject(ANALYTICS_STORE) private readonly store: AnalyticsStore,
   ) {}
+
+  /** La familia de cada ejercicio entrenado en esos días que aún no está en `families`. */
+  private async addFamilies(
+    families: Map<string, FatigueFamily | null>,
+    days: readonly {
+      readonly workouts: readonly { readonly sets: readonly { readonly exerciseId: string }[] }[];
+    }[],
+  ): Promise<void> {
+    const missing = [
+      ...new Set(
+        days.flatMap((day) =>
+          day.workouts.flatMap((workout) => workout.sets.map((set) => set.exerciseId)),
+        ),
+      ),
+    ].filter((id) => !families.has(id));
+    if (missing.length === 0) return;
+    for (const exercise of await this.exercises.exercisesById(missing)) {
+      families.set(
+        exercise.id,
+        fatigueFamilyOf({
+          pattern: exercise.pattern,
+          equipmentCode: exercise.equipmentCode,
+          modality: exercise.modality,
+        }),
+      );
+    }
+  }
 
   /** Las líneas de los programas entrenados en el rango y la del programa vigente. Devuelve las filas escritas. */
   async refreshForRange(
@@ -68,6 +99,7 @@ export class TrainingProjection {
     let written = 0;
     const versions =
       lineages.size > 0 ? await this.training.volumeFactorVersions(organizationId) : [];
+    const families = new Map<string, FatigueFamily | null>();
     for (const lineageId of lineages) {
       const latest = await this.training.latestPublishedOfLineage(lineageId);
       if (!latest) continue;
@@ -77,6 +109,7 @@ export class TrainingProjection {
         weeks.length === 0
           ? []
           : await this.tracking.dailyFacts(patientId, latest.startDate, until);
+      await this.addFamilies(families, days);
       const members = new Set<string>([latest.programId]);
       for (const day of days) {
         for (const workout of day.workouts) {
@@ -98,6 +131,7 @@ export class TrainingProjection {
             set.exerciseId,
             set.setNo,
           ),
+        familyOf: (exerciseId) => families.get(exerciseId) ?? null,
       });
       await this.store.replaceWeeklyVolume(
         organizationId,

@@ -1,6 +1,7 @@
 import { Module, type OnModuleInit } from '@nestjs/common';
 import { AssessmentModule } from '../assessment/index.js';
 import { ClinicalModule } from '../clinical/index.js';
+import { ExerciseModule } from '../exercise/index.js';
 import { NutritionModule } from '../nutrition/index.js';
 import { TenancyModule } from '../tenancy/index.js';
 import { TrackingModule } from '../tracking/index.js';
@@ -39,6 +40,7 @@ import { TrainingProjection } from './application/training-projection.js';
     NutritionModule,
     TrainingModule,
     TrackingModule,
+    ExerciseModule,
   ],
   controllers: [PatientAnalyticsController, OverviewController],
   providers: [

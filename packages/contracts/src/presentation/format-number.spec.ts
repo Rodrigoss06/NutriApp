@@ -18,6 +18,8 @@ describe('RN-D09 · se redondea solo al presentar', () => {
     [1834.536, 'kcal', '1,835'],
     [183.7, 'grams', '184'],
     [6, 'exchanges', '6'],
+    [1.1, 'fatigueCoefficient', '1.10'],
+    [1.019517, 'fatigueCoefficient', '1.02'],
   ] as const)('%s como %s se muestra %s (es-PE)', (value, kind, expected) => {
     expect(formatNumber(value, kind)).toBe(expected);
   });

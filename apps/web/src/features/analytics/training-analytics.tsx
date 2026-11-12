@@ -39,6 +39,7 @@ const pct = (value: number | null) =>
   value === null ? '—' : `${formatNumber(value, 'percent')} %`;
 const scale = (value: number | null) => formatNumber(value, 'index');
 const ratio = (value: number | null) => formatNumber(value, 'zScore');
+const coefficient = (value: number | undefined) => formatNumber(value, 'fatigueCoefficient');
 
 function sessionsText(week: TrainingWeek): string {
   if (!week.started || week.sessionsDone === null) {
@@ -318,7 +319,8 @@ function MusclesTable({
 
 /**
  * La fatiga por grupo muscular de la semana elegida (P14.5, PR 4; P-27; ADR-115): el volumen ajustado del grupo contra su promedio de
- * las 3 semanas previas, con su estado y la recuperación estimada. Solo informa: decide el control semanal (P-25).
+ * las 3 semanas previas, con su estado y la recuperación estimada, y los cuatro coeficientes de la hoja (P-27.1; ADR-121). Solo
+ * informa: decide el control semanal (P-25).
  */
 function MuscleFatigueTable({
   fatigue,
@@ -378,6 +380,30 @@ function MuscleFatigueTable({
           header: 'Recuperación est.',
           numeric: true,
           cell: (muscle) => recoveryText(muscle.recoveryHours),
+        },
+        {
+          key: 'muscular',
+          header: 'Fatiga muscular',
+          numeric: true,
+          cell: (muscle) => coefficient(muscle.coefficients?.muscularFatigue),
+        },
+        {
+          key: 'neural',
+          header: 'Fatiga neural',
+          numeric: true,
+          cell: (muscle) => coefficient(muscle.coefficients?.neuralFatigue),
+        },
+        {
+          key: 'axial',
+          header: 'Carga axial',
+          numeric: true,
+          cell: (muscle) => coefficient(muscle.coefficients?.axialLoad),
+        },
+        {
+          key: 'technical',
+          header: 'Demanda técnica',
+          numeric: true,
+          cell: (muscle) => coefficient(muscle.coefficients?.technicalDemand),
         },
       ]}
     />
@@ -496,6 +522,12 @@ export function TrainingAnalyticsView({
               promedio en las 3 semanas previas que tienen volumen, donde una semana sin ese grupo
               cuenta 0. La recuperación estimada depende del estado. Solo informa: decide el control
               semanal.
+            </p>
+            <p className="text-sm text-muted-foreground">
+              Los coeficientes son los de la familia de cada ejercicio, por su patrón y su equipo:
+              pierna y cadera, torso libre, guiados y poleas, aislamiento y brazos, y movilidad y
+              cardio. En cada grupo se promedian según el volumen que le dio cada familia. Son
+              referencia: no cambian el estado ni la recuperación.
             </p>
             <MuscleFatigueTable
               fatigue={muscleWeek.muscleFatigue}

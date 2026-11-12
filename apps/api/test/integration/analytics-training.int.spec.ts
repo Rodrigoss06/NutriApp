@@ -248,6 +248,22 @@ describe('RF-33 · la semana del macrociclo contra lo programado', () => {
       overall: 'GREEN',
     });
     expect(result.methods.fatiguePanel).toEqual({ code: 'FATIGUE_PANEL_JV', version: '1.0.0' });
+    // P-27.1, P-27.2 (ADR-121): la sentadilla goblet (sentadilla con mancuerna) es «pierna y cadera»; los coeficientes de la versión
+    // global de los umbrales.
+    expect(
+      week?.muscleFatigue?.muscles.find((muscle) => muscle.muscleCode === 'QUADRICEPS')
+        ?.coefficients,
+    ).toEqual({ muscularFatigue: 1.2, neuralFatigue: 1.3, axialLoad: 1.3, technicalDemand: 1.2 });
+    expect(result.methods.muscleFatigue).toEqual({ code: 'MUSCLE_FATIGUE_JV', version: '1.1.0' });
+    const families = await owner(
+      `SELECT muscle_code, family_adjusted_volume_kg AS families FROM analytics.patient_weekly_muscle_volume
+       WHERE patient_id = $1 ORDER BY muscle_code`,
+      [patientId],
+    );
+    expect(families).toEqual([
+      { muscle_code: 'GLUTES', families: { LEG_HIP: 264 } },
+      { muscle_code: 'QUADRICEPS', families: { LEG_HIP: 528 } },
+    ]);
     expect(result.methods.fractionalSets.code).toBe('FRACTIONAL_SETS');
     expect(result.methods.srpe.code).toBe('READINESS_JV');
   });

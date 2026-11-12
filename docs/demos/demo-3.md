@@ -145,8 +145,19 @@ En el celular del paciente de prueba:
 
 **Qué decir:** cada serie da 1.0 al músculo principal y 0.5 al secundario, sin coeficientes por ejercicio (P-27). Por eso el
 pectoral (el «Pecho» de la hoja) da 1,419 y el tríceps 709.5, y no los 1,461.6 y 312.2 de la hoja. Dorsal y Cuádriceps tienen base: el jalón y la sentadilla cuentan.
-En la semana 3, todos los grupos salen en ámbar, con 60 h de recuperación estimada. Las cuatro columnas de coeficientes esperan la
-respuesta de Jeremy (P-27.1).
+En la semana 3, todos los grupos salen en ámbar, con 60 h de recuperación estimada.
+
+**Coeficientes (P-27.1 y P-27.2):** con la semana 3 elegida (`?semana=3`), las cuatro columnas del final.
+
+| Grupo de Mateo                        | Ejercicio y familia                 | Fatiga muscular | Fatiga neural | Carga axial | Demanda técnica |
+| ------------------------------------- | ----------------------------------- | --------------- | ------------- | ----------- | --------------- |
+| Pectoral, Tríceps, Deltoides anterior | Press banca: torso libre            | 1.10            | 1.10          | 1.00        | 1.10            |
+| Cuádriceps, Glúteo                    | Sentadilla trasera: pierna y cadera | 1.20            | 1.30          | 1.30        | 1.20            |
+| Dorsal, Bíceps                        | Jalón al pecho (polea): guiados     | 1.00            | 1.00          | 0.80        | 0.90            |
+
+**Qué decir:** cada ejercicio va a una familia por su patrón y su equipo: un compuesto con máquina o polea es «guiados y poleas».
+Un grupo trabajado por varias familias promedia sus coeficientes según el volumen que le dio cada una. Son referencia: no cambian
+el estado ni la recuperación estimada. En la semana 5 no hay coeficientes, porque no se entrenó.
 
 ## 6 · Control semanal (RF-42) · Mateo y Luis · 6 min
 
@@ -250,14 +261,14 @@ dicen «Sin foto»: en la demo se suben en vivo.
 
 ## 10 · La hoja de Jeremy frente a la app · Mateo · 5 min
 
-| Coincide                                                                                                                                                                                                                                                                          | Difiere o falta (P14.5)                                                   |
-| --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------- |
-| Las metas por tipo de día, con las respuestas de Jeremy a P-20: mandan los gramos, así que son 2,510 y 2,230 kcal. Cada día de octubre lleva la de su perfil: Entrenamiento si tiene sesión y Descanso si no. Las comidas de Descanso: el mismo plan con menos almidones (P-20.5) | Las porciones exactas de Descanso de Mateo: las de la demo son de ejemplo |
-| El macrociclo V3 de las semanas 1 a 8                                                                                                                                                                                                                                             | «No entreno hoy» y «mover a mañana» (PR 1e)                               |
-| El control de las 4 semanas, el volumen ajustado por RIR y descanso, y el panel de fatiga y recuperación                                                                                                                                                                          | Los coeficientes de la fatiga por grupo muscular (P-27.1)                 |
-| El 1RM de Epley y el porcentaje                                                                                                                                                                                                                                                   | La prescripción de la hoja (PR 9)                                         |
-| Las sesiones (12), el sueño, el rendimiento y la alimentación por semana, y el informe del mesociclo (sección 9)                                                                                                                                                                  | Las fotos de progreso (PR 6b)                                             |
-| Peso, cintura, cadera y grasa                                                                                                                                                                                                                                                     | El expediente de documentos                                               |
+| Coincide                                                                                                                                                                                                                                                                          | Difiere o falta (P14.5)                                                                                                           |
+| --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------- |
+| Las metas por tipo de día, con las respuestas de Jeremy a P-20: mandan los gramos, así que son 2,510 y 2,230 kcal. Cada día de octubre lleva la de su perfil: Entrenamiento si tiene sesión y Descanso si no. Las comidas de Descanso: el mismo plan con menos almidones (P-20.5) | Las porciones exactas de Descanso de Mateo: las de la demo son de ejemplo                                                         |
+| El macrociclo V3 de las semanas 1 a 8                                                                                                                                                                                                                                             | «No entreno hoy» y «mover a mañana» (PR 1e)                                                                                       |
+| El control de las 4 semanas, el volumen ajustado por RIR y descanso, el panel de fatiga y recuperación y los coeficientes de la fatiga por grupo muscular                                                                                                                         | Cómo se reparten los coeficientes en un grupo: la hoja no lo decía; la app los promedia según el volumen de cada familia (P-27.1) |
+| El 1RM de Epley y el porcentaje                                                                                                                                                                                                                                                   | La prescripción de la hoja (PR 9)                                                                                                 |
+| Las sesiones (12), el sueño, el rendimiento y la alimentación por semana, y el informe del mesociclo (sección 9)                                                                                                                                                                  | Las fotos de progreso (PR 6b)                                                                                                     |
+| Peso, cintura, cadera y grasa                                                                                                                                                                                                                                                     | El expediente de documentos                                                                                                       |
 
 Dos diferencias de datos de la hoja:
 

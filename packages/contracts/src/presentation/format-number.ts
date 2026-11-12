@@ -1,8 +1,9 @@
 /**
  * Redondeo solo al presentar (RN-D09): masas y porcentajes con 1 decimal; medidas en mm y cm con 1; densidad
  * con 5; índices con 1; cintura/talla y cintura/cadera con 2; puntajes Z con 2; kcal, gramos e intercambios
- * enteros. Lo que RN-D09 no fija (ADR-049): ETM, %ETM y CMD95 con 2, superficie corporal con 2 y meses con 1.
- * Formato es-PE: punto decimal y coma de miles. La interpretación usa siempre el valor sin redondear.
+ * enteros. Lo que RN-D09 no fija (ADR-049): ETM, %ETM y CMD95 con 2, superficie corporal con 2 y meses con 1; los coeficientes de
+ * la fatiga por grupo muscular con 2 (ADR-121). Formato es-PE: punto decimal y coma de miles. La interpretación usa siempre el valor
+ * sin redondear.
  */
 export const NUMBER_KINDS = {
   mass: 1,
@@ -23,6 +24,8 @@ export const NUMBER_KINDS = {
   grams: 0,
   /** Tonelaje en kg y carga sRPE: enteros al presentar (RN-F03, RN-G14). */
   trainingLoad: 0,
+  /** Coeficientes de fatiga de la hoja piloto (P-27.1, ADR-121): un promedio de 1.1 y 0.9 da 1.02, que con 1 decimal se vería 1.0. */
+  fatigueCoefficient: 2,
   exchanges: 0,
 } as const;
 

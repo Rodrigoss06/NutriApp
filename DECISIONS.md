@@ -3215,3 +3215,54 @@ Consecuencias:
   - Luis retira la autorización y las fotos desaparecen;
   - axe en cada pantalla.
 - Para Notion (/notion-sync de P14.5): 04 (las pantallas de las fotos).
+
+## ADR-121 · Los coeficientes de la fatiga por grupo muscular, por la familia de cada ejercicio — aceptada (2026-11-12)
+Contexto: P14.5, fase C (P-27.1 y P-27.2, respondidas por Rodrigo el 2026-11-12; RN-G16; RF-33; ADR-115). La hoja piloto trae en
+«Fatiga por grupo muscular» cuatro columnas: fatiga muscular, fatiga neural, carga axial y demanda técnica. Jeremy dio los
+coeficientes por familia de ejercicio (pierna y cadera 1.2, 1.3, 1.3 y 1.2; torso libre 1.1, 1.1, 1.0 y 1.1; guiados y poleas 1.0,
+1.0, 0.8 y 0.9; aislamiento y brazos 0.9, 0.7, 0.5 y 0.8; movilidad y cardio 0), y el PR 4 salió sin ellas. Rodrigo decidió:
+- P-27.1: en cada grupo va el coeficiente de sus familias, promediado según su volumen (Pecho 1.1 en la semana 3 de Mateo); solo
+  se muestran, sin cambiar el estado ni la recuperación; «Volumen ajustado» y «Fatiga entrenamiento» son una sola columna;
+- P-27.2: la familia sale del patrón y del equipo del ejercicio (opción a), no ejercicio por ejercicio.
+Decisión:
+- Motor 1.17.0, `MUSCLE_FATIGUE_JV` 1.1.0:
+  - `fatigueFamilyOf`, en este orden: modalidad de cardio o movilidad, o patrón de acondicionamiento o de movilidad, es
+    «movilidad y cardio»; bíceps, tríceps, hombro, pantorrilla, extensión y flexión de rodilla y tronco (anti-extensión,
+    anti-rotación y estabilidad lumbar) son «aislamiento y brazos» con cualquier equipo; un patrón compuesto con máquina o polea
+    es «guiados y poleas»; los demás compuestos, libres, sin equipo o con el peso corporal, son «pierna y cadera» (sentadilla,
+    bisagra, extensión de cadera y unilateral, también su pliometría) o «torso libre» (empujes y tracciones). Sin patrón, o con
+    uno que no existe, no hay familia;
+  - cada grupo recibe su volumen ajustado por familia (con 1.0 y 0.5) y la tabla de coeficientes; cada coeficiente es
+    Σ volumen × coeficiente ÷ Σ volumen, sin redondear. Movilidad y cardio pesan con 0. Sin volumen en la semana, o sin
+    familias, null. El estado y las horas no cambian;
+  - NC-ENG-419: una familia repetida o sin coeficientes, o un coeficiente o un volumen negativo.
+- Datos:
+  - los coeficientes, versionados con los demás umbrales del panel: `training.fatigue_panel_threshold.family_coefficients`
+    (jsonb, la tabla de Jeremy por defecto);
+  - el volumen por familia, en el volumen semanal: `analytics.patient_weekly_muscle_volume.family_adjusted_volume_kg`
+    (jsonb, {familia: kg}). La migración es `202611120300_training_fatigue_coefficients`; las filas que ya existen se llenan con
+    `analytics:rebuild`. Mientras tanto, sin familias, el grupo sale sin coeficientes y con su estado.
+- Analítica: la proyección lee el patrón, el equipo y la modalidad de cada ejercicio entrenado con `ExerciseApi.exercisesById`
+  (analytics importa exercise; no hay ciclo), también los archivados. Una serie de un ejercicio sin familia suma al volumen del
+  grupo, no a sus familias. `weeks[].muscleFatigue.muscles[].coefficients` llega en
+  `GET /patients/:id/analytics/training`, con la versión de los umbrales vigente al empezar la semana.
+- Web: en Analítica › Rutina, cuatro columnas al final de «Fatiga por grupo muscular»: «Fatiga muscular», «Fatiga neural», «Carga
+  axial» y «Demanda técnica», con 2 decimales (`fatigueCoefficient`: con 1, un promedio de 1.02 se vería 1.0), y una nota de que
+  son referencia.
+- Lo que sale del orden de la regla y no de la respuesta queda por confirmar con Rodrigo: los saltos de tobillo (pliometría de
+  pantorrilla) van a «aislamiento y brazos», el burpee (pliometría de acondicionamiento) a «movilidad y cardio» y la banda elástica
+  cuenta como libre (el jalón con banda es «torso libre»). Cambiar cualquiera es una línea de `fatigueFamilyOf` y sube la versión.
+- La familia es la del ejercicio en la biblioteca al proyectar: si una organización cambia el patrón o el equipo de un ejercicio
+  propio, las semanas cambian cuando se recalculan. Son coeficientes de referencia, no un resultado publicado (RN-D08).
+Consecuencias:
+- Motor: Pecho 1.1, 1.1, 1.0 y 1.1 con solo el press banca; el promedio de dos familias; movilidad y cardio con 0; sin volumen o sin
+  familias, null; el estado y las horas iguales con coeficientes o sin ellos; NC-ENG-419; la familia de cada ejemplo de la
+  biblioteca y de los 20 patrones.
+- Unitarias de la API: el volumen por familia de cada grupo (sentadilla, prensa y un ejercicio sin familia) y los coeficientes de
+  la versión vigente.
+- Integración: `demo-3.int.spec.ts`, la semana 3 de Mateo por HTTP (Pecho y Tríceps 1.1, 1.1, 1.0 y 1.1; Cuádriceps 1.2, 1.3, 1.3 y
+  1.2; Dorsal 1.0, 1.0, 0.8 y 0.9); `analytics-training.int.spec.ts`, la columna por familia y la reconstrucción igual. E2E
+  `analitica.spec.ts`: el cuádriceps de Luis con 1.20, 1.30, 1.30 y 1.20.
+- Para Notion (/notion-sync de P14.5): 02 §9 (`MUSCLE_FATIGUE_JV` 1.1.0), 03 (la regla del panel, RN-G18, con los coeficientes y
+  la familia de cada ejercicio), 05.2 (`family_coefficients`), 05.3 (`family_adjusted_volume_kg`), 04 RF-33 y 07 §10 y §15
+  (P-27.1 y P-27.2 resueltas).

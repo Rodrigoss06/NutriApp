@@ -1,3 +1,4 @@
+import type { FamilyVolume } from '@nutricoach/engine';
 import type { DailySummary } from '../../domain/daily-summary.js';
 import type { OneRmPoint } from '../../domain/one-rm.js';
 import type { OverviewAlert } from '../../domain/overview.js';
@@ -38,6 +39,11 @@ export interface WeeklyMuscleRow {
   readonly adjustedVolumeKg: number | null;
   /** Las series del grupo con carga que quedaron «sin factor». */
   readonly unfactoredSets: number | null;
+  /**
+   * El volumen ajustado repartido por la familia de sus ejercicios (P-27.2, ADR-121): pesa los coeficientes de la fatiga por grupo.
+   * null sin series del grupo o en una fila escrita antes de la migración (la llena `analytics:rebuild`).
+   */
+  readonly familyVolumes: readonly FamilyVolume[] | null;
   readonly avgRpe: number | null;
   readonly avgStimulus: number | null;
   readonly avgFatigue: number | null;

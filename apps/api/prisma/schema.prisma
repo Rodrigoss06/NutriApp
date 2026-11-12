@@ -96,23 +96,24 @@ model PatientOverview {
 
 /// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
 model PatientWeeklyMuscleVolume {
-  patientId             String   @map("patient_id") @db.Uuid
-  weekStart             DateTime @map("week_start") @db.Date
-  muscleCode            String   @map("muscle_code")
-  organizationId        String   @map("organization_id") @db.Uuid
-  programId             String?  @map("program_id") @db.Uuid
-  mesocycleId           String?  @map("mesocycle_id") @db.Uuid
-  weekNo                Int?     @map("week_no") @db.SmallInt
-  isDeload              Boolean? @map("is_deload")
-  fractionalSetsDone    Decimal  @map("fractional_sets_done") @db.Decimal(6, 1)
-  fractionalSetsPlanned Decimal? @map("fractional_sets_planned") @db.Decimal(6, 1)
-  tonnageKg             Decimal? @map("tonnage_kg") @db.Decimal(10, 1)
-  avgRpe                Decimal? @map("avg_rpe") @db.Decimal(3, 1)
-  avgStimulus           Decimal? @map("avg_stimulus") @db.Decimal(3, 1)
-  avgFatigue            Decimal? @map("avg_fatigue") @db.Decimal(3, 1)
-  sfr                   Decimal? @db.Decimal(4, 2)
-  adjustedVolumeKg      Decimal? @map("adjusted_volume_kg") @db.Decimal(10, 1)
-  unfactoredSets        Int?     @map("unfactored_sets") @db.SmallInt
+  patientId              String   @map("patient_id") @db.Uuid
+  weekStart              DateTime @map("week_start") @db.Date
+  muscleCode             String   @map("muscle_code")
+  organizationId         String   @map("organization_id") @db.Uuid
+  programId              String?  @map("program_id") @db.Uuid
+  mesocycleId            String?  @map("mesocycle_id") @db.Uuid
+  weekNo                 Int?     @map("week_no") @db.SmallInt
+  isDeload               Boolean? @map("is_deload")
+  fractionalSetsDone     Decimal  @map("fractional_sets_done") @db.Decimal(6, 1)
+  fractionalSetsPlanned  Decimal? @map("fractional_sets_planned") @db.Decimal(6, 1)
+  tonnageKg              Decimal? @map("tonnage_kg") @db.Decimal(10, 1)
+  avgRpe                 Decimal? @map("avg_rpe") @db.Decimal(3, 1)
+  avgStimulus            Decimal? @map("avg_stimulus") @db.Decimal(3, 1)
+  avgFatigue             Decimal? @map("avg_fatigue") @db.Decimal(3, 1)
+  sfr                    Decimal? @db.Decimal(4, 2)
+  adjustedVolumeKg       Decimal? @map("adjusted_volume_kg") @db.Decimal(10, 1)
+  unfactoredSets         Int?     @map("unfactored_sets") @db.SmallInt
+  familyAdjustedVolumeKg Json?    @map("family_adjusted_volume_kg")
 
   @@id([patientId, weekStart, muscleCode])
   @@map("patient_weekly_muscle_volume")
@@ -2420,6 +2421,7 @@ model FatiguePanelThreshold {
   muscleRecoveryGreenHours     Int      @default(48) @map("muscle_recovery_green_hours") @db.SmallInt
   muscleRecoveryAmberHours     Int      @default(60) @map("muscle_recovery_amber_hours") @db.SmallInt
   muscleRecoveryRedHours       Int      @default(72) @map("muscle_recovery_red_hours") @db.SmallInt
+  familyCoefficients           Json     @default("[{\"family\": \"LEG_HIP\", \"axialLoad\": 1.3, \"neuralFatigue\": 1.3, \"muscularFatigue\": 1.2, \"technicalDemand\": 1.2}, {\"family\": \"FREE_TORSO\", \"axialLoad\": 1.0, \"neuralFatigue\": 1.1, \"muscularFatigue\": 1.1, \"technicalDemand\": 1.1}, {\"family\": \"GUIDED\", \"axialLoad\": 0.8, \"neuralFatigue\": 1.0, \"muscularFatigue\": 1.0, \"technicalDemand\": 0.9}, {\"family\": \"ISOLATION\", \"axialLoad\": 0.5, \"neuralFatigue\": 0.7, \"muscularFatigue\": 0.9, \"technicalDemand\": 0.8}, {\"family\": \"MOBILITY_CARDIO\", \"axialLoad\": 0, \"neuralFatigue\": 0, \"muscularFatigue\": 0, \"technicalDemand\": 0}]") @map("family_coefficients")
 
   @@unique([organizationId, validFrom])
   @@map("fatigue_panel_threshold")

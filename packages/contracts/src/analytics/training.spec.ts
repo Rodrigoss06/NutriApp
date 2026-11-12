@@ -70,6 +70,7 @@ const MUSCLE_FATIGUE = {
       changePct: null,
       state: 'NO_DATA',
       recoveryHours: null,
+      coefficients: null,
     },
     {
       muscleCode: 'QUADRICEPS',
@@ -78,6 +79,13 @@ const MUSCLE_FATIGUE = {
       changePct: 30,
       state: 'AMBER',
       recoveryHours: 60,
+      // Solo la sentadilla libre: los coeficientes de «pierna y cadera».
+      coefficients: {
+        muscularFatigue: 1.2,
+        neuralFatigue: 1.3,
+        axialLoad: 1.3,
+        technicalDemand: 1.2,
+      },
     },
   ],
 };
@@ -113,6 +121,19 @@ describe('RF-33 · contrato de la analítica de rutina', () => {
         muscleFatigue: { ...MUSCLE_FATIGUE, baseWeeks: -1 },
       }).success,
     ).toBe(false);
+  });
+
+  it('P-27.1 · cada grupo entrenado trae sus cuatro coeficientes, que no son negativos; sin entrenar, null', () => {
+    const parsed = trainingWeekSchema.parse({ ...WEEK, muscleFatigue: MUSCLE_FATIGUE });
+    expect(
+      parsed.muscleFatigue?.muscles.map((muscle) => muscle.coefficients?.axialLoad ?? null),
+    ).toEqual([null, 1.3]);
+    const [, quadriceps] = MUSCLE_FATIGUE.muscles;
+    const negative = {
+      ...MUSCLE_FATIGUE,
+      muscles: [{ ...quadriceps, coefficients: { ...quadriceps?.coefficients, axialLoad: -1 } }],
+    };
+    expect(trainingWeekSchema.safeParse({ ...WEEK, muscleFatigue: negative }).success).toBe(false);
   });
 
   it('una semana que no empieza deja lo hecho en null', () => {

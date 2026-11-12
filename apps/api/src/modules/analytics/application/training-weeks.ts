@@ -1,4 +1,13 @@
-import { FRACTIONAL_SETS, RPE_FROM_RIR, runMethod, SFR, type MuscleRole } from '@nutricoach/engine';
+import {
+  FATIGUE_FAMILIES,
+  FRACTIONAL_SETS,
+  RPE_FROM_RIR,
+  runMethod,
+  SFR,
+  type FamilyVolume,
+  type FatigueFamily,
+  type MuscleRole,
+} from '@nutricoach/engine';
 import type { DaySet, DayFacts } from '../../tracking/index.js';
 import type { FactorVersion } from '../domain/adjusted-volume.js';
 import { CARDIO_MUSCLE } from '../domain/daily-summary.js';
@@ -10,7 +19,8 @@ import type { WeeklyMuscleRow } from './ports/analytics.ports.js';
  * El volumen de cada semana del macrociclo por grupo muscular (RF-33, RN-F06 a RN-F09): lo hecho en las sesiones de esa semana del
  * programa contra lo programado, con el motor. Una sesión se cuenta en su semana aunque se haga otro día (ADR-083). Las series de
  * cardio van en minutos, no aquí (ADR-071). El tonelaje de una serie se reparte como las series: principal 1 y secundario 0.5
- * (ADR-088), y el volumen ajustado igual, con la tabla de factores vigente al empezar la semana (ADR-106).
+ * (ADR-088), y el volumen ajustado igual, con la tabla de factores vigente al empezar la semana (ADR-106). El volumen ajustado de
+ * cada grupo se reparte también por la familia de sus ejercicios, que pesa los coeficientes de la fatiga por grupo (P-27.2, ADR-121).
  */
 
 const roleOf = (weight: number): MuscleRole['role'] => (weight >= 1 ? 'PRIMARY' : 'SECONDARY');
@@ -26,6 +36,25 @@ function rpeOf(set: DaySet): number | null {
   if (set.rir === null) return null;
   const run = runMethod(RPE_FROM_RIR, { rir: set.rir });
   return run.ok ? run.result.outputs.rpe : null;
+}
+
+/**
+ * El volumen ajustado del grupo por familia, en el orden de las familias: las series con factor de los ejercicios con familia. Una
+ * serie de un ejercicio sin familia cuenta en el volumen del grupo, no aquí.
+ */
+function familyVolumesOf(
+  involved: readonly { readonly family: FatigueFamily | null; readonly adjusted: number | null }[],
+): FamilyVolume[] {
+  const totals = new Map<FatigueFamily, number>();
+  for (const { family, adjusted } of involved) {
+    if (family !== null && adjusted !== null) {
+      totals.set(family, (totals.get(family) ?? 0) + adjusted);
+    }
+  }
+  return FATIGUE_FAMILIES.flatMap((family) => {
+    const adjustedVolumeKg = totals.get(family);
+    return adjustedVolumeKg === undefined ? [] : [{ family, adjustedVolumeKg }];
+  });
 }
 
 /** SFR con las series que tienen las dos valoraciones (RN-F07); sin ninguna, null. */
@@ -52,6 +81,8 @@ export interface WeeklyInput {
   readonly factorsOn: (localDate: string) => FactorVersion | null;
   /** El descanso prescrito de una serie en el programa con que se registró su entreno (ADR-106). */
   readonly restOf: (workout: DayFacts['workouts'][number], set: DaySet) => number | null;
+  /** La familia de un ejercicio por su patrón y su equipo (P-27.2); null si no tiene. */
+  readonly familyOf: (exerciseId: string) => FatigueFamily | null;
 }
 
 export function weeklyMuscleRows(input: WeeklyInput): WeeklyMuscleRow[] {
@@ -126,6 +157,15 @@ export function weeklyMuscleRows(input: WeeklyInput): WeeklyMuscleRow[] {
             : adjusted.reduce<number>((total, value) => total + (value ?? 0), 0),
         unfactoredSets:
           involved.length === 0 ? null : adjusted.filter((value) => value === null).length,
+        familyVolumes:
+          involved.length === 0
+            ? null
+            : familyVolumesOf(
+                involved.map(({ set }, index) => ({
+                  family: input.familyOf(set.exerciseId),
+                  adjusted: adjusted[index] ?? null,
+                })),
+              ),
         avgRpe: average(sets.map(rpeOf)),
         avgStimulus: average(sets.map((set) => set.stimulusRating)),
         avgFatigue: average(sets.map((set) => set.fatigueRating)),
