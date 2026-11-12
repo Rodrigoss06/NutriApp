@@ -13,11 +13,12 @@ const TABS = [
   { path: '/programas', label: 'Programas' },
   { path: '/control-semanal', label: 'Control semanal' },
   { path: '/informes', label: 'Informes' },
+  { path: '/fotos', label: 'Fotos' },
 ] as const;
 
 /**
- * Las partes de la seguridad antes de prescribir (RF-41), los programas, su control semanal (RF-42) y el informe de cada mesociclo
- * (RN-G19), con aria-current en la activa, también en sus páginas internas.
+ * Las partes de la seguridad antes de prescribir (RF-41), los programas, su control semanal (RF-42), el informe de cada mesociclo
+ * (RN-G19) y las fotos de progreso (RN-G20), con aria-current en la activa, también en sus páginas internas.
  */
 export function TrainingTabs({ patientId }: { patientId: string }) {
   const pathname = usePathname();
