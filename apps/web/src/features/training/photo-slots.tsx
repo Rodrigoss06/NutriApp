@@ -22,10 +22,10 @@ const KEEP_BYTES = 4_500_000;
 const KEEP_TYPES = new Set(['image/jpeg', 'image/png']);
 
 /** La foto no se pudo leer en el navegador: no es una imagen JPEG o PNG. */
-class PhotoReadError extends Error {}
+export class PhotoReadError extends Error {}
 
 /** Achica la foto antes de subirla si hace falta; una chica en JPEG o PNG va tal cual. */
-async function preparePhoto(file: File): Promise<Blob> {
+export async function preparePhoto(file: File): Promise<Blob> {
   const bitmap = await createImageBitmap(file).catch(() => null);
   if (!bitmap) throw new PhotoReadError();
   const size = fittedSize(bitmap.width, bitmap.height, MAX_SIDE);

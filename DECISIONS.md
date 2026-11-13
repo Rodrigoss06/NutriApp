@@ -3317,3 +3317,39 @@ Consecuencias:
   borra filas). El `put` del harness ahora acepta ir sin cuerpo, para el multipart.
 - Para Notion (/notion-sync de P14.5): 02 (clinical: tabla, rutas y eventos), 03 (RN-G21 nueva), 04 (el requisito del
   expediente), 05.1 (`clinical.record_document`) y 05.3 (la política de `platform.file_object`).
+
+## ADR-123 · Las pantallas del expediente de documentos, en el panel y en la app — aceptada (2026-11-12)
+Contexto: P14.5, fase C, PR 8b (P-31; RN-G21; ADR-122). El expediente ya tenía su API; faltaban las pantallas, la E2E y el guion,
+como aprobó Rodrigo en el plan del PR 8 (2026-11-12).
+Decisión:
+- Panel, pestaña «Documentos» de la ficha (después de «Condiciones, objetivos y notas»):
+  - un solo formulario: título, categoría y qué se agrega: pedírselo al paciente (sin contenido, «Pendiente»), subir un archivo o
+    pegar un enlace (entran «Validado»);
+  - las 8 categorías de la hoja, en su orden, cada una con sus documentos o «Sin documentos.»; cada documento con su estado
+    (color, ícono y texto), su archivo («Descargar», con el tipo y el peso) o su enlace («Abrir el enlace», en otra pestaña, con
+    el sitio), la nota si se devolvió y quién puso el contenido y cuándo;
+  - lo que está por revisar se valida o se devuelve con una nota; cualquier documento se borra con confirmación. Lo cambia quien
+    escribe en el expediente (RN-A05);
+  - sin HEALTH_DATA, un aviso con el enlace a Consentimientos y sin formulario; sin IMAGES, solo PDF y un aviso de que las fotos
+    y los enlaces la piden.
+- App, Más › Documentos (`/mi/documentos`). El enlace de Más dice cuántos documentos pide el coach («Tu coach te pide 1
+  documento») y se ve siempre, aunque la lista no cargue:
+  - arriba, lo que pidió el coach o devolvió, con su nota y el formulario para subirlo;
+  - agregar un documento nuevo, que queda «Por revisar»;
+  - lo ya subido: reemplazar lo que no está validado y borrar lo propio mientras está por revisar;
+  - sin la hora de cada documento: la app no tiene la zona horaria del paciente, y una zona adivinada daría otra hora en el
+    servidor y en el celular.
+- Archivos: una foto JPEG o PNG se achica en el navegador como las de progreso (`preparePhoto`, que ahora se exporta), para que
+  las del celular entren en los 5 MB; un PDF de más de 5 MB se rechaza antes de subirlo, con la sugerencia de compartir un enlace.
+- Cada escritura de la app lleva su Idempotency-Key, la misma en los reintentos de una acción; las del panel no la necesitan. Las
+  que cambian un documento mandan su versión en If-Match.
+Consecuencias:
+- Unitarias de la web: las 8 categorías en orden, lo pendiente arriba, qué puede borrar o reemplazar el paciente, la ruta de cada
+  archivo, el tipo y el peso, el sitio de un enlace y qué archivos se aceptan sin IMAGES.
+- E2E `documentos.spec.ts`, en escritorio y en el celular:
+  - el coach pide «Análisis de sangre»;
+  - el paciente lo ve desde Más, sube el PDF y agrega el enlace de un video de técnica;
+  - el coach valida el enlace, devuelve el PDF con una nota y borra el enlace;
+  - axe en cada pantalla. También pasan fotos, material, fichas en la app, informe y app del paciente.
+- Guion de la Demo 3: el expediente en la sección 9, y la tabla de la sección 10 al día.
+- Para Notion (/notion-sync de P14.5): 04 (las pantallas del expediente).

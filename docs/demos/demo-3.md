@@ -259,6 +259,17 @@ del evaluador (RN-C06).
 acto si el alumno retira su autorización o si se archiva su ficha, y reactivarla no las recupera. Las de la hoja de Jeremy
 dicen «Sin foto»: en la demo se suben en vivo.
 
+**Expediente de documentos (P14.5, PR 8):** en la misma ficha, Documentos.
+
+1. «Pedir documento»: «Análisis de sangre», en Clínico. Queda «Pendiente» y Mateo lo ve en su app.
+2. Desde la app de Mateo, Más › «Tu coach te pide 1 documento»: sube un PDF, que queda «Por revisar», y agrega el enlace de un
+   video de técnica. Los enlaces y las fotos piden la autorización de imágenes: si falta, la app solo deja subir PDF.
+3. De vuelta en el panel: validar el video y devolver el PDF con una nota («Falta la segunda página»). Mateo ve la nota y sube
+   otro.
+
+**Qué decir:** son archivos de hasta 5 MB o enlaces, y los videos siempre van por enlace. Lo que agrega el coach entra validado.
+Cada descarga queda en la auditoría, y borrar elimina el archivo y deja registrado quién lo borró.
+
 ## 10 · La hoja de Jeremy frente a la app · Mateo · 5 min
 
 | Coincide                                                                                                                                                                                                                                                                          | Difiere o falta (P14.5)                                                                                                           |
@@ -267,8 +278,8 @@ dicen «Sin foto»: en la demo se suben en vivo.
 | El macrociclo V3 de las semanas 1 a 8                                                                                                                                                                                                                                             | «No entreno hoy» y «mover a mañana» (PR 1e)                                                                                       |
 | El control de las 4 semanas, el volumen ajustado por RIR y descanso, el panel de fatiga y recuperación y los coeficientes de la fatiga por grupo muscular                                                                                                                         | Cómo se reparten los coeficientes en un grupo: la hoja no lo decía; la app los promedia según el volumen de cada familia (P-27.1) |
 | El 1RM de Epley y el porcentaje                                                                                                                                                                                                                                                   | La prescripción de la hoja (PR 9)                                                                                                 |
-| Las sesiones (12), el sueño, el rendimiento y la alimentación por semana, y el informe del mesociclo (sección 9)                                                                                                                                                                  | Las fotos de progreso (PR 6b)                                                                                                     |
-| Peso, cintura, cadera y grasa                                                                                                                                                                                                                                                     | El expediente de documentos                                                                                                       |
+| Las sesiones (12), el sueño, el rendimiento y la alimentación por semana, el informe del mesociclo, las fotos de progreso y el expediente de documentos (sección 9)                                                                                                               | Las fotos de la hoja dicen «Sin foto»: en la demo se suben en vivo                                                                |
+| Peso, cintura, cadera y grasa                                                                                                                                                                                                                                                     | Los documentos de la hoja son enlaces de ejemplo: en la demo se piden y se suben en vivo                                          |
 
 Dos diferencias de datos de la hoja:
 

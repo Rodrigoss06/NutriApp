@@ -5,6 +5,7 @@ import type {
   MeToday,
   MySheets as MySheetsResponse,
   PatientMesocycleReportsResponse,
+  RecordDocumentsResponse,
 } from '@nutricoach/contracts';
 import { Notice } from '@nutricoach/ui';
 import type { Metadata } from 'next';
@@ -15,6 +16,7 @@ import { InstallApp } from '@/features/patient-app/install-app';
 import { MenstrualConsent } from '@/features/patient-app/menstrual-consent';
 import { MyScreening } from '@/features/patient-app/my-screening';
 import { NotesForm } from '@/features/patient-app/notes-form';
+import { pendingDocuments } from '@/features/record-documents/record-documents-view';
 import { WeightForm } from '@/features/patient-app/weight-form';
 import { LogoutButton } from '@/features/session/session-actions';
 import { serverApi } from '@/lib/api/server';
@@ -22,19 +24,21 @@ import { serverApi } from '@/lib/api/server';
 export const metadata: Metadata = { title: 'Más' };
 
 /**
- * Más: escribir a tu equipo (RN-G13), el material que te asignó (RF-30), los informes de tus mesociclos (RN-G19), tus fichas
+ * Más: escribir a tu equipo (RN-G13), el material que te asignó (RF-30), los informes de tus mesociclos (RN-G19), tus documentos
+ * (RN-G21), tus fichas
  * vigentes en PDF (ADR-095), tu peso si está
  * habilitado, el seguimiento del ciclo menstrual (RN-G17) y el cribado de
  * seguridad (07 §3.2) si su sección está a la vista, instalar la app (RF-27) y salir.
  */
 export default async function Page() {
-  const [today, app, consents, screening, sheets, reports] = await Promise.all([
+  const [today, app, consents, screening, sheets, reports, documents] = await Promise.all([
     serverApi<MeToday>('/me/today'),
     serverApi<MeApp>('/me/app'),
     serverApi<MeConsents>('/me/consents'),
     serverApi<MeScreening>('/me/screening'),
     serverApi<MySheetsResponse>('/me/documents'),
     serverApi<PatientMesocycleReportsResponse>('/me/mesocycle-reports'),
+    serverApi<RecordDocumentsResponse>('/me/record-documents'),
   ]);
   if (!today.ok || !app.ok || !consents.ok || !screening.ok) {
     return <Notice tone="danger" title="No pudimos cargar esta sección" />;
@@ -85,6 +89,14 @@ export default async function Page() {
           </Link>
         </section>
       ) : null}
+      <section aria-labelledby="documentos" className="flex flex-col gap-2">
+        <h2 id="documentos" className="text-lg font-semibold">
+          Documentos
+        </h2>
+        <DocumentsLink
+          pending={documents.ok ? pendingDocuments(documents.data.documents).length : 0}
+        />
+      </section>
       {pdfs.length > 0 ? (
         <section aria-labelledby="fichas" className="flex flex-col gap-2">
           <h2 id="fichas" className="text-lg font-semibold">
@@ -133,5 +145,18 @@ export default async function Page() {
         <LogoutButton />
       </div>
     </div>
+  );
+}
+
+/** El expediente siempre está a mano: lo que pide el coach se sube desde aquí (P-31). Si no cargó, igual lleva a la página. */
+function DocumentsLink({ pending }: { pending: number }) {
+  return (
+    <Link href="/mi/documentos" className="flex min-h-touch items-center text-brand-text underline">
+      {pending === 0
+        ? 'Tu expediente: lo que te pide tu coach y lo que subes'
+        : pending === 1
+          ? 'Tu coach te pide 1 documento'
+          : `Tu coach te pide ${String(pending)} documentos`}
+    </Link>
   );
 }
