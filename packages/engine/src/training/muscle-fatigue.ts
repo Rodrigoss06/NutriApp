@@ -265,7 +265,7 @@ export const MUSCLE_FATIGUE_JV = defineMethod<MuscleFatigueInput, MuscleFatigueO
     'Hoja piloto de JV Fitness, fatiga por grupo muscular (P-27, respuesta de Jeremy del 2026-11-10; P-27.1 y P-27.2, respuestas de Rodrigo del 2026-11-12)',
   validity: [
     {
-      rule: 'RN-G16',
+      rule: 'RN-G18',
       severity: 'ERROR',
       code: 'NC-ENG-415',
       message:
@@ -279,7 +279,7 @@ export const MUSCLE_FATIGUE_JV = defineMethod<MuscleFatigueInput, MuscleFatigueO
         input.previousWeeks.some((week) => negative(week.adjustedVolumeKg)),
     },
     {
-      rule: 'RN-G16',
+      rule: 'RN-G18',
       severity: 'ERROR',
       code: 'NC-ENG-416',
       message:
@@ -287,7 +287,7 @@ export const MUSCLE_FATIGUE_JV = defineMethod<MuscleFatigueInput, MuscleFatigueO
       when: ({ thresholds }) => crossed(thresholds),
     },
     {
-      rule: 'RN-G16',
+      rule: 'RN-G18',
       severity: 'ERROR',
       code: 'NC-ENG-419',
       message:

@@ -126,14 +126,14 @@ export const ADJUSTED_VOLUME = defineMethod<AdjustedVolumeInput, AdjustedVolumeO
     'Hoja piloto de JV Fitness, registro de cargas (P-26, respuestas de Jeremy del 2026-11-10 y de Rodrigo del 2026-11-11): volumen × factor RIR × factor descanso',
   validity: [
     {
-      rule: 'RN-F03',
+      rule: 'RN-F18',
       severity: 'ERROR',
       code: 'NC-ENG-411',
       message: 'Cada factor de la tabla es mayor que 0 y cada valor aparece una sola vez.',
       when: ({ factors }) => badTable(factors.rir) || badTable(factors.rest),
     },
     {
-      rule: 'RN-F03',
+      rule: 'RN-F18',
       severity: 'ERROR',
       code: 'NC-ENG-412',
       message:
