@@ -4,11 +4,12 @@ import {
   type EventConsumer,
   type OutboxEnvelope,
 } from '../../../../../platform/index.js';
+import { APPOINTMENT_EVENTS } from '../../../../scheduling/index.js';
 import { OverviewProjection } from '../../../application/overview-projection.js';
 
 /**
  * Lo que cambia el panel del profesional sin cambiar el resumen diario (RF-34, 02 §8): las notas del paciente, la decisión de un
- * control semanal y el cierre de una evaluación. Los registros del día los atiende el consumidor del resumen, que recalcula el panel
+ * control semanal, el cierre de una evaluación y sus citas (la próxima, ADR-125). Los registros del día los atiende el consumidor del resumen, que recalcula el panel
  * después del día. Idempotente: la fila se recalcula entera.
  */
 @Injectable()
@@ -20,6 +21,7 @@ export class OverviewConsumer implements EventConsumer, OnModuleInit {
     'training.review.decided',
     'assessment.evaluation.closed',
     'assessment.evaluation.amended',
+    ...APPOINTMENT_EVENTS,
   ] as const;
 
   constructor(

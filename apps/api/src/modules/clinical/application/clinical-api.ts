@@ -111,6 +111,18 @@ export class ClinicalApi {
       : null;
   }
 
+  /**
+   * A quién y cómo saludar en el recordatorio de una cita (RN-J02): el correo y el nombre de pila de un paciente activo. null si el
+   * contexto no lo ve, si está archivado o si no tiene correo. Los datos de contacto nunca van en un evento: se leen al enviar.
+   */
+  async reminderContact(
+    patientId: string,
+  ): Promise<{ readonly email: string; readonly firstName: string } | null> {
+    const patient = await this.patients.find(patientId);
+    if (!patient || patient.status !== 'ACTIVE' || !patient.email) return null;
+    return { email: patient.email, firstName: patient.firstName };
+  }
+
   /** El paciente como lo muestra su ficha PDF; null si el contexto no lo ve (RN-A05). Solo para documents. */
   async patientCard(patientId: string): Promise<PatientCard | null> {
     const patient = await this.patients.find(patientId);

@@ -20,6 +20,12 @@ export const PERMISSIONS = {
   /** Catálogos de alimentos y actividades: los globales se leen; los propios de la organización se editan (RN-I01). */
   'catalog.read': ['OWNER', 'ADMIN', 'PROFESSIONAL'],
   'catalog.write': ['OWNER', 'ADMIN', 'PROFESSIONAL'],
+  /**
+   * La agenda (RF-37, ADR-125): todos la leen y la escriben; el caso de uso limita la agenda ajena al dueño y al administrador, y
+   * la RLS deja fuera las citas de pacientes que no se ven (RN-A05).
+   */
+  'agenda.read': ['OWNER', 'ADMIN', 'PROFESSIONAL'],
+  'agenda.write': ['OWNER', 'ADMIN', 'PROFESSIONAL'],
   /** El perfil profesional propio: profesión, colegiatura y título. */
   'profile.self': ['OWNER', 'ADMIN', 'PROFESSIONAL'],
 } as const satisfies Record<string, readonly MemberRole[]>;

@@ -12,6 +12,8 @@ export interface OverviewRow {
   readonly adherence7dPct: number | null;
   readonly adherence30dPct: number | null;
   readonly unreadNotes: number;
+  /** La próxima cita programada o confirmada (RF-34, ADR-125); null sin citas. */
+  readonly nextAppointmentAt: Date | null;
   readonly alerts: readonly OverviewAlert[];
   readonly updatedAt: Date;
 }

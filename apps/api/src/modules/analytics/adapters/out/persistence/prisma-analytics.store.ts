@@ -316,6 +316,7 @@ export class PrismaAnalyticsStore implements AnalyticsStore {
       adherence7dPct: row.adherence7dPct,
       adherence30dPct: row.adherence30dPct,
       unreadNotes: row.unreadNotes,
+      nextAppointmentAt: row.nextAppointmentAt,
       alerts: [...row.alerts],
       updatedAt: row.updatedAt,
     };
@@ -356,12 +357,13 @@ export class PrismaAnalyticsStore implements AnalyticsStore {
         adherence_7d_pct: { toString(): string } | null;
         adherence_30d_pct: { toString(): string } | null;
         unread_notes: number;
+        next_appointment_at: Date | null;
         alerts: string[];
         updated_at: Date;
       }[]
     >`
       SELECT patient_id, last_log_date, last_evaluation_at, last_weight_kg, adherence_7d_pct, adherence_30d_pct,
-             unread_notes, alerts, updated_at
+             unread_notes, next_appointment_at, alerts, updated_at
       FROM analytics.patient_overview
       WHERE cardinality(alerts) > 0 AND (${alert}::text IS NULL OR ${alert}::text = ANY(alerts))
       ORDER BY cardinality(alerts) DESC, last_log_date ASC NULLS FIRST, patient_id
@@ -377,6 +379,7 @@ export class PrismaAnalyticsStore implements AnalyticsStore {
         adherence7dPct: num(row.adherence_7d_pct),
         adherence30dPct: num(row.adherence_30d_pct),
         unreadNotes: row.unread_notes,
+        nextAppointmentAt: row.next_appointment_at,
         alerts: row.alerts.filter((code): code is OverviewAlert =>
           (OVERVIEW_ALERTS as readonly string[]).includes(code),
         ),

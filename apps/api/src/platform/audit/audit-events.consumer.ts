@@ -136,6 +136,37 @@ export const AUDITED_EVENTS: Readonly<Record<string, AuditMapping>> = {
     fields: () => ['review_decision', 'review_note'],
   },
   // El expediente de documentos (ADR-122): nunca el título ni el enlace, solo qué cambió. Borrar es lógico.
+  'scheduling.appointment.booked': { action: 'CREATE', resourceType: 'scheduling.appointment' },
+  'scheduling.appointment.updated': {
+    action: 'UPDATE',
+    resourceType: 'scheduling.appointment',
+    fields: (p) => namesOf(p.fields),
+  },
+  'scheduling.appointment.confirmed': {
+    action: 'UPDATE',
+    resourceType: 'scheduling.appointment',
+    fields: () => ['status'],
+  },
+  'scheduling.appointment.cancelled': {
+    action: 'UPDATE',
+    resourceType: 'scheduling.appointment',
+    fields: () => ['status'],
+  },
+  'scheduling.appointment.completed': {
+    action: 'UPDATE',
+    resourceType: 'scheduling.appointment',
+    fields: () => ['status'],
+  },
+  'scheduling.appointment.missed': {
+    action: 'UPDATE',
+    resourceType: 'scheduling.appointment',
+    fields: () => ['status'],
+  },
+  'scheduling.availability.changed': {
+    action: 'UPDATE',
+    resourceType: 'scheduling.availability',
+    fields: (p) => namesOf(p.fields),
+  },
   'clinical.document.added': { action: 'CREATE', resourceType: 'clinical.record_document' },
   'clinical.document.replaced': {
     action: 'UPDATE',
