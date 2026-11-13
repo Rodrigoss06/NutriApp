@@ -48,7 +48,7 @@ const run = (sets: ReturnType<typeof set>[], factors = JV_FACTORS) => {
 };
 
 describe('P14.5 · volumen ajustado = volumen × factor RIR × factor descanso (P-26)', () => {
-  it('el ejemplo de la hoja: 3 × 12 × 45 kg con RIR 2 y 120 s da 1,620 de volumen y 1,782 ajustado', () => {
+  it('G-42 · el ejemplo de la hoja: 3 × 12 × 45 kg con RIR 2 y 120 s da 1,620 de volumen y 1,782 ajustado', () => {
     const result = run([set('a'), set('b'), set('c')]);
     expect(result.outputs.volumeKg).toBe(1_620);
     expect(result.outputs.adjustedVolumeKg).toBeCloseTo(1_782, 9);

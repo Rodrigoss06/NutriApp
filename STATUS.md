@@ -22,14 +22,16 @@ Próxima demo: Demo 3 · Entrenamiento y app del paciente · semana 6
 | P12 Ejercicios y rutinas | ✅ | Rodrigo | #39 a #42 y #44 a #47 | 5 criterios en verde (integración y E2E en escritorio y celular): motor (ADR-070), biblioteca (ADR-071), anamnesis V2 (ADR-072), alergias (ADR-074), seguridad (ADR-075), programa por la API y en la web (ADR-077, ADR-078) y ficha de rutina (ADR-079) |
 | P13 App del paciente | ✅ | Rodrigo | #50 a #55 | 6 criterios en verde (integración y E2E en escritorio y celular): recuperación del día en el motor (ADR-080), registros por /me (ADR-081), Hoy y el plan (ADR-082), registro diario y entreno (ADR-083, ADR-084) y el profesional con los registros (ADR-085). Lighthouse móvil 97 en Hoy (local). La cola sin conexión (RF-31, deseable) queda fuera. /notion-sync aplicado (30 cambios en 11 páginas) |
 | P14 Analítica y evolución, Demo 3 | ✅ | Rodrigo | #57 a #68 | Plan aprobado (2026-11-05, ADR-086): 7 PR. PR 1 (motor, #57), PR 2a (dieta, #58), PR 2b (rutina, #59) y PR 3 (control semanal, #60) por la API; PR 4 (web de la analítica y del control semanal, #61, ADR-090) con E2E en escritorio y celular; PR 5a (evolución, tendencia por mes y ficha por la API, #62, ADR-091) y PR 5b (sus pantallas, #63, ADR-092); PR 6a (panel con alertas por la API y en Inicio, #64, ADR-093), PR 6b (material educativo, #65, ADR-094) y PR 6c (fichas en la app, #66, ADR-095); PR 7a (`seed:load` y p95, #67, ADR-096) y PR 7b (`demo:3` con Luis y Mateo, y guion, #68, ADR-097). Criterios 1 a 5 en verde: el 4, con el p95 de docs/demos/demo-3-p95.md. Etiqueta v0.3.0 (39f5b64); staging, pendiente de P4. /notion-sync aplicado (51 cambios en 14 páginas) |
-| P14.5 Hoja piloto de JV Fitness | 🟨 | Rodrigo | | Aprobado por Rodrigo (2026-11-08, ADR-098); prompt en Notion. PR 1a fusionado (#70, ADR-099). Jeremy respondió P-20 (ADR-100): perfiles de día por la API (PR 1c, #71, fusionado) y sus pantallas, fichas 1.1.0 y Mateo en `demo:3` (PR 1d, #72, fusionado, ADR-101); las porciones de cada perfil por la API (PR 1b, #73, fusionado, ADR-102) y sus pantallas (PR 1f, #74, fusionado); los cambios del día por la API (PR 1e, #75, fusionado, ADR-104); después sus pantallas (1g, #76, fusionado, ADR-105), y luego el PR 2 (volumen ajustado, #77, fusionado, ADR-106) y el 6a (cadera, comparativa y estrés, #78, fusionado, ADR-107); en la fase B, el PR 3 (panel de fatiga, #79, fusionado, ADR-108) el 5a (check-in de la semana por la API, #80, fusionado, ADR-109) el 5b (sus pantallas, #81, fusionado, ADR-110), el 9a (patrones y ejercicios de la prescripción de la hoja, #82, fusionado, ADR-111) y el 9b (la propuesta con las sesiones de la hoja, #83, fusionado, ADR-112) y el ajuste del volumen ajustado (#84, fusionado, ADR-113) y el 9c (cómo se escribe la prescripción, #85, fusionado, ADR-114) y el 4 (fatiga por grupo muscular, #86, fusionado, ADR-115) y el 9d (WhatsApp, #87, fusionado, ADR-116); en la fase C, el 7a (informe del mesociclo por la API, #88, fusionado, ADR-117) y el 7b (sus pantallas, #89, fusionado, ADR-118), y el 6b-1 (fotos de progreso por la API, #90, fusionado, ADR-119) y el 6b-2 (sus pantallas, #91, fusionado, ADR-120), los coeficientes de la fatiga por grupo muscular (#92, fusionado, ADR-121), el 8a (el expediente de documentos por la API, #93, fusionado, ADR-122) y el 8b (sus pantallas, ADR-123): la fase C queda completa. Jeremy respondió P-20.6 a P-27 y P-33 a P-37 (2026-11-09 y 2026-11-10): el PR 2 y la fase B (PR 3, 4, 5 y 9) ya tienen sus datos. La C, con la cotización por la cláusula 12 revisada (`docs/cotizaciones/fase-c-hoja-piloto.md`): empieza al cerrar los PR del contrato |
+| P14.5 Hoja piloto de JV Fitness | ✅ | Rodrigo | #70 a #94 | Aprobado por Rodrigo (2026-11-08, ADR-098), en 25 PR contra main. Fase A: metas de día (#70, ADR-099), volumen ajustado (#77, ADR-106) y la cadera, la comparativa física y el estrés (#78, ADR-107). Con las respuestas de Jeremy: perfiles de día (#71 y #72, ADR-100 y ADR-101), porciones por perfil (#73 y #74, ADR-102 y ADR-103), cambios del día (#75 y #76, ADR-104 y ADR-105), panel de fatiga (#79, ADR-108), check-in del domingo (#80 y #81, ADR-109 y ADR-110), la prescripción de la hoja (#82, #83 y #85, ADR-111, ADR-112 y ADR-114), el descanso por tramos (#84, ADR-113), la fatiga por grupo muscular (#86, ADR-115) y WhatsApp (#87, ADR-116). Fase C, fuera del contrato y cotizada por la cláusula 12: informe del mesociclo (#88 y #89, ADR-117 y ADR-118), fotos de progreso (#90 y #91, ADR-119 y ADR-120), coeficientes de la fatiga (#92, ADR-121) y expediente de documentos (#93 y #94, ADR-122 y ADR-123). Los 4 criterios en verde: G-41 a G-44 en `test/golden` (motor 1.17.0) y el panel de Mateo por HTTP en `demo-3.int.spec.ts`. /notion-sync aplicado (87 cambios en 11 páginas) |
 | P15 Marca, calendario, admin y migración | ⬜ | Rodrigo | | |
 | P16 Producción y entrega, Demo 4 | ⬜ | Rodrigo | | |
 
 Leyenda: ⬜ pendiente · 🟨 en curso · ✅ terminado · ⛔ bloqueado
 
 ## En curso
-- P14.5 en curso (aprobado el 2026-11-08, ADR-098): lo que trae la hoja piloto de Jeremy, por fases. Fase A, sin esperar respuestas:
+- Nada en curso: sigue P15 con /prompt P15 (plan primero).
+- P14.5 terminado (#70 a #94; aprobado el 2026-11-08, ADR-098), en 25 PR contra main: lo que trae la hoja piloto de Jeremy, por
+  fases. Fase A, sin esperar respuestas:
   PR 1a, metas de día de entrenamiento y de descanso; PR 2, volumen ajustado por RIR y descanso; PR 6a, la cadera en Progreso,
   la comparativa inicial → actual y el estrés en el control semanal. Nada que dependa de una respuesta se publica con valores
   inventados.
@@ -107,7 +109,17 @@ Leyenda: ⬜ pendiente · 🟨 en curso · ✅ terminado · ⛔ bloqueado
     al alumno o al revocar, sin días de gracia. Fusionado (#90).
   - PR 6b-2, las pantallas de las fotos (ADR-120): Entrenamiento › Fotos en el panel y Progreso › Fotos de progreso en la app, con
     la autorización, las tres vistas de cada mesociclo y la comparativa por vista; el navegador achica la foto antes de subirla.
-    E2E `fotos.spec.ts` y las fotos en la sección 9 del guion. Abierto.
+    E2E `fotos.spec.ts` y las fotos en la sección 9 del guion. Fusionado (#91).
+  - Los coeficientes de la fatiga por grupo muscular (P-27.1 y P-27.2, ADR-121): `MUSCLE_FATIGUE_JV` 1.1.0 (motor 1.17.0) con las
+    cuatro columnas de la hoja por la familia de cada ejercicio (patrón y equipo), promediadas según el volumen.
+    `analytics:rebuild --all` ya corrió en la base local; en staging y producción, después de migrar. Fusionado (#92).
+  - PR 8a, el expediente de documentos por la API (P-31, ADR-122): `clinical.record_document` con 8 categorías, Pendiente → Por
+    revisar → Validado, HEALTH_DATA e IMAGES, archivos de hasta 5 MB y borrado lógico auditado. Fusionado (#93).
+  - PR 8b, sus pantallas (ADR-123): la pestaña Documentos en el panel y Más › Documentos en la app, con la E2E
+    `documentos.spec.ts` y la sección 9 del guion. Fusionado (#94).
+  - Cierre (2026-11-12): /notion-sync aplicado, 87 cambios en 11 páginas (02, 03 en la 1.16, 04, 05 en la 1.13, 05.1, 05.2,
+    05.3, 07 en la 1.4, Proyecto, los prompts P14.5 a P16 y el Documento técnico en la 1.10), y G-41 a G-44 en `test/golden`, que
+    ahora corre `pnpm test:golden`.
 - P14 terminado (#57 a #68, etiqueta v0.3.0 en 39f5b64; plan aprobado el 2026-11-05, ADR-086), en 7 PR contra main. Plan de Rodrigo: completar la Demo 3 y, en ella, corregir
   cada punto faltante, como P4, para llevar bien la Demo 4 y cerrar el proyecto:
   - PR 1, motor: `WEEKLY_REVIEW_JV` 3.0.0 con los agregados, el semáforo, el factor ajustado y la decisión sugerida (RN-G16); G-39 en
@@ -216,6 +228,9 @@ Leyenda: ⬜ pendiente · 🟨 en curso · ✅ terminado · ⛔ bloqueado
   - migración 202610210000_food_tafera: fuente TAFERA_2016, columnas de origen y peso bruto en household_measure y
     tabla food.cooking_factor con la RLS de catálogo;
   - importadores TAFERA_MEASURES y TAFERA_COOKING_FACTORS; catalog:load los carga después de la TPCA.
+- Notion: el /notion-sync de P14.5 (2026-11-12) llevó ADR-099 a ADR-123 a 02, 03 (1.16: RN-F18, RN-G18 a RN-G21 y G-41 a G-44),
+  04 (RF-44 a RF-46, «Hoja piloto · fase C»), 05 (1.13), 05.1, 05.2, 05.3, 07 (1.4: P-20 a P-37 resueltas), Proyecto, los prompts
+  P14.5, P15 y P16 y el Documento técnico (1.10): 87 cambios aprobados por Rodrigo.
 - Notion: el /notion-sync de P14 (2026-11-08) llevó ADR-086 a ADR-098 a 01, 02, 03 (1.14), 04, 05 (1.12), 05.1, 05.2, 05.3, 06,
   07 (1.3: P-20 a P-37 en §15), Proyecto (hoja piloto y R9), Creación del proyecto, Prompts (P14.5 nuevo) y el Documento
   técnico (1.9): 51 cambios aprobados por Rodrigo.
@@ -236,26 +251,17 @@ Leyenda: ⬜ pendiente · 🟨 en curso · ✅ terminado · ⛔ bloqueado
 ## Siguiente paso
 - Antes de la Demo 3: la matriz manual de navegadores (RNF-19: Chrome, Edge, Safari y Firefox; la E2E cubre Chromium
   y WebKit), que no quedó registrada en las demos 1 y 2
-- P14.5, uno por vez contra main: del #71 al #91 (PR 1c, 1d, 1b, 1f, 1e, 1g, 2, 6a, 3, 5a, 5b, 9a, 9b, el ajuste del volumen
-  ajustado, el 9c, el 4, el 9d, el 7a, el 7b, el 6b-1 y el 6b-2) están fusionados: el informe del mesociclo y las fotos de progreso
-  están completos. Sigue la fase C, con la cotización aprobada, cada uno al fusionarse el anterior:
-  - los coeficientes de la fatiga por grupo muscular (#92, fusionado, motor 1.17.0, ADR-121). `analytics:rebuild` ya corrió en la
-    base local; en staging y producción, al desplegar;
-  - el 8a (el expediente de documentos por la API, P-31, #93, fusionado, ADR-122);
-  - el 8b (sus pantallas, en el panel y en la app, con la E2E y el guion, ADR-123), abierto. Con él se cierra la fase C: falta
-    cobrar el recibo 004 de la cotización y cerrar P14.5 con el /notion-sync.
-- /notion-sync de P14.5 con ADR-099 a ADR-123 (RN-F14 y G-31 ya aplicados): P-20 resuelta en 07 §15, los perfiles en 07 §2 y §8, RN-E07, RN-E09,
-  RN-G03 y RN-G05, el método nuevo en 02 §9, las tablas en 05.2 (con `tracking.day_change`), los eventos de los cambios del día
-  en 02 §8, las plantillas 1.1.0 y 1.2.0 en 05.3, RF-24, RF-28 y RF-29 en 04 y el caso dorado G-41
+- P15 (marca, calendario, panel interno, exportación y migración): /prompt P15, plan primero. Su exportación y su supresión suman
+  lo de P14.5: los check-in del domingo, los cambios del día, los informes, las fotos y el expediente (RN-G19 a RN-G21)
+- Al desplegar P14.5 en staging y producción: `pnpm db:migrate` y después `analytics:rebuild --all` (ADR-121; está en el prompt
+  de P16)
+- Propuestas para Notion pendientes de aprobación: P-18 y P-19 siguen abiertas en 07 §15, pero Proyecto dice «abiertas P-01 a
+  P-16»; y el glosario del Documento técnico no tiene los términos de P14.5
 - Demo 3: lista con v0.3.0 y `pnpm demo:3` (guion en docs/demos/demo-3.md). Falta la semana del paciente de prueba desde su
   celular (la evidencia de 04)
-- Hoja piloto de Jeremy (2026-11-07, interna: no se comparte hasta que la valide):
-  - las preguntas de `docs/preguntas/hoja-piloto-mateo.md` (P-20 a P-37, en 07 §15). Jeremy respondió P-20 (2026-11-08), P-20.6
-    a P-25 (2026-11-09) y P-26, P-27 y P-33 a P-37 (2026-11-10). P-20.6: los almidones de más van alternando la media tarde y
-    la cena, y el motor 1.9.0 ya lo sigue (PR 1b, ADR-102). P-33: para que la carga de la semana 3 de Mateo siga en ámbar, el
-    22/10 pasaría a «ASISTIÓ» en la semilla; con «AUSENTE», sale verde. Se decide con el PR 3;
-  - P14.5 aprobado (ADR-098): la fase B ya tiene sus respuestas; la C (informe mensual, fotos y expediente, P-28 a P-31), el
-    acuerdo y la cotización por la cláusula 12
+- Hoja piloto de Jeremy (2026-11-07, interna: no se comparte hasta que la valide): P-20 a P-37 resueltas (07 §15) y P14.5
+  entregado. Siguen «Provisional» los ejercicios de la hoja (ADR-111) y las 6 filas de flexión y extensión de rodilla (ADR-112):
+  se revisan en P16 (alcance 7)
 - Para la Demo 3 y la Demo 4, según el plan de Rodrigo (2026-11-05): resolver lo que falta del Notion maestro, empezando por P4
   (staging) en cuanto llegue la cuenta de Hetzner
 - Confirmar la fecha de inicio: si fue el 24-09, el 2026-11-05 es el primer día de la semana 7 y la Demo 4 cae el 25-11
@@ -268,32 +274,10 @@ Leyenda: ⬜ pendiente · 🟨 en curso · ✅ terminado · ⛔ bloqueado
 
 ## Bloqueos y preguntas al cliente
 - [ ] Cuenta de Hetzner y dominio a nombre de Jeremy: bloquea P4
-- [ ] Hoja piloto «JV Fitness · Mi plan» (`docs/preguntas/hoja-piloto-mateo.md`): Jeremy respondió P-20 (2026-11-08), P-20.6 a
-  P-25 (2026-11-09) y P-26, P-27 y P-33 a P-37 (2026-11-10). Nada de la fase A ni de la B queda bloqueado. P-27.1 y P-27.2, los
-  coeficientes de la fatiga por grupo, las respondió Rodrigo el 2026-11-12 (ADR-121), y confirmó lo que salía del orden de la
-  regla: los saltos de tobillo en «aislamiento y brazos», el burpee en «movilidad y cardio» y la banda elástica como libre.
-  - P-32 resuelta (2026-11-10): el «panel central» es el panel del coach; sin saldos, renovaciones, congelaciones ni pagos. La
-    asistencia a las sesiones y el calendario con sus citas llegan en P15.
-  - Rodrigo respondió el 2026-11-11:
-    - PR 9b: con 5 días, Superior A, Inferior A, Superior B, Inferior B y Acondicionamiento; «Flexión de rodilla» y «Extensión
-      de rodilla» como patrones nuevos; el tempo y el descanso por patrón, como la tabla de Jeremy. Cambian RN-F14 y G-31: se
-      proponen con /notion-sync antes de fusionar;
-    - PR 4: 1.0 el primario y 0.5 el secundario, sin coeficientes por ejercicio (la «Base 3 sem.» de Mateo no será la de la hoja);
-      sin las cuatro columnas de coeficientes, que se le preguntan a Jeremy (P-27.1, nueva), y la base de cada grupo con las
-      semanas de la carga del panel, con 0 donde no se entrenó (ADR-115);
-    - PR 9d (P-35): se activa por alumno en su perfil de atleta; la etiqueta, en una línea arriba del macrociclo, sin tocar la
-      columna «Revisión»; el botón abre wa.me con el teléfono del alumno, y si le falta el código de país, pide agregarlo.
-      Confirmado: el código de país solo cuenta si el teléfono empieza con «+» o «00», y la etiqueta queda en el panel del coach,
-      sin la ficha PDF de la rutina ni la app del paciente;
-    - PR 5: confirmados el peso solo si la app lo permite y la corrección dentro del plazo;
-    - volumen ajustado: el descanso por tramos (hasta 45 s = 1.15 … 180 s o más = 0.95) y, con RPE y sin RIR, RIR = 10 − RPE
-      entre 0 y 5, con la fórmula si tiene decimal (RPE 8.5 = 1.15): motor 1.14.0 (ADR-113);
-    - RN-F14 y G-31 aprobados y aplicados en Notion 03 (versión 1.15);
-    - fase C: cotización revisada (`docs/cotizaciones/fase-c-hoja-piloto.md`, 61 h, S/ 3,355, pago al final; el informe suma 3 h por el resumen semanal y la comparativa física). Se empieza al
-      cerrar el 9c, el 4, el 9d y el ajuste del descanso (#84, fusionado). El texto del consentimiento de las fotos está en P-30; las fotos se
-      guardan como dice el texto: solo mientras el expediente esté activo o hasta que el alumno revoque, sin los 12 meses después de
-      la baja de la respuesta (PR 6b). Se borran en el acto al archivar al alumno o cuando revoca, sin días de gracia;
-    - provisionales con Jeremy, de acuerdo: la máquina en los tres niveles de rodilla y 3 × 8–12.
+- [x] Hoja piloto «JV Fitness · Mi plan» (`docs/preguntas/hoja-piloto-mateo.md`): P-20 a P-37 resueltas (Jeremy, del
+  2026-11-08 al 2026-11-10; P-27.1 y P-27.2, Rodrigo, el 2026-11-12) y P14.5 entregado (#70 a #94); lo decidido está en ADR-099
+  a ADR-123. Provisionales, de acuerdo con Jeremy: los ejercicios de la hoja, la máquina en los tres niveles de rodilla y
+  3 × 8–12 (ADR-111, ADR-112)
 - [ ] N9: límites y precio de los tramos de membresía; qué pasa al superar el límite
 - [x] Ficha de anamnesis de Jeremy recibida (2026-10-20): será la versión 2 de la historia clínica (RF-43, P12)
 - [ ] Antes de P16: cargar en producción los valores definitivos de TRAMO_5 y TRAMO_50 (la semilla no corre en
@@ -340,6 +324,9 @@ Leyenda: ⬜ pendiente · 🟨 en curso · ✅ terminado · ⛔ bloqueado
   apartada en `.git/refs-remotes-origin-danado-2026-11-08` y git funciona. Hay que correr `chkdsk /f` desde Windows, o
   `ntfsfix` con la unidad desmontada, y después borrar esa carpeta
 - Consultas en paralelo dentro de una transacción (`Promise.all` en `me.queries.ts` y `patient-self-service.ts`): `pg` avisa que `pg@9` lo quitará.
+- El motor cita RN-G16 en los errores del panel de fatiga y de la fatiga por grupo (NC-ENG-413 a NC-ENG-416 y NC-ENG-419) y
+  RN-F03 en los del volumen ajustado (NC-ENG-411 y NC-ENG-412): son de antes de RN-G18 y RN-F18 en Notion (2026-11-12). Falta
+  decidir si cambia la cita; ningún número cambia
   Antes de subir a esa versión, pasarlas a secuencia (ADR-083)
 - P16, antes de la entrega: revisar y quitar los mensajes de «Provisional» (ejercicios base, lista DEMO, textos legales) o
   dejar marcado lo que siga sin confirmar (pedido de Rodrigo, 2026-10-30)
@@ -401,6 +388,9 @@ Leyenda: ⬜ pendiente · 🟨 en curso · ✅ terminado · ⛔ bloqueado
   reintentar (#35, 2026-10-27)
 
 ## Registro de sesiones (solo las 5 últimas)
+- 2026-11-12 · Cierre de P14.5 · #93 y #94 fusionados (el expediente de documentos por la API y sus pantallas, ADR-122 y
+  ADR-123). /notion-sync aplicado: 87 cambios en 11 páginas (ADR-099 a ADR-123, RN-F18, RN-G18 a RN-G21 y G-41 a G-44). P14.5
+  terminado en 25 PR (#70 a #94), con los 4 criterios en verde y G-41 a G-44 en `test/golden`
 - 2026-11-12 · P14.5, fase C (6b-2, coeficientes y 8a) · #90, #91 y #92 fusionados (las fotos de progreso por la API y sus
   pantallas, ADR-119 y ADR-120; los coeficientes de la fatiga por grupo muscular, motor 1.17.0, ADR-121). Plan del PR 8 aprobado:
   el 8a, el expediente de documentos por la API, con IMAGES para las fotos y los enlaces por 07 (#93, ADR-122), y el 8b, sus
@@ -416,6 +406,3 @@ Leyenda: ⬜ pendiente · 🟨 en curso · ✅ terminado · ⛔ bloqueado
 - 2026-11-06 · P14 (PR 1 a PR 4) · #56 a #59 fusionados y #60 abierto. Cierre de P13 con el /notion-sync; motor del control semanal (#57),
   analítica de dieta y de rutina por la API (#58, #59), control semanal por la API (#60, ADR-089) y su web con la analítica y los umbrales
   (ADR-090), con E2E en escritorio y celular
-- 2026-11-05 · P13 (PR 4b, PR 5 y cierre) · #53, #54 y #55 fusionados. Pantallas del registro diario, la indicación del día, Entreno serie por
-  serie, el ciclo y el cribado (ADR-084); el profesional ve los registros, los ajusta con motivo y abre las notas (ADR-085). P13 terminado:
-  los 6 criterios en verde y el /notion-sync aplicado (30 cambios)

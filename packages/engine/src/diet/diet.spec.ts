@@ -23,7 +23,7 @@ describe('RN-E07 · los perfiles de día: mandan los gramos (07 §2, P-20)', () 
   const profile = (choG: number, proteinG = 160, fatG = 70) =>
     runMethod(MACROS_DAY_PROFILE, { choG, proteinG, fatG });
 
-  it('las kcal salen de los gramos con Atwater: 2,230 el día de descanso y 2,510 el de entrenamiento', () => {
+  it('G-41 · las kcal salen de los gramos con Atwater: 2,230 el día de descanso y 2,510 el de entrenamiento', () => {
     expect(expectOk(profile(240)).outputs).toEqual({
       kcal: 2230,
       choG: 240,
