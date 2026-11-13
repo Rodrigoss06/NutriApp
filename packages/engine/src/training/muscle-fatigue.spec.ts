@@ -87,7 +87,7 @@ const PREVIOUS = [
   { adjustedVolumeKg: 3375, muscles: muscles({ CHEST: 1407, TRICEPS: 703.5 }) },
 ];
 
-describe('RN-G16 · P-27 · fatiga por grupo muscular de la hoja piloto', () => {
+describe('RN-G18 · P-27 · fatiga por grupo muscular de la hoja piloto', () => {
   it('la base de cada grupo es el promedio de las 3 semanas previas con volumen: Pecho 1,419 y Tríceps 709.5', () => {
     const result = fatigue({
       muscles: muscles({ CHEST: 1419, TRICEPS: 709.5 }),
@@ -198,7 +198,9 @@ describe('RN-G16 · P-27 · fatiga por grupo muscular de la hoja piloto', () => 
         ...input,
         thresholds,
       });
-      return run.ok ? null : run.errors.map((issue) => issue.code);
+      if (run.ok) return null;
+      expect(run.errors.map((issue) => issue.rule)).toEqual(run.errors.map(() => 'RN-G18'));
+      return run.errors.map((issue) => issue.code);
     };
     expect(error({ muscles: muscles({ CHEST: -1 }), previousWeeks: [] })).toEqual(['NC-ENG-415']);
     expect(
@@ -218,7 +220,7 @@ describe('RN-G16 · P-27 · fatiga por grupo muscular de la hoja piloto', () => 
 
 // P-27.1, respuestas de Rodrigo (2026-11-12): en cada grupo, el coeficiente de las familias que lo trabajaron, promediado según el
 // volumen que cada una le dio (con 1.0 y 0.5). Solo se muestran: no cambian el estado ni la recuperación estimada.
-describe('RN-G16 · P-27.1 · coeficientes por grupo muscular', () => {
+describe('RN-G18 · P-27.1 · coeficientes por grupo muscular', () => {
   const trained = (
     muscleCode: string,
     families: Readonly<Partial<Record<FatigueFamily, number>>>,
@@ -313,7 +315,9 @@ describe('RN-G16 · P-27.1 · coeficientes por grupo muscular', () => {
         ...input,
         thresholds: JV,
       });
-      return run.ok ? null : run.errors.map((issue) => issue.code);
+      if (run.ok) return null;
+      expect(run.errors.map((issue) => issue.rule)).toEqual(run.errors.map(() => 'RN-G18'));
+      return run.errors.map((issue) => issue.code);
     };
     const chest = (families: MuscleVolume['families']): MuscleVolume[] => [
       { muscleCode: 'CHEST', adjustedVolumeKg: 1000, families },
@@ -360,7 +364,7 @@ describe('RN-G16 · P-27.1 · coeficientes por grupo muscular', () => {
 
 // P-27.2, respuesta de Rodrigo (2026-11-12): la familia de cada ejercicio sale de su patrón y su equipo. Los ejemplos son de la
 // biblioteca base (seeds/exercise/ejercicios-base.csv).
-describe('RN-G16 · P-27.2 · la familia de cada ejercicio, por patrón y equipo', () => {
+describe('RN-G18 · P-27.2 · la familia de cada ejercicio, por patrón y equipo', () => {
   const family = (pattern: string | null, equipmentCode: string | null, modality = 'STRENGTH') =>
     fatigueFamilyOf({ pattern, equipmentCode, modality });
 

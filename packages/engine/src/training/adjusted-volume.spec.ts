@@ -47,7 +47,7 @@ const run = (sets: ReturnType<typeof set>[], factors = JV_FACTORS) => {
   return result.result;
 };
 
-describe('P14.5 · volumen ajustado = volumen × factor RIR × factor descanso (P-26)', () => {
+describe('RN-F18 · volumen ajustado = volumen × factor RIR × factor descanso (P-26)', () => {
   it('G-42 · el ejemplo de la hoja: 3 × 12 × 45 kg con RIR 2 y 120 s da 1,620 de volumen y 1,782 ajustado', () => {
     const result = run([set('a'), set('b'), set('c')]);
     expect(result.outputs.volumeKg).toBe(1_620);
@@ -146,7 +146,9 @@ describe('P14.5 · volumen ajustado = volumen × factor RIR × factor descanso (
   it('una tabla con un factor que no es positivo o un valor repetido, o una serie negativa, dan su código', () => {
     const error = (sets: ReturnType<typeof set>[], factors: VolumeFactorTables) => {
       const result = runMethod(ADJUSTED_VOLUME, { sets, factors });
-      return result.ok ? null : result.errors.map((issue) => issue.code);
+      if (result.ok) return null;
+      expect(result.errors.map((issue) => issue.rule)).toEqual(result.errors.map(() => 'RN-F18'));
+      return result.errors.map((issue) => issue.code);
     };
     expect(
       error([set('a')], { ...JV_FACTORS, rir: [{ from: 0, factor: 0, orMore: true }] }),

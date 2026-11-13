@@ -151,7 +151,7 @@ export const FATIGUE_PANEL_JV = defineMethod<FatiguePanelInput, FatiguePanelOutp
     'Hoja piloto de JV Fitness, panel de fatiga y recuperación (P-23 y P-24, respuestas de Jeremy del 2026-11-09)',
   validity: [
     {
-      rule: 'RN-G16',
+      rule: 'RN-G18',
       severity: 'ERROR',
       code: 'NC-ENG-413',
       message:
@@ -165,7 +165,7 @@ export const FATIGUE_PANEL_JV = defineMethod<FatiguePanelInput, FatiguePanelOutp
         input.previousVolumesKg.length > BASE_WEEKS,
     },
     {
-      rule: 'RN-G16',
+      rule: 'RN-G18',
       severity: 'ERROR',
       code: 'NC-ENG-414',
       message: 'Los umbrales no son negativos y el ámbar llega antes que el rojo.',

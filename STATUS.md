@@ -255,8 +255,6 @@ Leyenda: ⬜ pendiente · 🟨 en curso · ✅ terminado · ⛔ bloqueado
   lo de P14.5: los check-in del domingo, los cambios del día, los informes, las fotos y el expediente (RN-G19 a RN-G21)
 - Al desplegar P14.5 en staging y producción: `pnpm db:migrate` y después `analytics:rebuild --all` (ADR-121; está en el prompt
   de P16)
-- Propuestas para Notion pendientes de aprobación: P-18 y P-19 siguen abiertas en 07 §15, pero Proyecto dice «abiertas P-01 a
-  P-16»; y el glosario del Documento técnico no tiene los términos de P14.5
 - Demo 3: lista con v0.3.0 y `pnpm demo:3` (guion en docs/demos/demo-3.md). Falta la semana del paciente de prueba desde su
   celular (la evidencia de 04)
 - Hoja piloto de Jeremy (2026-11-07, interna: no se comparte hasta que la valide): P-20 a P-37 resueltas (07 §15) y P14.5
@@ -324,9 +322,6 @@ Leyenda: ⬜ pendiente · 🟨 en curso · ✅ terminado · ⛔ bloqueado
   apartada en `.git/refs-remotes-origin-danado-2026-11-08` y git funciona. Hay que correr `chkdsk /f` desde Windows, o
   `ntfsfix` con la unidad desmontada, y después borrar esa carpeta
 - Consultas en paralelo dentro de una transacción (`Promise.all` en `me.queries.ts` y `patient-self-service.ts`): `pg` avisa que `pg@9` lo quitará.
-- El motor cita RN-G16 en los errores del panel de fatiga y de la fatiga por grupo (NC-ENG-413 a NC-ENG-416 y NC-ENG-419) y
-  RN-F03 en los del volumen ajustado (NC-ENG-411 y NC-ENG-412): son de antes de RN-G18 y RN-F18 en Notion (2026-11-12). Falta
-  decidir si cambia la cita; ningún número cambia
   Antes de subir a esa versión, pasarlas a secuencia (ADR-083)
 - P16, antes de la entrega: revisar y quitar los mensajes de «Provisional» (ejercicios base, lista DEMO, textos legales) o
   dejar marcado lo que siga sin confirmar (pedido de Rodrigo, 2026-10-30)

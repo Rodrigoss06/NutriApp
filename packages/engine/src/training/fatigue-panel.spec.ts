@@ -54,7 +54,7 @@ const mateoWeek = (index: number): FatiguePanelInput => ({
   thresholds: JV,
 });
 
-describe('RN-G16 · P-23 y P-24 · panel de fatiga y recuperación de la hoja piloto', () => {
+describe('RN-G18 · P-23 y P-24 · panel de fatiga y recuperación de la hoja piloto', () => {
   it('G-43 · reproduce las semanas de Mateo: ámbar, rojo, ámbar, verde y luego faltan datos', () => {
     const rows = MATEO.map((_, index) => panel(mateoWeek(index)));
     expect(rows.map((row) => row.load)).toEqual([
@@ -164,16 +164,16 @@ describe('RN-G16 · P-23 y P-24 · panel de fatiga y recuperación de la hoja pi
       const run = runMethod(FATIGUE_PANEL_JV, input);
       return run.ok ? [] : run.errors.map(({ code, rule }) => ({ code, rule }));
     };
-    expect(codes(week({ avgStress: 6 }))).toEqual([{ code: 'NC-ENG-413', rule: 'RN-G16' }]);
-    expect(codes(week({ adjustedVolumeKg: -1 }))).toEqual([{ code: 'NC-ENG-413', rule: 'RN-G16' }]);
+    expect(codes(week({ avgStress: 6 }))).toEqual([{ code: 'NC-ENG-413', rule: 'RN-G18' }]);
+    expect(codes(week({ adjustedVolumeKg: -1 }))).toEqual([{ code: 'NC-ENG-413', rule: 'RN-G18' }]);
     expect(codes(week({ previousVolumesKg: [1, 2, 3, 4] }))).toEqual([
-      { code: 'NC-ENG-413', rule: 'RN-G16' },
+      { code: 'NC-ENG-413', rule: 'RN-G18' },
     ]);
     expect(codes(week({ thresholds: { ...JV, loadAmberAbovePct: 40 } }))).toEqual([
-      { code: 'NC-ENG-414', rule: 'RN-G16' },
+      { code: 'NC-ENG-414', rule: 'RN-G18' },
     ]);
     expect(codes(week({ thresholds: { ...JV, recoveryAmberSleepBelowHours: 5 } }))).toEqual([
-      { code: 'NC-ENG-414', rule: 'RN-G16' },
+      { code: 'NC-ENG-414', rule: 'RN-G18' },
     ]);
   });
 });
