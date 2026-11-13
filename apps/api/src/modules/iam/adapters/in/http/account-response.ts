@@ -13,6 +13,15 @@ export function toAccountResponse(view: AccountView): AccountResponse {
       organizationName: m.organizationName,
       role: m.role,
     })),
+    support: view.support
+      ? {
+          grantId: view.support.grantId,
+          organizationId: view.support.organizationId,
+          organizationName: view.support.organizationName,
+          scope: view.support.scope,
+          expiresAt: view.support.expiresAt.toISOString(),
+        }
+      : null,
   };
 }
 

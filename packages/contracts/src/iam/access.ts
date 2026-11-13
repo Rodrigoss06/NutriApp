@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { supportSessionSchema } from '../tenancy/support-access.js';
 
 /** Correo tal como lo escribe la persona: se recorta y se compara sin mayúsculas en la API (citext). */
 export const emailSchema = z.string().trim().max(254).pipe(z.email('Escribe un correo válido.'));
@@ -45,7 +46,10 @@ export const membershipSchema = z.object({
 });
 export type Membership = z.infer<typeof membershipSchema>;
 
-/** Lo que la web sabe de quien entró: GET /api/v1/account y la respuesta de entrar. */
+/**
+ * Lo que la web sabe de quien entró: GET /api/v1/account y la respuesta de entrar. `support`, solo en una sesión PLATFORM que entró
+ * a una organización con un permiso vigente (RN-A09, ADR-129).
+ */
 export const accountResponseSchema = z.object({
   id: z.uuid(),
   email: z.string(),
@@ -53,6 +57,7 @@ export const accountResponseSchema = z.object({
   kind: z.enum(SESSION_KINDS),
   activeOrganizationId: z.uuid().nullable(),
   memberships: z.array(membershipSchema),
+  support: supportSessionSchema.nullable(),
 });
 export type AccountResponse = z.infer<typeof accountResponseSchema>;
 

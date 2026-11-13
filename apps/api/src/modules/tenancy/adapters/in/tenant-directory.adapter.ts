@@ -3,6 +3,7 @@ import type { OrganizationId, PatientId, UserId } from '@nutricoach/shared-kerne
 import type {
   MembershipView,
   OrganizationStatus,
+  SupportGrantView,
   TenantDirectory,
 } from '../../../../platform/index.js';
 import { DirectoryQueries } from '../../application/queries/organization.queries.js';
@@ -25,5 +26,9 @@ export class TenancyTenantDirectory implements TenantDirectory {
     patient: { readonly userId: UserId; readonly patientId: PatientId },
   ): Promise<OrganizationStatus | null> {
     return this.queries.patientOrganizationStatus(organizationId, patient);
+  }
+
+  supportGrant(organizationId: OrganizationId, userId: UserId): Promise<SupportGrantView | null> {
+    return this.queries.supportGrant(organizationId, userId);
   }
 }

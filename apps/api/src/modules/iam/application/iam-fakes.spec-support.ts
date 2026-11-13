@@ -298,8 +298,12 @@ export class FakeTokens implements SecretTokens {
   }
 }
 
-export const membershipsOf = (list: MembershipSummary[]): MembershipDirectory => ({
+export const membershipsOf = (
+  list: MembershipSummary[],
+  supportGrant: Awaited<ReturnType<MembershipDirectory['supportGrant']>> = null,
+): MembershipDirectory => ({
   membershipsOf: () => Promise.resolve(list),
+  supportGrant: () => Promise.resolve(supportGrant),
 });
 
 export class MemoryInvitations implements InvitationStore {

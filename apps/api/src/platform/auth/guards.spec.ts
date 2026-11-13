@@ -11,6 +11,7 @@ import { TenantGuard } from './tenant.guard.js';
 import type {
   MembershipView,
   OrganizationStatus,
+  SupportGrantView,
   TenantDirectory,
 } from './tenant-directory.port.js';
 
@@ -53,7 +54,9 @@ const patientSession = (): SessionPrincipal => ({
 const directoryWith = (
   membership: Partial<MembershipView> | null,
   patientOrganization: OrganizationStatus | null = 'ACTIVE',
+  supportGrant: SupportGrantView | null = null,
 ): TenantDirectory => ({
+  supportGrant: () => Promise.resolve(supportGrant),
   membership: () =>
     Promise.resolve(
       membership && {
@@ -187,6 +190,75 @@ describe('02 §10 · TenantGuard y PolicyGuard', () => {
   it('RN-A04 · el rol necesita el permiso del caso de uso', async () => {
     expect(await run({ role: 'PROFESSIONAL' })).toBe(403);
     expect(await run({ role: 'ADMIN' })).toBe('ok');
+  });
+});
+
+describe('RN-A09 · el modo soporte, con el permiso del dueño (ADR-129)', () => {
+  const platform: SessionPrincipal = {
+    sessionId: 's',
+    userId: USER as never,
+    kind: 'PLATFORM',
+    activeOrganizationId: ORG as never,
+    patientId: null,
+  };
+  const grant = (overrides: Partial<SupportGrantView> = {}): SupportGrantView => ({
+    grantId: '0192f0a0-0000-7000-8000-0000000000cc',
+    organizationId: ORG as never,
+    organizationName: 'Org',
+    organizationStatus: 'ACTIVE',
+    scope: 'CLINICAL_READ',
+    expiresAt: new Date('2026-11-14T00:00:00Z'),
+    ...overrides,
+  });
+  const run = async (
+    support: SupportGrantView | null,
+    permission: AccessRule & { kind: 'tenant' },
+    method = 'GET',
+  ) => {
+    const request = { method, session: platform } as ContextualRequest;
+    const context = contextFor(request, permission);
+    const tenant = await status(() =>
+      new TenantGuard(new Reflector(), directoryWith(null, 'ACTIVE', support)).canActivate(context),
+    );
+    if (tenant !== 'ok') return { status: tenant, request };
+    return {
+      status: await status(() => new PolicyGuard(new Reflector()).canActivate(context)),
+      request,
+    };
+  };
+  const patients = { kind: 'tenant', permission: 'patients.read' } as const;
+  const members = { kind: 'tenant', permission: 'members.read' } as const;
+
+  it('sin un permiso vigente (vencido o revocado) no entra; con uno, lee como PLATFORM_ADMIN con el permiso', async () => {
+    expect((await run(null, members)).status).toBe(403);
+    const { status: allowed, request } = await run(grant(), patients);
+    expect(allowed).toBe('ok');
+    expect(request.securityContext).toEqual({
+      organizationId: ORG,
+      userId: USER,
+      role: 'PLATFORM_ADMIN',
+      patientId: null,
+      memberId: null,
+      supportGrantId: grant().grantId,
+    });
+    expect(request.support?.scope).toBe('CLINICAL_READ');
+  });
+
+  it('solo lee: toda escritura es 403, también las permitidas en solo lectura', async () => {
+    for (const method of ['POST', 'PUT', 'PATCH', 'DELETE']) {
+      expect((await run(grant(), patients, method)).status).toBe(403);
+    }
+    expect((await run(grant({ organizationStatus: 'SUSPENDED' }), patients)).status).toBe(403);
+  });
+
+  it('ACCOUNT lee el equipo y los ajustes, sin pacientes ni agenda; nunca la auditoría ni los permisos', async () => {
+    const account = grant({ scope: 'ACCOUNT' });
+    expect((await run(account, members)).status).toBe('ok');
+    expect((await run(account, patients)).status).toBe(403);
+    expect((await run(account, { kind: 'tenant', permission: 'agenda.read' })).status).toBe(403);
+    for (const permission of ['audit.read', 'support.manage', 'profile.self'] as const) {
+      expect((await run(grant(), { kind: 'tenant', permission })).status).toBe(403);
+    }
   });
 });
 

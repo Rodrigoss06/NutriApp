@@ -22,6 +22,7 @@ import {
   type PlanListResponse,
   type PlatformFeatureFlagsResponse,
   type PlatformOrganizationListResponse,
+  type PlatformSupportGrantListResponse,
 } from '@nutricoach/contracts';
 import { z } from 'zod';
 import {
@@ -43,6 +44,7 @@ import {
   PLAN_NOT_FOUND,
   PLAN_UNKNOWN,
   SLUG_TAKEN,
+  SupportGrantQueries,
   type PlanRecord,
 } from '../../../../tenancy/index.js';
 import { BackofficeCommands } from '../../../application/backoffice.commands.js';
@@ -82,7 +84,28 @@ const actorOf = (request: ContextualRequest): UserId => {
 @Controller('platform')
 @PlatformOnly()
 export class PlatformController {
-  constructor(private readonly backoffice: BackofficeCommands) {}
+  constructor(
+    private readonly backoffice: BackofficeCommands,
+    private readonly supportGrants: SupportGrantQueries,
+  ) {}
+
+  /** Los permisos de soporte vigentes de quien pregunta (RN-A09, ADR-129): desde aquí entra a cada organización en modo soporte. */
+  @Get('support/grants')
+  async supportGrantsOf(
+    @Req() request: ContextualRequest,
+  ): Promise<PlatformSupportGrantListResponse> {
+    const grants = await this.supportGrants.activeOf(actorOf(request));
+    return {
+      grants: grants.map((grant) => ({
+        id: grant.id,
+        organizationId: grant.organizationId,
+        organizationName: grant.organizationName,
+        scope: grant.scope,
+        reason: grant.reason,
+        expiresAt: grant.expiresAt.toISOString(),
+      })),
+    };
+  }
 
   @Get('plans')
   async plans(@Req() request: ContextualRequest): Promise<PlanListResponse> {

@@ -83,7 +83,7 @@ export interface SessionStore {
   revokeOwned(userId: UserId, id: string, now: Date): Promise<boolean>;
   revokeAll(userId: UserId, now: Date): Promise<number>;
   listAlive(userId: UserId, now: Date): Promise<readonly SessionRecord[]>;
-  setActiveOrganization(id: string, organizationId: OrganizationId): Promise<void>;
+  setActiveOrganization(id: string, organizationId: OrganizationId | null): Promise<void>;
 }
 
 export interface PendingReset {
@@ -138,9 +138,21 @@ export interface MembershipSummary {
   readonly active: boolean;
 }
 
-/** Membresías de un usuario, de tenancy (P5, PR 2). Sin tenancy, ninguna. */
+/** El permiso de soporte vigente de una persona de la plataforma en una organización (RN-A09, ADR-129). */
+export interface SupportGrantSummary {
+  readonly grantId: string;
+  readonly organizationId: OrganizationId;
+  readonly organizationName: string;
+  /** false si la organización está suspendida o cerrada. */
+  readonly available: boolean;
+  readonly scope: 'ACCOUNT' | 'CLINICAL_READ';
+  readonly expiresAt: Date;
+}
+
+/** Membresías de un usuario y permisos de soporte, de tenancy (P5, PR 2; ADR-129). Sin tenancy, ninguno. */
 export interface MembershipDirectory {
   membershipsOf(userId: UserId): Promise<readonly MembershipSummary[]>;
+  supportGrant(organizationId: OrganizationId, userId: UserId): Promise<SupportGrantSummary | null>;
 }
 
 export const MEMBERSHIP_DIRECTORY = Symbol.for('nutricoach.iam.MembershipDirectory');

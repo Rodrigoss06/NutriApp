@@ -1513,6 +1513,8 @@ model SupportAccessGrant {
   createdAt      DateTime     @default(now()) @map("created_at") @db.Timestamptz(6)
   organization   Organization @relation(fields: [organizationId], references: [id], onDelete: NoAction, onUpdate: NoAction)
 
+  @@index([supportUserId, organizationId], map: "support_access_grant_active", where: raw("(revoked_at IS NULL)"))
+  @@index([organizationId, createdAt(sort: Desc)], map: "support_access_grant_by_org")
   @@map("support_access_grant")
   @@schema("tenancy")
 }

@@ -6,7 +6,7 @@ import {
   type ExecutionContext,
 } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
-import type { Id } from '@nutricoach/shared-kernel';
+import type { Id, OrganizationId, UserId } from '@nutricoach/shared-kernel';
 import { ProblemException } from '../http/problem.js';
 import type { ContextualRequest } from '../http/request-context.js';
 import { ACCESS_RULE, ALLOWED_WHEN_READ_ONLY, type AccessRule } from './access.js';
@@ -24,12 +24,23 @@ const READ_ONLY = {
   code: 'NC-TEN-014',
   rule: 'RN-A02',
 } as const;
+export const SUPPORT_GRANT_GONE = {
+  title: 'Tu permiso de soporte venció o el dueño lo revocó.',
+  code: 'NC-TEN-016',
+  rule: 'RN-A09',
+} as const;
+export const SUPPORT_READ_ONLY = {
+  title: 'El modo soporte es de solo lectura.',
+  code: 'NC-TEN-017',
+  rule: 'RN-A09',
+} as const;
 
 /**
  * Segunda guardia (02 §10): en las rutas de una organización, sesión STAFF con organización activa y membresía
  * ACTIVE leída en cada petición. SUSPENDED y CLOSED: 403. READ_ONLY (RN-A02): 422 en toda escritura salvo las
  * permitidas. Completa el contexto de seguridad con la organización y el rol. En las rutas del paciente (/me), la
- * organización de su sesión con las mismas reglas de estado.
+ * organización de su sesión con las mismas reglas de estado. En modo soporte (RN-A09, ADR-129), una sesión PLATFORM con organización
+ * activa entra solo a leer y solo con un permiso del dueño vigente, leído en cada petición.
  */
 @Injectable()
 export class TenantGuard implements CanActivate {
@@ -49,6 +60,9 @@ export class TenantGuard implements CanActivate {
 
     const request = context.switchToHttp().getRequest<ContextualRequest>();
     const session = request.session;
+    if (session?.kind === 'PLATFORM' && session.activeOrganizationId) {
+      return this.#support(request, session.activeOrganizationId, session.userId);
+    }
     if (session?.kind !== 'STAFF') {
       throw new ProblemException(403, {
         title: 'Esta sección es del panel del profesional.',
@@ -77,6 +91,33 @@ export class TenantGuard implements CanActivate {
       role: membership.role,
       patientId: null,
       memberId: membership.memberId as Id<'MemberId'>,
+    };
+    return true;
+  }
+
+  /**
+   * Modo soporte: sin un permiso vigente, 403 (y la web vuelve al panel interno); toda escritura, 403; la organización suspendida o
+   * cerrada, 403. El contexto es PLATFORM_ADMIN, sin miembro y con el permiso, que la auditoría guarda.
+   */
+  async #support(
+    request: ContextualRequest,
+    organizationId: OrganizationId,
+    userId: UserId,
+  ): Promise<boolean> {
+    const grant = this.directory ? await this.directory.supportGrant(organizationId, userId) : null;
+    if (!grant) throw new ProblemException(403, SUPPORT_GRANT_GONE);
+    if (!SAFE_METHODS.has(request.method)) throw new ProblemException(403, SUPPORT_READ_ONLY);
+    if (grant.organizationStatus === 'SUSPENDED' || grant.organizationStatus === 'CLOSED') {
+      throw new ProblemException(403, UNAVAILABLE);
+    }
+    request.support = grant;
+    request.securityContext = {
+      organizationId: grant.organizationId,
+      userId,
+      role: 'PLATFORM_ADMIN',
+      patientId: null,
+      memberId: null,
+      supportGrantId: grant.grantId as Id<'SupportGrantId'>,
     };
     return true;
   }
