@@ -51,7 +51,7 @@ export interface AgendaBoardProps {
   readonly members: readonly MemberResponse[];
   /** null: la agenda de todos los profesionales (solo el dueño y el administrador). */
   readonly memberId: string | null;
-  readonly ownMemberId: string;
+  readonly ownMemberId: string | null;
   readonly slots: readonly AvailabilitySlot[];
   readonly patientNames: Readonly<Record<string, string>>;
   readonly canManage: boolean;
@@ -189,7 +189,7 @@ export function AgendaBoard(props: AgendaBoardProps) {
         <AppointmentForm
           timezone={timezone}
           members={props.members}
-          memberId={memberId ?? props.ownMemberId}
+          memberId={memberId ?? props.ownMemberId ?? props.members[0]?.id ?? ''}
           canChooseMember={canManage}
           patient={preselected}
           patientLabel={props.patientLabel}

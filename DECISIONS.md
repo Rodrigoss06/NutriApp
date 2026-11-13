@@ -3535,3 +3535,26 @@ Consecuencias:
   lectura» y salir); cada pantalla del panel sin miembro.
 - Para Notion (/notion-sync de P15): 03 RN-A09 (el alcance y la duración); 05.1 (`support_access_grant`: políticas, CHECK,
   disparador e índices); 02 §10 (TenantGuard y PolicyGuard en modo soporte, y la auditoría de cada petición); 04 RF-39.
+
+## ADR-130 · Las pantallas del soporte con permiso: dar y revocar, entrar en modo soporte y salir — aceptada (2026-11-13)
+Contexto: P15, PR 4b (RN-A09, RN-B03; ADR-129). La API del soporte con permiso estaba lista; faltaban las pantallas del dueño y del
+soporte, y que el panel funcione sin miembro.
+Decisión:
+- Dueño, en Organización › «Soporte de la plataforma»: dar un permiso (persona de la lista, «Qué puede ver»: equipo y ajustes, o
+  además pacientes y expedientes; motivo; de 24 horas a 7 días), los vigentes primero con su vencimiento, los de los últimos 90
+  días y «Revocar» con confirmación. Solo el dueño la ve.
+- Panel interno: «Tus permisos de soporte», cada uno con «Entrar en modo soporte», que lleva a /panel de esa organización.
+- Modo soporte en el panel (`role` SUPPORT y `support` en la sesión del panel):
+  - arriba, la franja «Modo soporte · solo lectura» con la organización, el alcance, el vencimiento y que todo queda en su
+    auditoría; «Salir del modo soporte» vuelve al panel interno y siempre funciona;
+  - sin cambio de organización, Mi cuenta ni Auditoría; con ACCOUNT, sin Pacientes, Agenda ni el buscador, y Inicio sin alertas;
+  - `useCanWrite` es false: los botones de escritura se desactivan como en solo lectura (RN-A02), y lo que el expediente ofrece
+    según el rol (RN-A05) también queda cerrado. Inicio no ofrece «Nuevo paciente». La API decide igual (403);
+  - la agenda sin miembro: la de todos, o la del profesional que elija; la disponibilidad, la del primero.
+  - Con el permiso vencido o revocado, `/account` ya no trae `support` y el panel lleva al panel interno.
+Consecuencias:
+- E2E `soporte.spec.ts`, en escritorio y en el celular, con axe: el dueño da un permiso CLINICAL_READ, el soporte entra, ve Inicio y
+  el expediente en solo lectura y sale; el dueño lo revoca y el soporte ya no lo tiene. Siguen pasando agenda, inicio, accesos,
+  panel interno, pacientes, marca y seguridad. Se recorrieron en modo soporte las pantallas del panel y del expediente (con
+  CLINICAL_READ) y las no clínicas (con ACCOUNT), sin errores.
+- Para Notion (/notion-sync de P15): 04 RF-39 (el soporte con permiso en el panel); 02 §11 (el modo soporte del grupo panel).

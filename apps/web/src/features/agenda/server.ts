@@ -3,12 +3,15 @@ import type { AccountResponse, MemberResponse, PatientListResponse } from '@nutr
 import { getMembers } from '@/features/patients/server';
 import { serverApi } from '@/lib/api/server';
 
-/** Quién mira la agenda: su fila de miembro y si gestiona la organización (el dueño y el administrador). */
+/**
+ * Quién mira la agenda: su fila de miembro y si gestiona la organización (el dueño y el administrador). El soporte en modo soporte
+ * (ADR-130) no es miembro: mira la agenda de todos o la de quien elija, sin escribir.
+ */
 export async function agendaViewer(): Promise<
   | {
       readonly ok: true;
       readonly members: readonly MemberResponse[];
-      readonly ownMemberId: string;
+      readonly ownMemberId: string | null;
       readonly canManage: boolean;
     }
   | { readonly ok: false }
@@ -18,6 +21,9 @@ export async function agendaViewer(): Promise<
     getMembers(),
   ]);
   if (!account.ok || !members.ok) return { ok: false };
+  if (account.data.support) {
+    return { ok: true, members: members.data.members, ownMemberId: null, canManage: true };
+  }
   const own = members.data.members.find((member) => member.userId === account.data.id);
   const role = account.data.memberships.find(
     (membership) => membership.organizationId === account.data.activeOrganizationId,

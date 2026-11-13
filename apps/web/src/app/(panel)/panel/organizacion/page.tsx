@@ -5,6 +5,8 @@ import type {
   MemberListResponse,
   OrganizationResponse,
   SubscriptionResponse,
+  SupportGrantListResponse,
+  SupportStaffResponse,
 } from '@nutricoach/contracts';
 import { Notice } from '@nutricoach/ui';
 import type { Metadata } from 'next';
@@ -14,13 +16,14 @@ import { InvitationsSection } from '@/features/organization/invitations-section'
 import { MembersSection } from '@/features/organization/members-section';
 import { OrganizationForm } from '@/features/organization/organization-form';
 import { SubscriptionSection } from '@/features/organization/subscription-section';
+import { SupportGrantsSection } from '@/features/support/support-grants-section';
 import { serverApi } from '@/lib/api/server';
 
 export const metadata: Metadata = { title: 'Organización' };
 
 /**
- * La organización activa (RF-02, RF-03) y la marca de sus fichas (RN-H03). La interfaz oculta lo que el rol no puede
- * hacer; la API decide.
+ * La organización activa (RF-02, RF-03), la marca de sus fichas (RN-H03) y, para el dueño, los permisos del soporte de la plataforma
+ * (RN-A09). La interfaz oculta lo que el rol no puede hacer; la API decide.
  */
 export default async function OrganizationPage() {
   const [account, organization, members, branding] = await Promise.all([
@@ -42,6 +45,13 @@ export default async function OrganizationPage() {
         serverApi<SubscriptionResponse>('/organization/subscription'),
       ])
     : [null, null];
+  const [supportStaff, supportGrants] =
+    role === 'OWNER'
+      ? await Promise.all([
+          serverApi<SupportStaffResponse>('/organization/support-staff'),
+          serverApi<SupportGrantListResponse>('/organization/support-grants'),
+        ])
+      : [null, null];
 
   return (
     <div className="flex flex-col gap-8">
@@ -67,6 +77,14 @@ export default async function OrganizationPage() {
       {invitations?.ok ? (
         <Section title="Invitaciones pendientes">
           <InvitationsSection invitations={invitations.data.invitations} />
+        </Section>
+      ) : null}
+      {supportStaff?.ok && supportGrants.ok ? (
+        <Section title="Soporte de la plataforma">
+          <SupportGrantsSection
+            staff={supportStaff.data.staff}
+            grants={supportGrants.data.grants}
+          />
         </Section>
       ) : null}
     </div>
