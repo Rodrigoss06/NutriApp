@@ -55,7 +55,7 @@ const mateoWeek = (index: number): FatiguePanelInput => ({
 });
 
 describe('RN-G16 · P-23 y P-24 · panel de fatiga y recuperación de la hoja piloto', () => {
-  it('reproduce las semanas de Mateo: ámbar, rojo, ámbar, verde y luego faltan datos', () => {
+  it('G-43 · reproduce las semanas de Mateo: ámbar, rojo, ámbar, verde y luego faltan datos', () => {
     const rows = MATEO.map((_, index) => panel(mateoWeek(index)));
     expect(rows.map((row) => row.load)).toEqual([
       'NO_BASE',
