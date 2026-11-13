@@ -10,9 +10,16 @@ type SelfConsent = MeConsents['consents'][number];
 
 /**
  * Autorizar o retirar las fotos de progreso desde la app (RN-G20, P-30): con el texto del abogado, que el paciente lee antes de
- * autorizar. Retirarla borra sus fotos en el acto, sin días de gracia.
+ * autorizar. Retirarla borra sus fotos en el acto, sin días de gracia. Si la organización tiene las fotos apagadas (`paused`,
+ * ADR-128), solo se puede retirar.
  */
-export function PhotosConsent({ consent }: { consent: SelfConsent | undefined }) {
+export function PhotosConsent({
+  consent,
+  paused = false,
+}: {
+  consent: SelfConsent | undefined;
+  paused?: boolean;
+}) {
   const grant = useMeAction<{ id: string }>('/me/consents');
   const revoke = useMeAction<undefined>('/me/consents/PROGRESS_PHOTOS/revoke');
   const pending = grant.isPending || revoke.isPending;
@@ -21,7 +28,9 @@ export function PhotosConsent({ consent }: { consent: SelfConsent | undefined })
     return (
       <div className="flex flex-col gap-3">
         <Notice tone="success" title="Lo autorizaste">
-          Tus fotos las ve solo tu equipo de atención, para seguir tu evolución.
+          {paused
+            ? 'Tu organización pausó las fotos de progreso: por ahora nadie las sube ni las ve. Las que ya subiste se guardan hasta que retires la autorización.'
+            : 'Tus fotos las ve solo tu equipo de atención, para seguir tu evolución.'}
         </Notice>
         <FormError error={revoke.error} title="No se retiró la autorización" />
         <div>
@@ -42,6 +51,14 @@ export function PhotosConsent({ consent }: { consent: SelfConsent | undefined })
           />
         </div>
       </div>
+    );
+  }
+
+  if (paused) {
+    return (
+      <p className="text-sm text-muted-foreground">
+        Tu organización pausó las fotos de progreso. Consulta a tu profesional.
+      </p>
     );
   }
 

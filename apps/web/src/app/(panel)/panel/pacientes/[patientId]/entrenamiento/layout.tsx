@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react';
+import { getOrganization } from '@/features/patients/server';
 import { TrainingTabs } from '@/features/training/training-tabs';
 
 /**
@@ -12,10 +13,13 @@ export default async function TrainingLayout({
   children: ReactNode;
   params: Promise<{ patientId: string }>;
 }) {
-  const { patientId } = await params;
+  const [{ patientId }, organization] = await Promise.all([params, getOrganization()]);
   return (
     <div className="flex flex-col gap-6">
-      <TrainingTabs patientId={patientId} />
+      <TrainingTabs
+        patientId={patientId}
+        features={organization.ok ? organization.data.features : null}
+      />
       {children}
     </div>
   );

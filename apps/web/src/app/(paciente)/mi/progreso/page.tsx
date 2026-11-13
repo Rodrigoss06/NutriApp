@@ -1,4 +1,4 @@
-import type { MeApp, PatientEvolutionResponse } from '@nutricoach/contracts';
+import type { MeApp, MeConsents, PatientEvolutionResponse } from '@nutricoach/contracts';
 import { EmptyState, Notice } from '@nutricoach/ui';
 import { TrendingUp } from 'lucide-react';
 import type { Metadata } from 'next';
@@ -21,15 +21,17 @@ export default async function Page() {
   if (!app.ok || !evolution.ok) {
     return <Notice tone="danger" title="No pudimos cargar tu progreso" />;
   }
-  // Las fotos van con su propia autorización (RN-G20): se ven aunque Progreso no muestre la evolución.
-  const photos = (
+  // Las fotos van con su propia autorización (RN-G20): se ven aunque Progreso no muestre la evolución, si su organización las
+  // tiene (ADR-127). Apagadas, el enlace queda mientras su autorización siga vigente, para que pueda retirarla (ADR-128).
+  const showPhotos = app.data.features.PROGRESS_PHOTOS || (await hasActivePhotosConsent());
+  const photos = showPhotos ? (
     <Link
       href="/mi/progreso/fotos"
       className="flex min-h-touch items-center rounded-lg border border-border bg-card p-4 font-medium text-brand-text underline"
     >
       Fotos de progreso
     </Link>
-  );
+  ) : null;
   if (!app.data.enabledSections.includes('EVOLUTION')) {
     return (
       <div className="flex flex-col gap-4">
@@ -72,5 +74,13 @@ export default async function Page() {
         </ul>
       )}
     </div>
+  );
+}
+
+async function hasActivePhotosConsent(): Promise<boolean> {
+  const consents = await serverApi<MeConsents>('/me/consents');
+  return (
+    consents.ok &&
+    consents.data.consents.some((item) => item.purpose === 'PROGRESS_PHOTOS' && item.active)
   );
 }
