@@ -1352,6 +1352,8 @@ model Appointment {
   version        Int       @default(0)
 
   @@index([organizationId, memberId, startsAt], map: "appointment_agenda")
+  @@index([organizationId, patientId, startsAt], map: "appointment_by_patient", where: raw("(patient_id IS NOT NULL)"))
+  @@index([organizationId, startsAt], map: "appointment_reminder_due", where: raw("((status = 'CONFIRMED'::text) AND (reminder_sent_at IS NULL))"))
   @@map("appointment")
   @@schema("scheduling")
 }
@@ -1368,6 +1370,7 @@ model Availability {
   validFrom      DateTime  @map("valid_from") @db.Date
   validTo        DateTime? @map("valid_to") @db.Date
 
+  @@index([organizationId, memberId, dayOfWeek], map: "availability_by_member")
   @@map("availability")
   @@schema("scheduling")
 }

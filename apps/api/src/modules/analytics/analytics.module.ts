@@ -3,6 +3,7 @@ import { AssessmentModule } from '../assessment/index.js';
 import { ClinicalModule } from '../clinical/index.js';
 import { ExerciseModule } from '../exercise/index.js';
 import { NutritionModule } from '../nutrition/index.js';
+import { SchedulingModule } from '../scheduling/index.js';
 import { TenancyModule } from '../tenancy/index.js';
 import { TrackingModule } from '../tracking/index.js';
 import { MesocycleReportSources, TrainingModule } from '../training/index.js';
@@ -41,6 +42,7 @@ import { TrainingProjection } from './application/training-projection.js';
     TrainingModule,
     TrackingModule,
     ExerciseModule,
+    SchedulingModule,
   ],
   controllers: [PatientAnalyticsController, OverviewController],
   providers: [

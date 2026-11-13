@@ -41,8 +41,7 @@ export class OverviewController {
         unreadNotes: row.unreadNotes,
         lastEvaluationAt: row.lastEvaluationAt?.toISOString() ?? null,
         lastWeightKg: row.lastWeightKg,
-        // La próxima cita llega con la agenda (P15).
-        nextAppointmentAt: null,
+        nextAppointmentAt: row.nextAppointmentAt?.toISOString() ?? null,
         updatedAt: row.updatedAt.toISOString(),
       })),
     };

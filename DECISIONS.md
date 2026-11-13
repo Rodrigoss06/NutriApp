@@ -3353,3 +3353,61 @@ Consecuencias:
   - axe en cada pantalla. También pasan fotos, material, fichas en la app, informe y app del paciente.
 - Guion de la Demo 3: el expediente en la sección 9, y la tabla de la sección 10 al día.
 - Para Notion (/notion-sync de P14.5): 04 (las pantallas del expediente).
+
+## ADR-124 · P15 aprobado: orden de los PR, la marca al final y las cinco decisiones — aceptada (2026-11-13)
+Contexto: P15 (marca, calendario, panel interno, exportación y migración; RF-07, RF-36 a RF-40). Rodrigo aprobó el plan el
+2026-11-13: los 9 PR, las migraciones previstas y `fflate` en el adaptador para el ZIP de la exportación. El cliente pidió dejar la
+marca (RF-36) para el final, después de usar el sistema y ajustar algunas cosas.
+Decisión:
+- Orden: 1 agenda por la API; 2 agenda en la web (con la próxima cita y las sesiones verificadas del control semanal); 3 panel
+  interno (planes, cupos, renovación y banderas); 4 soporte con permiso del dueño; 5 exportación; 6 supresión; 7 migración; 8 marca
+  completa; 9 cierre. Uno por vez contra main.
+- Migración (RF-40, RN-I05): el importador se arma ya con una plantilla CSV propia (pacientes, evaluaciones con sus tomas y planes);
+  se le pide a Jeremy una muestra de las exportaciones de NutriPlace y el conversor llega con ella.
+- Exportación (RN-B04): descarga con sesión, válida 24 horas y auditada. 05 §11 dice «enlace firmado»: se ajusta en el /notion-sync.
+- Soporte (RN-A09): el dueño elige la duración del permiso, de 1 a 7 días, con 24 horas por defecto.
+- Supresión (RN-B05): solo de un paciente archivado; la confirma el dueño escribiendo el código del paciente y antes se ofrece
+  exportar.
+- Banderas (RF-39): un catálogo cerrado en el código, por organización. Las primeras son las tres de la fase C (informe del
+  mesociclo, fotos de progreso y expediente de documentos), encendidas por defecto.
+Consecuencias:
+- La marca de las fichas sigue como en ADR-066 hasta el PR 8.
+- Para Notion (/notion-sync de P15): 05 §11 (la descarga de la exportación), 02 (scheduling y las banderas) y lo que sumen los PR.
+
+## ADR-125 · La agenda por la API: citas, disponibilidad, recordatorio y la próxima cita — aceptada (2026-11-13)
+Contexto: P15, PR 1 (RF-37; RN-J01 a RN-J03; RN-A05; P-32; ADR-124). Las tablas `scheduling.availability` y
+`scheduling.appointment` existían desde 0010, con la exclusión de cruces (RN-J01) y la RLS del paciente, sin módulo.
+Decisión:
+- Módulo `scheduling`, con su API pública `SchedulingApi` (la próxima cita de cada paciente, para analytics).
+- Citas:
+  - tipo, modalidad, lugar o enlace externo opcional (solo https y sin sincronizar, P-32), nota del profesional y estados
+    programada, confirmada, realizada, cancelada y no asistió;
+  - el dueño y el administrador escriben en cualquier agenda y el profesional en la suya (permisos `agenda.read` y `agenda.write`);
+    con paciente, exige acceso de escritura a su expediente (RN-A05), sin HEALTH_DATA, porque una cita no es un dato de salud;
+  - una cita dura como mucho 12 horas;
+  - transiciones: programada → confirmada; programada o confirmada → cancelada; programada o confirmada → realizada o no asistió,
+    solo desde que empezó; realizada y no asistió se corrigen entre sí; cancelada es final. Una cita cerrada no se reprograma;
+  - reprogramar o cambiar de estado lleva If-Match. Cambiar la hora deja pendiente el recordatorio y no cambia el estado;
+  - un cruce lo rechaza la base aunque las dos lleguen a la vez: el error 23P01 vuelve como 422 con RN-J01 (NC-SCH-002).
+- Disponibilidad: franjas semanales por profesional en la zona de la organización, sin cruces el mismo día; se reemplaza entera.
+  Orienta la agenda: una cita fuera de ella se puede poner y la pantalla la marca.
+- Horas: instantes en UTC; la agenda pide fechas locales de la organización y responde con su zona (RN-J03).
+- Recordatorio (RN-J02): cada 15 minutos, el worker toma las citas confirmadas que empiezan dentro de las próximas 24 horas sin
+  recordatorio; marca `reminder_sent_at` con bloqueo optimista y deja `scheduling.reminder.requested` en el outbox. El consumidor
+  `scheduling.mailer` lee el correo y el nombre del paciente (`ClinicalApi.reminderContact`) y envía el correo con la fecha en la
+  zona de la organización, sin la nota. Sin correo, o si la cita ya no está confirmada, no se envía.
+- Rutas: `/appointments` (agenda por rango, crear), `/appointments/:id` (leer, PATCH), `/appointments/:id/status`,
+  `/members/:memberId/availability`, `/patients/:id/appointments` y `/me/appointments` (el paciente, sin las notas).
+- Eventos `scheduling.appointment.booked`, `.updated`, `.confirmed`, `.cancelled`, `.completed` y `.missed`, y
+  `scheduling.availability.changed`, a la auditoría; los de las citas recalculan la próxima cita en `patient_overview` (RF-34).
+- Migración `202611130000_scheduling_agenda`: los CHECK del enlace, los largos y las 12 horas; índices por paciente y de los
+  recordatorios; UPDATE solo de lo que cambia y sin DELETE de citas.
+Consecuencias:
+- Unitarias: los estados, la ventana, la agenda ajena, el recordatorio, la disponibilidad y las fechas de Lima y con cambio de hora.
+- Integración `scheduling.int.spec.ts` (14 casos, como app_user): RN-J01 en serie, en paralelo y al reprogramar; la agenda ajena;
+  RN-A05; la disponibilidad; If-Match; la asistencia; el paciente sin las notas; el recordatorio una sola vez; la próxima cita en el
+  panel; la auditoría.
+- PR 2: las pantallas (vistas semanal y mensual), la próxima cita en Inicio y en el expediente, «Tus citas» en la app, la línea de
+  tiempo del expediente y las sesiones verificadas, por validar y próximas del control semanal (07 §10, ADR-090).
+- Para Notion (/notion-sync de P15): 02 §2, §3 y §8 (scheduling, `SchedulingApi`, sus eventos y su trabajo); 05.3 (lo de la
+  migración); 03 RN-J01 a RN-J03 (sin cambios de regla).

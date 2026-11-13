@@ -2,6 +2,7 @@ import { Inject, Injectable } from '@nestjs/common';
 import { CLOCK, type Clock } from '@nutricoach/shared-kernel';
 import { AssessmentApi } from '../../assessment/index.js';
 import { ClinicalApi } from '../../clinical/index.js';
+import { SchedulingApi } from '../../scheduling/index.js';
 import { TrackingApi } from '../../tracking/index.js';
 import { TrainingApi } from '../../training/index.js';
 import { addDays } from '../domain/diet-weeks.js';
@@ -14,8 +15,8 @@ import { ANALYTICS_STORE, type AnalyticsStore } from './ports/analytics.ports.js
 
 /**
  * La fila de un paciente en el panel del profesional (RF-34, ADR-093): junta lo de tracking (último registro, notas sin leer y la
- * recuperación del día), lo de training (el control de la semana y los que esperan decisión), la última evaluación y la adherencia
- * del resumen diario, y calcula las alertas en la fecha local del paciente (RN-G04). Corre en la transacción de quien llama, como
+ * recuperación del día), lo de training (el control de la semana y los que esperan decisión), la última evaluación, la adherencia
+ * del resumen diario y la próxima cita (ADR-125), y calcula las alertas en la fecha local del paciente (RN-G04). Corre en la transacción de quien llama, como
  * SYSTEM con la organización: la recalculan los eventos y un trabajo de cada hora. Un paciente archivado sale del panel.
  */
 @Injectable()
@@ -27,6 +28,7 @@ export class OverviewProjection {
     @Inject(TrackingApi) private readonly tracking: TrackingApi,
     @Inject(TrainingApi) private readonly training: TrainingApi,
     @Inject(AssessmentApi) private readonly assessment: AssessmentApi,
+    @Inject(SchedulingApi) private readonly scheduling: SchedulingApi,
   ) {}
 
   async refresh(organizationId: string, patientId: string): Promise<void> {
@@ -45,6 +47,8 @@ export class OverviewProjection {
       await this.assessment.lastClosedEvaluationAt(patientId),
     ];
     const latestFatigueWeek = await this.#latestFatigueWeek(organizationId, patientId, today);
+    const nextAppointmentAt =
+      (await this.scheduling.nextAppointments([patientId])).get(patientId) ?? null;
     const adherence7dPct = adherencePct(days.filter((day) => day.localDate >= window.from7d));
     const lastWeight = days.findLast((day) => day.bodyWeightKg !== null);
     await this.store.replaceOverview(organizationId, {
@@ -55,6 +59,7 @@ export class OverviewProjection {
       adherence7dPct,
       adherence30dPct: adherencePct(days),
       unreadNotes: facts.unreadNotes,
+      nextAppointmentAt,
       alerts: overviewAlerts({
         today,
         lastRecordDate: facts.lastRecordDate,

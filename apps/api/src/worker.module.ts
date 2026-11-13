@@ -4,6 +4,7 @@ import { AssessmentModule } from './modules/assessment/index.js';
 import { ClinicalModule } from './modules/clinical/index.js';
 import { DocumentsModule } from './modules/documents/index.js';
 import { IamModule } from './modules/iam/index.js';
+import { SchedulingModule } from './modules/scheduling/index.js';
 import { TenancyModule } from './modules/tenancy/index.js';
 import { TrackingModule } from './modules/tracking/index.js';
 import { PlatformModule, WorkerPlatformModule } from './platform/index.js';
@@ -14,6 +15,7 @@ import { PlatformModule, WorkerPlatformModule } from './platform/index.js';
     PlatformModule,
     WorkerPlatformModule,
     TenancyModule,
+    SchedulingModule,
     IamModule,
     ClinicalModule,
     AssessmentModule,
