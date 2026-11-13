@@ -6,6 +6,7 @@ import {
   HttpStatus,
   Param,
   ParseUUIDPipe,
+  Patch,
   Post,
   Put,
   Req,
@@ -13,10 +14,16 @@ import {
 import {
   changeSubscriptionSchema,
   createOrganizationSchema,
+  createPlanSchema,
+  FEATURE_FLAGS,
   graceDaysSchema,
+  setFeatureFlagSchema,
+  updatePlanSchema,
   type PlanListResponse,
+  type PlatformFeatureFlagsResponse,
   type PlatformOrganizationListResponse,
 } from '@nutricoach/contracts';
+import { z } from 'zod';
 import {
   isErr,
   type DomainError,
@@ -30,16 +37,36 @@ import {
   ProblemException,
   type ContextualRequest,
 } from '../../../../../platform/index.js';
-import { ALREADY_MEMBER, PLAN_NOT_FOUND, SLUG_TAKEN } from '../../../../tenancy/index.js';
+import {
+  ALREADY_MEMBER,
+  PLAN_CODE_TAKEN,
+  PLAN_NOT_FOUND,
+  PLAN_UNKNOWN,
+  SLUG_TAKEN,
+  type PlanRecord,
+} from '../../../../tenancy/index.js';
 import { BackofficeCommands } from '../../../application/backoffice.commands.js';
 
 const STATUS_BY_CODE: Readonly<Record<string, number>> = {
   [PLAN_NOT_FOUND.code]: 422,
+  [PLAN_CODE_TAKEN.code]: 409,
+  [PLAN_UNKNOWN.code]: 404,
   [SLUG_TAKEN.code]: 409,
   [ALREADY_MEMBER.code]: 409,
 };
 
 const problem = (error: DomainError) => problemFromDomainError(error, STATUS_BY_CODE[error.code]);
+
+const planOf = (plan: PlanRecord) => ({
+  code: plan.code,
+  name: plan.name,
+  maxActivePatients: plan.maxActivePatients,
+  maxProfessionals: plan.maxProfessionals,
+  durationMonths: plan.durationMonths,
+  priceCents: plan.priceCents,
+  currency: plan.currency,
+  isActive: plan.isActive,
+});
 
 const actorOf = (request: ContextualRequest): UserId => {
   const userId = request.securityContext?.userId;
@@ -51,7 +78,7 @@ const actorOf = (request: ContextualRequest): UserId => {
   return userId;
 };
 
-/** Panel interno de la plataforma (RF-39): planes, organizaciones y suscripciones. Solo sesiones PLATFORM. */
+/** Panel interno de la plataforma (RF-39): planes, organizaciones con su cupo, suscripciones y banderas. Solo sesiones PLATFORM. */
 @Controller('platform')
 @PlatformOnly()
 export class PlatformController {
@@ -60,36 +87,41 @@ export class PlatformController {
   @Get('plans')
   async plans(@Req() request: ContextualRequest): Promise<PlanListResponse> {
     const plans = await this.backoffice.listPlans(actorOf(request));
-    return {
-      plans: plans.map(
-        ({
-          code,
-          name,
-          maxActivePatients,
-          maxProfessionals,
-          durationMonths,
-          priceCents,
-          currency,
-          isActive,
-        }) => ({
-          code,
-          name,
-          maxActivePatients,
-          maxProfessionals,
-          durationMonths,
-          priceCents,
-          currency,
-          isActive,
-        }),
-      ),
-    };
+    return { plans: plans.map(planOf) };
+  }
+
+  /** Un tramo nuevo (N9): sus límites se congelan en cada suscripción (RN-A03). */
+  @Post('plans')
+  async createPlan(@Req() request: ContextualRequest, @Body() body: unknown) {
+    const result = await this.backoffice.createPlan(
+      actorOf(request),
+      parseBody(createPlanSchema, body),
+    );
+    if (isErr(result)) throw problem(result.error);
+    return planOf(result.value);
+  }
+
+  /** Cambiar un plan: el código no cambia; desactivarlo deja de ofrecerlo y no toca las suscripciones vigentes. */
+  @Patch('plans/:code')
+  async updatePlan(
+    @Req() request: ContextualRequest,
+    @Param('code') code: string,
+    @Body() body: unknown,
+  ) {
+    const result = await this.backoffice.updatePlan(
+      actorOf(request),
+      code,
+      parseBody(updatePlanSchema, body),
+    );
+    if (isErr(result)) throw problem(result.error);
+    return planOf(result.value);
   }
 
   @Get('organizations')
   async organizations(
     @Req() request: ContextualRequest,
   ): Promise<PlatformOrganizationListResponse> {
-    const organizations = await this.backoffice.listOrganizations(actorOf(request));
+    const organizations = await this.backoffice.listOrganizationsWithUsage(actorOf(request));
     return {
       organizations: organizations.map((o) => ({
         id: o.id,
@@ -101,7 +133,10 @@ export class PlatformController {
           planCode: o.subscription.planCode,
           startsOn: o.subscription.startsOn,
           endsOn: o.subscription.endsOn,
+          maxActivePatients: o.subscription.maxActivePatients,
+          maxProfessionals: o.subscription.maxProfessionals,
         },
+        usage: o.usage,
       })),
     };
   }
@@ -150,6 +185,36 @@ export class PlatformController {
       value,
     );
     if (isErr(result)) throw problem(result.error);
+  }
+
+  /** Las banderas de la organización (RF-39, ADR-127), con su valor y si las fijó el panel interno. */
+  @Get('organizations/:organizationId/flags')
+  async flags(
+    @Req() request: ContextualRequest,
+    @Param('organizationId', ParseUUIDPipe) organizationId: string,
+  ): Promise<PlatformFeatureFlagsResponse> {
+    const actor = actorOf(request);
+    await this.#ensureExists(actor, organizationId as OrganizationId);
+    return {
+      flags: [...(await this.backoffice.features(actor, organizationId as OrganizationId))],
+    };
+  }
+
+  @Put('organizations/:organizationId/flags/:key')
+  async setFlag(
+    @Req() request: ContextualRequest,
+    @Param('organizationId', ParseUUIDPipe) organizationId: string,
+    @Param('key') key: string,
+    @Body() body: unknown,
+  ): Promise<PlatformFeatureFlagsResponse> {
+    const actor = actorOf(request);
+    const flag = parseBody(z.enum(FEATURE_FLAGS), key);
+    const { enabled } = parseBody(setFeatureFlagSchema, body);
+    await this.#ensureExists(actor, organizationId as OrganizationId);
+    await this.backoffice.setFeature(actor, organizationId as OrganizationId, flag, enabled);
+    return {
+      flags: [...(await this.backoffice.features(actor, organizationId as OrganizationId))],
+    };
   }
 
   async #ensureExists(actor: UserId, organizationId: OrganizationId): Promise<void> {

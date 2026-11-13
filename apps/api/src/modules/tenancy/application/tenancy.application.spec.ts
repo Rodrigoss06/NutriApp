@@ -23,7 +23,14 @@ let org: OrganizationId;
 
 const commands = () => new OrganizationCommands(uow, clock, fakeIds, outbox, store);
 const api = () => new TenancyApi(store, outbox, clock, fakeIds);
-const platform = () => new PlatformTenancy(store, outbox, clock, fakeIds);
+const platform = () =>
+  new PlatformTenancy(
+    store,
+    outbox,
+    clock,
+    fakeIds,
+    {} as ConstructorParameters<typeof PlatformTenancy>[4],
+  );
 const metadata = { actorUserId: null, actorRole: 'SYSTEM' as const };
 
 beforeEach(() => {
@@ -35,6 +42,11 @@ beforeEach(() => {
   store.addSubscription(org, { maxProfessionals: 3, maxActivePatients: 2 });
 });
 
+/** Las banderas de fábrica: estas pruebas no las cambian (ADR-127). */
+const FEATURES = {
+  features: () =>
+    Promise.resolve({ MESOCYCLE_REPORT: true, PROGRESS_PHOTOS: true, RECORD_DOCUMENTS: true }),
+};
 describe('RF-02 · datos de la organización', () => {
   it('06 §5 · editar con la versión leída; con otra versión, conflicto', async () => {
     const owner = contextFor(org, 'OWNER');
@@ -156,6 +168,7 @@ describe('Ajustes registrados', () => {
           { profiles: () => Promise.resolve(new Map()) },
           { count: () => Promise.resolve(0) },
           { count: () => Promise.resolve(0) },
+          FEATURES,
         ).settings(owner)
       )['assessment.lee_reference_group_coefficient'];
     expect(await lee()).toBeNull();
@@ -331,6 +344,7 @@ describe('RF-02 y RF-03 · consultas', () => {
       profiles,
       { count: () => Promise.resolve(2) },
       { count: () => Promise.resolve(1) },
+      FEATURES,
     );
 
   it('los correos solo para OWNER y ADMIN; los quitados no aparecen', async () => {
@@ -398,6 +412,7 @@ describe('Perfil profesional propio', () => {
       { profiles: () => Promise.resolve(new Map()) },
       { count: () => Promise.resolve(0) },
       { count: () => Promise.resolve(0) },
+      FEATURES,
     );
     expect((await queries.ownMember(context))?.licenseNumber).toBe('CNP 1234');
 

@@ -69,3 +69,5 @@ export {
 } from './import/catalog-importer.js';
 export { ImportRegistry } from './import/import-registry.js';
 export { STORAGE, type StoragePort } from './storage/storage.port.js';
+export { FeatureFlags, type EffectiveFlag } from './flags/feature-flags.js';
+export { RequireFeature } from './flags/feature.guard.js';

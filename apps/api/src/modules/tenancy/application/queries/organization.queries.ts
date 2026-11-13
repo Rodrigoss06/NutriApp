@@ -1,4 +1,6 @@
 import { Inject, Injectable } from '@nestjs/common';
+import type { Features } from '@nutricoach/contracts';
+import { FeatureFlags } from '../../../../platform/index.js';
 import {
   UNIT_OF_WORK,
   type OrganizationId,
@@ -61,10 +63,20 @@ export class OrganizationQueries {
     @Inject(MEMBER_PROFILES) private readonly profiles: MemberProfiles,
     @Inject(PENDING_STAFF_INVITATIONS) private readonly pending: PendingStaffInvitations,
     @Inject(ACTIVE_PATIENT_COUNTER) private readonly patients: ActivePatientCounter,
+    @Inject(FeatureFlags) private readonly flags: Pick<FeatureFlags, 'features'>,
   ) {}
 
-  organization(context: SecurityContext): Promise<OrganizationRecord | null> {
-    return this.uow.query(context, () => this.store.findOrganization(this.#organization(context)));
+  /** La organización activa con sus banderas vigentes (RF-39, ADR-127): la web oculta lo que la API negaría. */
+  organization(
+    context: SecurityContext,
+  ): Promise<(OrganizationRecord & { readonly features: Features }) | null> {
+    const organizationId = this.#organization(context);
+    return this.uow.query(context, async () => {
+      const organization = await this.store.findOrganization(organizationId);
+      return organization
+        ? { ...organization, features: await this.flags.features(organizationId) }
+        : null;
+    });
   }
 
   async members(context: SecurityContext): Promise<readonly MemberView[]> {

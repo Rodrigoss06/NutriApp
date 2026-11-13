@@ -168,6 +168,7 @@ export class MeAppController {
       enabledSections: [...view.enabledSections],
       allowWeightLog: view.allowWeightLog,
       message: view.message ? { id: view.message.id, body: view.message.body } : null,
+      features: view.features,
     };
   }
 }

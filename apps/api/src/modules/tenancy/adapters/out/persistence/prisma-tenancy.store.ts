@@ -15,6 +15,8 @@ import type {
   SubscriptionRecord,
   SubscriptionStatus,
   TenancyStore,
+  OrganizationUsage,
+  PlanChanges,
 } from '../../../application/ports/tenancy.ports.js';
 
 /** Fecha de PostgreSQL (date) como YYYY-MM-DD: Prisma la trae como medianoche UTC. */
@@ -363,6 +365,34 @@ export class PrismaTenancyStore implements TenancyStore {
     return (
       await this.db.tx.subscriptionPlan.findMany({ orderBy: { maxActivePatients: 'asc' } })
     ).map(toPlan);
+  }
+
+  async createPlan(plan: PlanRecord): Promise<boolean> {
+    const { count } = await this.db.tx.subscriptionPlan.createMany({
+      data: [plan],
+      skipDuplicates: true,
+    });
+    return count === 1;
+  }
+
+  async updatePlan(code: string, changes: PlanChanges): Promise<boolean> {
+    const { count } = await this.db.tx.subscriptionPlan.updateMany({
+      where: { code },
+      data: changes,
+    });
+    return count === 1;
+  }
+
+  async organizationUsage(): Promise<ReadonlyMap<string, OrganizationUsage>> {
+    const rows = await this.db.tx.$queryRaw<
+      { organization_id: string; active_patients: number; active_professionals: number }[]
+    >`SELECT organization_id, active_patients, active_professionals FROM app.organization_usage()`;
+    return new Map(
+      rows.map((row) => [
+        row.organization_id,
+        { activePatients: row.active_patients, activeProfessionals: row.active_professionals },
+      ]),
+    );
   }
 
   async getSetting(organizationId: OrganizationId, key: string): Promise<unknown> {

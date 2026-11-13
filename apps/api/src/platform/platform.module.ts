@@ -6,6 +6,7 @@ import { SystemClock } from './clock/system.clock.js';
 import { loadEnv } from './config/env.js';
 import { DatabaseModule } from './database/database.module.js';
 import { EventsModule } from './events/events.module.js';
+import { FeatureFlags } from './flags/feature-flags.js';
 import { CatalogImporter } from './import/catalog-importer.js';
 import { ImportBatchStore } from './import/import-batch.store.js';
 import { ImportRegistry } from './import/import-registry.js';
@@ -44,6 +45,7 @@ import { STORAGE } from './storage/storage.port.js';
     ImportRegistry,
     ImportBatchStore,
     CatalogImporter,
+    FeatureFlags,
   ],
   exports: [
     CLOCK,
@@ -54,6 +56,7 @@ import { STORAGE } from './storage/storage.port.js';
     FileRegistry,
     ImportRegistry,
     CatalogImporter,
+    FeatureFlags,
   ],
 })
 export class PlatformModule {}

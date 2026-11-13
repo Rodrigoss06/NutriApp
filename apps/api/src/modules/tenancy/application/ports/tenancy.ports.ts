@@ -58,6 +58,13 @@ export interface PlanRecord {
   readonly isActive: boolean;
 }
 
+export type PlanChanges = Partial<Omit<PlanRecord, 'id' | 'code'>>;
+
+export interface OrganizationUsage {
+  readonly activePatients: number;
+  readonly activeProfessionals: number;
+}
+
 export interface SubscriptionRecord {
   readonly id: string;
   readonly organizationId: OrganizationId;
@@ -148,6 +155,12 @@ export interface TenancyStore {
   ): Promise<boolean>;
   findPlanByCode(code: string): Promise<PlanRecord | null>;
   listPlans(): Promise<readonly PlanRecord[]>;
+  /** false si ya hay un plan con ese código. */
+  createPlan(plan: PlanRecord): Promise<boolean>;
+  /** false si no existe. El código no cambia. */
+  updatePlan(code: string, changes: PlanChanges): Promise<boolean>;
+  /** El uso del cupo de cada organización, para el panel interno: solo cuentas (RN-A09). */
+  organizationUsage(): Promise<ReadonlyMap<string, OrganizationUsage>>;
   getSetting(organizationId: OrganizationId, key: string): Promise<unknown>;
   setSetting(
     organizationId: OrganizationId,

@@ -9,6 +9,7 @@ export * from './methods/issue.js';
 export * from './iam/access.js';
 export * from './tenancy/organization.js';
 export * from './tenancy/branding.js';
+export * from './tenancy/feature-flags.js';
 export * from './clinical/patient.js';
 export * from './clinical/anamnesis.js';
 export * from './clinical/records.js';

@@ -16,14 +16,15 @@ import { isErr, type DomainError, type SecurityContext } from '@nutricoach/share
 import type { Response } from 'express';
 import { z } from 'zod';
 import {
+  type AllowedMime,
+  type ContextualRequest,
   EXTENSIONS,
   MAX_UPLOAD_BYTES,
   PatientOnly,
-  problemFromDomainError,
   ProblemException,
+  problemFromDomainError,
+  RequireFeature,
   RequirePermission,
-  type AllowedMime,
-  type ContextualRequest,
 } from '../../../../../platform/index.js';
 import {
   PATIENT_ARCHIVED,
@@ -147,6 +148,7 @@ const UPLOAD = FileInterceptor('photo', {
  * Las fotos de progreso de un alumno para su equipo de atención (P14.5, PR 6b; RN-G20; ADR-119): con la RLS del equipo (RN-A05);
  * fuera de él, 404. Cada lectura queda en la auditoría (RN-B03).
  */
+@RequireFeature('PROGRESS_PHOTOS')
 @Controller('patients/:patientId/progress-photos')
 export class PatientProgressPhotosController {
   constructor(
@@ -191,6 +193,7 @@ export class PatientProgressPhotosController {
 }
 
 /** Una foto por su id, para el equipo. */
+@RequireFeature('PROGRESS_PHOTOS')
 @Controller('progress-photos')
 export class ProgressPhotoController {
   constructor(private readonly queries: ProgressPhotoQueries) {}
@@ -207,6 +210,7 @@ export class ProgressPhotoController {
 }
 
 /** Las fotos del alumno en su app (rutas /me: nunca envía su id); sus POST llevan Idempotency-Key (06 §5). */
+@RequireFeature('PROGRESS_PHOTOS')
 @Controller('me/progress-photos')
 export class MeProgressPhotosController {
   constructor(

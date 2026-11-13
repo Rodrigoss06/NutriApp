@@ -27,12 +27,13 @@ import {
 import { isErr, type DomainError, type SecurityContext } from '@nutricoach/shared-kernel';
 import { z } from 'zod';
 import {
+  type ContextualRequest,
   parseBody,
   PatientOnly,
-  problemFromDomainError,
   ProblemException,
+  problemFromDomainError,
+  RequireFeature,
   RequirePermission,
-  type ContextualRequest,
 } from '../../../../../platform/index.js';
 import { evolutionOf } from '../../../../assessment/index.js';
 import {
@@ -156,6 +157,7 @@ const reportOf = (report: MesocycleReportView): MesocycleReport => ({
  * Los informes del mesociclo de un alumno para su equipo de atención (P14.5, PR 7a; RN-G19; ADR-117): con la RLS del equipo
  * (RN-A05); fuera de él, 404. Leerlos deja un READ en la auditoría (RN-B03).
  */
+@RequireFeature('MESOCYCLE_REPORT')
 @Controller('patients/:patientId/mesocycle-reports')
 export class PatientMesocycleReportsController {
   constructor(
@@ -206,6 +208,7 @@ export class PatientMesocycleReportsController {
 }
 
 /** Un informe del mesociclo para el equipo: el borrador se edita con If-Match y se envía al cerrar el mesociclo (RN-G19). */
+@RequireFeature('MESOCYCLE_REPORT')
 @Controller('mesocycle-reports')
 export class MesocycleReportController {
   constructor(
@@ -255,6 +258,7 @@ export class MesocycleReportController {
 }
 
 /** Los informes enviados del alumno, en su app (rutas /me: nunca envía su id), y su comentario. */
+@RequireFeature('MESOCYCLE_REPORT')
 @Controller('me/mesocycle-reports')
 export class MeMesocycleReportsController {
   constructor(

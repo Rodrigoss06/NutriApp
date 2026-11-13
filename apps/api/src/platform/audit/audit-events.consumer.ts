@@ -136,6 +136,17 @@ export const AUDITED_EVENTS: Readonly<Record<string, AuditMapping>> = {
     fields: () => ['review_decision', 'review_note'],
   },
   // El expediente de documentos (ADR-122): nunca el título ni el enlace, solo qué cambió. Borrar es lógico.
+  'tenancy.plan.created': { action: 'CREATE', resourceType: 'tenancy.subscription_plan' },
+  'tenancy.plan.updated': {
+    action: 'UPDATE',
+    resourceType: 'tenancy.subscription_plan',
+    fields: (p) => namesOf(p.fields),
+  },
+  'tenancy.feature.changed': {
+    action: 'UPDATE',
+    resourceType: 'platform.feature_flag',
+    fields: () => ['enabled'],
+  },
   'scheduling.appointment.booked': { action: 'CREATE', resourceType: 'scheduling.appointment' },
   'scheduling.appointment.updated': {
     action: 'UPDATE',

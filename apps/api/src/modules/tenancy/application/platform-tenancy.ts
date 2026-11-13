@@ -1,6 +1,8 @@
 import { Inject, Injectable } from '@nestjs/common';
+import type { FeatureFlag } from '@nutricoach/contracts';
 import {
   CLOCK,
+  createDomainEvent,
   err,
   ID_GENERATOR,
   ok,
@@ -16,9 +18,18 @@ import {
 } from '@nutricoach/shared-kernel';
 import { checkSetting } from '../domain/settings.js';
 import { addDays } from '../domain/tenancy-rules.js';
-import { PLAN_NOT_FOUND, SLUG_TAKEN } from './tenancy-errors.js';
+import { FeatureFlags } from '../../../platform/index.js';
+import { PLAN_CODE_TAKEN, PLAN_NOT_FOUND, PLAN_UNKNOWN, SLUG_TAKEN } from './tenancy-errors.js';
 import { tenancyEvent } from './tenancy-events.js';
-import { TENANCY_STORE, type PlanRecord, type TenancyStore } from './ports/tenancy.ports.js';
+import {
+  TENANCY_STORE,
+  type PlanChanges,
+  type PlanRecord,
+  type TenancyStore,
+} from './ports/tenancy.ports.js';
+
+const snakeCase = (key: string): string =>
+  key.replace(/[A-Z]/g, (letter) => `_${letter.toLowerCase()}`);
 
 /** Fin de la vigencia: startsOn + duración en meses − 1 día (vale hasta ends_on inclusive, RN-A02). */
 export function subscriptionEndsOn(startsOn: string, durationMonths: number): string {
@@ -38,6 +49,7 @@ export class PlatformTenancy {
     @Inject(OUTBOX) private readonly outbox: Outbox,
     @Inject(CLOCK) private readonly clock: Clock,
     @Inject(ID_GENERATOR) private readonly ids: IdGenerator,
+    @Inject(FeatureFlags) private readonly flags: FeatureFlags,
   ) {}
 
   async createOrganization(
@@ -133,6 +145,74 @@ export class PlatformTenancy {
 
   listPlans() {
     return this.store.listPlans();
+  }
+
+  /** El uso del cupo de cada organización: pacientes y miembros activos, solo cuentas (RN-A03, RN-A09). */
+  organizationUsage() {
+    return this.store.organizationUsage();
+  }
+
+  /**
+   * Un tramo nuevo (N9). Los límites de un plan se congelan en cada suscripción: cambiarlos después no toca las vigentes (RN-A03).
+   */
+  async createPlan(
+    input: Omit<PlanRecord, 'id' | 'isActive'>,
+    metadata: EventMetadata,
+  ): Promise<Result<PlanRecord, DomainError>> {
+    const plan: PlanRecord = { ...input, id: this.ids.newId<'PlanId'>(), isActive: true };
+    if (!(await this.store.createPlan(plan))) return err(PLAN_CODE_TAKEN);
+    await this.outbox.append([this.#planEvent('tenancy.plan.created', plan.id, [])], metadata);
+    return ok(plan);
+  }
+
+  /** Cambiar un plan: el código no cambia; un plan no se borra, se desactiva y deja de ofrecerse. */
+  async updatePlan(
+    code: string,
+    changes: PlanChanges,
+    metadata: EventMetadata,
+  ): Promise<Result<PlanRecord, DomainError>> {
+    const current = await this.store.findPlanByCode(code);
+    if (!current) return err(PLAN_UNKNOWN);
+    const fields = (Object.keys(changes) as (keyof PlanChanges)[]).filter(
+      (key) => changes[key] !== undefined && changes[key] !== current[key],
+    );
+    if (fields.length === 0) return ok(current);
+    await this.store.updatePlan(code, changes);
+    await this.outbox.append(
+      [this.#planEvent('tenancy.plan.updated', current.id, fields.map(snakeCase))],
+      metadata,
+    );
+    return ok({ ...current, ...changes });
+  }
+
+  /** Encender o apagar una bandera de la organización (RF-39, ADR-127); queda en la auditoría. */
+  async setFeature(
+    organizationId: OrganizationId,
+    key: FeatureFlag,
+    enabled: boolean,
+    actor: UserId,
+    metadata: EventMetadata,
+  ): Promise<void> {
+    await this.flags.set(organizationId, key, enabled, actor);
+    await this.outbox.append(
+      [this.#event('tenancy.feature.changed', organizationId, organizationId, { key, enabled })],
+      metadata,
+    );
+  }
+
+  features(organizationId: OrganizationId) {
+    return this.flags.effective(organizationId);
+  }
+
+  #planEvent(
+    type: 'tenancy.plan.created' | 'tenancy.plan.updated',
+    planId: string,
+    fields: string[],
+  ) {
+    return createDomainEvent(
+      { type, version: 1, organizationId: null, aggregateId: planId, payload: { fields } },
+      { clock: this.clock, ids: this.ids },
+    );
   }
 
   async #subscribe(

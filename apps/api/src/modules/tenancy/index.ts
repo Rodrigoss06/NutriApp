@@ -18,9 +18,16 @@ export {
 export {
   ALREADY_MEMBER,
   ORGANIZATION_NOT_FOUND,
+  PLAN_CODE_TAKEN,
   PLAN_NOT_FOUND,
+  PLAN_UNKNOWN,
   SLUG_TAKEN,
 } from './application/tenancy-errors.js';
 export { TenancyApi, type SheetBranding } from './application/tenancy-api.js';
-export type { BrandingRecord } from './application/ports/tenancy.ports.js';
+export type {
+  BrandingRecord,
+  OrganizationUsage,
+  PlanChanges,
+  PlanRecord,
+} from './application/ports/tenancy.ports.js';
 export { TenancyModule } from './tenancy.module.js';

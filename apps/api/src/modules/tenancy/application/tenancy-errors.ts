@@ -21,3 +21,12 @@ export const SLUG_TAKEN = domainError({
   code: 'NC-TEN-025',
   message: 'Ese identificador de organización ya está en uso.',
 });
+
+export const PLAN_CODE_TAKEN = domainError({
+  code: 'NC-TEN-045',
+  message: 'Ya hay un plan con ese código.',
+});
+export const PLAN_UNKNOWN = domainError({
+  code: 'NC-TEN-046',
+  message: 'El plan de membresía no existe.',
+});

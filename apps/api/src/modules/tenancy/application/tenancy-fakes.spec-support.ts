@@ -21,6 +21,8 @@ import type {
   OrganizationChanges,
   OrganizationRecord,
   OrganizationStatus,
+  OrganizationUsage,
+  PlanChanges,
   PlanRecord,
   SubscriptionRecord,
   SubscriptionStatus,
@@ -272,6 +274,20 @@ export class MemoryTenancyStore implements TenancyStore {
   }
   listPlans() {
     return Promise.resolve([...this.plans.values()]);
+  }
+  createPlan(plan: PlanRecord) {
+    if (this.plans.has(plan.code)) return Promise.resolve(false);
+    this.plans.set(plan.code, plan);
+    return Promise.resolve(true);
+  }
+  updatePlan(code: string, changes: PlanChanges) {
+    const current = this.plans.get(code);
+    if (!current) return Promise.resolve(false);
+    this.plans.set(code, { ...current, ...changes });
+    return Promise.resolve(true);
+  }
+  organizationUsage() {
+    return Promise.resolve(new Map<string, OrganizationUsage>());
   }
   getSetting(organizationId: OrganizationId, key: string) {
     return Promise.resolve(this.settings.get(`${organizationId}:${key}`));

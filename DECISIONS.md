@@ -3443,3 +3443,34 @@ Consecuencias:
   confirmarla, el mes y la app del paciente.
 - Para Notion (/notion-sync de P15): 04 RF-10, RF-34 y RF-37 (lo que hacen las pantallas); 07 §10 (las sesiones verificadas y por
   validar ya llegaron).
+
+## ADR-127 · El panel interno por la API: planes, uso del cupo y banderas por organización — aceptada (2026-11-13)
+Contexto: P15, PR 3a (RF-39; RN-A02, RN-A03, RN-A09, RN-B03; ADR-034, ADR-124). El panel interno ya creaba organizaciones,
+asignaba suscripciones y fijaba los días de gracia (ADR-034). Faltaban los planes, el uso de los cupos y las banderas, y los valores
+definitivos de TRAMO_5 y TRAMO_50 se iban a cargar con una migración de datos.
+Decisión:
+- Planes (N9): `POST /platform/plans` y `PATCH /platform/plans/:code`. El código es único, en mayúsculas, y no cambia; un plan no se
+  borra: se desactiva y deja de ofrecerse. Sus límites se congelan en cada suscripción, así que cambiarlos no toca las vigentes
+  (RN-A03). Con esto, TRAMO_5 y TRAMO_50 se cargan en producción desde el panel, sin migración.
+- `tenancy.subscription_plan` pasa a tener RLS: todos leen; solo PLATFORM_ADMIN y SYSTEM crean o cambian, y solo las columnas que
+  cambian.
+- Uso del cupo: `GET /platform/organizations` suma, por organización, los pacientes y los miembros activos y los límites congelados
+  de la suscripción. Lo cuenta `app.organization_usage()`, SECURITY DEFINER, que solo responde a PLATFORM_ADMIN y solo devuelve
+  cuentas: ningún dato clínico (RN-A09).
+- Banderas: el catálogo está en contracts (`FEATURE_FLAGS`): `MESOCYCLE_REPORT`, `PROGRESS_PHOTOS` y `RECORD_DOCUMENTS`, encendidas
+  de fábrica (ADR-124). En `platform.feature_flag`, la fila de la organización manda sobre la global y la global sobre la de
+  fábrica; solo PLATFORM_ADMIN y SYSTEM las escriben (políticas restrictivas). `GET` y `PUT
+  /platform/organizations/:id/flags[/:key]`.
+- Una función apagada no existe: `@RequireFeature` y la quinta guardia (`FeatureGuard`) responden 404 `NC-PLT-014` en sus rutas
+  del panel y de la app. Lo que corre en el worker (el borrado de las fotos al archivar o revocar) no depende de la bandera.
+- La web lo sabe por `features` en `GET /organization` y en `GET /me/app`, para ocultar lo que la API negaría (ADR-076).
+- Eventos `tenancy.plan.created`, `tenancy.plan.updated` (sin organización) y `tenancy.feature.changed`, a la auditoría.
+- Migración `202611130100_platform_backoffice`.
+Consecuencias:
+- Contratos: el catálogo de banderas y los planes. Unitarias de tenancy con las banderas de fábrica.
+- Integración `backoffice.int.spec.ts` (8 casos, como app_user): crear y cambiar planes sin tocar las suscripciones vigentes; el
+  equipo no escribe planes ni banderas, tampoco en la base; el uso del cupo y la función que no responde a otros roles; apagar las
+  fotos las saca de la API, del panel y de la app; la auditoría.
+- PR 3b: las pantallas del panel interno y ocultar en el panel y en la app lo que esté apagado.
+- Para Notion (/notion-sync de P15): 05.1 (la RLS de los planes), 05.3 (las políticas de las banderas) y 05 §3 (la función del uso),
+  02 §10 (la quinta guardia), 04 RF-39.
