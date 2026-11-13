@@ -167,11 +167,17 @@ function MacrocycleTable({
   );
 }
 
-function SessionsSummary({ rows }: { rows: readonly MacrocycleRow[] }) {
+function SessionsSummary({
+  rows,
+  attendance,
+}: {
+  rows: readonly MacrocycleRow[];
+  attendance: { readonly verified: number; readonly pending: number } | null;
+}) {
   const { registered, programmedToDate, upcoming } = sessionSummary(rows);
   return (
     <div className="flex flex-col gap-2">
-      <dl className="grid gap-3 sm:grid-cols-2">
+      <dl className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
         <div className="rounded-lg border border-border bg-card p-3">
           <dt className="text-sm text-muted-foreground">Sesiones registradas</dt>
           <dd className="text-2xl font-semibold">
@@ -186,9 +192,23 @@ function SessionsSummary({ rows }: { rows: readonly MacrocycleRow[] }) {
           <dt className="text-sm text-muted-foreground">Sesiones próximas</dt>
           <dd className="text-2xl font-semibold">{upcoming}</dd>
         </div>
+        {attendance ? (
+          <>
+            <div className="rounded-lg border border-border bg-card p-3">
+              <dt className="text-sm text-muted-foreground">Sesiones verificadas</dt>
+              <dd className="text-2xl font-semibold">{attendance.verified}</dd>
+            </div>
+            <div className="rounded-lg border border-border bg-card p-3">
+              <dt className="text-sm text-muted-foreground">Por validar</dt>
+              <dd className="text-2xl font-semibold">{attendance.pending}</dd>
+            </div>
+          </>
+        ) : null}
       </dl>
       <p className="text-sm text-muted-foreground">
         Las sesiones las registra el paciente en su app y se comparan con las del programa vigente.
+        Las verificadas son las citas de entrenamiento con la asistencia validada en la agenda; por
+        validar, las que ya empezaron sin validar.
       </p>
     </div>
   );
@@ -442,6 +462,7 @@ export function WeeklyReviewBoard({
   careTeam,
   members,
   timezone,
+  attendance,
 }: {
   rows: readonly MacrocycleRow[];
   weeks: readonly TrainingWeek[];
@@ -450,6 +471,8 @@ export function WeeklyReviewBoard({
   careTeam: readonly CareTeamMember[];
   members: readonly MemberResponse[];
   timezone: string;
+  /** Las sesiones con cita del macrociclo (07 §10); null sin agenda. */
+  attendance: { readonly verified: number; readonly pending: number } | null;
 }) {
   const base = `/panel/pacientes/${patientId}/entrenamiento/control-semanal`;
   const row = rows.find((candidate) => candidate.weekNo === selected);
@@ -460,7 +483,7 @@ export function WeeklyReviewBoard({
         title="Resumen del macrociclo"
         description="Cada semana se controla al cerrar, con los registros diarios del paciente y los umbrales de la organización vigentes ese día."
       >
-        <SessionsSummary rows={rows} />
+        <SessionsSummary rows={rows} attendance={attendance} />
         <MacrocycleTable
           rows={rows}
           selected={selected}

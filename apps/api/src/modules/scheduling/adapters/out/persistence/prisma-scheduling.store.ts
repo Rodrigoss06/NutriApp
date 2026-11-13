@@ -1,6 +1,7 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { TransactionHost } from '@nestjs-cls/transactional';
 import type { Db } from '../../../../../platform/index.js';
+import type { TimelineCursor, TimelineEntry } from '../../../../clinical/index.js';
 import type {
   AppointmentChanges,
   NewAppointment,
@@ -146,6 +147,30 @@ export class PrismaSchedulingStore implements SchedulingStore {
         row.patientId && row._min.startsAt ? [[row.patientId, row._min.startsAt] as const] : [],
       ),
     );
+  }
+
+  async timeline(
+    patientId: string,
+    startedBy: Date,
+    before: TimelineCursor | null,
+    limit: number,
+  ): Promise<readonly TimelineEntry[]> {
+    const rows = await this.db.tx.$queryRaw<
+      { id: string; starts_at: Date; kind: string; status: string }[]
+    >`
+      SELECT id, starts_at, kind, status FROM scheduling.appointment
+      WHERE patient_id = ${patientId}::uuid AND status <> 'CANCELLED' AND starts_at <= ${startedBy}
+        AND (${before?.occurredAt ?? null}::timestamptz IS NULL
+             OR (starts_at, id) < (${before?.occurredAt ?? null}::timestamptz, ${before?.refId ?? null}::uuid))
+      ORDER BY starts_at DESC, id DESC
+      LIMIT ${limit}`;
+    return rows.map((row) => ({
+      kind: 'APPOINTMENT',
+      occurredAt: row.starts_at,
+      refId: row.id,
+      label: row.kind,
+      detail: row.status,
+    }));
   }
 
   async availability(memberId: string): Promise<readonly AvailabilitySlot[]> {

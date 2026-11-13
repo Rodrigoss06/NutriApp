@@ -216,6 +216,8 @@ export const TIMELINE_KINDS = [
   'NUTRITION_PLAN_PUBLISHED',
   /** Programa de entrenamiento publicado (P12): label es su número de versión. */
   'TRAINING_PROGRAM_PUBLISHED',
+  /** Cita que ya empezó, sin las canceladas (P15, ADR-125): label es su tipo; detail, su estado. */
+  'APPOINTMENT',
 ] as const;
 export const timelineItemSchema = z.object({
   kind: z.enum(TIMELINE_KINDS),

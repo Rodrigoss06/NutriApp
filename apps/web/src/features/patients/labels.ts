@@ -115,6 +115,7 @@ export const TIMELINE_KIND_LABELS = {
   ENERGY_PRESCRIBED: 'Prescripción energética',
   NUTRITION_PLAN_PUBLISHED: 'Plan nutricional publicado',
   TRAINING_PROGRAM_PUBLISHED: 'Programa de entrenamiento publicado',
+  APPOINTMENT: 'Cita',
 } as const satisfies Record<TimelineItem['kind'], string>;
 
 export const AUDIT_ACTION_LABELS = {

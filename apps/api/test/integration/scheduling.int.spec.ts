@@ -376,6 +376,21 @@ describe('RN-J02 · el recordatorio por correo, 24 horas antes de la cita confir
   });
 });
 
+describe('RF-10 · las citas en la línea de tiempo del expediente', () => {
+  it('las que ya empezaron, sin las canceladas, con su tipo y su estado', async () => {
+    const response = await harness.get(`/patients/${patientId}/timeline?limit=50`, responsible);
+    expect(response.status, JSON.stringify(response.body)).toBe(200);
+    const items = (
+      response.body as { items: { kind: string; label: string; detail: string | null }[] }
+    ).items;
+    const appointments = items.filter((item) => item.kind === 'APPOINTMENT');
+    expect(appointments).toContainEqual(
+      expect.objectContaining({ label: 'TRAINING', detail: 'NO_SHOW' }),
+    );
+    expect(appointments.every((item) => item.detail !== 'CANCELLED')).toBe(true);
+  });
+});
+
 describe('RF-34 · RN-B03 · la próxima cita en el panel y la auditoría', () => {
   it('el panel guarda la próxima cita programada o confirmada del paciente', async () => {
     await harness.deliver('analytics.overview');

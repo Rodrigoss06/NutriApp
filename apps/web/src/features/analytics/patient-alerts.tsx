@@ -15,12 +15,15 @@ export function PatientAlerts({
   filter,
   patientLabel,
   pluralPatientLabel,
+  timezone,
 }: {
   overview: OverviewResponse;
   names: ReadonlyMap<string, string>;
   filter: OverviewAlert | null;
   patientLabel: string;
   pluralPatientLabel: string;
+  /** La zona de la organización, para la próxima cita (RN-J03). */
+  timezone: string;
 }) {
   const plural = pluralPatientLabel.toLowerCase();
   const shown = OVERVIEW_ALERTS.filter((code) => overview.counts[code] > 0);
@@ -84,7 +87,7 @@ export function PatientAlerts({
                   {name}
                 </Link>
                 <ul className="flex flex-col text-sm text-muted-foreground">
-                  {overviewFacts(patient).map((fact) => (
+                  {overviewFacts(patient, timezone).map((fact) => (
                     <li key={fact}>{fact}</li>
                   ))}
                 </ul>

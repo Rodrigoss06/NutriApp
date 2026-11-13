@@ -255,7 +255,9 @@ export type TimelineKind =
   | 'ENERGY_PRESCRIBED'
   /** Plan nutricional publicado; lo aporta nutrition. */
   | 'NUTRITION_PLAN_PUBLISHED'
-  | 'TRAINING_PROGRAM_PUBLISHED';
+  | 'TRAINING_PROGRAM_PUBLISHED'
+  /** Cita que ya empezó, sin las canceladas; la aporta scheduling (ADR-125). */
+  | 'APPOINTMENT';
 
 export interface TimelineRecord {
   readonly kind: TimelineKind;

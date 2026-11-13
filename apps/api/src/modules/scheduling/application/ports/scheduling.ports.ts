@@ -1,3 +1,4 @@
+import type { TimelineCursor, TimelineEntry } from '../../../clinical/index.js';
 import type {
   AppointmentKind,
   AppointmentMode,
@@ -57,6 +58,13 @@ export interface SchedulingStore {
   dueReminders(after: Date, until: Date): Promise<readonly AppointmentRecord[]>;
   /** La próxima cita programada o confirmada de cada paciente, desde ese instante. */
   nextForPatients(patientIds: readonly string[], from: Date): Promise<ReadonlyMap<string, Date>>;
+  /** Las citas del paciente que ya empezaron, sin las canceladas, para la línea de tiempo del expediente (RF-10). */
+  timeline(
+    patientId: string,
+    startedBy: Date,
+    before: TimelineCursor | null,
+    limit: number,
+  ): Promise<readonly TimelineEntry[]>;
   availability(memberId: string): Promise<readonly AvailabilitySlot[]>;
   /** Reemplaza la disponibilidad semanal entera del profesional, vigente desde esa fecha. */
   replaceAvailability(
