@@ -64,6 +64,7 @@ export const CONSENT_CHANNEL_LABELS = {
   APP: 'Desde la app',
   IN_PERSON_DIGITAL: 'En consulta, digital',
   PAPER_SCANNED: 'En papel, escaneado',
+  MIGRATED: 'Migrado',
 } as const satisfies Record<Consent['channel'], string>;
 
 export const CONDITION_KIND_LABELS = {

@@ -25,6 +25,7 @@
     "analytics:rebuild": "node dist/cli/analytics-rebuild.js",
     "catalog:import": "node dist/cli/import-catalog.js",
     "catalog:load": "node dist/cli/load-catalogs.js",
+    "account:import": "node dist/cli/import-account.js",
     "test:int": "vitest run --config vitest.int.config.js --coverage"
   },
   "dependencies": {

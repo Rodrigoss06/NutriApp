@@ -3704,3 +3704,63 @@ Consecuencias:
 - E2E `supresion.spec.ts`, en escritorio y en el celular, con axe: la dueña suprime a un paciente archivado con su código; el
   expediente queda «Anonimizado» y «Suprimido», sin «Reactivar» ni su nombre. Siguen pasando exportación, pacientes y soporte.
 - Para Notion (/notion-sync de P15): 04 RF-07 (dónde se suprime y cómo se confirma).
+
+## ADR-135 · La migración de cuentas por la CLI: plantilla CSV propia, una fila por transacción e informe con conteos y muestreo — aceptada (2026-11-14)
+Contexto: P15, PR 7a (RF-40, RN-I05; ADR-124). RF-40 pide migrar hasta cinco cuentas de nutricionista (pacientes, evaluaciones y
+planes) desde los archivos del cliente, y el prompt, un importador idempotente con origen IMPORT, validado con conteos y muestreo y
+con un informe por cuenta. Las exportaciones de NutriPlace siguen pendientes: el importador va con una plantilla propia y el conversor
+llegará con la muestra. Rodrigo eligió el 2026-11-14:
+- las evaluaciones entran con sus tomas y se cierran, así que el motor calcula sus resultados con los métodos de la organización;
+- los planes entran al historial, y al armar un plan nuevo se ven al lado las metas del último importado, sin crear borrador (RN-D01:
+  un plan nace de una prescripción del motor y NutriPlace no trae el método);
+- el consentimiento de datos de salud entra como «migrado», con la fecha que trae la plantilla (pendiente de validación legal).
+Decisión:
+- Plantilla (`docs/migracion/`): una carpeta por cuenta con `pacientes.csv`, `evaluaciones.csv`, `tomas.csv` y `planes.csv`, cada uno
+  con su encabezado exacto, en UTF-8 y RFC 4180, con fechas AAAA-MM-DD y decimales con punto. Un archivo puede venir solo con el
+  encabezado. El `id_origen` es el id del sistema anterior: nunca el documento (se rechaza si coincide).
+- Sobre lo aprobado, tres columnas opcionales que replican la app: `poblacion` (vacía es ADULTO, como en el alta; decide los
+  métodos), y `en_ayunas` y `actividad_intensa_24h` (vacías son NO, como en el formulario de la evaluación).
+- Validación (módulo nuevo `migration`, dominio puro): cada columna con su mensaje; un id repetido, una evaluación o un plan cuyo
+  paciente no está o tiene errores, una toma de una evaluación que no está, un sitio repetido y una evaluación sin tomas son errores
+  de su fila. Una evaluación con una toma mala no entra entera. Cada sitio va con dos tomas, como en la app (RN-C02): con una sola
+  la app lo deja sin consolidar y la evaluación no cierra.
+- Cada contexto importa lo suyo con su caso de uso, en una transacción por fila, y deja la fila en `platform.import_record` (cuenta,
+  tipo, `id_origen` → id creado) en esa misma transacción. La UnitOfWork no se anida, así que no hay una transacción por paciente:
+  si algo falla, se revierte esa fila, y al reimportar se salta lo que ya entró y entra lo que falló.
+  - clinical (`PatientImportCommands`): el alta de siempre (`PatientCommands.registerWithin`), con el nutricionista como
+    responsable; el inactivo entra archivado y no ocupa cupo (RN-A03); con fecha, el consentimiento HEALTH_DATA con el canal nuevo
+    MIGRATED, al mediodía UTC de esa fecha, sin evidencia ni IP (CHECK `consent_migrated`). Sin fecha, el paciente entra solo con
+    su ficha. Si tenía menos de 14 años en esa fecha no se migra: solo vale el papel del tutor (RN-B01).
+  - assessment (`EvaluationImportCommands`): valida las tomas como la app (RN-C02 a RN-C04), exige el nivel completo y la cierra a su
+    hora local (sin hora, las 09:00); el cálculo lo hace el worker con `assessment.evaluation.closed` (RN-D01). Deja pasar al
+    paciente archivado (`ClinicalApi.ensureImportWritable`), nunca al suprimido.
+  - nutrition (`ImportedPlanCommands`): `nutrition.imported_plan`, historial de solo lectura con sus metas (cada una puede faltar) y
+    sus indicaciones. Evento `nutrition.plan.imported` a la auditoría.
+  - Todo a nombre del nutricionista de la cuenta (autor y evaluador): los datos son suyos. Quién corrió la importación queda en cada
+    lote (`platform.import_batch`, started_by).
+- Lotes: uno por archivo y corrida (ACCOUNT_PATIENTS, ACCOUNT_EVALUATIONS, ACCOUNT_MEASUREMENTS, ACCOUNT_PLANS) con su hash, sus conteos
+  y los primeros 100 errores. `import_batch_once` deja fuera ACCOUNT_*: el mismo archivo se puede volver a correr.
+- Informe por cuenta, sin nombres, documentos ni correos (solo filas e `id_origen`): por archivo, filas, nuevas, ya estaban y con
+  error, con el motivo; los conteos contra la base (las filas del archivo con su registro de importación); y un muestreo al azar de
+  10 filas por tipo vueltas a leer campo por campo. Las lecturas del muestreo son parte de la importación: no se auditan como
+  lectura de una persona. Una fila que ya entró no se actualiza; si cambió en el origen, el muestreo la marca.
+- CLI `account:import <carpeta> --org --member --admin [--dry-run] [--sample N] [--report]`, para un administrador de plataforma
+  activo; el nutricionista, miembro activo de la organización. `--dry-run` valida y cuenta lo que ya entró sin escribir nada.
+- Particiones: nada de esto va a tablas particionadas (solo tracking y la auditoría lo son), así que no hace falta
+  `app.ensure_monthly_partitions`. Si la muestra de NutriPlace trae registros diarios, el conversor la llama desde la fecha más antigua.
+- `import_record` no guarda datos personales y queda después de una supresión: reimportar no devuelve a un paciente suprimido. La
+  supresión vacía las indicaciones de los planes importados (`clinical.anonymize_patient`, reemplazada en esta migración).
+- Migración `202611140100_account_import`.
+Consecuencias:
+- Unitarias: cada archivo de la plantilla, la carpeta entera, la hora local, el muestreo y el consentimiento migrado.
+- Integración `account-import.int.spec.ts` (11 casos), con el criterio 3 de P15: importar dos veces no duplica y el informe cuadra con
+  los conteos; el cupo, el archivado, el consentimiento migrado y sin él, la evaluación cerrada con sus resultados, el plan en el
+  historial sin plan de NutriCoach, los lotes, el informe sin datos personales, el `--dry-run` y que app_user no cambia
+  `import_record` ni `imported_plan`. La supresión vacía las indicaciones del plan importado de Luis; la exportación lo trae.
+- Las pantallas (el historial de planes con los importados, las metas al lado del plan nuevo y el consentimiento «Migrado») llegan en
+  el PR 7b.
+- Abierto: si NutriPlace guarda solo el valor final de cada sitio (una toma), sus evaluaciones no cierran; hay que decidirlo con la
+  muestra.
+- Para Notion (/notion-sync de P15): 03 RN-I05 (cómo se valida) y RN-B01 (el consentimiento migrado); 04 RF-40; 05.1 (`consent.channel`
+  MIGRATED y `consent_migrated`); 05.2 (`nutrition.imported_plan`); 05.3 (`platform.import_record` e `import_batch_once`); 02 (el módulo
+  migration y la CLI).

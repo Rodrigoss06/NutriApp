@@ -71,4 +71,13 @@ export class IamApi {
     const account = await this.accounts.findByEmail(normalizeEmail(email));
     return account?.isPlatformAdmin && account.status === 'ACTIVE' ? account.id : null;
   }
+
+  /**
+   * Una cuenta ACTIVE por su correo, dentro de la transacción del llamador; null si no existe o no está activa. La migración de
+   * cuentas busca así al nutricionista de cada cuenta (RF-40, ADR-135).
+   */
+  async activeAccount(email: string): Promise<UserId | null> {
+    const account = await this.accounts.findByEmail(normalizeEmail(email));
+    return account?.status === 'ACTIVE' ? account.id : null;
+  }
 }

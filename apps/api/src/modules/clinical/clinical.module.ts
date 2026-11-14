@@ -27,6 +27,7 @@ import { ClinicalApi } from './application/clinical-api.js';
 import { ClinicalRecordCommands } from './application/commands/clinical-record.commands.js';
 import { ConsentCommands } from './application/commands/consent.commands.js';
 import { PatientInvitationCommands } from './application/commands/patient-invitation.commands.js';
+import { PatientImportCommands } from './application/commands/patient-import.commands.js';
 import { PatientCommands } from './application/commands/patient.commands.js';
 import { RecordDocumentCommands } from './application/commands/record-document.commands.js';
 import { PatientEnrollmentService } from './application/patient-enrollment.js';
@@ -83,6 +84,7 @@ import { PrismaRecordDocumentStore } from './adapters/out/persistence/prisma-rec
     ClinicalExportSource,
     PatientExportCommands,
     PatientSuppressionCommands,
+    PatientImportCommands,
     PatientExportQueries,
     PatientExportBuilder,
     PatientExportConsumer,
@@ -101,7 +103,7 @@ import { PrismaRecordDocumentStore } from './adapters/out/persistence/prisma-rec
       inject: [ClinicalApi],
     },
   ],
-  exports: [ClinicalApi, ACTIVE_PATIENT_COUNTER, PATIENT_ENROLLMENT],
+  exports: [ClinicalApi, PatientImportCommands, ACTIVE_PATIENT_COUNTER, PATIENT_ENROLLMENT],
 })
 export class ClinicalModule implements OnModuleInit {
   constructor(

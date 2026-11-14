@@ -21,6 +21,7 @@ import {
   type Population,
   type Sex,
 } from '../domain/clinical-rules.js';
+import { PATIENT_ANONYMIZED } from '../domain/patient-suppression.js';
 import {
   CLINICAL_RECORD_STORE,
   CONSENT_STORE,
@@ -148,6 +149,26 @@ export class ClinicalApi {
     const patient = await this.patients.find(patientId);
     if (!patient) return err(PATIENT_NOT_FOUND);
     if (patient.status === 'ARCHIVED') return err(PATIENT_ARCHIVED);
+    const actor = { memberId: context.memberId ?? null };
+    if (!canWriteRecord(actor, await this.patients.careTeam(patientId))) {
+      return err(WRITE_ACCESS_REQUIRED);
+    }
+    if (!(await this.consents.active(patientId, 'HEALTH_DATA'))) return err(HEALTH_DATA_REQUIRED);
+    return ok(refOf(patient));
+  }
+
+  /**
+   * Lo que exige importar datos de salud de un paciente de una cuenta del sistema anterior (RF-40, ADR-135): verlo (RN-A05), que no
+   * esté suprimido, acceso de escritura en su equipo y HEALTH_DATA vigente (RN-B01). A diferencia de ensureRecordWritable deja pasar
+   * al archivado: el paciente inactivo entra archivado con su historia.
+   */
+  async ensureImportWritable(
+    context: SecurityContext,
+    patientId: string,
+  ): Promise<Result<PatientRef, DomainError>> {
+    const patient = await this.patients.find(patientId);
+    if (!patient) return err(PATIENT_NOT_FOUND);
+    if (patient.anonymizedAt) return err(PATIENT_ANONYMIZED);
     const actor = { memberId: context.memberId ?? null };
     if (!canWriteRecord(actor, await this.patients.careTeam(patientId))) {
       return err(WRITE_ACCESS_REQUIRED);

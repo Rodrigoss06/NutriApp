@@ -76,6 +76,13 @@ export {
   type ImportRequest,
 } from './import/catalog-importer.js';
 export { ImportRegistry } from './import/import-registry.js';
+export { ImportBatchStore, type ImportBatch } from './import/import-batch.store.js';
+export {
+  ImportRecordStore,
+  type ImportedEntity,
+  type ImportOrigin,
+} from './import/import-record.store.js';
+export { parseCsv, type CsvRecord } from './import/csv.js';
 export { STORAGE, type StoragePort } from './storage/storage.port.js';
 export { FeatureFlags, type EffectiveFlag } from './flags/feature-flags.js';
 export { RequireFeature } from './flags/feature.guard.js';

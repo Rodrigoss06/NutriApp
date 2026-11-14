@@ -12,6 +12,7 @@ export type NutritionEventType =
   | 'nutrition.plan.updated'
   | 'nutrition.plan.published'
   | 'nutrition.plan.superseded'
+  | 'nutrition.plan.imported'
   | 'nutrition.exclusion.changed';
 
 export function nutritionEvent<TPayload extends { patientId: string }>(

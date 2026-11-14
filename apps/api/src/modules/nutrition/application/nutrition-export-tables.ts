@@ -28,4 +28,6 @@ export const NUTRITION_EXPORT_TABLES: readonly PatientExportTable[] = [
   },
   { table: 'nutrition.plan_item', where: OF_MEALS },
   { table: 'nutrition.plan_item_profile', where: OF_PLANS, orderBy: 'plan_item_id, profile_code' },
+  /** Los planes del sistema anterior, importados con la migración de cuentas (RF-40, ADR-135). */
+  { table: 'nutrition.imported_plan', orderBy: 'valid_from, id' },
 ];

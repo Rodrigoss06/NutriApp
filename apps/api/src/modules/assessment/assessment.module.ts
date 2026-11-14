@@ -6,6 +6,7 @@ import { AssessmentTimelineSource } from './application/assessment-timeline.js';
 import { CalculationService } from './application/calculation.service.js';
 import { CalculationCommands } from './application/commands/calculation.commands.js';
 import { EvaluationCommands } from './application/commands/evaluation.commands.js';
+import { EvaluationImportCommands } from './application/commands/evaluation-import.commands.js';
 import { TechnicalErrorCommands } from './application/commands/technical-error.commands.js';
 import {
   CALCULATION_STORE,
@@ -71,6 +72,7 @@ import {
   ],
   providers: [
     EvaluationCommands,
+    EvaluationImportCommands,
     TechnicalErrorCommands,
     EvaluationQueries,
     FunctionalEvaluationCommands,
@@ -90,7 +92,7 @@ import {
     { provide: CALCULATION_STORE, useClass: PrismaCalculationStore },
     { provide: PATIENT_EVOLUTION_STORE, useClass: PrismaPatientEvolutionStore },
   ],
-  exports: [AssessmentApi],
+  exports: [AssessmentApi, EvaluationImportCommands],
 })
 export class AssessmentModule implements OnModuleInit {
   constructor(

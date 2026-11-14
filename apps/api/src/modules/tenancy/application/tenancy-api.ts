@@ -119,6 +119,15 @@ export class TenancyApi {
     return (await this.store.findMember(organizationId, memberId))?.status === 'ACTIVE';
   }
 
+  /** El miembro activo de esa cuenta en la organización, con su rol; null si no lo es. La migración de cuentas (ADR-135). */
+  async activeMemberOfUser(
+    organizationId: OrganizationId,
+    userId: UserId,
+  ): Promise<{ readonly memberId: string; readonly role: MemberRole } | null> {
+    const member = await this.store.findMemberByUser(organizationId, userId);
+    return member?.status === 'ACTIVE' ? { memberId: member.id, role: member.role } : null;
+  }
+
   /** Miembro activo o suspendido: invitarlo de nuevo es 409; quitado, puede volver por invitación. */
   async isMember(organizationId: OrganizationId, userId: UserId): Promise<boolean> {
     const member = await this.store.findMemberByUser(organizationId, userId);

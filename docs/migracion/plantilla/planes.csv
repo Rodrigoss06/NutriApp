@@ -1,0 +1,4 @@
+id_origen,id_paciente,desde,hasta,kcal,proteina_g,grasa_g,carbohidratos_g,agua_ml,indicaciones
+PL-9001,NP-1001,2025-01-15,2025-03-11,2600,160,75,320,3000,"Desayuno antes de entrenar; cena ligera, sin frituras."
+PL-9002,NP-1001,2025-03-12,,2450,155,70,300,3000,
+PL-9003,NP-1002,2024-08-09,2024-12-31,1700,95,55,205,2200,Agua durante el día.

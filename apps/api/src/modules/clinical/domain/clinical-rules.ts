@@ -30,7 +30,8 @@ export const SELF_SERVICE_PURPOSES = [
   'MENSTRUAL_TRACKING',
   'PROGRESS_PHOTOS',
 ] as const satisfies readonly ConsentPurpose[];
-export type ConsentChannel = 'APP' | 'IN_PERSON_DIGITAL' | 'PAPER_SCANNED';
+/** MIGRATED: el de datos de salud que el paciente dio en el sistema anterior, con su fecha (RF-40, ADR-135). Solo la importación. */
+export type ConsentChannel = 'APP' | 'IN_PERSON_DIGITAL' | 'PAPER_SCANNED' | 'MIGRATED';
 export type ActorRole = 'OWNER' | 'ADMIN' | 'PROFESSIONAL';
 export type ConditionKind =
   | 'DISEASE'
