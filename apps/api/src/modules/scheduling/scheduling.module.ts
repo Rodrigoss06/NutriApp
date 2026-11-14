@@ -1,4 +1,5 @@
-import { Module } from '@nestjs/common';
+import { Inject, Module, type OnModuleInit } from '@nestjs/common';
+import { ClinicalApi } from '../clinical/index.js';
 import { SchedulingMailConsumer } from './adapters/in/events/scheduling-mail.consumer.js';
 import {
   AppointmentsController,
@@ -13,6 +14,7 @@ import { RemindersHandler } from './application/reminders.handler.js';
 import { SchedulingApi } from './application/scheduling-api.js';
 import { SchedulingCommands } from './application/scheduling.commands.js';
 import { SchedulingQueries } from './application/scheduling.queries.js';
+import { SchedulingTimelineSource } from './application/scheduling-timeline.js';
 
 /**
  * scheduling (02 §2): la disponibilidad de los profesionales y sus citas (RF-37), con la exclusión de cruces en la base (RN-J01),
@@ -31,9 +33,20 @@ import { SchedulingQueries } from './application/scheduling.queries.js';
     SchedulingQueries,
     RemindersHandler,
     RemindersJob,
+    SchedulingTimelineSource,
     SchedulingMailConsumer,
     { provide: SCHEDULING_STORE, useClass: PrismaSchedulingStore },
   ],
   exports: [SchedulingApi],
 })
-export class SchedulingModule {}
+export class SchedulingModule implements OnModuleInit {
+  constructor(
+    @Inject(ClinicalApi) private readonly clinical: ClinicalApi,
+    @Inject(SchedulingTimelineSource) private readonly timeline: SchedulingTimelineSource,
+  ) {}
+
+  /** Las citas suman sus hechos a la línea de tiempo del expediente (RF-10). */
+  onModuleInit(): void {
+    this.clinical.registerTimelineSource(this.timeline);
+  }
+}

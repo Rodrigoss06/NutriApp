@@ -1,4 +1,5 @@
 import type {
+  AgendaResponse,
   AthleteProfileResponse,
   TrainingAnalytics,
   WeeklyReviewsResponse,
@@ -7,6 +8,7 @@ import { EmptyState, Notice } from '@nutricoach/ui';
 import { CalendarCheck } from 'lucide-react';
 import type { Metadata } from 'next';
 import Link from 'next/link';
+import { trainingAttendance } from '@/features/agenda/agenda-view';
 import { getMembers, getPatient } from '@/features/patients/server';
 import { ComputeReviews } from '@/features/training/compute-reviews';
 import { WeeklyReviewBoard } from '@/features/training/weekly-review-board';
@@ -31,12 +33,13 @@ export default async function WeeklyReviewPage({
   const { patientId } = await params;
   const { semana } = await searchParams;
   const path = `/patients/${encodeURIComponent(patientId)}`;
-  const [patient, reviews, analytics, members, profile] = await Promise.all([
+  const [patient, reviews, analytics, members, profile, appointments] = await Promise.all([
     getPatient(patientId),
     serverApi<WeeklyReviewsResponse>(`${path}/weekly-reviews`),
     serverApi<TrainingAnalytics>(`${path}/analytics/training`),
     getMembers(),
     serverApi<AthleteProfileResponse>(`${path}/athlete-profile`),
+    serverApi<AgendaResponse>(`${path}/appointments`),
   ]);
   if (!patient.ok) return null;
   if (!reviews.ok || !analytics.ok || !members.ok) {
@@ -64,6 +67,16 @@ export default async function WeeklyReviewPage({
     reviews.data.reviews,
     todayIn(patient.data.timezone),
   );
+  // Las sesiones con cita (07 §10, ADR-090): verificadas al validar la asistencia; por validar, las que ya empezaron.
+  const attendance =
+    appointments.ok && rows.length > 0
+      ? trainingAttendance(
+          appointments.data.appointments,
+          rows[0]?.weekStart ?? '',
+          rows.at(-1)?.weekEnd ?? '',
+          appointments.data.timezone,
+        )
+      : null;
   return (
     <div className="flex flex-col gap-4">
       <p className="text-sm text-muted-foreground">
@@ -87,6 +100,7 @@ export default async function WeeklyReviewPage({
         careTeam={patient.data.careTeam}
         members={members.data.members}
         timezone={patient.data.timezone}
+        attendance={attendance}
       />
     </div>
   );

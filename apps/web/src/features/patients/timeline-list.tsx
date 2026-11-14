@@ -1,6 +1,11 @@
 'use client';
 
-import type { TimelineItem, TimelineResponse } from '@nutricoach/contracts';
+import {
+  APPOINTMENT_KIND_LABELS,
+  APPOINTMENT_STATUS_LABELS,
+  type TimelineItem,
+  type TimelineResponse,
+} from '@nutricoach/contracts';
 import { DataTable } from '@nutricoach/ui';
 import { useQuery } from '@tanstack/react-query';
 import { useState } from 'react';
@@ -44,6 +49,8 @@ export function timelineDetail(item: TimelineItem): string {
     case 'NUTRITION_PLAN_PUBLISHED':
     case 'TRAINING_PROGRAM_PUBLISHED':
       return `Versión ${item.label}`;
+    case 'APPOINTMENT':
+      return `${label(APPOINTMENT_KIND_LABELS, item.label)} · ${label(APPOINTMENT_STATUS_LABELS, item.detail ?? '').toLowerCase()}`;
   }
 }
 

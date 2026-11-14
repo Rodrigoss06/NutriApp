@@ -54,7 +54,7 @@ export function macrocycleRows(
 
 /**
  * Las sesiones del macrociclo (07 §10): las que registró el paciente, las programadas hasta hoy y las próximas. Las
- * verificadas y por validar dependen de la asistencia a una cita, que llega con el calendario (ADR-090).
+ * verificadas y por validar salen de la asistencia a las citas de la agenda (trainingAttendance, ADR-125).
  */
 export function sessionSummary(rows: readonly MacrocycleRow[]): {
   readonly registered: number;

@@ -6,7 +6,7 @@ import {
   type PatientSummary,
 } from '@nutricoach/contracts';
 import type { Tone } from '@nutricoach/ui';
-import { formatDate } from '@/lib/dates';
+import { formatDate, formatInstant } from '@/lib/dates';
 
 /** Las alertas del panel (RF-34): color, ícono y texto, nunca solo color. */
 export const ALERT_LABELS = {
@@ -62,7 +62,7 @@ export function alertFilter(value: string | string[] | undefined): OverviewAlert
 }
 
 /** Los números con que se calcularon las alertas, en una línea cada uno; redondeo solo al mostrar (RN-D09). */
-export function overviewFacts(patient: OverviewPatient): string[] {
+export function overviewFacts(patient: OverviewPatient, timezone = 'America/Lima'): string[] {
   const facts = [
     patient.lastLogDate
       ? `Último registro: ${formatDate(patient.lastLogDate)}`
@@ -77,6 +77,9 @@ export function overviewFacts(patient: OverviewPatient): string[] {
         ? '1 nota sin leer'
         : `${String(patient.unreadNotes)} notas sin leer`,
     );
+  }
+  if (patient.nextAppointmentAt) {
+    facts.push(`Próxima cita: ${formatInstant(patient.nextAppointmentAt, timezone)}`);
   }
   return facts;
 }

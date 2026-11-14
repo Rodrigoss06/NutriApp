@@ -24,7 +24,8 @@ import { serverApi } from '@/lib/api/server';
 export const metadata: Metadata = { title: 'Más' };
 
 /**
- * Más: escribir a tu equipo (RN-G13), el material que te asignó (RF-30), los informes de tus mesociclos (RN-G19), tus documentos
+ * Más: escribir a tu equipo (RN-G13), el material que te asignó (RF-30), los informes de tus mesociclos (RN-G19), tus citas
+ * (RF-37), tus documentos
  * (RN-G21), tus fichas
  * vigentes en PDF (ADR-095), tu peso si está
  * habilitado, el seguimiento del ciclo menstrual (RN-G17) y el cribado de
@@ -89,6 +90,14 @@ export default async function Page() {
           </Link>
         </section>
       ) : null}
+      <section aria-labelledby="citas" className="flex flex-col gap-2">
+        <h2 id="citas" className="text-lg font-semibold">
+          Citas
+        </h2>
+        <Link href="/mi/citas" className="flex min-h-touch items-center text-brand-text underline">
+          Tus citas con tu profesional
+        </Link>
+      </section>
       <section aria-labelledby="documentos" className="flex flex-col gap-2">
         <h2 id="documentos" className="text-lg font-semibold">
           Documentos

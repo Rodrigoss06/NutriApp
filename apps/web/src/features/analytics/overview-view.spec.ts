@@ -35,6 +35,12 @@ describe('RF-34 · las alertas en Inicio', () => {
     expect(
       overviewFacts(patient({ lastLogDate: null, adherence7dPct: null, unreadNotes: 2 })),
     ).toEqual(['Todavía no registra en su app', '2 notas sin leer']);
+    // RF-34 · la próxima cita, en la hora de la organización (ADR-125).
+    expect(
+      overviewFacts(patient({ nextAppointmentAt: '2026-11-16T14:00:00.000Z' }), 'America/Lima').at(
+        -1,
+      ),
+    ).toMatch(/^Próxima cita: 16 nov\.? 2026,? 9:00/);
   });
 
   it('el filtro de la URL solo acepta una alerta conocida', () => {

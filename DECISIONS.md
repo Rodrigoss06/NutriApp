@@ -3411,3 +3411,35 @@ Consecuencias:
   tiempo del expediente y las sesiones verificadas, por validar y próximas del control semanal (07 §10, ADR-090).
 - Para Notion (/notion-sync de P15): 02 §2, §3 y §8 (scheduling, `SchedulingApi`, sus eventos y su trabajo); 05.3 (lo de la
   migración); 03 RN-J01 a RN-J03 (sin cambios de regla).
+
+## ADR-126 · Las pantallas de la agenda: semana y mes, disponibilidad, la próxima cita y las sesiones verificadas — aceptada (2026-11-13)
+Contexto: P15, PR 2 (RF-37, RF-34, RF-10, 07 §10; RN-J01, RN-J03; ADR-090, ADR-124, ADR-125). La agenda tenía su API; faltaban
+las pantallas del panel y de la app, la próxima cita en Inicio, la línea de tiempo y las sesiones con cita del control semanal.
+Decisión:
+- Panel, Agenda (`/panel/agenda`):
+  - la semana (de lunes a domingo, un bloque por día con la disponibilidad del profesional) o el mes (una tabla por semanas, con
+    las citas de cada día; cada día lleva a su semana); anterior, hoy y siguiente; todo en la URL (`vista`, `fecha`,
+    `profesional`);
+  - el profesional ve su agenda; el dueño y el administrador eligen un profesional o «Todos los profesionales»;
+  - cada cita con su hora, tipo, paciente, lugar o enlace, nota y estado (color, ícono y texto); «Fuera de la disponibilidad» si no
+    cabe en una franja de su día; «Falta validar la asistencia» si ya empezó;
+  - nueva cita y reprogramar con la fecha y la hora de la organización (RN-J03); el paciente se busca por nombre o documento;
+    confirmar, «Asistió», «No asistió» y cancelar (con confirmación), como permite la API (ADR-076). Un cruce muestra el mensaje
+    de RN-J01 en el formulario.
+- Disponibilidad (`/panel/agenda/disponibilidad`): franjas por día; el dueño y el administrador eligen el profesional.
+- Expediente: pestaña «Citas» con las próximas y las pasadas, y «Nueva cita», que abre la agenda con el paciente elegido
+  (`?paciente=`). La línea de tiempo suma las citas que ya empezaron, sin las canceladas (`APPOINTMENT`, con su tipo y su estado).
+- Inicio: «Tu agenda de hoy» y la próxima cita de cada paciente con alertas (RF-34).
+- Control semanal: «Sesiones verificadas» (citas de entrenamiento con la asistencia validada) y «Por validar» (las que ya empezaron
+  sin validar) en el resumen del macrociclo, con las citas del paciente en las fechas del programa (07 §10). La web las cuenta
+  desde `/patients/:id/appointments`: training no lee la agenda.
+- App del paciente: Más › Citas (`/mi/citas`), las próximas y las de los últimos 90 días, sin la nota del profesional; la cita
+  virtual con su enlace.
+Consecuencias:
+- Unitarias de la web: la semana y el mes, el rango que se pide (hasta 42 días), las horas de Lima, «fuera de la disponibilidad»,
+  las acciones de cada estado, las sesiones verificadas y por validar y la próxima cita en las alertas.
+- Integración: la línea de tiempo con las citas (`scheduling.int.spec.ts`, 15 casos).
+- E2E `agenda.spec.ts`, en escritorio y en el celular, con axe: la disponibilidad, la cita desde el expediente, el cruce con RN-J01,
+  confirmarla, el mes y la app del paciente.
+- Para Notion (/notion-sync de P15): 04 RF-10, RF-34 y RF-37 (lo que hacen las pantallas); 07 §10 (las sesiones verificadas y por
+  validar ya llegaron).

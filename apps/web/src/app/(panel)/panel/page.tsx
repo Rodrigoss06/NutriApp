@@ -1,5 +1,6 @@
 import type {
   AccountResponse,
+  AgendaResponse,
   OrganizationResponse,
   OverviewResponse,
   PatientListResponse,
@@ -10,8 +11,11 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import { alertFilter, namesById } from '@/features/analytics/overview-view';
 import { PatientAlerts } from '@/features/analytics/patient-alerts';
+import { agendaViewer, patientNamesOf } from '@/features/agenda/server';
+import { TodayAgenda } from '@/features/agenda/today-agenda';
 import { pluralLabel } from '@/features/organization/labels';
 import { serverApi } from '@/lib/api/server';
+import { todayIn } from '@/lib/dates';
 
 export const metadata: Metadata = { title: 'Inicio' };
 
@@ -38,8 +42,8 @@ async function patientNames(overview: OverviewResponse): Promise<ReadonlyMap<str
 }
 
 /**
- * Inicio del panel (ADR-051): la zona destacada con el fondo de curvas, el saludo y lo que se hace más seguido; debajo, las
- * alertas de los pacientes (RF-34, ADR-093).
+ * Inicio del panel (ADR-051): la zona destacada con el fondo de curvas, el saludo y lo que se hace más seguido; debajo, la agenda
+ * de hoy (RF-37, ADR-125) y las alertas de los pacientes con su próxima cita (RF-34, ADR-093).
  */
 export default async function PanelHomePage({
   searchParams,
@@ -57,6 +61,18 @@ export default async function PanelHomePage({
   const timezone = organization.ok ? organization.data.timezone : 'America/Lima';
   const label = organization.ok ? organization.data.patientLabel : 'Paciente';
   const firstName = account.ok ? account.data.displayName.split(' ')[0] : null;
+  const localToday = todayIn(timezone, now);
+  const viewer = await agendaViewer();
+  const agenda = viewer.ok
+    ? await serverApi<AgendaResponse>(
+        `/appointments?from=${localToday}&to=${localToday}&memberId=${viewer.ownMemberId}`,
+      )
+    : null;
+  const agendaNames = agenda?.ok
+    ? await patientNamesOf(
+        agenda.data.appointments.flatMap((a) => (a.patientId ? [a.patientId] : [])),
+      )
+    : {};
   const today = new Intl.DateTimeFormat('es-PE', {
     weekday: 'long',
     day: 'numeric',
@@ -99,6 +115,13 @@ export default async function PanelHomePage({
           </div>
         </div>
       </section>
+      {agenda?.ok ? (
+        <TodayAgenda
+          appointments={agenda.data.appointments}
+          timezone={timezone}
+          patientNames={agendaNames}
+        />
+      ) : null}
       {overview.ok ? (
         <PatientAlerts
           overview={overview.data}
@@ -106,6 +129,7 @@ export default async function PanelHomePage({
           filter={filter}
           patientLabel={label}
           pluralPatientLabel={pluralLabel(label)}
+          timezone={timezone}
         />
       ) : (
         <Notice tone="danger" title="No pudimos cargar las alertas">
