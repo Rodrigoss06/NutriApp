@@ -5,13 +5,17 @@ import { PatientExportSection } from '@/features/patient-export/patient-export-s
 import { AppAccessSection } from '@/features/patients/app-access-section';
 import { CareTeamSection } from '@/features/patients/care-team-section';
 import { PatientDetails } from '@/features/patients/patient-details';
+import { SuppressionSection } from '@/features/patients/suppression-section';
 import { Section } from '@/features/patients/section';
 import { getMembers, getPatient } from '@/features/patients/server';
 import { serverApi } from '@/lib/api/server';
 
 export const metadata: Metadata = { title: 'Ficha' };
 
-/** La ficha: datos, equipo de atención, acceso a la app y la exportación de sus datos (RF-08, RF-07, RN-A05, RN-A06, RN-B04). */
+/**
+ * La ficha: datos, equipo de atención, acceso a la app, la exportación y la supresión de sus datos (RF-08, RF-07, RN-A05, RN-A06,
+ * RN-B04, RN-B05).
+ */
 export default async function PatientPage({ params }: { params: Promise<{ patientId: string }> }) {
   const { patientId } = await params;
   const [patient, members, exports] = await Promise.all([
@@ -44,6 +48,7 @@ export default async function PatientPage({ params }: { params: Promise<{ patien
           initial={exports.data}
         />
       ) : null}
+      <SuppressionSection patient={patient.data} />
     </div>
   );
 }
