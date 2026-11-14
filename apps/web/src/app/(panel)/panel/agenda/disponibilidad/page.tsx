@@ -26,7 +26,8 @@ export default async function AvailabilityPage({
   const memberId =
     viewer.canManage && typeof asked === 'string' && viewer.members.some((m) => m.id === asked)
       ? asked
-      : viewer.ownMemberId;
+      : (viewer.ownMemberId ?? viewer.members[0]?.id);
+  if (!memberId) return <Notice tone="info" title="La organización no tiene profesionales" />;
   const member = viewer.members.find((m) => m.id === memberId);
   const availability = await serverApi<AvailabilityResponse>(`/members/${memberId}/availability`);
   return (

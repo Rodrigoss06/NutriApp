@@ -24,7 +24,7 @@ export function PatientAppointments({
   appointments: readonly Appointment[];
   timezone: string;
   members: readonly MemberResponse[];
-  ownMemberId: string;
+  ownMemberId: string | null;
   canManage: boolean;
   canWrite: boolean;
   patientLabel: string;

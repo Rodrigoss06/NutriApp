@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react';
 import { LogoutButton } from '@/features/session/session-actions';
+import { LeaveSupportButton } from '@/features/support/support-mode';
 import { BrandMark } from './brand-mark';
 import { OrganizationSwitcher, type OrganizationOption } from './organization-switcher';
 import { PanelFrame } from './panel-frame';
@@ -14,6 +15,8 @@ export interface PanelShellProps {
   readonly organizations: readonly OrganizationOption[];
   readonly activeOrganizationId: string;
   readonly notices?: ReactNode;
+  /** Modo soporte (RN-A09, ADR-130): sin cambio de organización ni Mi cuenta; con `clinical` false, sin pacientes ni agenda. */
+  readonly support?: { readonly clinical: boolean };
   readonly children: ReactNode;
 }
 
@@ -26,20 +29,30 @@ export function PanelShell({
   organizations,
   activeOrganizationId,
   notices,
+  support,
   children,
 }: PanelShellProps) {
   return (
     <PanelFrame
       patientLabel={patientLabel}
-      showAudit={showAudit}
+      showAudit={showAudit && !support}
+      support={support}
       brand={<BrandMark displayName={displayName} logoUrl={logoUrl} />}
       notices={notices}
       tools={
-        <>
-          <PatientSearch patientLabel={patientLabel} />
-          <OrganizationSwitcher organizations={organizations} activeId={activeOrganizationId} />
-          <LogoutButton />
-        </>
+        support ? (
+          <>
+            {support.clinical ? <PatientSearch patientLabel={patientLabel} /> : null}
+            <LeaveSupportButton />
+            <LogoutButton />
+          </>
+        ) : (
+          <>
+            <PatientSearch patientLabel={patientLabel} />
+            <OrganizationSwitcher organizations={organizations} activeId={activeOrganizationId} />
+            <LogoutButton />
+          </>
+        )
       }
     >
       {children}

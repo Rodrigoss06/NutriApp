@@ -19,7 +19,8 @@ export function useWritesClinical(
   members: readonly MemberResponse[],
 ): boolean {
   const { role, userId } = usePanelSession();
-  return writesClinical(role, careTeam, memberIdOf(members, userId));
+  // El soporte en modo soporte solo lee (RN-A09, ADR-130).
+  return role !== 'SUPPORT' && writesClinical(role, careTeam, memberIdOf(members, userId));
 }
 
 /** Si quien mira archiva, reactiva, cambia de responsable y arma el equipo de atención. */
@@ -28,5 +29,7 @@ export function useManagesPatient(
   members: readonly MemberResponse[],
 ): boolean {
   const { role, userId } = usePanelSession();
-  return managesPatient(role, responsibleMemberId, memberIdOf(members, userId));
+  return (
+    role !== 'SUPPORT' && managesPatient(role, responsibleMemberId, memberIdOf(members, userId))
+  );
 }

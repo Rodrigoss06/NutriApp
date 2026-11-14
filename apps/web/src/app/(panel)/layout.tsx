@@ -3,6 +3,7 @@ import type {
   MemberProfileResponse,
   OrganizationResponse,
   SubscriptionResponse,
+  SupportSession,
 } from '@nutricoach/contracts';
 import { BrandStyle, Notice } from '@nutricoach/ui';
 import Link from 'next/link';
@@ -14,16 +15,25 @@ import { PanelSessionProvider } from '@/features/session/panel-session';
 import { LogoutButton, RedirectToLogin } from '@/features/session/session-actions';
 import { SubscriptionNotices } from '@/features/session/subscription-notices';
 import { PanelShell } from '@/features/shell/panel-shell';
+import { SupportBanner } from '@/features/support/support-mode';
 import { serverApi } from '@/lib/api/server';
 
 /**
  * Panel del profesional (02 §11) con la marca de su organización (RN-H03). Pide la cuenta en cada petición: sin
- * sesión, a /entrar; con sesión de plataforma, al panel interno. La protección de verdad es la API.
+ * sesión, a /entrar; con sesión de plataforma, al panel interno, salvo en modo soporte (RN-A09, ADR-130), que ve el panel de la
+ * organización en solo lectura. La protección de verdad es la API.
  */
 export default async function PanelLayout({ children }: Readonly<{ children: ReactNode }>) {
   const account = await serverApi<AccountResponse>('/account');
   if (!account.ok) return <RedirectToLogin />;
-  if (account.data.kind === 'PLATFORM') redirect('/admin/plataforma');
+  if (account.data.kind === 'PLATFORM') {
+    if (!account.data.support) redirect('/admin/plataforma');
+    return (
+      <SupportPanel userId={account.data.id} support={account.data.support}>
+        {children}
+      </SupportPanel>
+    );
+  }
   if (account.data.kind === 'PATIENT') redirect('/mi/hoy');
 
   const { memberships, activeOrganizationId } = account.data;
@@ -54,6 +64,7 @@ export default async function PanelLayout({ children }: Readonly<{ children: Rea
       value={{
         userId: account.data.id,
         role: membership.role,
+        support: null,
         organizationId: org.id,
         organizationStatus: org.status,
         timezone: org.timezone,
@@ -82,6 +93,51 @@ export default async function PanelLayout({ children }: Readonly<{ children: Rea
             ) : null}
           </>
         }
+      >
+        {children}
+      </PanelShell>
+    </PanelSessionProvider>
+  );
+}
+
+/**
+ * El panel de la organización en modo soporte: sin miembro, sin perfil ni cambio de organización; la franja del modo soporte arriba
+ * y «Salir del modo soporte». Con ACCOUNT, sin pacientes ni agenda.
+ */
+async function SupportPanel({
+  userId,
+  support,
+  children,
+}: {
+  userId: string;
+  support: SupportSession;
+  children: ReactNode;
+}) {
+  const organization = await serverApi<OrganizationResponse>('/organization');
+  if (!organization.ok) redirect('/admin/plataforma');
+  const brand = organizationBrand();
+  const org = organization.data;
+  return (
+    <PanelSessionProvider
+      value={{
+        userId,
+        role: 'SUPPORT',
+        support,
+        organizationId: org.id,
+        organizationStatus: org.status,
+        timezone: org.timezone,
+        patientLabel: org.patientLabel,
+      }}
+    >
+      <BrandStyle brand={brand.colors} />
+      <PanelShell
+        displayName={org.name}
+        logoUrl={brand.logoUrl}
+        patientLabel={org.patientLabel}
+        organizations={[]}
+        activeOrganizationId={org.id}
+        support={{ clinical: support.scope === 'CLINICAL_READ' }}
+        notices={<SupportBanner support={support} timezone={org.timezone} />}
       >
         {children}
       </PanelShell>

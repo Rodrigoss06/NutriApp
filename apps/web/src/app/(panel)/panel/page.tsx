@@ -51,23 +51,31 @@ export default async function PanelHomePage({
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
   const filter = alertFilter((await searchParams).alerta);
-  const [account, organization, overview] = await Promise.all([
+  const [account, organization] = await Promise.all([
     serverApi<AccountResponse>('/account'),
     serverApi<OrganizationResponse>('/organization'),
-    serverApi<OverviewResponse>(`/analytics/overview?limit=50${filter ? `&alert=${filter}` : ''}`),
   ]);
-  const names = overview.ok ? await patientNames(overview.data) : new Map<string, string>();
+  // El soporte en modo soporte no crea pacientes, y con un permiso ACCOUNT tampoco los ve (ADR-130).
+  const support = account.ok ? account.data.support : null;
+  const clinical = support?.scope !== 'ACCOUNT';
+  const overview = clinical
+    ? await serverApi<OverviewResponse>(
+        `/analytics/overview?limit=50${filter ? `&alert=${filter}` : ''}`,
+      )
+    : null;
+  const names = overview?.ok ? await patientNames(overview.data) : new Map<string, string>();
   const now = new Date();
   const timezone = organization.ok ? organization.data.timezone : 'America/Lima';
   const label = organization.ok ? organization.data.patientLabel : 'Paciente';
   const firstName = account.ok ? account.data.displayName.split(' ')[0] : null;
   const localToday = todayIn(timezone, now);
   const viewer = await agendaViewer();
-  const agenda = viewer.ok
-    ? await serverApi<AgendaResponse>(
-        `/appointments?from=${localToday}&to=${localToday}&memberId=${viewer.ownMemberId}`,
-      )
-    : null;
+  const agenda =
+    viewer.ok && viewer.ownMemberId
+      ? await serverApi<AgendaResponse>(
+          `/appointments?from=${localToday}&to=${localToday}&memberId=${viewer.ownMemberId}`,
+        )
+      : null;
   const agendaNames = agenda?.ok
     ? await patientNamesOf(
         agenda.data.appointments.flatMap((a) => (a.patientId ? [a.patientId] : [])),
@@ -99,20 +107,24 @@ export default async function PanelHomePage({
             {greeting(timezone, now)}
             {firstName ? `, ${firstName}` : ''}.
           </h1>
-          <div className="nc-enter mt-4 flex flex-wrap gap-3" style={enterStyle(2)}>
-            <Button asChild attention>
-              <Link href="/panel/pacientes/nuevo">
-                <UserPlus aria-hidden />
-                Nuevo {label.toLowerCase()}
-              </Link>
-            </Button>
-            <Button asChild variant="secondary">
-              <Link href="/panel/pacientes">
-                <Search aria-hidden />
-                Buscar en {pluralLabel(label).toLowerCase()}
-              </Link>
-            </Button>
-          </div>
+          {clinical ? (
+            <div className="nc-enter mt-4 flex flex-wrap gap-3" style={enterStyle(2)}>
+              {support ? null : (
+                <Button asChild attention>
+                  <Link href="/panel/pacientes/nuevo">
+                    <UserPlus aria-hidden />
+                    Nuevo {label.toLowerCase()}
+                  </Link>
+                </Button>
+              )}
+              <Button asChild variant="secondary">
+                <Link href="/panel/pacientes">
+                  <Search aria-hidden />
+                  Buscar en {pluralLabel(label).toLowerCase()}
+                </Link>
+              </Button>
+            </div>
+          ) : null}
         </div>
       </section>
       {agenda?.ok ? (
@@ -122,7 +134,7 @@ export default async function PanelHomePage({
           patientNames={agendaNames}
         />
       ) : null}
-      {overview.ok ? (
+      {overview === null ? null : overview.ok ? (
         <PatientAlerts
           overview={overview.data}
           names={names}

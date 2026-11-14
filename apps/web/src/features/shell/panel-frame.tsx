@@ -26,12 +26,15 @@ import { NavLink, type NavItem } from './nav-link';
 export function PanelFrame({
   patientLabel,
   showAudit = false,
+  support,
   brand,
   tools,
   notices,
   children,
 }: {
   patientLabel: string;
+  /** Modo soporte (RN-A09, ADR-130): sin Mi cuenta; sin pacientes ni agenda si el permiso no es clínico. */
+  support?: { readonly clinical: boolean };
   /** La auditoría solo aparece para el dueño (RF-06); la API decide igual. */
   showAudit?: boolean;
   brand: ReactNode;
@@ -42,15 +45,20 @@ export function PanelFrame({
 }) {
   const [open, setOpen] = useState(false);
 
+  const clinical = !support || support.clinical;
   const items: NavItem[] = [
     { href: '/panel', label: 'Inicio', icon: LayoutDashboard, exact: true },
-    { href: '/panel/pacientes', label: pluralLabel(patientLabel), icon: Users },
-    { href: '/panel/agenda', label: 'Agenda', icon: CalendarDays },
+    ...(clinical
+      ? [
+          { href: '/panel/pacientes', label: pluralLabel(patientLabel), icon: Users },
+          { href: '/panel/agenda', label: 'Agenda', icon: CalendarDays },
+        ]
+      : []),
     { href: '/panel/biblioteca', label: 'Biblioteca', icon: Library },
     { href: '/panel/organizacion', label: 'Organización', icon: Building2 },
     { href: '/panel/ajustes', label: 'Ajustes', icon: Settings },
     ...(showAudit ? [{ href: '/panel/auditoria', label: 'Auditoría', icon: ShieldCheck }] : []),
-    { href: '/panel/cuenta', label: 'Mi cuenta', icon: UserRound },
+    ...(support ? [] : [{ href: '/panel/cuenta', label: 'Mi cuenta', icon: UserRound }]),
   ];
 
   return (

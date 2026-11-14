@@ -1,12 +1,15 @@
 'use client';
 
+import type { SupportSession } from '@nutricoach/contracts';
 import { createContext, useContext, type ReactNode } from 'react';
 
 export type MemberRole = 'OWNER' | 'ADMIN' | 'PROFESSIONAL';
 
 export interface PanelSession {
   readonly userId: string;
-  readonly role: MemberRole;
+  /** SUPPORT: el soporte de la plataforma en modo soporte, con el permiso del dueño (RN-A09, ADR-130). */
+  readonly role: MemberRole | 'SUPPORT';
+  readonly support: SupportSession | null;
   readonly organizationId: string;
   readonly organizationStatus: 'ACTIVE' | 'READ_ONLY' | 'SUSPENDED' | 'CLOSED';
   readonly timezone: string;
@@ -32,11 +35,12 @@ export function usePanelSession(): PanelSession {
 }
 
 /**
- * Si la interfaz ofrece escribir: en solo lectura (RN-A02) los botones de escritura se desactivan. Es comodidad:
- * la API decide (TenantGuard responde 422).
+ * Si la interfaz ofrece escribir: en solo lectura (RN-A02) y en modo soporte (RN-A09) los botones de escritura se desactivan. Es
+ * comodidad: la API decide (TenantGuard responde 422 o 403).
  */
 export function useCanWrite(): boolean {
-  return usePanelSession().organizationStatus === 'ACTIVE';
+  const { organizationStatus, support } = usePanelSession();
+  return organizationStatus === 'ACTIVE' && support === null;
 }
 
 /** Lo que el rol puede hacer (decisión 6 de P5). La interfaz oculta; la API decide. */
