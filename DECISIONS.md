@@ -3635,3 +3635,56 @@ Consecuencias:
 - E2E `exportacion.spec.ts`, en escritorio y en el celular, con axe: la dueña (responsable) prepara y descarga el ZIP desde la
   ficha, y el paciente desde Más › Tus datos.
 - Para Notion (/notion-sync de P15): 04 RF-07 (dónde se pide y se descarga).
+
+## ADR-133 · La supresión del paciente por anonimización, por la API — aceptada (2026-11-13)
+Contexto: P15, PR 6a (RN-B05, RF-07; ADR-124, ADR-131). 05 §11 describe `clinical.anonymize_patient(id)`: nombres por «Anonimizado»,
+sin documento, teléfono ni correo, solo el año de nacimiento, textos libres vacíos, la cuenta desactivada y los archivos borrados.
+ADR-124 fijó que solo se suprime a un paciente archivado y que la confirma el dueño escribiendo su código, después de ofrecer la
+exportación. Rodrigo decidió el 2026-11-13 que se vacía todo texto escrito por personas, también dentro de lo publicado.
+Decisión:
+- Quién y cuándo: solo el dueño (permiso nuevo `patients.suppress`), de un paciente archivado, una vez, con su código (sin importar
+  mayúsculas ni espacios). Errores NC-CLI-046 (no es el dueño, 403), NC-CLI-047 (no está archivado, 409), NC-CLI-048 (ya suprimido,
+  409) y NC-CLI-049 (otro código, 422). Como toda escritura, no corre con la organización en solo lectura (RN-A02).
+- El paciente suprimido sigue ARCHIVED y gana `anonymized_at`: todas las reglas que cierran la escritura de un archivado ya lo leen, y
+  un estado nuevo las habría dejado abiertas. 05.1 admite ANONYMIZED en el CHECK, pero la 1.0 no lo usa. Un CHECK exige ARCHIVED con
+  `anonymized_at`, y un disparador congela la ficha: no se reactiva (también por la API, NC-CLI-048).
+- `clinical.anonymize_patient(id)`, de app_owner (SECURITY DEFINER), en la transacción del caso de uso:
+  - verifica dueño, organización, archivado y que no esté suprimido;
+  - la ficha: «Anonimizado» en nombre y apellido; sin identidad de género, documento, teléfono, correo ni etiquetas; el 1 de enero del
+    año de nacimiento; se desvincula de su cuenta;
+  - vacía o reemplaza cada texto escrito por personas: la historia clínica entera, las notas (también las «Solo el autor»), la etiqueta
+    y las notas de las condiciones, las notas de objetivos, cribados, evaluaciones, pruebas y perfil, el título y el enlace de los
+    documentos del expediente (que quedan borrados), los textos del informe del mesociclo y el comentario del alumno, las notas y
+    la sustitución de sesiones y ejercicios, el nombre del programa, del mesociclo y de la sesión («Programa», «Mesociclo», «Sesión»),
+    las indicaciones del plan, el lugar, el enlace y la nota de las citas, los mensajes, el saludo de la app, las notas del alumno y
+    los motivos de los ajustes, y la IP y el navegador de los consentimientos;
+  - dentro de los snapshots (plan, programa, informe y la vista del plan activo) quita los mismos textos con `app.anonymize_json`;
+    lo que viene de un catálogo (alimentos, recetas, ejercicios, medidas, tabla de fases) queda. Las huellas guardadas ya no coinciden
+    con el contenido: se conservan como historia;
+  - lo inmutable (RN-E15, RN-C07, RN-F12) deja pasar solo a la supresión: cada disparador consulta `app.anonymizing()`, verdadera solo
+    si quien escribe es app_owner y fijó `app.anonymizing`. app_user puede fijar la variable, pero nunca es app_owner;
+  - la cuenta de la app se desactiva y pierde su correo y su nombre, salvo que la use el equipo u otra organización: entonces solo se
+    desvincula. Sus sesiones de paciente se cierran. Las invitaciones pierden el correo y las pendientes se revocan. Se borra lo que la
+    idempotencia guardó con su id o su cuenta;
+  - marca borrados todos sus archivos (`platform.file_object.patient_id`, ADR-131): fichas, expediente, fotos, evidencias y
+    exportaciones. Devuelve sus claves y la aplicación borra los bytes al confirmar; uno que no se borra queda contado y marcado.
+- Quedan los códigos, los números, los métodos y la estructura, sin identificación (lo agregado de RN-B05), y la auditoría, que no se
+  modifica (RN-B03): registra accesos, también la IP de las peticiones que hizo el propio paciente.
+- `POST /patients/:id/anonymize` con `{ code }` (204). Evento `clinical.patient.anonymized` (sin datos, con cuántos archivos), a la
+  auditoría como UPDATE de `anonymized_at`.
+- Migración `202611140000_patient_anonymization`.
+Consecuencias:
+- Unitarias: quién suprime y con qué código; el caso de uso con puertos en memoria (el evento, los bytes, lo que no se pudo borrar).
+- Integración `patient-suppression.int.spec.ts` (9 casos), con la parte de supresión del criterio 4 de P15:
+  - la prueba del catálogo: cada columna de texto, JSON, lista o bytes de las tablas del paciente está decidida (se vacía, se limpia
+    por dentro o queda, con su motivo);
+  - Luis con textos marcados en notas, condición, documento, cita, programa publicado con sus sesiones, cuenta y una exportación:
+    después de suprimir, ninguna fila de sus tablas guarda la marca, su nombre, su correo ni su documento; cada columna que se vacía
+    quedó vacía; ninguno de sus archivos sigue vivo; su cuenta no entra;
+  - solo el dueño, solo archivado y con su código; no se reactiva ni se suprime dos veces; la auditoría; en la base, nadie más llama
+    a la función y la variable sola no salta lo inmutable.
+- Una columna nueva con texto en una tabla del paciente hace fallar la prueba hasta decidir qué hace la supresión con ella.
+- Las pantallas llegan en el PR 6b.
+- Para Notion (/notion-sync de P15): 05 §11 (lo que vacía y que el paciente sigue archivado con `anonymized_at`); 05.1
+  (`anonymized_at`, el CHECK y el disparador); 03 RN-B05 (quién la confirma, con el código, y todo texto escrito por personas); 02 §3
+  (la ruta); 06 (los disparadores de inmutabilidad y `app.anonymizing`).

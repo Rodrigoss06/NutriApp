@@ -14,6 +14,7 @@ export type ClinicalEventType =
   | 'clinical.patient.updated'
   | 'clinical.patient.archived'
   | 'clinical.patient.reactivated'
+  | 'clinical.patient.anonymized'
   | 'clinical.careteam.changed'
   | 'clinical.patient.linked'
   | 'clinical.consent.granted'

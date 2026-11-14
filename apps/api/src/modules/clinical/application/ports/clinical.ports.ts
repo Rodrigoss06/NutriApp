@@ -38,6 +38,8 @@ export interface PatientRecord {
   readonly status: PatientStatus;
   readonly responsibleMemberId: string;
   readonly version: number;
+  /** Suprimido (RN-B05, ADR-133): sigue archivado y ya no cambia. */
+  readonly anonymizedAt?: Date | null;
 }
 
 export type PatientChanges = Partial<
@@ -102,6 +104,11 @@ export interface PatientStore {
   removeCareTeamMember(patientId: string, memberId: string): Promise<boolean>;
   /** Vincula la cuenta de la app solo si el paciente sigue activo y sin cuenta (UPDATE condicional). */
   linkAccount(patientId: string, userId: UserId): Promise<boolean>;
+  /**
+   * La supresión (RN-B05, ADR-133) con clinical.anonymize_patient: anonimiza todo lo del paciente en la transacción activa y devuelve las
+   * claves de sus archivos, ya marcados borrados, para borrar sus bytes después de confirmar.
+   */
+  anonymize(patientId: string): Promise<readonly string[]>;
   /** Vista previa de una invitación pendiente por el hash del token (app.patient_invitation_preview). */
   previewInvitation(tokenHash: Uint8Array): Promise<InvitationPreviewRecord | null>;
   /** El paciente de la cuenta del contexto (app.patient_of_account). */

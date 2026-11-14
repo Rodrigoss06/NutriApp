@@ -20,6 +20,7 @@ import {
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import {
+  anonymizePatientSchema,
   grantConsentSchema,
   patientSearchSchema,
   registerPatientSchema,
@@ -44,6 +45,7 @@ import {
 } from '../../../../../platform/index.js';
 import { ConsentCommands } from '../../../application/commands/consent.commands.js';
 import { PatientCommands } from '../../../application/commands/patient.commands.js';
+import { PatientSuppressionCommands } from '../../../application/commands/patient-suppression.commands.js';
 import { PatientQueries, type PatientView } from '../../../application/queries/patient.queries.js';
 import {
   ALREADY_IN_STATUS,
@@ -62,6 +64,12 @@ import {
   VERSION_CONFLICT,
   WRITE_ACCESS_REQUIRED,
 } from '../../../domain/clinical-rules.js';
+import {
+  PATIENT_ANONYMIZED,
+  SUPPRESSION_CODE_MISMATCH,
+  SUPPRESSION_NOT_ALLOWED,
+  SUPPRESSION_NOT_ARCHIVED,
+} from '../../../domain/patient-suppression.js';
 
 const STATUS_BY_CODE: Readonly<Record<string, number>> = {
   [PATIENT_NOT_FOUND.code]: 404,
@@ -81,6 +89,10 @@ const STATUS_BY_CODE: Readonly<Record<string, number>> = {
   [CANNOT_REMOVE_RESPONSIBLE.code]: 422,
   [RESPONSIBLE_NOT_MEMBER.code]: 422,
   [CONSENT_DOCUMENT_NOT_CURRENT.code]: 422,
+  [SUPPRESSION_NOT_ALLOWED.code]: 403,
+  [SUPPRESSION_NOT_ARCHIVED.code]: 409,
+  [PATIENT_ANONYMIZED.code]: 409,
+  [SUPPRESSION_CODE_MISMATCH.code]: 422,
 };
 
 const problem = (error: DomainError) => problemFromDomainError(error, STATUS_BY_CODE[error.code]);
@@ -126,6 +138,7 @@ const toResponse = (view: PatientView): PatientResponse => ({
       : null,
   },
   version: view.version,
+  anonymizedAt: view.anonymizedAt?.toISOString() ?? null,
 });
 
 /** Lo que llega del parser multipart: solo los bytes, ya acotados a 5 MB. El nombre original no se usa. */
@@ -143,6 +156,7 @@ export class PatientController {
     private readonly commands: PatientCommands,
     private readonly consentCommands: ConsentCommands,
     private readonly queries: PatientQueries,
+    private readonly suppression: PatientSuppressionCommands,
   ) {}
 
   @Get()
@@ -256,6 +270,23 @@ export class PatientController {
     @Param('patientId', ParseUUIDPipe) patientId: string,
   ): Promise<void> {
     const result = await this.commands.reactivate(contextOf(request), patientId);
+    if (isErr(result)) throw problem(result.error);
+  }
+
+  /**
+   * POST /api/v1/patients/:patientId/anonymize: la supresión (RN-B05, ADR-133). Solo el dueño, de un paciente archivado y con su código.
+   * Irreversible.
+   */
+  @Post(':patientId/anonymize')
+  @RequirePermission('patients.suppress')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  async anonymize(
+    @Req() request: ContextualRequest,
+    @Param('patientId', ParseUUIDPipe) patientId: string,
+    @Body() body: unknown,
+  ): Promise<void> {
+    const { code } = parseBody(anonymizePatientSchema, body);
+    const result = await this.suppression.suppress(contextOf(request), patientId, code);
     if (isErr(result)) throw problem(result.error);
   }
 

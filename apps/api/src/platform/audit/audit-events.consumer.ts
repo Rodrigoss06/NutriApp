@@ -197,6 +197,12 @@ export const AUDITED_EVENTS: Readonly<Record<string, AuditMapping>> = {
     resourceType: 'clinical.record_document',
     fields: () => ['deleted_at'],
   },
+  // La supresión (RN-B05, ADR-133): sin datos, solo que ocurrió y cuántos archivos se borraron.
+  'clinical.patient.anonymized': {
+    action: 'UPDATE',
+    resourceType: 'clinical.patient',
+    fields: () => ['anonymized_at'],
+  },
   // El pedido; cada descarga queda aparte como EXPORT (RN-B03, ADR-131).
   'clinical.export.requested': { action: 'CREATE', resourceType: 'clinical.patient_export' },
   'assessment.evaluation.created': { action: 'CREATE', resourceType: 'assessment.evaluation' },

@@ -181,6 +181,17 @@ export class MemoryPatients implements PatientStore {
   /** La cuenta del contexto: las pruebas la fijan aquí. */
   accountUserId: string | null = null;
   readonly previews = new Map<string, InvitationPreviewRecord>();
+  /** Como clinical.anonymize_patient, en lo que la ficha muestra; el resto lo prueba la integración. */
+  anonymize(patientId: string) {
+    const row = this.rows.get(patientId);
+    if (row) {
+      row.firstName = 'Anonimizado';
+      row.lastName = 'Anonimizado';
+      row.email = null;
+      row.anonymizedAt = new Date();
+    }
+    return Promise.resolve(row ? [`org/archivo-de-${patientId}`] : []);
+  }
   linkAccount(patientId: string, userId: UserId) {
     const row = this.rows.get(patientId);
     if (!row || row.userId || row.status !== 'ACTIVE') return Promise.resolve(false);

@@ -10,6 +10,7 @@ import { FflateArchiveWriter } from './adapters/out/archive/fflate-archive.write
 import { PrismaPatientExportStore } from './adapters/out/persistence/prisma-patient-export.store.js';
 import { ClinicalExportSource } from './application/clinical-export-source.js';
 import { PatientExportCommands } from './application/commands/patient-export.commands.js';
+import { PatientSuppressionCommands } from './application/commands/patient-suppression.commands.js';
 import { PatientExportBuilder } from './application/patient-export-builder.js';
 import { PatientExportSources } from './application/patient-export-sources.js';
 import { ARCHIVE_WRITER, PATIENT_EXPORT_STORE } from './application/ports/patient-export.ports.js';
@@ -81,6 +82,7 @@ import { PrismaRecordDocumentStore } from './adapters/out/persistence/prisma-rec
     PatientExportSources,
     ClinicalExportSource,
     PatientExportCommands,
+    PatientSuppressionCommands,
     PatientExportQueries,
     PatientExportBuilder,
     PatientExportConsumer,

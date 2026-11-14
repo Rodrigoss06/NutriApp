@@ -519,6 +519,7 @@ model Patient {
   createdAt             DateTime               @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt             DateTime               @default(now()) @map("updated_at") @db.Timestamptz(6)
   version               Int                    @default(0)
+  anonymizedAt          DateTime?              @map("anonymized_at") @db.Timestamptz(6)
   careTeamMembers       CareTeamMember[]
   clinicalHistorys      ClinicalHistory[]
   clinicalNotes         ClinicalNote[]

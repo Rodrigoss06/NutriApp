@@ -62,6 +62,11 @@ Leyenda: ⬜ pendiente · 🟨 en curso · ✅ terminado · ⛔ bloqueado
   - PR 5b, las pantallas de la exportación (ADR-132): «Exportar sus datos» en la ficha, para el responsable y el dueño, y Más ›
     Tus datos en la app (`/mi/datos`): preparar, ver cómo va cada 3 segundos y descargar el ZIP mientras dura. La lista trae la
     zona horaria del paciente. E2E `exportacion.spec.ts`. Listo en local, después del PR 5a.
+  - PR 6a, la supresión por la API (RN-B05; ADR-133): el dueño la confirma con el código de un paciente archivado;
+    `clinical.anonymize_patient` reemplaza nombres por «Anonimizado», borra documento, teléfono y correo, deja el año de nacimiento,
+    vacía todo texto escrito por personas (también en lo publicado), desactiva la cuenta y marca borrados sus archivos, cuyos bytes
+    se borran al confirmar. El paciente sigue archivado y no se reactiva. Una prueba del catálogo exige decidir cada columna de
+    texto. Listo en local, después del PR 5b.
 - P14.5 terminado (#70 a #94; aprobado el 2026-11-08, ADR-098), en 25 PR contra main: lo que trae la hoja piloto de Jeremy, por
   fases. Fase A, sin esperar respuestas:
   PR 1a, metas de día de entrenamiento y de descanso; PR 2, volumen ajustado por RIR y descanso; PR 6a, la cadera en Progreso,
