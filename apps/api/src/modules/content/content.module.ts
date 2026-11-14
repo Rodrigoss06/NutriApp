@@ -1,4 +1,6 @@
-import { Module } from '@nestjs/common';
+import { Module, type OnModuleInit } from '@nestjs/common';
+import { ClinicalApi } from '../clinical/index.js';
+import { CONTENT_EXPORT_TABLES } from './application/content-export-tables.js';
 import {
   MeAppController,
   MotivationalMessagesController,
@@ -43,4 +45,11 @@ import { ResourceQueries } from './application/resource.queries.js';
   ],
   exports: [ContentApi],
 })
-export class ContentModule {}
+export class ContentModule implements OnModuleInit {
+  constructor(private readonly clinical: ClinicalApi) {}
+
+  /** El material asignado, los mensajes y el tema de la app van en la exportación del paciente (RN-B04). */
+  onModuleInit(): void {
+    this.clinical.registerExportSource({ context: 'content', tables: CONTENT_EXPORT_TABLES });
+  }
+}

@@ -1,4 +1,5 @@
 import { Module, type OnModuleInit } from '@nestjs/common';
+import { ASSESSMENT_EXPORT_TABLES } from './application/assessment-export-tables.js';
 import { ClinicalApi } from '../clinical/index.js';
 import { AssessmentApi } from './application/assessment-api.js';
 import { AssessmentTimelineSource } from './application/assessment-timeline.js';
@@ -99,5 +100,6 @@ export class AssessmentModule implements OnModuleInit {
 
   onModuleInit(): void {
     this.clinical.registerTimelineSource(this.timeline);
+    this.clinical.registerExportSource({ context: 'assessment', tables: ASSESSMENT_EXPORT_TABLES });
   }
 }

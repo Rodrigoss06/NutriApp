@@ -82,6 +82,7 @@ export class BrandingCommands {
           organizationId,
           purpose: 'BRANDING_LOGO',
           uploadedBy: context.userId,
+          patientId: null,
         });
         await this.#save(context, organizationId, current, { logoFileId: file.id }, ['logo']);
         return ok(undefined);

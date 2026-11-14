@@ -31,6 +31,7 @@ import {
   type PatientStore,
 } from './ports/clinical.ports.js';
 import { phoneAad } from './commands/patient.commands.js';
+import { PatientExportSources, type PatientExportSource } from './patient-export-sources.js';
 import { TimelineSources, type TimelineSource } from './timeline-sources.js';
 
 /**
@@ -89,6 +90,7 @@ export class ClinicalApi {
     @Inject(PATIENT_STORE) private readonly patients: PatientStore,
     @Inject(CONSENT_STORE) private readonly consents: ConsentStore,
     @Inject(TimelineSources) private readonly timeline: TimelineSources,
+    @Inject(PatientExportSources) private readonly exportSources: PatientExportSources,
     @Inject(CLINICAL_RECORD_STORE) private readonly records: ClinicalRecordStore,
     @Inject(ENCRYPTION_PORT) private readonly encryption: EncryptionPort,
   ) {}
@@ -224,6 +226,11 @@ export class ClinicalApi {
   /** Un contexto suma sus hechos a la línea de tiempo del expediente (RF-10). */
   registerTimelineSource(source: TimelineSource): void {
     this.timeline.register(source);
+  }
+
+  /** Un contexto suma sus tablas a la exportación del paciente (RN-B04, ADR-131). */
+  registerExportSource(source: PatientExportSource): void {
+    this.exportSources.register(source);
   }
 
   /**

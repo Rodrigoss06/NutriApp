@@ -15,6 +15,12 @@ export interface EventConsumer {
   /** Estable: nombra la cola y la fila de processed_event. Minúsculas, puntos y guiones. */
   readonly name: string;
   readonly eventTypes: readonly EventType[];
+  /**
+   * true para un trabajo largo que no cabe en una transacción (la exportación del paciente, ADR-131): el consumidor abre sus propias
+   * transacciones cortas y tiene que ser idempotente por sí mismo, porque una entrega repetida puede llegar a correrlo dos veces. El
+   * evento se registra en processed_event después de que termina bien.
+   */
+  readonly ownTransactions?: boolean;
   handle(event: OutboxEnvelope): Promise<void>;
 }
 

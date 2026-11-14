@@ -197,6 +197,8 @@ export const AUDITED_EVENTS: Readonly<Record<string, AuditMapping>> = {
     resourceType: 'clinical.record_document',
     fields: () => ['deleted_at'],
   },
+  // El pedido; cada descarga queda aparte como EXPORT (RN-B03, ADR-131).
+  'clinical.export.requested': { action: 'CREATE', resourceType: 'clinical.patient_export' },
   'assessment.evaluation.created': { action: 'CREATE', resourceType: 'assessment.evaluation' },
   'assessment.evaluation.updated': {
     action: 'UPDATE',

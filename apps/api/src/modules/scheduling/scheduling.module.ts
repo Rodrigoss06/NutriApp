@@ -1,4 +1,5 @@
 import { Inject, Module, type OnModuleInit } from '@nestjs/common';
+import { SCHEDULING_EXPORT_TABLES } from './application/scheduling-export-tables.js';
 import { ClinicalApi } from '../clinical/index.js';
 import { SchedulingMailConsumer } from './adapters/in/events/scheduling-mail.consumer.js';
 import {
@@ -48,5 +49,6 @@ export class SchedulingModule implements OnModuleInit {
   /** Las citas suman sus hechos a la línea de tiempo del expediente (RF-10). */
   onModuleInit(): void {
     this.clinical.registerTimelineSource(this.timeline);
+    this.clinical.registerExportSource({ context: 'scheduling', tables: SCHEDULING_EXPORT_TABLES });
   }
 }

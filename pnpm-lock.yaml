@@ -126,6 +126,9 @@ catalogs:
     fast-check:
       specifier: ^4.10.2
       version: 4.10.2
+    fflate:
+      specifier: ^0.8.3
+      version: 0.8.3
     globals:
       specifier: ^17.13.0
       version: 17.13.0
@@ -296,6 +299,9 @@ importers:
       cookie:
         specifier: 'catalog:'
         version: 2.0.1
+      fflate:
+        specifier: 'catalog:'
+        version: 0.8.3
       nestjs-cls:
         specifier: 'catalog:'
         version: 7.0.1(@nestjs/common@12.1.2(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/core@12.1.2)(reflect-metadata@0.2.2)(rxjs@7.8.2)

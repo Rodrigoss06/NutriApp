@@ -95,6 +95,7 @@ export class DocumentGeneration {
         organizationId,
         purpose: 'GENERATED_DOCUMENT',
         uploadedBy: null,
+        patientId: sheet.patientId,
       });
       await this.outbox.append(
         [

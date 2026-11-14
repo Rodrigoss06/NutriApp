@@ -15,6 +15,11 @@ export const PERMISSIONS = {
   /** Pacientes (RF-08): la RLS decide a quién se ve (RN-A05); el caso de uso, quién escribe o gestiona. */
   'patients.read': ['OWNER', 'ADMIN', 'PROFESSIONAL'],
   'patients.write': ['OWNER', 'ADMIN', 'PROFESSIONAL'],
+  /**
+   * La exportación del paciente (RN-B04, ADR-131): la ruta la abre a todo el equipo y el caso de uso la deja solo al responsable del
+   * paciente y al dueño. El soporte no exporta.
+   */
+  'patients.export': ['OWNER', 'ADMIN', 'PROFESSIONAL'],
   /** La auditoría de la organización la consulta solo el dueño (RF-06). */
   'audit.read': ['OWNER'],
   /** Catálogos de alimentos y actividades: los globales se leen; los propios de la organización se editan (RN-I01). */

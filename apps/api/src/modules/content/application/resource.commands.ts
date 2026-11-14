@@ -109,6 +109,7 @@ export class ResourceCommands {
           organizationId,
           purpose: 'EDUCATIONAL_RESOURCE',
           uploadedBy: context.userId,
+          patientId: null,
         });
         return this.#insert(context, {
           kind: 'FILE',

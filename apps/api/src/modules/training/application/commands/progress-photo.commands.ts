@@ -137,6 +137,7 @@ export class ProgressPhotoCommands {
             organizationId,
             purpose: 'PROGRESS_PHOTO',
             uploadedBy: userId,
+            patientId,
           });
           const existing = await this.photos.byView(found.lineageId, position, view);
           const uploaded = {

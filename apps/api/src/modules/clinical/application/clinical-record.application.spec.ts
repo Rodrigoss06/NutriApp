@@ -24,6 +24,7 @@ import {
 } from './clinical-fakes.spec-support.js';
 import { PatientEnrollmentService } from './patient-enrollment.js';
 import { ClinicalRecordQueries } from './queries/clinical-record.queries.js';
+import { PatientExportSources } from './patient-export-sources.js';
 import { TimelineSources } from './timeline-sources.js';
 import { PatientQueries } from './queries/patient.queries.js';
 import { WRITE_ACCESS_REQUIRED } from '../domain/clinical-rules.js';
@@ -670,6 +671,7 @@ describe('RF-06 · códigos de paciente para la auditoría', () => {
       patients,
       consents,
       sources,
+      new PatientExportSources(),
       records,
       fakeEncryption,
     ).dietaryConditions(id);
@@ -686,6 +688,7 @@ describe('RF-06 · códigos de paciente para la auditoría', () => {
       patients,
       consents,
       sources,
+      new PatientExportSources(),
       records,
       fakeEncryption,
     ).patientCodes([id, 'no-existe']);
@@ -706,7 +709,14 @@ describe('RN-F15 · 07 §3.2 · el cribado previo al ejercicio', () => {
   };
   const review = { decision: 'START', note: 'Con aval de su médico.' } as const;
   const api = () =>
-    new ClinicalApi(patients, consents, new TimelineSources(), records, fakeEncryption);
+    new ClinicalApi(
+      patients,
+      consents,
+      new TimelineSources(),
+      new PatientExportSources(),
+      records,
+      fakeEncryption,
+    );
 
   it('el motor decide el estado con sus versiones, y cada respuesta es una fila nueva', async () => {
     const id = await registered();

@@ -59,7 +59,13 @@ export {
 } from './rate-limit/rate-limiter.js';
 export { JobRegistry, type ScheduledJob } from './jobs/job-registry.js';
 export { EXTENSIONS, MAX_UPLOAD_BYTES, sniffMime, type AllowedMime } from './storage/file-type.js';
-export { FileRegistry, UNSUPPORTED_FILE, type StoredFile } from './storage/file-registry.js';
+export {
+  FileRegistry,
+  UNSUPPORTED_FILE,
+  type PatientFile,
+  type StoredFile,
+  type StoredMime,
+} from './storage/file-registry.js';
 export { inspectImage, type ImageInspection, type ImageMime } from './storage/image-info.js';
 export type { CatalogImport, ImportRowError, ImportStatus } from './import/catalog-import.js';
 export { readCatalogFile } from './import/catalog-import.js';
