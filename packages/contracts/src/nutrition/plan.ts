@@ -574,5 +574,23 @@ export const nutritionPlanListResponseSchema = z.object({
       validFrom: z.iso.date().nullable(),
     }),
   ),
+  /**
+   * Los planes del sistema anterior, de la migración de cuentas (RF-40, ADR-135): historial de solo lectura con sus metas, cada una
+   * puede faltar, y sus indicaciones. Del más reciente al más antiguo.
+   */
+  importedPlans: z.array(
+    z.object({
+      id: z.uuid(),
+      validFrom: z.iso.date(),
+      validTo: z.iso.date().nullable(),
+      targetKcal: z.number().nullable(),
+      targetProteinG: z.number().nullable(),
+      targetFatG: z.number().nullable(),
+      targetChoG: z.number().nullable(),
+      hydrationTargetMl: z.number().int().nullable(),
+      instructions: z.string().nullable(),
+    }),
+  ),
 });
 export type NutritionPlanListResponse = z.infer<typeof nutritionPlanListResponseSchema>;
+export type ImportedPlan = NutritionPlanListResponse['importedPlans'][number];

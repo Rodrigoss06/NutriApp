@@ -4,6 +4,7 @@ import { Salad } from 'lucide-react';
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { DietaryAlertsNotice } from '@/features/nutrition-plan/dietary-alerts-notice';
+import { ImportedPlansSection } from '@/features/nutrition-plan/imported-plans';
 import {
   PLAN_MODALITY_LABELS,
   PLAN_STATUS_LABELS,
@@ -119,6 +120,7 @@ export default async function DietPage({ params }: { params: Promise<{ patientId
           </table>
         </TableScroll>
       )}
+      <ImportedPlansSection plans={plans.data.importedPlans} />
     </Section>
   );
 }

@@ -1,4 +1,5 @@
 import { Test, type TestingModule } from '@nestjs/testing';
+import { nutritionPlanListResponseSchema } from '@nutricoach/contracts';
 import type { OrganizationId } from '@nutricoach/shared-kernel';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { AccountCliModule } from '../../src/cli/account-cli.module.js';
@@ -321,6 +322,40 @@ describe('RF-40 · RN-I05 · la migración de una cuenta desde la plantilla CSV'
       [org.organizationId],
     );
     expect(count).toBe('0');
+  });
+
+  it('el historial de planes del paciente trae el importado, en la misma lectura auditada (PR 7b)', async () => {
+    const [patient] = await owner<{ id: string }>(
+      `SELECT entity_id AS id FROM platform.import_record
+       WHERE organization_id = $1 AND entity = 'PATIENT' AND external_id = 'NP-1'`,
+      [org.organizationId],
+    );
+    const response = await harness.get(
+      `/patients/${patient?.id ?? ''}/nutrition-plans`,
+      org.staff.responsible.cookie,
+    );
+    expect(response.status).toBe(200);
+    const body = nutritionPlanListResponseSchema.parse(response.body);
+    expect(body.plans).toEqual([]);
+    expect(body.importedPlans).toEqual([
+      {
+        id: expect.any(String) as string,
+        validFrom: '2025-02-10',
+        validTo: '2025-03-10',
+        targetKcal: 1850,
+        targetProteinG: 110,
+        targetFatG: 60,
+        targetChoG: 215.5,
+        hydrationTargetMl: 2500,
+        instructions: 'Cenar temprano; "sin" frituras',
+      },
+    ]);
+    const [read] = await owner<{ count: string }>(
+      `SELECT count(*) FROM audit.audit_log
+       WHERE organization_id = $1 AND patient_id = $2 AND action = 'READ' AND resource_type = 'nutrition.plan'`,
+      [org.organizationId, patient?.id],
+    );
+    expect(Number(read?.count)).toBeGreaterThan(0);
   });
 
   it('cada archivo deja su lote con su hash, sus conteos y quién la corrió', async () => {

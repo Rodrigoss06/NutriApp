@@ -1,10 +1,15 @@
-import type { EnergyPrescriptionListResponse, ExchangeListResponse } from '@nutricoach/contracts';
+import type {
+  EnergyPrescriptionListResponse,
+  ExchangeListResponse,
+  NutritionPlanListResponse,
+} from '@nutricoach/contracts';
 import { Button, EmptyState, Notice } from '@nutricoach/ui';
 import { Salad } from 'lucide-react';
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import type { ReactNode } from 'react';
 import { DietaryAlertsNotice } from '@/features/nutrition-plan/dietary-alerts-notice';
+import { ImportedPlanReference } from '@/features/nutrition-plan/imported-plans';
 import { NewPlanForm } from '@/features/nutrition-plan/new-plan-form';
 import { RecordWriteGate } from '@/features/patients/record-write-gate';
 import { Section } from '@/features/patients/section';
@@ -16,13 +21,16 @@ export const metadata: Metadata = { title: 'Nuevo plan' };
 /** Un plan nuevo de cualquier modalidad, desde una prescripción energética (RF-19 a RF-21). */
 export default async function NewPlanPage({ params }: { params: Promise<{ patientId: string }> }) {
   const { patientId } = await params;
-  const [patient, prescriptions, lists, members] = await Promise.all([
+  const [patient, prescriptions, lists, members, plans] = await Promise.all([
     getPatient(patientId),
     serverApi<EnergyPrescriptionListResponse>(
       `/patients/${encodeURIComponent(patientId)}/energy-prescriptions`,
     ),
     serverApi<ExchangeListResponse>('/exchange-lists'),
     getMembers(),
+    serverApi<NutritionPlanListResponse>(
+      `/patients/${encodeURIComponent(patientId)}/nutrition-plans`,
+    ),
   ]);
   if (!patient.ok) return null;
   if (patient.data.status === 'ARCHIVED') {
@@ -31,6 +39,8 @@ export default async function NewPlanPage({ params }: { params: Promise<{ patien
   if (!prescriptions.ok || !lists.ok || !members.ok) {
     return <Notice tone="danger" title="No pudimos cargar lo necesario para el plan" />;
   }
+  // Las metas del último plan del sistema anterior, de referencia (ADR-135); si no cargan, el plan nuevo sigue igual.
+  const lastImported = plans.ok ? plans.data.importedPlans[0] : undefined;
   const careTeam = patient.data.careTeam;
   const staff = members.data.members;
   const gated = (content: ReactNode) => (
@@ -45,16 +55,19 @@ export default async function NewPlanPage({ params }: { params: Promise<{ patien
   );
   if (prescriptions.data.prescriptions.length === 0) {
     return gated(
-      <EmptyState
-        icon={Salad}
-        title="Primero, una prescripción energética"
-        description="El plan toma sus metas de kcal y macronutrientes de una prescripción."
-        action={
-          <Button asChild variant="secondary">
-            <Link href={`/panel/pacientes/${patientId}/energia/nueva`}>Nueva prescripción</Link>
-          </Button>
-        }
-      />,
+      <div className="flex flex-col gap-4">
+        <ImportedPlanReference plan={lastImported} />
+        <EmptyState
+          icon={Salad}
+          title="Primero, una prescripción energética"
+          description="El plan toma sus metas de kcal y macronutrientes de una prescripción."
+          action={
+            <Button asChild variant="secondary">
+              <Link href={`/panel/pacientes/${patientId}/energia/nueva`}>Nueva prescripción</Link>
+            </Button>
+          }
+        />
+      </div>,
     );
   }
   return gated(
@@ -63,6 +76,7 @@ export default async function NewPlanPage({ params }: { params: Promise<{ patien
       description="Elige la modalidad y la prescripción de la que salen las metas. Después armas el plan en el editor."
     >
       <DietaryAlertsNotice patientId={patientId} />
+      <ImportedPlanReference plan={lastImported} />
       <NewPlanForm
         patientId={patientId}
         prescriptions={prescriptions.data.prescriptions}

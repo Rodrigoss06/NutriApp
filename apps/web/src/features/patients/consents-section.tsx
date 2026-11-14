@@ -22,7 +22,7 @@ import { useId, useState } from 'react';
 import { FormError } from '@/features/forms/form-error';
 import { useCanWrite, usePanelSession } from '@/features/session/panel-session';
 import { apiFetch, apiUpload } from '@/lib/api/client';
-import { formatInstant } from '@/lib/dates';
+import { formatDate, formatInstant } from '@/lib/dates';
 import { ConsentText } from './consent-text';
 import { checkEvidence, EVIDENCE_ACCEPT } from './evidence';
 import { CONSENT_CHANNEL_LABELS, CONSENT_PURPOSE_LABELS } from './labels';
@@ -130,8 +130,10 @@ export function ConsentsSection({
                   )}
                 </div>
                 <span className="text-sm text-muted-foreground">
-                  {CONSENT_CHANNEL_LABELS[consent.channel]} · versión {consent.documentVersion} ·
-                  otorgado el {formatInstant(consent.grantedAt, timezone)}
+                  {consent.channel === 'MIGRATED'
+                    ? // Lo dio en el sistema anterior, con su texto: la versión del de NutriCoach no aplica (ADR-135).
+                      `${CONSENT_CHANNEL_LABELS.MIGRATED} del sistema anterior · otorgado el ${formatDate(consent.grantedAt.slice(0, 10))}`
+                    : `${CONSENT_CHANNEL_LABELS[consent.channel]} · versión ${consent.documentVersion} · otorgado el ${formatInstant(consent.grantedAt, timezone)}`}
                   {consent.revokedAt
                     ? ` · revocado el ${formatInstant(consent.revokedAt, timezone)}`
                     : ''}
