@@ -4,7 +4,7 @@ import type { ReactNode } from 'react';
 import { pluralLabel } from '@/features/organization/labels';
 import { PatientHeader } from '@/features/patients/patient-header';
 import { RecordTabs } from '@/features/patients/record-tabs';
-import { getPatient, patientLabel } from '@/features/patients/server';
+import { getOrganization, getPatient, patientLabel } from '@/features/patients/server';
 
 /**
  * Expediente del paciente (RF-09, RF-10). Abrirlo deja un READ en la auditoría (RN-B03). Fuera del equipo de atención
@@ -18,7 +18,11 @@ export default async function PatientRecordLayout({
   params: Promise<{ patientId: string }>;
 }) {
   const { patientId } = await params;
-  const [patient, label] = await Promise.all([getPatient(patientId), patientLabel()]);
+  const [patient, label, organization] = await Promise.all([
+    getPatient(patientId),
+    patientLabel(),
+    getOrganization(),
+  ]);
   if (!patient.ok) {
     return (
       <div className="flex flex-col gap-4">
@@ -41,7 +45,10 @@ export default async function PatientRecordLayout({
   return (
     <div className="flex flex-col gap-6">
       <PatientHeader patient={patient.data} patientLabel={label} />
-      <RecordTabs patientId={patientId} />
+      <RecordTabs
+        patientId={patientId}
+        features={organization.ok ? organization.data.features : null}
+      />
       {children}
     </div>
   );

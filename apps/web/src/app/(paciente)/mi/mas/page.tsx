@@ -77,7 +77,7 @@ export default async function Page() {
           </Link>
         </section>
       ) : null}
-      {reports.ok && reports.data.reports.length > 0 ? (
+      {app.data.features.MESOCYCLE_REPORT && reports.ok && reports.data.reports.length > 0 ? (
         <section aria-labelledby="informes" className="flex flex-col gap-2">
           <h2 id="informes" className="text-lg font-semibold">
             Informes
@@ -98,14 +98,16 @@ export default async function Page() {
           Tus citas con tu profesional
         </Link>
       </section>
-      <section aria-labelledby="documentos" className="flex flex-col gap-2">
-        <h2 id="documentos" className="text-lg font-semibold">
-          Documentos
-        </h2>
-        <DocumentsLink
-          pending={documents.ok ? pendingDocuments(documents.data.documents).length : 0}
-        />
-      </section>
+      {app.data.features.RECORD_DOCUMENTS ? (
+        <section aria-labelledby="documentos" className="flex flex-col gap-2">
+          <h2 id="documentos" className="text-lg font-semibold">
+            Documentos
+          </h2>
+          <DocumentsLink
+            pending={documents.ok ? pendingDocuments(documents.data.documents).length : 0}
+          />
+        </section>
+      ) : null}
       {pdfs.length > 0 ? (
         <section aria-labelledby="fichas" className="flex flex-col gap-2">
           <h2 id="fichas" className="text-lg font-semibold">

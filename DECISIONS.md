@@ -3474,3 +3474,26 @@ Consecuencias:
 - PR 3b: las pantallas del panel interno y ocultar en el panel y en la app lo que esté apagado.
 - Para Notion (/notion-sync de P15): 05.1 (la RLS de los planes), 05.3 (las políticas de las banderas) y 05 §3 (la función del uso),
   02 §10 (la quinta guardia), 04 RF-39.
+
+## ADR-128 · Las pantallas del panel interno y lo apagado fuera del panel y de la app — aceptada (2026-11-13)
+Contexto: P15, PR 3b (RF-39; RN-A02, RN-A03, RN-A09; ADR-034, ADR-076, ADR-127). El panel interno tenía su API; en la web solo había
+una página de espera.
+Decisión:
+- Panel interno (`/admin/plataforma`, solo sesiones PLATFORM), con su encabezado y dos secciones:
+  - Organizaciones: cada una con su estado, su plan, el vencimiento y el uso del cupo («3 de 5», y «Al límite» cuando lo alcanza),
+    solo con cuentas (RN-A09); el alta de una organización con su primer plan y la invitación al dueño. Cada organización abre su
+    detalle: la suscripción vigente con su uso, «Renovar o cambiar de plan» (RN-A02), los días de gracia y las funciones de la
+    fase C, que se encienden o se apagan con una casilla (optimista: vuelve atrás si la API no la guarda);
+  - Planes: cada uno con sus límites, su vigencia y su precio en soles (se guarda en céntimos); editar, desactivar o activar, y el
+    alta de uno nuevo. Lo que cambia vale para las suscripciones nuevas: las vigentes tienen sus límites congelados (RN-A03).
+- Lo apagado no se ofrece (ADR-076): la pestaña Documentos del expediente, Informes y Fotos de entrenamiento, y en la app, Informes
+  y Documentos de Más y las fotos de Progreso. La web lo lee en `features` de `/organization` y `/me/app`; la API decide (404).
+- Apagar una función no borra nada: lo guardado vuelve a verse al encenderla. Con las fotos apagadas, el paciente que las había
+  autorizado sigue viendo «Fotos de progreso» en Progreso, solo con su autorización, para retirarla (RN-G20): al retirarla se borran
+  como siempre. La app no ofrece autorizarlas mientras sigan apagadas.
+Consecuencias:
+- Unitarias de la web: el precio en céntimos sin coma flotante.
+- E2E `plataforma.spec.ts`, en escritorio y en el celular, con axe: el cupo de una organización, un plan nuevo y las fotos apagadas,
+  que desaparecen de la pestaña de entrenamiento de su dueña; el paciente que las había autorizado retira su autorización. Siguen
+  pasando fotos, documentos, informe y la app del paciente.
+- Para Notion (/notion-sync de P15): 04 RF-39; 02 §11 (el grupo admin ya no está vacío).

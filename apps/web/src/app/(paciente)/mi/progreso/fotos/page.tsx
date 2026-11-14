@@ -1,4 +1,4 @@
-import type { MeConsents, ProgressPhotosResponse } from '@nutricoach/contracts';
+import type { MeApp, MeConsents, ProgressPhotosResponse } from '@nutricoach/contracts';
 import { EmptyState, Notice } from '@nutricoach/ui';
 import { Camera } from 'lucide-react';
 import type { Metadata } from 'next';
@@ -14,29 +14,47 @@ export const metadata: Metadata = { title: 'Fotos de progreso' };
 
 /**
  * Tus fotos de progreso (P-30; RN-G20): tu autorización, las tres fotos de cada mesociclo, que subes desde su última semana, y la
- * comparativa por vista. Sin tu autorización no se suben ni se ven; al retirarla, se borran.
+ * comparativa por vista. Sin tu autorización no se suben ni se ven; al retirarla, se borran. Si tu organización apagó las fotos
+ * (ADR-128), queda solo tu autorización, para que puedas retirarla.
  */
 export default async function Page() {
-  const [photos, consents] = await Promise.all([
-    serverApi<ProgressPhotosResponse>('/me/progress-photos'),
+  const [app, consents] = await Promise.all([
+    serverApi<MeApp>('/me/app'),
     serverApi<MeConsents>('/me/consents'),
   ]);
-  if (!photos.ok || !consents.ok) {
+  if (!app.ok || !consents.ok) {
     return <Notice tone="danger" title="No pudimos cargar tus fotos" />;
   }
   const consent = consents.data.consents.find((item) => item.purpose === 'PROGRESS_PHOTOS');
+  const header = (
+    <div className="flex flex-col gap-1">
+      <Link
+        href="/mi/progreso"
+        className="flex min-h-touch items-center text-sm text-brand-text underline"
+      >
+        Volver a Progreso
+      </Link>
+      <h1 className="text-2xl font-semibold">Fotos de progreso</h1>
+    </div>
+  );
+  if (!app.data.features.PROGRESS_PHOTOS) {
+    return (
+      <div className="flex flex-col gap-6">
+        {header}
+        <Section title="Tu autorización">
+          <PhotosConsent consent={consent} paused />
+        </Section>
+      </div>
+    );
+  }
+  const photos = await serverApi<ProgressPhotosResponse>('/me/progress-photos');
+  if (!photos.ok) {
+    return <Notice tone="danger" title="No pudimos cargar tus fotos" />;
+  }
   const rows = photoSlots(photos.data);
   return (
     <div className="flex flex-col gap-6">
-      <div className="flex flex-col gap-1">
-        <Link
-          href="/mi/progreso"
-          className="flex min-h-touch items-center text-sm text-brand-text underline"
-        >
-          Volver a Progreso
-        </Link>
-        <h1 className="text-2xl font-semibold">Fotos de progreso</h1>
-      </div>
+      {header}
       <Section title="Tu autorización">
         <PhotosConsent consent={consent} />
       </Section>
