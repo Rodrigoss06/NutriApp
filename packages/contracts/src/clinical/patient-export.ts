@@ -32,5 +32,9 @@ export type PatientExport = z.infer<typeof patientExportSchema>;
  * GET /api/v1/patients/:id/exports y GET /api/v1/me/exports: las que pidió quien pregunta en los últimos 7 días, de la más reciente a
  * la más antigua.
  */
-export const patientExportListResponseSchema = z.object({ exports: z.array(patientExportSchema) });
+export const patientExportListResponseSchema = z.object({
+  exports: z.array(patientExportSchema),
+  /** La zona horaria del paciente: la app muestra las horas en ella. */
+  timezone: z.string(),
+});
 export type PatientExportListResponse = z.infer<typeof patientExportListResponseSchema>;

@@ -3615,3 +3615,23 @@ Consecuencias:
 - Para Notion (/notion-sync de P15): 05 §11 (la descarga con sesión por 24 horas, no un enlace firmado); 05.1 (`clinical.patient_export`);
   05.3 (`platform.file_object.patient_id`); 03 RN-B04 (quién la pide y las notas «Solo el autor»); 04 RF-07; 02 §3 y §8 (las rutas, el
   evento y el trabajo).
+
+## ADR-132 · Las pantallas de la exportación: en la ficha y en Más › Tus datos — aceptada (2026-11-13)
+Contexto: P15, PR 5b (RF-07, RN-B04; ADR-131). La exportación tenía su API; faltaban las pantallas del equipo y del paciente.
+Decisión:
+- Panel, en la Ficha del paciente: la sección «Exportar sus datos», solo para el responsable y el dueño (`exportsPatient`, igual a la
+  regla de la API); el soporte no la ve (su lista responde 403). Vale con la organización en solo lectura (RN-A02).
+- App, Más › «Tus datos» (`/mi/datos`), con objetivos de 44 px. Dice qué trae el ZIP, que queda 24 horas solo para el paciente y que
+  las notas privadas de su profesional no van.
+- Las dos comparten `PatientExportPanel`:
+  - «Preparar la exportación», desactivado mientras una se prepara;
+  - la lista de las propias de los últimos 7 días con su estado (texto, nunca solo color), cuándo se pidió y hasta cuándo se
+    descarga; mientras una se prepara, vuelve a preguntar cada 3 segundos;
+  - «Descargar el ZIP (tamaño)» va directo a la API, con sesión y como adjunto. El tamaño en KB o MB con un decimal, en formato
+    es-PE.
+- La lista de la API suma `timezone`, la zona del paciente: la app muestra las horas en ella; el panel, en la de la organización.
+Consecuencias:
+- Unitarias de la web: quién exporta, el tamaño y la pendiente.
+- E2E `exportacion.spec.ts`, en escritorio y en el celular, con axe: la dueña (responsable) prepara y descarga el ZIP desde la
+  ficha, y el paciente desde Más › Tus datos.
+- Para Notion (/notion-sync de P15): 04 RF-07 (dónde se pide y se descarga).

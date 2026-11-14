@@ -33,6 +33,12 @@ export interface PatientExportView extends PatientExportRecord {
   readonly status: PatientExportStatus;
 }
 
+/** Las exportaciones de quien pregunta, con la zona horaria del paciente para mostrar las horas. */
+export interface PatientExportList {
+  readonly exports: readonly PatientExportView[];
+  readonly timezone: string;
+}
+
 export interface PatientExportFile {
   readonly content: Buffer;
   readonly fileName: string;
@@ -57,18 +63,23 @@ export class PatientExportQueries {
   list(
     context: SecurityContext,
     patientId: string,
-  ): Promise<Result<readonly PatientExportView[], DomainError>> {
+  ): Promise<Result<PatientExportList, DomainError>> {
     return this.uow.query(context, async () => {
       const patient = await this.patients.find(patientId);
       if (!patient) return err(PATIENT_NOT_FOUND);
-      return ok(await this.#mine(context, patient.id));
+      return ok({ exports: await this.#mine(context, patient.id), timezone: patient.timezone });
     });
   }
 
+  /** Las suyas, desde la app; su ficha la ve con su RLS. */
   listForPatient(
     context: SecurityContext & { patientId: string },
-  ): Promise<readonly PatientExportView[]> {
-    return this.uow.query(context, () => this.#mine(context, context.patientId));
+  ): Promise<Result<PatientExportList, DomainError>> {
+    return this.uow.query(context, async () => {
+      const patient = await this.patients.find(context.patientId);
+      if (!patient) return err(PATIENT_NOT_FOUND);
+      return ok({ exports: await this.#mine(context, patient.id), timezone: patient.timezone });
+    });
   }
 
   /** El ZIP como adjunto, si la pidió quien pregunta, es de ese paciente, está lista y no venció. Auditado como EXPORT (RN-B03). */

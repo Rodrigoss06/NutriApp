@@ -2,7 +2,13 @@
 
 import type { CareTeamMember, MemberResponse } from '@nutricoach/contracts';
 import { usePanelSession } from '@/features/session/panel-session';
-import { managesPatient, memberIdOf, writesClinical, writesRecord } from './record-access';
+import {
+  exportsPatient,
+  managesPatient,
+  memberIdOf,
+  writesClinical,
+  writesRecord,
+} from './record-access';
 
 /** Si quien mira escribe datos de salud en este expediente (RN-A05). La interfaz oculta; la API decide. */
 export function useWritesRecord(
@@ -31,5 +37,16 @@ export function useManagesPatient(
   const { role, userId } = usePanelSession();
   return (
     role !== 'SUPPORT' && managesPatient(role, responsibleMemberId, memberIdOf(members, userId))
+  );
+}
+
+/** Si quien mira pide la exportación del paciente (RN-B04): el responsable o el dueño; el soporte, nunca. */
+export function useExportsPatient(
+  responsibleMemberId: string,
+  members: readonly MemberResponse[],
+): boolean {
+  const { role, userId } = usePanelSession();
+  return (
+    role !== 'SUPPORT' && exportsPatient(role, responsibleMemberId, memberIdOf(members, userId))
   );
 }

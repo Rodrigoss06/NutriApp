@@ -59,6 +59,9 @@ Leyenda: ⬜ pendiente · 🟨 en curso · ✅ terminado · ⛔ bloqueado
     archivos del paciente, que ahora llevan su id en `platform.file_object`; queda 24 horas para descargarla con sesión, solo quien
     la pidió, auditada como EXPORT. Las notas «Solo el autor», solo a su autor. Una prueba del catálogo exige que toda tabla con
     datos del paciente esté en la exportación o tenga su motivo. Listo en local, después del PR 4b.
+  - PR 5b, las pantallas de la exportación (ADR-132): «Exportar sus datos» en la ficha, para el responsable y el dueño, y Más ›
+    Tus datos en la app (`/mi/datos`): preparar, ver cómo va cada 3 segundos y descargar el ZIP mientras dura. La lista trae la
+    zona horaria del paciente. E2E `exportacion.spec.ts`. Listo en local, después del PR 5a.
 - P14.5 terminado (#70 a #94; aprobado el 2026-11-08, ADR-098), en 25 PR contra main: lo que trae la hoja piloto de Jeremy, por
   fases. Fase A, sin esperar respuestas:
   PR 1a, metas de día de entrenamiento y de descanso; PR 2, volumen ajustado por RIR y descanso; PR 6a, la cadera en Progreso,

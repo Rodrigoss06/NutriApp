@@ -396,10 +396,13 @@ describe('RN-B04 · listar y descargar', () => {
     const mine = await built();
     await requested(staffContext('OWNER', OWNER));
     const listed = await queries.list(responsible, PATIENT);
-    expect(isOk(listed) && listed.value.map((e) => [e.id, e.status])).toEqual([[mine.id, 'READY']]);
+    expect(isOk(listed) && listed.value.exports.map((e) => [e.id, e.status])).toEqual([
+      [mine.id, 'READY'],
+    ]);
+    expect(isOk(listed) && listed.value.timezone).toBe('America/Lima');
     clock.current = new Date(clock.current.getTime() + 25 * HOUR);
     const later = await queries.list(responsible, PATIENT);
-    expect(isOk(later) && later.value.map((e) => e.status)).toEqual(['EXPIRED']);
+    expect(isOk(later) && later.value.exports.map((e) => e.status)).toEqual(['EXPIRED']);
     const missing = await queries.list(responsible, uuidv7());
     expect(isErr(missing) && missing.error).toBe(PATIENT_NOT_FOUND);
   });
@@ -408,7 +411,12 @@ describe('RN-B04 · listar y descargar', () => {
     const context = patientContext();
     const asked = await commands.requestAsPatient(context);
     const listed = await queries.listForPatient(context);
-    expect(listed.map((e) => e.id)).toEqual([isOk(asked) ? asked.value.export.id : null]);
+    expect(isOk(listed) && listed.value.exports.map((e) => e.id)).toEqual([
+      isOk(asked) ? asked.value.export.id : null,
+    ]);
+    patients.rows.delete(PATIENT);
+    const gone = await queries.listForPatient(context);
+    expect(isErr(gone) && gone.error).toBe(PATIENT_NOT_FOUND);
   });
 
   it('descarga solo quien la pidió, del paciente de la ruta, lista y sin vencer; queda en la auditoría', async () => {
