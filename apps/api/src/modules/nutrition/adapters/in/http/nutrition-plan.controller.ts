@@ -162,10 +162,10 @@ export class PatientNutritionPlanController {
     @Req() request: ContextualRequest,
     @Param('patientId', ParseUUIDPipe) patientId: string,
   ): Promise<NutritionPlanListResponse> {
-    const plans = await this.queries.list(contextOf(request), patientId);
-    if (!plans) throw notFound(PATIENT_NOT_FOUND.code);
+    const found = await this.queries.list(contextOf(request), patientId);
+    if (!found) throw notFound(PATIENT_NOT_FOUND.code);
     return {
-      plans: plans.map((plan) => ({
+      plans: found.plans.map((plan) => ({
         id: plan.id,
         lineageId: plan.lineageId,
         versionNo: plan.versionNo,
@@ -177,6 +177,17 @@ export class PatientNutritionPlanController {
         createdAt: plan.createdAt.toISOString(),
         publishedAt: plan.publishedAt?.toISOString() ?? null,
         validFrom: plan.validFrom,
+      })),
+      importedPlans: found.importedPlans.map((plan) => ({
+        id: plan.id,
+        validFrom: plan.validFrom,
+        validTo: plan.validTo,
+        targetKcal: plan.targetKcal,
+        targetProteinG: plan.targetProteinG,
+        targetFatG: plan.targetFatG,
+        targetChoG: plan.targetChoG,
+        hydrationTargetMl: plan.hydrationTargetMl,
+        instructions: plan.instructions,
       })),
     };
   }

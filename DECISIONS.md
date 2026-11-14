@@ -3764,3 +3764,26 @@ Consecuencias:
 - Para Notion (/notion-sync de P15): 03 RN-I05 (cómo se valida) y RN-B01 (el consentimiento migrado); 04 RF-40; 05.1 (`consent.channel`
   MIGRATED y `consent_migrated`); 05.2 (`nutrition.imported_plan`); 05.3 (`platform.import_record` e `import_batch_once`); 02 (el módulo
   migration y la CLI).
+
+## ADR-136 · Las pantallas de la migración: los planes del sistema anterior en Dieta, sus metas al lado del plan nuevo y el consentimiento «Migrado» — aceptada (2026-11-14)
+Contexto: P15, PR 7b (RF-40; ADR-135). La migración de cuentas tenía su CLI; faltaba ver lo importado en el expediente, con lo que
+Rodrigo eligió el 2026-11-14: los planes, como historial y sin borrador, con sus metas de referencia al crear el plan nuevo.
+Decisión:
+- API: `GET /patients/:id/nutrition-plans` suma `importedPlans`, del más reciente al más antiguo, en la misma lectura auditada del
+  historial (RN-B03). Sin ruta nueva.
+- Dieta: debajo de los planes, «Planes del sistema anterior», de solo lectura. Cada uno con su vigencia, la marca «Importado»
+  (texto e ícono), las metas que traía (una que no venía no se muestra) y sus indicaciones. Gramos y mililitros, enteros al presentar
+  (RN-D09).
+- Nuevo plan: arriba del formulario, «Último plan del sistema anterior, de referencia», con sus metas. Dice que las del plan nuevo
+  salen de su prescripción energética y que estas no se copian (RF-18, RN-D01). También aparece sin prescripción, para tenerlas a la
+  vista al crearla.
+- Consentimientos: el migrado se lee «Migrado del sistema anterior · otorgado el <fecha>», sin la versión del texto de NutriCoach, que
+  el paciente no firmó.
+Consecuencias:
+- Unitarias de la web: las metas y la vigencia de un plan importado. Integración: el historial trae el importado, válido contra el
+  contrato, y deja su lectura en la auditoría.
+- E2E `migracion.spec.ts`, en escritorio y en el celular, con axe: un administrador migra una cuenta con la CLI compilada, como en
+  producción (es la única entrada de la migración y usa las variables de la base del entorno: las del job en CI y las de
+  env.local.example en local), y la dueña ve el consentimiento migrado, los dos planes en Dieta y la referencia en Nuevo plan. La web
+  no toca la base: corre la CLI de la API como lo haría quien migra.
+- Para Notion (/notion-sync de P15): 04 RF-40 (dónde se ve lo importado).
