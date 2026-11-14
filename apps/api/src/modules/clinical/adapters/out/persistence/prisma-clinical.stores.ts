@@ -69,6 +69,7 @@ const PATIENT_FIELDS = {
   status: true,
   responsibleMemberId: true,
   version: true,
+  anonymizedAt: true,
 } as const;
 
 const toPatient = (row: PatientRow): PatientRecord => ({
@@ -252,6 +253,12 @@ export class PrismaPatientStore implements PatientStore {
       data: { userId, updatedAt: new Date() },
     });
     return count === 1;
+  }
+
+  async anonymize(patientId: string): Promise<readonly string[]> {
+    const rows = await this.db.tx.$queryRaw<{ key: string }[]>`
+      SELECT k AS key FROM clinical.anonymize_patient(${patientId}::uuid) AS k`;
+    return rows.map((row) => row.key);
   }
 
   async previewInvitation(tokenHash: Uint8Array): Promise<InvitationPreviewRecord | null> {

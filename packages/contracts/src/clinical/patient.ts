@@ -131,8 +131,16 @@ export const patientResponseSchema = patientSummarySchema.extend({
     invitation: z.object({ email: z.string(), expiresAt: z.iso.datetime() }).nullable(),
   }),
   version: z.number().int(),
+  /** Suprimido (RN-B05, ADR-133): sigue archivado, sin datos que lo identifiquen, y no se reactiva. */
+  anonymizedAt: z.iso.datetime().nullable(),
 });
 export type PatientResponse = z.infer<typeof patientResponseSchema>;
+
+/** POST /api/v1/patients/:id/anonymize: la supresión, que el dueño confirma escribiendo el código del paciente (RN-B05). */
+export const anonymizePatientSchema = z.strictObject({
+  code: z.string().trim().min(1, 'Escribe el código del paciente.').max(40),
+});
+export type AnonymizePatient = z.infer<typeof anonymizePatientSchema>;
 
 export const setCareTeamMemberSchema = z.object({
   role: z.enum(CARE_TEAM_ROLES).exclude(['RESPONSIBLE']),
