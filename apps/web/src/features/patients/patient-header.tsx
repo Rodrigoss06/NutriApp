@@ -27,9 +27,13 @@ export function PatientHeader({
         <h1 className="text-3xl font-semibold">
           {patient.firstName} {patient.lastName}
         </h1>
-        <StatusBadge tone={patient.status === 'ACTIVE' ? 'success' : 'info'}>
-          {PATIENT_STATUS_LABELS[patient.status]}
-        </StatusBadge>
+        {patient.anonymizedAt ? (
+          <StatusBadge tone="warning">Suprimido</StatusBadge>
+        ) : (
+          <StatusBadge tone={patient.status === 'ACTIVE' ? 'success' : 'info'}>
+            {PATIENT_STATUS_LABELS[patient.status]}
+          </StatusBadge>
+        )}
       </div>
       <ul className="flex flex-wrap gap-2 font-label text-sm text-muted-foreground [&>li]:rounded-md [&>li]:border [&>li]:border-border [&>li]:bg-card [&>li]:px-2 [&>li]:py-0.5">
         <li className="tabular-nums">{patient.code}</li>

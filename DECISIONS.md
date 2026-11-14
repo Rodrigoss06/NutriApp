@@ -3688,3 +3688,19 @@ Consecuencias:
 - Para Notion (/notion-sync de P15): 05 §11 (lo que vacía y que el paciente sigue archivado con `anonymized_at`); 05.1
   (`anonymized_at`, el CHECK y el disparador); 03 RN-B05 (quién la confirma, con el código, y todo texto escrito por personas); 02 §3
   (la ruta); 06 (los disparadores de inmutabilidad y `app.anonymizing`).
+
+## ADR-134 · Las pantallas de la supresión: en la ficha del paciente archivado — aceptada (2026-11-14)
+Contexto: P15, PR 6b (RN-B05; ADR-124, ADR-133). La supresión tenía su API; faltaba la pantalla del dueño.
+Decisión:
+- En la Ficha, debajo de «Exportar sus datos», la sección «Suprimir sus datos», solo para el dueño y solo con el paciente archivado
+  (el soporte no la ve). Dice lo que borra y lo que queda, que es irreversible, y enlaza a la exportación de arriba para hacerla antes
+  (ADR-124).
+- Se confirma escribiendo el código del paciente: «Suprimir para siempre» se activa cuando coincide (sin espacios a los lados ni
+  mayúsculas, como la API) y pide una confirmación más. Con la organización en solo lectura queda desactivada, como toda escritura.
+- Suprimido: la cabecera dice «Suprimido» en vez de «Archivado», la sección dice cuándo se suprimieron sus datos y la ficha no ofrece
+  «Reactivar».
+Consecuencias:
+- Unitarias de la web: el código que confirma.
+- E2E `supresion.spec.ts`, en escritorio y en el celular, con axe: la dueña suprime a un paciente archivado con su código; el
+  expediente queda «Anonimizado» y «Suprimido», sin «Reactivar» ni su nombre. Siguen pasando exportación, pacientes y soporte.
+- Para Notion (/notion-sync de P15): 04 RF-07 (dónde se suprime y cómo se confirma).

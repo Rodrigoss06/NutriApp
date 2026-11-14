@@ -67,6 +67,9 @@ Leyenda: ⬜ pendiente · 🟨 en curso · ✅ terminado · ⛔ bloqueado
     vacía todo texto escrito por personas (también en lo publicado), desactiva la cuenta y marca borrados sus archivos, cuyos bytes
     se borran al confirmar. El paciente sigue archivado y no se reactiva. Una prueba del catálogo exige decidir cada columna de
     texto. Listo en local, después del PR 5b.
+  - PR 6b, las pantallas de la supresión (ADR-134): «Suprimir sus datos» en la ficha, solo para el dueño y con el paciente
+    archivado: el código para confirmar, el enlace a exportar antes y la confirmación. Suprimido, la cabecera dice «Suprimido» y
+    no hay «Reactivar». E2E `supresion.spec.ts`. Listo en local, después del PR 6a.
 - P14.5 terminado (#70 a #94; aprobado el 2026-11-08, ADR-098), en 25 PR contra main: lo que trae la hoja piloto de Jeremy, por
   fases. Fase A, sin esperar respuestas:
   PR 1a, metas de día de entrenamiento y de descanso; PR 2, volumen ajustado por RIR y descanso; PR 6a, la cadera en Progreso,

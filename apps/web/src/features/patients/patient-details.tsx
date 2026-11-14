@@ -105,7 +105,8 @@ export function PatientDetails({
                 Editar datos
               </Button>
             ) : null}
-            {!manages ? null : archived ? (
+            {/* Suprimido: sigue archivado para siempre (RN-B05, ADR-133). */}
+            {!manages || patient.anonymizedAt ? null : archived ? (
               <ConfirmDialog
                 trigger={
                   <Button variant="secondary" disabled={!canWrite || status.isPending}>
