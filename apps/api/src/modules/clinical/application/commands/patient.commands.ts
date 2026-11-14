@@ -44,6 +44,7 @@ import {
   type Population,
   type Sex,
 } from '../../domain/clinical-rules.js';
+import { PATIENT_ANONYMIZED } from '../../domain/patient-suppression.js';
 import { clinicalEvent, type ClinicalEventType } from '../clinical-events.js';
 import {
   CONSENT_STORE,
@@ -344,6 +345,8 @@ export class PatientCommands {
       const patient = await this.patients.find(patientId);
       if (!patient) return err(PATIENT_NOT_FOUND);
       if (!canManagePatient(actor, patient.responsibleMemberId)) return err(NOT_RESPONSIBLE);
+      // Suprimido: sigue archivado para siempre (RN-B05).
+      if (patient.anonymizedAt) return err(PATIENT_ANONYMIZED);
       if (patient.status === status) return err(ALREADY_IN_STATUS);
       if (status === 'ACTIVE') {
         const capacity = await this.tenancy.ensurePatientCapacity(actor.organizationId, () =>

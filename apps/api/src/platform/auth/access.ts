@@ -20,6 +20,8 @@ export const PERMISSIONS = {
    * paciente y al dueño. El soporte no exporta.
    */
   'patients.export': ['OWNER', 'ADMIN', 'PROFESSIONAL'],
+  /** La supresión del paciente por anonimización la confirma solo el dueño (RN-B05, ADR-133). */
+  'patients.suppress': ['OWNER'],
   /** La auditoría de la organización la consulta solo el dueño (RF-06). */
   'audit.read': ['OWNER'],
   /** Catálogos de alimentos y actividades: los globales se leen; los propios de la organización se editan (RN-I01). */

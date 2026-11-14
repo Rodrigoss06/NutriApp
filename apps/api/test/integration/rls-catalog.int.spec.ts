@@ -200,6 +200,8 @@ describe('RNF-12 · RN-A01 · el catálogo de PostgreSQL prueba el aislamiento',
     );
 
     expect(executable.map((f) => f.name)).toEqual([
+      // La leen los disparadores de inmutabilidad: solo es verdadera dentro de la supresión, que es de app_owner (ADR-133).
+      'anonymizing',
       'applied_migrations',
       'can_see_patient',
       'count_active_patients',
