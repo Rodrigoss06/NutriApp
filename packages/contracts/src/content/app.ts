@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { featuresSchema } from '../tenancy/feature-flags.js';
 
 const isoDate = z.iso.date();
 
@@ -99,5 +100,7 @@ export type UpdateMotivationalMessage = z.input<typeof updateMotivationalMessage
 /** GET /api/v1/me/app: los ajustes de la app del paciente y el mensaje de hoy, si hay uno. */
 export const meAppSchema = appSettingsSchema.omit({ updatedAt: true }).extend({
   message: z.object({ id: z.uuid(), body: z.string() }).nullable(),
+  /** Las banderas de su organización (RF-39, ADR-127): la app oculta lo que la API negaría. */
+  features: featuresSchema,
 });
 export type MeApp = z.infer<typeof meAppSchema>;

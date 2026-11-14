@@ -16,6 +16,9 @@ export type TenancyEventType =
   | 'tenancy.subscription.changed'
   | 'tenancy.subscription.expired'
   | 'tenancy.setting.changed'
+  | 'tenancy.feature.changed'
+  | 'tenancy.plan.created'
+  | 'tenancy.plan.updated'
   | 'tenancy.branding.changed';
 
 export function tenancyEvent<TPayload>(

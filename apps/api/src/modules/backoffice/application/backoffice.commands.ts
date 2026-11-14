@@ -1,4 +1,5 @@
 import { Inject, Injectable } from '@nestjs/common';
+import type { FeatureFlag } from '@nutricoach/contracts';
 import {
   ID_GENERATOR,
   ok,
@@ -13,7 +14,7 @@ import {
 } from '@nutricoach/shared-kernel';
 import { atomically } from '../../../platform/index.js';
 import { IamApi } from '../../iam/index.js';
-import { PlatformTenancy } from '../../tenancy/index.js';
+import { PlatformTenancy, type PlanChanges, type PlanRecord } from '../../tenancy/index.js';
 
 /** Contexto PLATFORM_ADMIN de una organización: la RLS de tenancy e iam.invitation lo admiten. */
 const platformContext = (
@@ -45,6 +46,57 @@ export class BackofficeCommands {
 
   listOrganizations(actor: UserId) {
     return this.uow.query(platformContext(null, actor), () => this.tenancy.listOrganizations());
+  }
+
+  /** Las organizaciones con el uso de su cupo: pacientes y miembros activos, solo cuentas (RN-A03, RN-A09). */
+  listOrganizationsWithUsage(actor: UserId) {
+    return this.uow.query(platformContext(null, actor), async () => {
+      const [organizations, usage] = [
+        await this.tenancy.listOrganizations(),
+        await this.tenancy.organizationUsage(),
+      ];
+      return organizations.map((organization) => ({
+        ...organization,
+        usage: usage.get(organization.id) ?? { activePatients: 0, activeProfessionals: 0 },
+      }));
+    });
+  }
+
+  createPlan(
+    actor: UserId,
+    input: Omit<PlanRecord, 'id' | 'isActive'>,
+  ): Promise<Result<PlanRecord, DomainError>> {
+    return atomically(this.uow, platformContext(null, actor), () =>
+      this.tenancy.createPlan(input, this.#metadata(actor)),
+    );
+  }
+
+  updatePlan(
+    actor: UserId,
+    code: string,
+    changes: PlanChanges,
+  ): Promise<Result<PlanRecord, DomainError>> {
+    return atomically(this.uow, platformContext(null, actor), () =>
+      this.tenancy.updatePlan(code, changes, this.#metadata(actor)),
+    );
+  }
+
+  /** Las banderas vigentes de la organización (ADR-127). */
+  features(actor: UserId, organizationId: OrganizationId) {
+    return this.uow.query(platformContext(organizationId, actor), () =>
+      this.tenancy.features(organizationId),
+    );
+  }
+
+  async setFeature(
+    actor: UserId,
+    organizationId: OrganizationId,
+    key: FeatureFlag,
+    enabled: boolean,
+  ): Promise<void> {
+    await this.uow.run(platformContext(organizationId, actor), () =>
+      this.tenancy.setFeature(organizationId, key, enabled, actor, this.#metadata(actor)),
+    );
   }
 
   /** Alta: organización, primera suscripción e invitación al dueño, todo o nada. */

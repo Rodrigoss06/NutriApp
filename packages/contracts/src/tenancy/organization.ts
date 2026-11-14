@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { featuresSchema } from './feature-flags.js';
 import {
   emailSchema,
   MEMBER_ROLES,
@@ -21,6 +22,8 @@ export const organizationResponseSchema = z.object({
   patientLabel: z.string(),
   patientVisibility: z.enum(['CARE_TEAM', 'ORGANIZATION']),
   version: z.number().int(),
+  /** Las banderas vigentes (RF-39, ADR-127): la web oculta lo que la API negaría. */
+  features: featuresSchema,
 });
 export type OrganizationResponse = z.infer<typeof organizationResponseSchema>;
 
@@ -219,6 +222,44 @@ export const planSchema = z.object({
   isActive: z.boolean(),
 });
 export const planListResponseSchema = z.object({ plans: z.array(planSchema) });
+
+const planCode = z
+  .string()
+  .trim()
+  .regex(/^[A-Z][A-Z0-9_]{1,39}$/, 'Mayúsculas, dígitos y guion bajo, como TRAMO_50.');
+const planFields = {
+  name: z.string().trim().min(1).max(80),
+  maxActivePatients: z.int().min(1).max(100_000),
+  maxProfessionals: z.int().min(1).max(10_000),
+  durationMonths: z.int().min(1).max(60),
+  /** En céntimos (05 §2); 0 es gratis. */
+  priceCents: z.int().min(0).max(100_000_000),
+  currency: z
+    .string()
+    .length(3)
+    .regex(/^[A-Z]{3}$/),
+};
+
+/**
+ * POST /api/v1/platform/plans: un tramo nuevo (N9). Los límites de un plan se congelan en cada suscripción: cambiarlos después no
+ * cambia las vigentes (RN-A03). Un plan no se borra: se desactiva.
+ */
+export const createPlanSchema = z.strictObject({ code: planCode, ...planFields });
+export type CreatePlan = z.infer<typeof createPlanSchema>;
+
+/** PATCH /api/v1/platform/plans/:code: el código no cambia. */
+export const updatePlanSchema = z
+  .strictObject({
+    name: planFields.name.optional(),
+    maxActivePatients: planFields.maxActivePatients.optional(),
+    maxProfessionals: planFields.maxProfessionals.optional(),
+    durationMonths: planFields.durationMonths.optional(),
+    priceCents: planFields.priceCents.optional(),
+    currency: planFields.currency.optional(),
+    isActive: z.boolean().optional(),
+  })
+  .refine((input) => Object.keys(input).length > 0, { message: 'No hay nada que cambiar.' });
+export type UpdatePlan = z.infer<typeof updatePlanSchema>;
 export type PlanListResponse = z.infer<typeof planListResponseSchema>;
 
 export const platformOrganizationSchema = z.object({
@@ -227,7 +268,18 @@ export const platformOrganizationSchema = z.object({
   slug: z.string(),
   status: z.enum(['ACTIVE', 'READ_ONLY', 'SUSPENDED', 'CLOSED']),
   timezone: z.string(),
-  subscription: z.object({ planCode: z.string(), startsOn: isoDate, endsOn: isoDate }).nullable(),
+  subscription: z
+    .object({
+      planCode: z.string(),
+      startsOn: isoDate,
+      endsOn: isoDate,
+      /** Los límites congelados en la suscripción (RN-A03). */
+      maxActivePatients: z.int(),
+      maxProfessionals: z.int(),
+    })
+    .nullable(),
+  /** El uso del cupo: solo cuentas, sin datos clínicos (RN-A09). */
+  usage: z.object({ activePatients: z.int(), activeProfessionals: z.int() }),
 });
 export const platformOrganizationListResponseSchema = z.object({
   organizations: z.array(platformOrganizationSchema),

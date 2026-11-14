@@ -27,15 +27,16 @@ import {
 import { isErr, type DomainError, type SecurityContext } from '@nutricoach/shared-kernel';
 import type { Response } from 'express';
 import {
+  type AllowedMime,
+  type ContextualRequest,
   EXTENSIONS,
   MAX_UPLOAD_BYTES,
   parseBody,
   PatientOnly,
-  problemFromDomainError,
   ProblemException,
+  problemFromDomainError,
+  RequireFeature,
   RequirePermission,
-  type AllowedMime,
-  type ContextualRequest,
 } from '../../../../../platform/index.js';
 import { RecordDocumentCommands } from '../../../application/commands/record-document.commands.js';
 import type { RecordDocumentRecord } from '../../../application/ports/record-document.ports.js';
@@ -176,6 +177,7 @@ function sendFile(response: Response, file: RecordDocumentFile | null): void {
  * El expediente de documentos de un alumno para su equipo de atención (P14.5, PR 8; RN-G21; ADR-122): con la RLS del equipo
  * (RN-A05); fuera de él, 404. Cada lectura queda en la auditoría (RN-B03).
  */
+@RequireFeature('RECORD_DOCUMENTS')
 @Controller('patients/:patientId/record-documents')
 export class PatientRecordDocumentsController {
   constructor(
@@ -218,6 +220,7 @@ export class PatientRecordDocumentsController {
 }
 
 /** Un documento por su id, para el equipo: reemplazar su contenido, revisarlo, borrarlo o descargar su archivo. */
+@RequireFeature('RECORD_DOCUMENTS')
 @Controller('record-documents')
 export class RecordDocumentController {
   constructor(
@@ -288,6 +291,7 @@ export class RecordDocumentController {
 }
 
 /** El expediente del alumno en su app (rutas /me: nunca envía su id); sus escrituras llevan Idempotency-Key (06 §5). */
+@RequireFeature('RECORD_DOCUMENTS')
 @Controller('me/record-documents')
 export class MeRecordDocumentsController {
   constructor(

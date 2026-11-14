@@ -41,6 +41,9 @@ Leyenda: ⬜ pendiente · 🟨 en curso · ✅ terminado · ⛔ bloqueado
   - PR 2, las pantallas de la agenda (ADR-126): la semana y el mes, la disponibilidad, la pestaña Citas del expediente, las
     citas en la línea de tiempo, «Tu agenda de hoy» y la próxima cita en Inicio, las sesiones verificadas y por validar del
     control semanal y «Tus citas» en la app. E2E `agenda.spec.ts`. Listo en local, después del PR 1.
+  - PR 3a, el panel interno por la API (ADR-127): planes que crea y cambia la plataforma (TRAMO_5 y TRAMO_50 se cargan en
+    producción desde el panel), el uso del cupo de cada organización y las banderas de la fase C, que apagan la función en la
+    API, el panel y la app. Listo en local, después del PR 2.
 - P14.5 terminado (#70 a #94; aprobado el 2026-11-08, ADR-098), en 25 PR contra main: lo que trae la hoja piloto de Jeremy, por
   fases. Fase A, sin esperar respuestas:
   PR 1a, metas de día de entrenamiento y de descanso; PR 2, volumen ajustado por RIR y descanso; PR 6a, la cadera en Progreso,
@@ -290,7 +293,7 @@ Leyenda: ⬜ pendiente · 🟨 en curso · ✅ terminado · ⛔ bloqueado
 - [ ] N9: límites y precio de los tramos de membresía; qué pasa al superar el límite
 - [x] Ficha de anamnesis de Jeremy recibida (2026-10-20): será la versión 2 de la historia clínica (RF-43, P12)
 - [ ] Antes de P16: cargar en producción los valores definitivos de TRAMO_5 y TRAMO_50 (la semilla no corre en
-  producción): migración de datos o panel interno de P15
+  producción): desde el panel interno (ADR-127), cuando Jeremy responda N9
 - [ ] N22: caducidad del enlace de acceso del paciente (provisional: 7 días, ajustable por organización en
   patient_invitation.ttl_days, de 1 a 30)
 - [ ] N19: confirmar la carga manual de bioimpedancia (lista cerrada de 8 indicadores, ADR-044)
