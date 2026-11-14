@@ -99,6 +99,7 @@ export class ConsentCommands {
             organizationId: actor.organizationId,
             purpose: 'CONSENT_EVIDENCE',
             uploadedBy: actor.userId,
+            patientId,
           });
         }
         const id = this.ids.newId<'ConsentId'>();

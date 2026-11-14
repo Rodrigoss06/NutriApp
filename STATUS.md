@@ -54,6 +54,11 @@ Leyenda: ⬜ pendiente · 🟨 en curso · ✅ terminado · ⛔ bloqueado
   - PR 4b, las pantallas del soporte con permiso (ADR-130): el dueño da y revoca en Organización; el soporte ve sus permisos en el
     panel interno, entra en modo soporte (franja de solo lectura, sin escribir, sin pacientes con ACCOUNT) y sale. E2E
     `soporte.spec.ts`. Listo en local, después del PR 4a.
+  - PR 5a, la exportación del paciente por la API (RF-07, RN-B04, RN-B03; ADR-131): la piden el responsable, el dueño o el propio
+    paciente; el worker arma un ZIP con datos.json, un CSV por tabla, las fichas (genera las vigentes que falten) y todos los
+    archivos del paciente, que ahora llevan su id en `platform.file_object`; queda 24 horas para descargarla con sesión, solo quien
+    la pidió, auditada como EXPORT. Las notas «Solo el autor», solo a su autor. Una prueba del catálogo exige que toda tabla con
+    datos del paciente esté en la exportación o tenga su motivo. Listo en local, después del PR 4b.
 - P14.5 terminado (#70 a #94; aprobado el 2026-11-08, ADR-098), en 25 PR contra main: lo que trae la hoja piloto de Jeremy, por
   fases. Fase A, sin esperar respuestas:
   PR 1a, metas de día de entrenamiento y de descanso; PR 2, volumen ajustado por RIR y descanso; PR 6a, la cadera en Progreso,

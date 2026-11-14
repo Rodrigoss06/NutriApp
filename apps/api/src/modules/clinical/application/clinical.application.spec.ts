@@ -1,6 +1,7 @@
 import { isErr, isOk } from '@nutricoach/shared-kernel';
 import { beforeEach, describe, expect, it } from 'vitest';
 import { ClinicalApi } from './clinical-api.js';
+import { PatientExportSources } from './patient-export-sources.js';
 import { TimelineSources } from './timeline-sources.js';
 import { ConsentCommands } from './commands/consent.commands.js';
 import { PatientCommands } from './commands/patient.commands.js';
@@ -338,6 +339,7 @@ describe('RF-05 · consentimiento', () => {
       patients,
       consents,
       new TimelineSources(),
+      new PatientExportSources(),
       new MemoryRecords(),
       fakeEncryption,
     );
@@ -362,6 +364,7 @@ describe('RF-05 · consentimiento', () => {
       patients,
       consents,
       new TimelineSources(),
+      new PatientExportSources(),
       new MemoryRecords(),
       fakeEncryption,
     );

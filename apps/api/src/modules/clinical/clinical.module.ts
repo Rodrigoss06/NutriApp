@@ -1,5 +1,19 @@
-import { Global, Module } from '@nestjs/common';
+import { Global, Module, type OnModuleInit } from '@nestjs/common';
+import { PatientExportConsumer } from './adapters/in/events/patient-export.consumer.js';
 import { MeClinicalController } from './adapters/in/http/me-clinical.controller.js';
+import {
+  MeExportsController,
+  PatientExportsController,
+} from './adapters/in/http/patient-export.controller.js';
+import { PatientExportJob } from './adapters/in/jobs/patient-export.job.js';
+import { FflateArchiveWriter } from './adapters/out/archive/fflate-archive.writer.js';
+import { PrismaPatientExportStore } from './adapters/out/persistence/prisma-patient-export.store.js';
+import { ClinicalExportSource } from './application/clinical-export-source.js';
+import { PatientExportCommands } from './application/commands/patient-export.commands.js';
+import { PatientExportBuilder } from './application/patient-export-builder.js';
+import { PatientExportSources } from './application/patient-export-sources.js';
+import { ARCHIVE_WRITER, PATIENT_EXPORT_STORE } from './application/ports/patient-export.ports.js';
+import { PatientExportQueries } from './application/queries/patient-export.queries.js';
 import {
   MeRecordDocumentsController,
   PatientRecordDocumentsController,
@@ -35,8 +49,8 @@ import {
 import { PrismaRecordDocumentStore } from './adapters/out/persistence/prisma-record-document.store.js';
 
 /**
- * clinical (02 §2): pacientes, equipo de atención, consentimiento, historia clínica, notas y el expediente de documentos
- * (ADR-122). Global para entregar a
+ * clinical (02 §2): pacientes, equipo de atención, consentimiento, historia clínica, notas, el expediente de documentos
+ * (ADR-122) y la exportación del paciente (ADR-131). Global para entregar a
  * tenancy el conteo real de pacientes activos (ACTIVE_PATIENT_COUNTER, RN-A03) y a iam la inscripción del paciente
  * en la app (PATIENT_ENROLLMENT, RN-A06).
  */
@@ -49,6 +63,8 @@ import { PrismaRecordDocumentStore } from './adapters/out/persistence/prisma-rec
     PatientRecordDocumentsController,
     RecordDocumentController,
     MeRecordDocumentsController,
+    PatientExportsController,
+    MeExportsController,
   ],
   providers: [
     PatientCommands,
@@ -62,12 +78,21 @@ import { PrismaRecordDocumentStore } from './adapters/out/persistence/prisma-rec
     ClinicalApi,
     PatientSelfService,
     TimelineSources,
+    PatientExportSources,
+    ClinicalExportSource,
+    PatientExportCommands,
+    PatientExportQueries,
+    PatientExportBuilder,
+    PatientExportConsumer,
+    PatientExportJob,
     PatientEnrollmentService,
     { provide: PATIENT_ENROLLMENT, useExisting: PatientEnrollmentService },
     { provide: CLINICAL_RECORD_STORE, useClass: PrismaClinicalRecordStore },
     { provide: PATIENT_STORE, useClass: PrismaPatientStore },
     { provide: CONSENT_STORE, useClass: PrismaConsentStore },
     { provide: RECORD_DOCUMENT_STORE, useClass: PrismaRecordDocumentStore },
+    { provide: PATIENT_EXPORT_STORE, useClass: PrismaPatientExportStore },
+    { provide: ARCHIVE_WRITER, useClass: FflateArchiveWriter },
     {
       provide: ACTIVE_PATIENT_COUNTER,
       useFactory: (api: ClinicalApi) => ({ count: () => api.countActivePatients() }),
@@ -76,4 +101,14 @@ import { PrismaRecordDocumentStore } from './adapters/out/persistence/prisma-rec
   ],
   exports: [ClinicalApi, ACTIVE_PATIENT_COUNTER, PATIENT_ENROLLMENT],
 })
-export class ClinicalModule {}
+export class ClinicalModule implements OnModuleInit {
+  constructor(
+    private readonly exportSources: PatientExportSources,
+    private readonly clinicalExport: ClinicalExportSource,
+  ) {}
+
+  /** Lo de clinical va primero en la exportación del paciente (RN-B04, ADR-131). */
+  onModuleInit(): void {
+    this.exportSources.register(this.clinicalExport);
+  }
+}

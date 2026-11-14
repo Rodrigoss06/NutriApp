@@ -1,4 +1,5 @@
 import { Module, type OnModuleInit } from '@nestjs/common';
+import { NUTRITION_EXPORT_TABLES } from './application/nutrition-export-tables.js';
 import { AssessmentModule } from '../assessment/index.js';
 import { ClinicalApi } from '../clinical/index.js';
 import { ExerciseModule } from '../exercise/index.js';
@@ -68,5 +69,6 @@ export class NutritionModule implements OnModuleInit {
 
   onModuleInit(): void {
     this.clinical.registerTimelineSource(this.timeline);
+    this.clinical.registerExportSource({ context: 'nutrition', tables: NUTRITION_EXPORT_TABLES });
   }
 }

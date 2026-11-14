@@ -212,7 +212,7 @@ export class RecordDocumentCommands {
         if (!access.ok) return access;
         const images = await this.#imagesConsent(patientId, link, stored);
         if (!images.ok) return images;
-        if (stored) await this.#register(stored, context);
+        if (stored) await this.#register(stored, context, patientId);
         const now = this.clock.now();
         const id = this.ids.newId<'RecordDocumentId'>();
         const hasContent = link !== null || stored !== null;
@@ -270,7 +270,7 @@ export class RecordDocumentCommands {
           if (!status.ok) return status;
           const images = await this.#imagesConsent(document.patientId, link, stored);
           if (!images.ok) return images;
-          if (stored) await this.#register(stored, context);
+          if (stored) await this.#register(stored, context, document.patientId);
           const now = this.clock.now();
           // El anterior se marca borrado mientras el documento todavía lo nombra: así la RLS del alumno lo deja.
           const retiredKey = document.fileId ? await this.files.retire(document.fileId, now) : null;
@@ -337,13 +337,14 @@ export class RecordDocumentCommands {
       : err(RECORD_DOCUMENT_FILE_UNSUPPORTED);
   }
 
-  async #register(file: WrittenFile, context: SecurityContext): Promise<void> {
+  async #register(file: WrittenFile, context: SecurityContext, patientId: string): Promise<void> {
     const actor = actorOf(context);
     await this.files.register({
       ...file,
       organizationId: actor.organizationId,
       purpose: FILE_PURPOSE,
       uploadedBy: actor.userId,
+      patientId,
     });
   }
 

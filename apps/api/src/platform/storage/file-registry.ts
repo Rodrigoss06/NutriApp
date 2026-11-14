@@ -17,6 +17,23 @@ export interface StoredFile {
   readonly sizeBytes: number;
 }
 
+/** Lo que guarda la plataforma además de lo admitido como subida: el ZIP de una exportación (ADR-131). */
+export type StoredMime = AllowedMime | 'application/zip';
+
+/**
+ * Un archivo de un paciente. `storageKey` sirve solo para leer sus bytes con `readKey` fuera de la transacción que lo listó (con su
+ * RLS); nunca sale de la API.
+ */
+export interface PatientFile {
+  readonly id: string;
+  readonly storageKey: string;
+  readonly mimeType: string;
+  readonly sizeBytes: number;
+  readonly sha256: Uint8Array;
+  readonly purpose: string;
+  readonly createdAt: Date;
+}
+
 export const UNSUPPORTED_FILE = 'NC-PLT-415';
 
 /**
@@ -44,16 +61,36 @@ export class FileRegistry {
     return { id, key, mimeType, sha256: createHash('sha256').update(content).digest() };
   }
 
-  /** Registra en la transacción activa un archivo ya escrito. */
+  /** Escribe un ZIP que armó la plataforma, sin mirar sus bytes: nunca viene de una subida (ADR-131). */
+  async writeArchive(
+    organizationId: OrganizationId,
+    content: Uint8Array,
+  ): Promise<{ id: string; key: string; mimeType: StoredMime; sha256: Uint8Array }> {
+    const id = this.ids.newId<'FileId'>();
+    const key = `${organizationId}/${id}`;
+    await this.storage.put(key, content);
+    return {
+      id,
+      key,
+      mimeType: 'application/zip',
+      sha256: createHash('sha256').update(content).digest(),
+    };
+  }
+
+  /**
+   * Registra en la transacción activa un archivo ya escrito. patientId es el paciente del archivo, o null si no es de uno (un logo, el
+   * material, una importación): la exportación y la supresión encuentran así todos los suyos (ADR-131).
+   */
   async register(file: {
     id: string;
     key: string;
-    mimeType: AllowedMime;
+    mimeType: StoredMime;
     sha256: Uint8Array;
     sizeBytes: number;
     organizationId: OrganizationId;
     purpose: string;
     uploadedBy: UserId | null;
+    patientId: string | null;
   }): Promise<void> {
     await this.db.tx.fileObject.createMany({
       data: [
@@ -67,9 +104,31 @@ export class FileRegistry {
           sha256: new Uint8Array(file.sha256),
           purpose: file.purpose,
           uploadedBy: file.uploadedBy,
+          patientId: file.patientId,
         },
       ],
     });
+  }
+
+  /** Los archivos visibles de un paciente con el contexto de la transacción activa, sin los de esos propósitos. */
+  async listForPatient(
+    patientId: string,
+    excludedPurposes: readonly string[],
+  ): Promise<readonly PatientFile[]> {
+    const rows = await this.db.tx.fileObject.findMany({
+      where: { patientId, deletedAt: null, purpose: { notIn: [...excludedPurposes] } },
+      select: {
+        id: true,
+        storageKey: true,
+        mimeType: true,
+        sizeBytes: true,
+        sha256: true,
+        purpose: true,
+        createdAt: true,
+      },
+      orderBy: { id: 'asc' },
+    });
+    return rows.map((row) => ({ ...row, sizeBytes: Number(row.sizeBytes) }));
   }
 
   discard(key: string): Promise<void> {
@@ -88,6 +147,11 @@ export class FileRegistry {
     if (!row) return null;
     await this.db.tx.fileObject.updateMany({ where: { id: fileId }, data: { deletedAt: at } });
     return row.storageKey;
+  }
+
+  /** Los bytes de un archivo que ya se listó con su RLS (`listForPatient`), sin abrir una transacción. */
+  readKey(storageKey: string): Promise<Buffer> {
+    return this.storage.read(storageKey);
   }
 
   /** Lee un archivo visible con el contexto de la transacción activa (RLS). */

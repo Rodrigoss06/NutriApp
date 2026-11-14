@@ -1,4 +1,6 @@
 import { Module, type OnModuleInit } from '@nestjs/common';
+import { ClinicalApi } from '../clinical/index.js';
+import { TRACKING_EXPORT_TABLES } from './application/tracking-export-tables.js';
 import { ContentModule } from '../content/index.js';
 import { FoodModule } from '../food/index.js';
 import { NutritionModule } from '../nutrition/index.js';
@@ -75,10 +77,15 @@ export class TrackingModule implements OnModuleInit {
   constructor(
     private readonly sources: WeekCheckinSources,
     private readonly weekCheckins: TrackingWeekCheckins,
+    private readonly clinical: ClinicalApi,
   ) {}
 
-  /** El control semanal de training lee los registros diarios de aquí, sin importar tracking (02 §4). */
+  /**
+   * El control semanal de training lee los registros diarios de aquí, sin importar tracking (02 §4); los registros van en la
+   * exportación del paciente (RN-B04).
+   */
   onModuleInit(): void {
     this.sources.register(this.weekCheckins);
+    this.clinical.registerExportSource({ context: 'tracking', tables: TRACKING_EXPORT_TABLES });
   }
 }

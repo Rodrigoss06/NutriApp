@@ -42,6 +42,7 @@
     "@prisma/client": "catalog:",
     "@react-pdf/renderer": "catalog:",
     "cookie": "catalog:",
+    "fflate": "catalog:",
     "nestjs-cls": "catalog:",
     "nestjs-pino": "catalog:",
     "nodemailer": "catalog:",

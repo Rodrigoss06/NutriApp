@@ -16,6 +16,7 @@ export * from './clinical/anamnesis.js';
 export * from './clinical/records.js';
 export * from './clinical/screening.js';
 export * from './clinical/record-documents.js';
+export * from './clinical/patient-export.js';
 export * from './audit/events.js';
 export * from './assessment/catalog.js';
 export * from './assessment/evaluation.js';

@@ -16,4 +16,12 @@ export {
 } from './domain/clinical-rules.js';
 export type { TimelineRecord as TimelineEntry } from './application/ports/clinical.ports.js';
 export type { TimelineCursor, TimelineSource } from './application/timeline-sources.js';
+export {
+  NOT_EXPORTED,
+  PatientExportSources,
+  type PatientExportSource,
+  type PatientExportTable,
+} from './application/patient-export-sources.js';
+/** Para el trabajo de cada hora en las pruebas, como RemindersHandler de scheduling. */
+export { PatientExportCommands } from './application/commands/patient-export.commands.js';
 export { ClinicalModule } from './clinical.module.js';

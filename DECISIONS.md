@@ -3558,3 +3558,60 @@ Consecuencias:
   panel interno, pacientes, marca y seguridad. Se recorrieron en modo soporte las pantallas del panel y del expediente (con
   CLINICAL_READ) y las no clínicas (con ACCOUNT), sin errores.
 - Para Notion (/notion-sync de P15): 04 RF-39 (el soporte con permiso en el panel); 02 §11 (el modo soporte del grupo panel).
+
+## ADR-131 · La exportación del paciente por la API: quién la pide, qué trae el ZIP y 24 horas con sesión — aceptada (2026-11-13)
+Contexto: P15, PR 5a (RF-07, RN-B04, RN-B03; ADR-124). RN-B04 pide los datos completos en JSON y CSV con las fichas en PDF, y que la
+pidan el profesional responsable o el propio paciente; el prompt suma todo lo que se fue agregando (anamnesis V2, seguridad y su
+evidencia, también la que quedó sin ruta, programas, check-in, cambios del día, informes, fotos y expediente). Rodrigo decidió el
+2026-11-13: además del responsable, el dueño (la necesita antes de la supresión y cuando el responsable ya no está), y las notas
+«Solo el autor» van solo en la exportación que pide su autor.
+Decisión:
+- Quién: del equipo, el responsable del paciente y el dueño (NC-CLI-041 para el resto, también el administrador); fuera del equipo
+  de atención, 404 (RN-A05). El paciente, desde `/me`. Vale en solo lectura (RN-A02). El soporte no exporta: `patients.export` no
+  está en sus permisos (RN-A09).
+- `clinical.patient_export`: PENDING → READY con su archivo por 24 horas desde que quedó lista → EXPIRED; FAILED si no se armó. Se
+  muestra vencida apenas pasa su hora y fallida si sigue pendiente después de una hora, aunque el trabajo de cada hora no haya
+  pasado. Pedir con una pendiente en curso devuelve esa (200); si no, una nueva (202). Cada uno pide a su nombre, nace pendiente y
+  solo el worker la completa (RLS y permisos por columna).
+- El worker (`clinical.exports`, con el evento `clinical.export.requested`) la arma como SYSTEM en transacciones cortas, porque
+  todo junto (dibujar fichas, leer las tablas, armar el ZIP) no cabe en los 5 segundos de una:
+  - el consumidor declara `ownTransactions`, nuevo en la plataforma: corre fuera de la transacción del corredor, es idempotente por
+    sí mismo (solo arma un pedido pendiente y dejarlo listo es condicional; si otra entrega ganó, descarta su ZIP) y queda en
+    processed_event al terminar bien. Cada ficha se dibuja en su transacción; las tablas de cada contexto se leen en una de solo
+    lectura; los bytes y el ZIP, fuera de toda transacción; el archivo y el pedido listo, en una última;
+  - fuentes por contexto, como las de la línea de tiempo: cada contexto registra sus tablas con `ClinicalApi.registerExportSource`
+    y, si hace falta, qué preparar antes; documents genera las fichas vigentes que falten (el plan y la rutina que ve, y los
+    resultados y la evolución de su última evaluación cerrada);
+  - cada tabla sale tal como está en la base (`to_jsonb`), con el SQL fijo de su contexto: `patient_id = $1`, o la cadena hasta el
+    paciente para las hijas (tomas, partes del plan y del programa). La ficha del paciente sale con su documento y su teléfono
+    descifrados y sin el índice ciego;
+  - los archivos: todos los del paciente en `platform.file_object`, que ahora lleva `patient_id` (las fichas, el expediente, las
+    fotos, la evidencia de las pruebas y de los consentimientos), también la evidencia que quedó sin ruta (ADR-075). La migración
+    completa los que ya existían desde las filas que los nombran; la evidencia que ya estaba sin ruta no se puede atar (en local
+    solo hay datos sintéticos). La tabla suma care_team_scope y account_scope, y el paciente escribe sus archivos con su id;
+  - el ZIP (fflate, en memoria): LEEME.txt, datos.json, un CSV por tabla con filas (RFC 4180, UTF-8 con BOM, un texto que empieza
+    como fórmula lleva un apóstrofo), archivos.csv y las carpetas fichas, expediente, fotos-de-progreso, evidencias y
+    consentimientos, cada archivo con el id que nombran las tablas.
+- Lo que no entra, con su motivo (`NOT_EXPORTED`): los read models de analytics (se calculan desde los registros), la auditoría, la
+  invitación (guarda el token), los pedidos de exportación y `platform.file_object` (sus archivos van en carpetas).
+- Descarga: con sesión, solo quien la pidió (el dueño no descarga la del responsable), como adjunto, nosniff y sin caché; 409 si
+  todavía se prepara o falló, 410 si venció (NC-CLI-042 a NC-CLI-045). Cada descarga queda en la auditoría como EXPORT; el pedido,
+  como CREATE.
+- `clinical.exports-close`, cada hora: borra el archivo de las vencidas (marcado y sus bytes después de confirmar) y da por fallidas
+  las pendientes de más de una hora.
+- Rutas: `/patients/:id/exports` (pedir y listar las propias de los últimos 7 días), `/patients/:id/exports/:exportId/file`, y las
+  mismas en `/me/exports`.
+Consecuencias:
+- Unitarias: quién la pide, los estados con su hora, la pendiente que se reutiliza, la descarga, el nombre del ZIP, el CSV, las
+  carpetas, el contenido del ZIP y fflate; y los casos de uso con puertos en memoria (pedir, armar, listar, descargar, el trabajo
+  de cada hora y las fuentes).
+- Integración `patient-export.int.spec.ts` (11 casos): la prueba del catálogo (toda tabla con patient_id, o hija de una que entra,
+  está en una fuente o en `NOT_EXPORTED`); quién pide; la de Luis con todas sus tablas, sus fichas, su documento del expediente y su
+  foto (criterio 4 de P15, la parte de exportación); la auditoría; las notas «Solo el autor» para el responsable, el dueño y el
+  paciente; el vencimiento con el trabajo de cada hora; la pendiente fallida; la RLS.
+- Un paciente con muchos archivos arma un ZIP grande en memoria: alcanza para la versión 1.0; si crece, el ZIP pasa a armarse por
+  partes hacia el almacenamiento.
+- Las pantallas llegan en el PR 5b. La supresión (PR 6) borra los archivos con el mismo `patient_id`.
+- Para Notion (/notion-sync de P15): 05 §11 (la descarga con sesión por 24 horas, no un enlace firmado); 05.1 (`clinical.patient_export`);
+  05.3 (`platform.file_object.patient_id`); 03 RN-B04 (quién la pide y las notas «Solo el autor»); 04 RF-07; 02 §3 y §8 (las rutas, el
+  evento y el trabajo).

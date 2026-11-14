@@ -1,4 +1,5 @@
 import { Module, type OnModuleInit } from '@nestjs/common';
+import { TRAINING_EXPORT_TABLES } from './application/training-export-tables.js';
 import { AssessmentModule } from '../assessment/index.js';
 import { ClinicalApi } from '../clinical/index.js';
 import { ExerciseModule } from '../exercise/index.js';
@@ -109,5 +110,6 @@ export class TrainingModule implements OnModuleInit {
 
   onModuleInit(): void {
     this.clinical.registerTimelineSource(this.timeline);
+    this.clinical.registerExportSource({ context: 'training', tables: TRAINING_EXPORT_TABLES });
   }
 }

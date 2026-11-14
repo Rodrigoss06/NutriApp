@@ -270,6 +270,7 @@ export class FunctionalEvaluationCommands {
           organizationId: actor.organizationId,
           purpose: 'ASSESSMENT_EVIDENCE',
           uploadedBy: actor.userId,
+          patientId: draft.value.patientId,
         });
         const attached = await this.#setEvidenceFile(draft.value, testCode, file.id);
         if (!attached) return err(FUNCTIONAL_TEST_NOT_FOUND);

@@ -525,6 +525,7 @@ model Patient {
   conditions            Condition[]
   consents              Consent[]
   goals                 Goal[]
+  patientExports        PatientExport[]
   performanceProfiles   PerformanceProfile[]
   preExerciseScreenings PreExerciseScreening[]
   recordDocuments       RecordDocument[]
@@ -1252,9 +1253,12 @@ model FileObject {
   uploadedBy      String?          @map("uploaded_by") @db.Uuid
   createdAt       DateTime         @default(now()) @map("created_at") @db.Timestamptz(6)
   deletedAt       DateTime?        @map("deleted_at") @db.Timestamptz(6)
+  patientId       String?          @map("patient_id") @db.Uuid
+  patientExports  PatientExport[]
   recordDocuments RecordDocument[]
   progressPhotos  ProgressPhoto[]
 
+  @@index([organizationId, patientId], map: "file_object_by_patient", where: raw("(patient_id IS NOT NULL)"))
   @@map("file_object")
   @@schema("platform")
 }
@@ -2538,5 +2542,29 @@ model RecordDocument {
 
   @@index([organizationId, patientId, createdAt], map: "record_document_by_patient", where: raw("(deleted_at IS NULL)"))
   @@map("record_document")
+  @@schema("clinical")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model PatientExport {
+  id                String      @id @db.Uuid
+  organizationId    String      @map("organization_id") @db.Uuid
+  patientId         String      @map("patient_id") @db.Uuid
+  requestedBy       String      @map("requested_by") @db.Uuid
+  requestedByRole   String      @map("requested_by_role")
+  requestedByMember String?     @map("requested_by_member") @db.Uuid
+  status            String      @default("PENDING")
+  fileId            String?     @map("file_id") @db.Uuid
+  sizeBytes         BigInt?     @map("size_bytes")
+  createdAt         DateTime    @default(now()) @map("created_at") @db.Timestamptz(6)
+  readyAt           DateTime?   @map("ready_at") @db.Timestamptz(6)
+  expiresAt         DateTime?   @map("expires_at") @db.Timestamptz(6)
+  fileObject        FileObject? @relation(fields: [fileId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  patient           Patient     @relation(fields: [patientId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@index([organizationId, patientId, createdAt(sort: Desc)], map: "patient_export_by_patient")
+  @@index([organizationId, status], map: "patient_export_to_close", where: raw("(status = ANY (ARRAY['PENDING'::text, 'READY'::text]))"))
+  @@map("patient_export")
   @@schema("clinical")
 }
