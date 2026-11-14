@@ -397,6 +397,8 @@ describe('RN-B04 · la exportación de Luis (criterio 4 de P15)', () => {
     expect((await ready('/me/exports', patientCookie)).map((e) => [e.id, e.status])).toEqual([
       [mine.id, 'READY'],
     ]);
+    const listed = await harness.get('/me/exports', patientCookie);
+    expect((listed.body as { timezone: string }).timezone).toBe('America/Lima');
     const zip = await opened(`/me/exports/${mine.id}/file`, patientCookie);
     expect(zip.tables['clinical.patient']?.[0]).toMatchObject({ id: patientId });
     expect(noteIds(zip.tables)).toEqual([sharedNoteId]);

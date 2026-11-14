@@ -29,3 +29,10 @@ export const managesPatient = (
   responsibleMemberId: string,
   memberId: string | null,
 ): boolean => role === 'OWNER' || role === 'ADMIN' || memberId === responsibleMemberId;
+
+/** Pedir la exportación del paciente: el responsable o el dueño; un administrador, solo si es el responsable (RN-B04, ADR-131). */
+export const exportsPatient = (
+  role: MemberRole,
+  responsibleMemberId: string,
+  memberId: string | null,
+): boolean => role === 'OWNER' || (memberId !== null && memberId === responsibleMemberId);

@@ -116,7 +116,7 @@ export class PatientExportsController {
   ): Promise<PatientExportListResponse> {
     const result = await this.queries.list(contextOf(request), patientId);
     if (isErr(result)) throw problem(result.error);
-    return { exports: result.value.map(exportOf) };
+    return { exports: result.value.exports.map(exportOf), timezone: result.value.timezone };
   }
 
   /** GET /api/v1/patients/:patientId/exports/:exportId/file: el ZIP, auditado como EXPORT (RN-B03). */
@@ -160,8 +160,9 @@ export class MeExportsController {
   @PatientOnly()
   @Header('Cache-Control', 'no-store')
   async list(@Req() request: ContextualRequest): Promise<PatientExportListResponse> {
-    const exports = await this.queries.listForPatient(patientContextOf(request));
-    return { exports: exports.map(exportOf) };
+    const result = await this.queries.listForPatient(patientContextOf(request));
+    if (isErr(result)) throw problem(result.error);
+    return { exports: result.value.exports.map(exportOf), timezone: result.value.timezone };
   }
 
   @Get(':exportId/file')

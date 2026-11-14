@@ -25,9 +25,9 @@ describe('RN-B04 · la exportación del paciente', () => {
       expiresAt: null,
       sizeBytes: null,
     };
-    expect(patientExportListResponseSchema.parse({ exports: [pending] }).exports).toEqual([
-      pending,
-    ]);
+    const list = { exports: [pending], timezone: 'America/Lima' };
+    expect(patientExportListResponseSchema.parse(list)).toEqual(list);
+    expect(patientExportListResponseSchema.safeParse({ exports: [pending] }).success).toBe(false);
     expect(patientExportSchema.safeParse({ ...ready, status: 'DONE' }).success).toBe(false);
     expect(patientExportSchema.safeParse({ ...ready, sizeBytes: 0 }).success).toBe(false);
   });

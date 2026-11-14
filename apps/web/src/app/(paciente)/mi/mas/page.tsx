@@ -29,7 +29,7 @@ export const metadata: Metadata = { title: 'Más' };
  * (RN-G21), tus fichas
  * vigentes en PDF (ADR-095), tu peso si está
  * habilitado, el seguimiento del ciclo menstrual (RN-G17) y el cribado de
- * seguridad (07 §3.2) si su sección está a la vista, instalar la app (RF-27) y salir.
+ * seguridad (07 §3.2) si su sección está a la vista, descargar tus datos (RN-B04), instalar la app (RF-27) y salir.
  */
 export default async function Page() {
   const [today, app, consents, screening, sheets, reports, documents] = await Promise.all([
@@ -143,6 +143,14 @@ export default async function Page() {
           <MyScreening latest={screening.data.latest} />
         </section>
       ) : null}
+      <section aria-labelledby="tus-datos" className="flex flex-col gap-2">
+        <h2 id="tus-datos" className="text-lg font-semibold">
+          Tus datos
+        </h2>
+        <Link href="/mi/datos" className="flex min-h-touch items-center text-brand-text underline">
+          Descargar todo lo que tu equipo guarda sobre ti
+        </Link>
+      </section>
       <section aria-labelledby="instalar" className="flex flex-col gap-2">
         <h2 id="instalar" className="text-lg font-semibold">
           Instalar la app
