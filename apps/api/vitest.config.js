@@ -17,6 +17,12 @@ export const INTEGRATION_COVERED = [
   'src/platform/idempotency/idempotency.module.ts',
   'src/platform/import/catalog-importer.ts',
   'src/platform/import/import-batch.store.ts',
+  'src/platform/import/import-record.store.ts',
+  // La migración de cuentas: la recorre account-import.int.spec.ts contra PostgreSQL (ADR-135).
+  'src/modules/migration/application/account-importer.ts',
+  'src/modules/clinical/application/commands/patient-import.commands.ts',
+  'src/modules/assessment/application/commands/evaluation-import.commands.ts',
+  'src/modules/nutrition/application/commands/imported-plan.commands.ts',
   'src/platform/http/request-meta.ts',
   'src/platform/rate-limit/rate-limiter.ts',
   // Adaptadores y cableado de cada contexto: controladores, repositorios y consumidores.

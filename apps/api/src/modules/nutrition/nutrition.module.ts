@@ -14,6 +14,7 @@ import { PlanCalculator } from './application/plan-calculator.js';
 import {
   ENERGY_PRESCRIPTION_STORE,
   FOOD_EXCLUSION_STORE,
+  IMPORTED_PLAN_STORE,
   NUTRITION_PLAN_STORE,
 } from './application/ports/nutrition.ports.js';
 import { EnergyPrescriptionQueries } from './application/queries/energy-prescription.queries.js';
@@ -30,6 +31,8 @@ import {
 import { PrismaEnergyPrescriptionStore } from './adapters/out/persistence/prisma-energy-prescription.store.js';
 import { PrismaFoodExclusionStore } from './adapters/out/persistence/prisma-food-exclusion.store.js';
 import { PrismaNutritionPlanStore } from './adapters/out/persistence/prisma-nutrition-plan.store.js';
+import { ImportedPlanCommands } from './application/commands/imported-plan.commands.js';
+import { PrismaImportedPlanStore } from './adapters/out/persistence/prisma-imported-plan.store.js';
 
 /**
  * nutrition (02 §2, núcleo): la prescripción energética (RF-17, RF-18) y los planes por intercambios (RF-19). Pide la
@@ -58,8 +61,10 @@ import { PrismaNutritionPlanStore } from './adapters/out/persistence/prisma-nutr
     { provide: ENERGY_PRESCRIPTION_STORE, useClass: PrismaEnergyPrescriptionStore },
     { provide: NUTRITION_PLAN_STORE, useClass: PrismaNutritionPlanStore },
     { provide: FOOD_EXCLUSION_STORE, useClass: PrismaFoodExclusionStore },
+    { provide: IMPORTED_PLAN_STORE, useClass: PrismaImportedPlanStore },
+    ImportedPlanCommands,
   ],
-  exports: [NutritionApi],
+  exports: [NutritionApi, ImportedPlanCommands],
 })
 export class NutritionModule implements OnModuleInit {
   constructor(

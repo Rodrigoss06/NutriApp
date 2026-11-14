@@ -173,3 +173,34 @@ export interface FoodExclusionStore {
 }
 
 export const FOOD_EXCLUSION_STORE = Symbol.for('nutricoach.nutrition.FoodExclusionStore');
+
+/**
+ * Un plan del sistema anterior (RF-40, ADR-135): historial de solo lectura con sus metas y sus indicaciones, sin tiempos de comida ni
+ * prescripción. Cada meta puede faltar si la cuenta no la tenía.
+ */
+export interface ImportedPlanRecord {
+  readonly id: string;
+  readonly organizationId: OrganizationId;
+  readonly patientId: string;
+  /** AAAA-MM-DD. */
+  readonly validFrom: string;
+  readonly validTo: string | null;
+  readonly targetKcal: number | null;
+  readonly targetProteinG: number | null;
+  readonly targetFatG: number | null;
+  readonly targetChoG: number | null;
+  readonly hydrationTargetMl: number | null;
+  readonly instructions: string | null;
+  readonly createdBy: UserId;
+  readonly createdAt: Date;
+}
+
+/** nutrition.imported_plan, con la transacción de quien llama: la RLS aplica RN-A01 y RN-A05. Solo se agrega. */
+export interface ImportedPlanStore {
+  insert(plan: ImportedPlanRecord): Promise<void>;
+  /** Del más reciente al más antiguo por validFrom. */
+  listByPatient(patientId: string): Promise<readonly ImportedPlanRecord[]>;
+  find(id: string): Promise<ImportedPlanRecord | null>;
+}
+
+export const IMPORTED_PLAN_STORE = Symbol.for('nutricoach.nutrition.ImportedPlanStore');

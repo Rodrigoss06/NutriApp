@@ -9,6 +9,7 @@ import { EventsModule } from './events/events.module.js';
 import { FeatureFlags } from './flags/feature-flags.js';
 import { CatalogImporter } from './import/catalog-importer.js';
 import { ImportBatchStore } from './import/import-batch.store.js';
+import { ImportRecordStore } from './import/import-record.store.js';
 import { ImportRegistry } from './import/import-registry.js';
 import { UuidV7IdGenerator } from './ids/uuid-v7.id-generator.js';
 import { createMailer } from './mail/mailers.js';
@@ -44,6 +45,7 @@ import { STORAGE } from './storage/storage.port.js';
     FileRegistry,
     ImportRegistry,
     ImportBatchStore,
+    ImportRecordStore,
     CatalogImporter,
     FeatureFlags,
   ],
@@ -55,6 +57,8 @@ import { STORAGE } from './storage/storage.port.js';
     STORAGE,
     FileRegistry,
     ImportRegistry,
+    ImportBatchStore,
+    ImportRecordStore,
     CatalogImporter,
     FeatureFlags,
   ],

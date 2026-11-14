@@ -113,59 +113,77 @@ export class PatientCommands {
     context: SecurityContext,
     input: PatientInput,
   ): Promise<Result<{ id: string }, DomainError>> {
+    return this.uow.run(context, () => this.registerWithin(context, input));
+  }
+
+  /**
+   * El alta dentro de la transacción del llamador: la usa también la importación de cuentas (RF-40, ADR-135). Recién creado no tiene
+   * consentimiento, así que OBESITY no entra, salvo que la importación traiga el de datos de salud en la misma transacción (RN-B01).
+   * `archived`: el paciente inactivo del sistema anterior entra archivado y no ocupa cupo (RN-A03).
+   */
+  async registerWithin(
+    context: SecurityContext,
+    input: PatientInput,
+    options: { readonly healthDataInTransaction: boolean; readonly archived: boolean } = {
+      healthDataInTransaction: false,
+      archived: false,
+    },
+  ): Promise<Result<{ id: string }, DomainError>> {
     const actor = actorOf(context);
-    // Recién creado no tiene consentimiento: OBESITY nunca entra en el alta (RN-B01).
-    const population = checkPopulation(input.population, false);
-    if (population) return Promise.resolve(err(population));
+    const population = checkPopulation(input.population, options.healthDataInTransaction);
+    if (population) return err(population);
     const id = this.ids.newId<'PatientId'>();
     const document = this.#document(actor.organizationId, id, input.document);
-    if (document === 'INVALID') return Promise.resolve(err(INVALID_DOCUMENT));
-
-    return this.uow.run(context, async () => {
-      const responsibleMemberId = input.responsibleMemberId ?? actor.memberId;
-      if (
-        !responsibleMemberId ||
-        !(await this.tenancy.isActiveMemberId(actor.organizationId, responsibleMemberId))
-      ) {
-        return err(RESPONSIBLE_NOT_MEMBER);
-      }
-      if (document.bidx && (await this.patients.documentTaken(document.bidx, null)))
-        return err(DOCUMENT_TAKEN);
+    if (document === 'INVALID') return err(INVALID_DOCUMENT);
+    const responsibleMemberId = input.responsibleMemberId ?? actor.memberId;
+    if (
+      !responsibleMemberId ||
+      !(await this.tenancy.isActiveMemberId(actor.organizationId, responsibleMemberId))
+    ) {
+      return err(RESPONSIBLE_NOT_MEMBER);
+    }
+    if (document.bidx && (await this.patients.documentTaken(document.bidx, null)))
+      return err(DOCUMENT_TAKEN);
+    if (!options.archived) {
       const capacity = await this.tenancy.ensurePatientCapacity(actor.organizationId, () =>
         this.patients.countActivePatients(),
       );
       if (!capacity.ok) return capacity;
-      const organization = await this.tenancy.organization(actor.organizationId);
-      const number = await this.patients.nextPatientNumber(actor.organizationId);
-      await this.patients.insert({
-        id,
-        organizationId: actor.organizationId,
-        userId: null,
-        code: patientCode(number),
-        firstName: input.firstName,
-        lastName: input.lastName,
-        sex: input.sex,
-        birthDate: input.birthDate,
-        documentType: document.type,
-        documentNumberEnc: document.enc,
-        documentNumberBidx: document.bidx,
-        email: input.email ?? null,
-        phoneEnc: input.phone ? this.encryption.encrypt(input.phone, phoneAad(id)) : null,
-        timezone: organization?.timezone ?? 'America/Lima',
-        population: input.population,
-        status: 'ACTIVE',
-        responsibleMemberId,
-        version: 0,
-        createdBy: actor.userId,
-      });
-      await this.patients.upsertCareTeamMember(
-        { id, organizationId: actor.organizationId },
-        { memberId: responsibleMemberId, role: 'RESPONSIBLE', access: 'WRITE' },
-        actor.userId,
-      );
-      await this.#emit(context, 'clinical.patient.registered', id, {});
-      return ok({ id });
+    }
+    const organization = await this.tenancy.organization(actor.organizationId);
+    const number = await this.patients.nextPatientNumber(actor.organizationId);
+    await this.patients.insert({
+      id,
+      organizationId: actor.organizationId,
+      userId: null,
+      code: patientCode(number),
+      firstName: input.firstName,
+      lastName: input.lastName,
+      sex: input.sex,
+      birthDate: input.birthDate,
+      documentType: document.type,
+      documentNumberEnc: document.enc,
+      documentNumberBidx: document.bidx,
+      email: input.email ?? null,
+      phoneEnc: input.phone ? this.encryption.encrypt(input.phone, phoneAad(id)) : null,
+      timezone: organization?.timezone ?? 'America/Lima',
+      population: input.population,
+      status: 'ACTIVE',
+      responsibleMemberId,
+      version: 0,
+      createdBy: actor.userId,
     });
+    await this.patients.upsertCareTeamMember(
+      { id, organizationId: actor.organizationId },
+      { memberId: responsibleMemberId, role: 'RESPONSIBLE', access: 'WRITE' },
+      actor.userId,
+    );
+    await this.#emit(context, 'clinical.patient.registered', id, {});
+    if (options.archived) {
+      await this.patients.setStatus(id, 'ARCHIVED', 'ACTIVE', this.clock.now());
+      await this.#emit(context, 'clinical.patient.archived', id, { userId: null });
+    }
+    return ok({ id });
   }
 
   /** Editar la ficha: el equipo con WRITE; cambiar el responsable, quien gestiona. Bloqueo optimista por version. */

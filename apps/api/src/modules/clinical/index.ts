@@ -24,4 +24,11 @@ export {
 } from './application/patient-export-sources.js';
 /** Para el trabajo de cada hora en las pruebas, como RemindersHandler de scheduling. */
 export { PatientExportCommands } from './application/commands/patient-export.commands.js';
+/** La migración de cuentas (RF-40, ADR-135): el paciente con su consentimiento migrado, en su transacción. */
+export {
+  PatientImportCommands,
+  type PatientImportInput,
+  type PatientImportOutcome,
+} from './application/commands/patient-import.commands.js';
+export type { MigratedConsent } from './domain/patient-import.js';
 export { ClinicalModule } from './clinical.module.js';

@@ -530,6 +530,7 @@ model Patient {
   performanceProfiles   PerformanceProfile[]
   preExerciseScreenings PreExerciseScreening[]
   recordDocuments       RecordDocument[]
+  importedPlans         ImportedPlan[]
 
   @@unique([organizationId, documentNumberBidx], map: "patient_document", where: raw("(document_number_bidx IS NOT NULL)"))
   @@unique([organizationId, code])
@@ -1298,7 +1299,7 @@ model ImportBatch {
   finishedAt     DateTime? @map("finished_at") @db.Timestamptz(6)
   fileName       String?   @map("file_name")
 
-  @@unique([organizationId, kind, fileSha256], map: "import_batch_once", where: raw("(status = ANY (ARRAY['PROCESSING'::text, 'COMPLETED'::text, 'COMPLETED_WITH_ERRORS'::text]))"))
+  @@unique([organizationId, kind, fileSha256], map: "import_batch_once", where: raw("((status = ANY (ARRAY['PROCESSING'::text, 'COMPLETED'::text, 'COMPLETED_WITH_ERRORS'::text])) AND (kind !~~ 'ACCOUNT\\_%'::text))"))
   @@map("import_batch")
   @@schema("platform")
 }
@@ -1405,18 +1406,19 @@ model Branding {
 /// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
 /// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
 model Member {
-  id             String       @id @db.Uuid
-  organizationId String       @map("organization_id") @db.Uuid
-  userId         String       @map("user_id") @db.Uuid
+  id             String         @id @db.Uuid
+  organizationId String         @map("organization_id") @db.Uuid
+  userId         String         @map("user_id") @db.Uuid
   role           String
-  status         String       @default("ACTIVE")
+  status         String         @default("ACTIVE")
   profession     String?
-  licenseNumber  String?      @map("license_number")
+  licenseNumber  String?        @map("license_number")
   title          String?
-  createdAt      DateTime     @default(now()) @map("created_at") @db.Timestamptz(6)
-  updatedAt      DateTime     @default(now()) @map("updated_at") @db.Timestamptz(6)
+  createdAt      DateTime       @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt      DateTime       @default(now()) @map("updated_at") @db.Timestamptz(6)
+  importRecords  ImportRecord[]
   brandings      Branding[]
-  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  organization   Organization   @relation(fields: [organizationId], references: [id], onDelete: NoAction, onUpdate: NoAction)
 
   @@unique([organizationId, userId])
   @@map("member")
@@ -2568,4 +2570,44 @@ model PatientExport {
   @@index([organizationId, status], map: "patient_export_to_close", where: raw("(status = ANY (ARRAY['PENDING'::text, 'READY'::text]))"))
   @@map("patient_export")
   @@schema("clinical")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model ImportedPlan {
+  id                String    @id @db.Uuid
+  organizationId    String    @map("organization_id") @db.Uuid
+  patientId         String    @map("patient_id") @db.Uuid
+  validFrom         DateTime  @map("valid_from") @db.Date
+  validTo           DateTime? @map("valid_to") @db.Date
+  targetKcal        Decimal?  @map("target_kcal") @db.Decimal(7, 1)
+  targetProteinG    Decimal?  @map("target_protein_g") @db.Decimal(6, 1)
+  targetFatG        Decimal?  @map("target_fat_g") @db.Decimal(6, 1)
+  targetChoG        Decimal?  @map("target_cho_g") @db.Decimal(6, 1)
+  hydrationTargetMl Int?      @map("hydration_target_ml")
+  instructions      String?
+  createdBy         String    @map("created_by") @db.Uuid
+  createdAt         DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  patient           Patient   @relation(fields: [patientId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@index([organizationId, patientId, validFrom(sort: Desc)], map: "imported_plan_by_patient")
+  @@map("imported_plan")
+  @@schema("nutrition")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model ImportRecord {
+  organizationId  String   @map("organization_id") @db.Uuid
+  accountMemberId String   @map("account_member_id") @db.Uuid
+  entity          String
+  externalId      String   @map("external_id")
+  entityId        String   @map("entity_id") @db.Uuid
+  batchId         String   @map("batch_id") @db.Uuid
+  createdAt       DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  member          Member   @relation(fields: [accountMemberId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@id([organizationId, accountMemberId, entity, externalId])
+  @@map("import_record")
+  @@schema("platform")
 }

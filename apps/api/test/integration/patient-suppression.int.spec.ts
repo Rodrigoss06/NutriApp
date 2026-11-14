@@ -1,7 +1,8 @@
 import { readFile } from 'node:fs/promises';
-import type { UserId } from '@nutricoach/shared-kernel';
+import type { Id, OrganizationId, UserId } from '@nutricoach/shared-kernel';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { PatientExportSources } from '../../src/modules/clinical/index.js';
+import { ImportedPlanCommands } from '../../src/modules/nutrition/index.js';
 import { CatalogImporter } from '../../src/platform/index.js';
 import { ApiHarness, PASSWORD, type StaffOrganization } from './support/api-harness.js';
 import { id as uuid, pool } from './support/database.js';
@@ -147,6 +148,7 @@ const COLUMNS: Readonly<Record<string, string>> = {
   'nutrition.energy_prescription.tee_method_code': CODE,
   'nutrition.energy_prescription.tee_method_version': CODE,
   'nutrition.energy_prescription.components': ENGINE,
+  'nutrition.imported_plan.instructions': CLEAR,
   'nutrition.plan.modality': CODE,
   'nutrition.plan.status': CODE,
   'nutrition.plan.exchange_list_version': CODE,
@@ -416,6 +418,34 @@ beforeAll(async () => {
     .field('category', 'ADMINISTRATIVE')
     .attach('file', PDF, { filename: 'contrato.pdf' });
   expect(document.status, JSON.stringify(document.body)).toBe(201);
+  // Un plan del sistema anterior, de la migración de cuentas (ADR-135).
+  const responsible = org.staff.responsible;
+  const imported = await harness.app.get(ImportedPlanCommands).importPlan(
+    {
+      organizationId: org.organizationId as OrganizationId,
+      userId: responsible.userId as UserId,
+      role: 'PROFESSIONAL',
+      patientId: null,
+      memberId: responsible.memberId as Id<'MemberId'>,
+    },
+    {
+      origin: {
+        accountMemberId: responsible.memberId,
+        externalId: `plan-${uuid()}`,
+        batchId: uuid(),
+      },
+      patientId,
+      validFrom: addDays(today(), -90),
+      validTo: addDays(today(), -30),
+      targetKcal: 1900,
+      targetProteinG: 120,
+      targetFatG: 60,
+      targetChoG: 215,
+      hydrationTargetMl: 2500,
+      instructions: `${MARK} evitar frituras`,
+    },
+  );
+  expect(imported.ok).toBe(true);
   const start = new Date(Date.now() + 3 * DAY_MS);
   start.setUTCMinutes(0, 0, 0);
   const appointment = await harness.post(

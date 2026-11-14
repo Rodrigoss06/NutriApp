@@ -39,7 +39,7 @@ import { actorOf } from './patient.commands.js';
 
 export interface GrantInput {
   readonly consentDocumentId: string;
-  readonly channel: Exclude<ConsentChannel, 'APP'>;
+  readonly channel: Exclude<ConsentChannel, 'APP' | 'MIGRATED'>;
   /** Escaneo del papel (o constancia), ya acotado a 5 MB por el parser. */
   readonly evidence: Uint8Array | null;
   readonly ip: string | null;

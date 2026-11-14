@@ -34,7 +34,8 @@ export const CONSENT_PURPOSES = [
   'MENSTRUAL_TRACKING',
   'PROGRESS_PHOTOS',
 ] as const;
-export const CONSENT_CHANNELS = ['APP', 'IN_PERSON_DIGITAL', 'PAPER_SCANNED'] as const;
+/** MIGRATED: lo trae la migración de cuentas (RF-40); nunca se otorga por la API. */
+export const CONSENT_CHANNELS = ['APP', 'IN_PERSON_DIGITAL', 'PAPER_SCANNED', 'MIGRATED'] as const;
 
 const documentSchema = z
   .object({ type: z.enum(DOCUMENT_TYPES), number: z.string().trim().min(1).max(20) })
@@ -165,7 +166,7 @@ export type ConsentDocumentListResponse = z.infer<typeof consentDocumentListResp
 /** Campos del multipart de otorgar; la evidencia va en el mismo pedido, en el campo «evidence». */
 export const grantConsentSchema = z.object({
   consentDocumentId: z.uuid(),
-  channel: z.enum(CONSENT_CHANNELS).exclude(['APP']),
+  channel: z.enum(CONSENT_CHANNELS).exclude(['APP', 'MIGRATED']),
 });
 export type GrantConsent = z.infer<typeof grantConsentSchema>;
 
