@@ -43,6 +43,8 @@ export {
   type MemberRole,
   type MembershipView,
   type OrganizationStatus,
+  type SupportGrantView,
+  type SupportScope,
   type TenantDirectory,
 } from './auth/tenant-directory.port.js';
 export { loadEnv } from './config/env.js';

@@ -3497,3 +3497,41 @@ Consecuencias:
   que desaparecen de la pestaña de entrenamiento de su dueña; el paciente que las había autorizado retira su autorización. Siguen
   pasando fotos, documentos, informe y la app del paciente.
 - Para Notion (/notion-sync de P15): 04 RF-39; 02 §11 (el grupo admin ya no está vacío).
+
+## ADR-129 · El soporte con permiso del dueño, por la API — aceptada (2026-11-13)
+Contexto: P15, PR 4a (RN-A09, RN-B03; ADR-124). La base ya tenía `tenancy.support_access_grant`, `app.has_clinical_support_grant()`
+y las políticas de solo lectura del soporte en los esquemas clínicos; faltaban la API y algunas capas. Rodrigo eligió (2026-11-13):
+el soporte ve el panel de la organización en solo lectura; ACCOUNT abre el equipo y los ajustes, y CLINICAL_READ, además, los
+pacientes; el dueño elige a la persona de una lista del soporte.
+Decisión:
+- El dueño (permiso nuevo `support.manage`, solo OWNER) ve la lista del soporte de la plataforma, solo con nombres
+  (`app.platform_support_directory()`), da un permiso con alcance, motivo (3 a 300 caracteres) y duración de 1 a 7 días (1 por
+  defecto), lo ve y lo revoca. Un permiso nuevo para la misma persona y el mismo alcance reemplaza al vigente. No se edita ni se
+  borra. `tenancy.support.granted` y `.revoked` van a la auditoría, sin el motivo.
+- Modo soporte: la persona del soporte ve sus permisos vigentes (`GET /platform/support/grants`) y entra a una organización
+  (`POST /platform/support/session`, 404 sin permiso vigente); la sesión PLATFORM fija la organización activa y `/account` trae
+  `support` (organización, alcance y vencimiento). Sale con `DELETE`, que siempre funciona. Entrar y salir quedan en la auditoría.
+- TenantGuard lee el permiso en cada petición: vencido o revocado, 403 (NC-TEN-016); toda escritura, 403 (NC-TEN-017), también
+  las permitidas en solo lectura. El contexto es PLATFORM_ADMIN, sin miembro, con el permiso; la RLS hace el resto.
+- PolicyGuard, por alcance: ACCOUNT lee `organization.read`, `members.read`, `subscription.read` y `catalog.read`; CLINICAL_READ,
+  además, `patients.read` y `agenda.read`. Nunca la auditoría, los permisos de soporte ni el perfil propio.
+- Toda petición del soporte en modo soporte queda en la auditoría antes de responder (`SupportAuditInterceptor`): la ruta sin
+  valores (`support:/patients/:patientId`), el paciente si la ruta lo nombra y el permiso. Falla cerrado.
+- Migración `202611130200_support_access`:
+  - la plataforma ya no escribe permisos (antes podía darse uno) y solo lee los suyos; dentro de la organización, solo el dueño
+    los ve, los da (con `granted_by` propio) y los revoca; UPDATE solo de `revoked_at`;
+  - CHECK del motivo, de la caducidad (hasta 7 días desde `created_at`, que fija la API) y de la revocación; un disparador exige que
+    `support_user_id` sea una persona de soporte activa; índices de los vigentes y por organización;
+  - `app.restrict_platform_admin` en las tablas con paciente que faltaban: `scheduling.appointment`,
+    `content.resource_assignment`, `content.motivational_message`, `content.patient_app_setting` y
+    `assessment.method_preference`.
+Consecuencias:
+- Unitarias: el permiso en el dominio (duración, motivo, estado y revocación), las guardias en modo soporte y el contrato.
+- Integración `support-access.int.spec.ts` (12 casos, como app_user), con el criterio 2 de P15: sin permiso no entra ni abre un
+  expediente; con CLINICAL_READ lee la lista, el expediente y la línea de tiempo, no escribe, y la auditoría guarda la entrada y
+  cada lectura con el paciente; ACCOUNT sin pacientes ni agenda; reemplazo, revocación y vencimiento que cortan el acceso en la
+  petición siguiente; en la base, el soporte no se da un permiso y un administrador tampoco.
+- PR 4b: las pantallas del dueño (dar, ver y revocar) y del soporte (sus permisos, entrar, la franja «Modo soporte · solo
+  lectura» y salir); cada pantalla del panel sin miembro.
+- Para Notion (/notion-sync de P15): 03 RN-A09 (el alcance y la duración); 05.1 (`support_access_grant`: políticas, CHECK,
+  disparador e índices); 02 §10 (TenantGuard y PolicyGuard en modo soporte, y la auditoría de cada petición); 04 RF-39.

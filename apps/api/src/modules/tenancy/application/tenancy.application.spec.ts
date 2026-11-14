@@ -3,6 +3,7 @@ import { beforeEach, describe, expect, it } from 'vitest';
 import { ExpireSubscriptionsHandler } from './commands/expire-subscriptions.handler.js';
 import { OrganizationCommands } from './commands/organization.commands.js';
 import { PlatformTenancy, subscriptionEndsOn } from './platform-tenancy.js';
+import type { SupportGrantStore } from './ports/support-grant.ports.js';
 import { DirectoryQueries, OrganizationQueries } from './queries/organization.queries.js';
 import { TenancyApi } from './tenancy-api.js';
 import {
@@ -16,6 +17,9 @@ import {
 } from './tenancy-fakes.spec-support.js';
 
 let clock: FakeClock;
+const noSupportGrants = {
+  activeOfSupport: () => Promise.resolve([]),
+} as unknown as SupportGrantStore;
 let uow: FakeUow;
 let outbox: FakeOutbox;
 let store: MemoryTenancyStore;
@@ -385,7 +389,7 @@ describe('RF-02 y RF-03 · consultas', () => {
   it('el directorio de membresías usa el contexto de la cuenta y no muestra las quitadas', async () => {
     const member = store.addMember(org, 'ADMIN');
     store.addMember(store.addOrganization(), 'PROFESSIONAL', 'REMOVED', member.userId);
-    const directory = new DirectoryQueries(uow, store);
+    const directory = new DirectoryQueries(uow, store, noSupportGrants, clock);
     expect(await directory.membership(org, member.userId)).toMatchObject({
       role: 'ADMIN',
       status: 'ACTIVE',

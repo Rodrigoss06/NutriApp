@@ -1,5 +1,5 @@
 import { SetMetadata } from '@nestjs/common';
-import type { MemberRole } from './tenant-directory.port.js';
+import type { MemberRole, SupportScope } from './tenant-directory.port.js';
 
 /**
  * Permisos de los casos de uso de una organización (RN-A04) y los roles que los tienen. Las reglas finas (solo un
@@ -28,9 +28,27 @@ export const PERMISSIONS = {
   'agenda.write': ['OWNER', 'ADMIN', 'PROFESSIONAL'],
   /** El perfil profesional propio: profesión, colegiatura y título. */
   'profile.self': ['OWNER', 'ADMIN', 'PROFESSIONAL'],
+  /** Los permisos de soporte de la plataforma los da y los revoca solo el dueño (RN-A09, ADR-129). */
+  'support.manage': ['OWNER'],
 } as const satisfies Record<string, readonly MemberRole[]>;
 
 export type Permission = keyof typeof PERMISSIONS;
+
+/**
+ * Qué lee el soporte en modo soporte, según el alcance del permiso que le dio el dueño (RN-A09, ADR-129). Solo lecturas: TenantGuard
+ * ya rechazó toda escritura. ACCOUNT: la organización, el equipo, la suscripción y los catálogos. CLINICAL_READ: además, los
+ * pacientes con su expediente y la agenda. Nunca la auditoría ni los permisos de soporte.
+ */
+const ACCOUNT_SUPPORT = [
+  'organization.read',
+  'members.read',
+  'subscription.read',
+  'catalog.read',
+] as const satisfies readonly Permission[];
+export const SUPPORT_PERMISSIONS = {
+  ACCOUNT: ACCOUNT_SUPPORT,
+  CLINICAL_READ: [...ACCOUNT_SUPPORT, 'patients.read', 'agenda.read'],
+} as const satisfies Record<SupportScope, readonly Permission[]>;
 
 /**
  * Qué exige una ruta. Se niega por defecto: toda ruta declara una de estas reglas con su decorador, y una prueba
@@ -63,7 +81,7 @@ export const PlatformOnly = () =>
  */
 export const PatientOnly = () => SetMetadata(ACCESS_RULE, { kind: 'patient' } satisfies AccessRule);
 
-/** Sesión STAFF con organización activa, membresía vigente y el permiso. */
+/** Sesión STAFF con organización activa, membresía vigente y el permiso; o, para leer, el soporte con permiso del dueño. */
 export const RequirePermission = (permission: Permission) =>
   SetMetadata(ACCESS_RULE, { kind: 'tenant', permission } satisfies AccessRule);
 

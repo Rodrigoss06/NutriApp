@@ -267,6 +267,12 @@ describe('RN-A09 · soporte de la plataforma', () => {
   it('sin permiso clínico no ve pacientes; con permiso los lee, pero nunca escribe', async () => {
     const supportUserId = id();
     const admin = { orgId: a.orgId, userId: supportUserId, role: 'PLATFORM_ADMIN' as const };
+    // Solo una persona de soporte de la plataforma recibe un permiso (ADR-129).
+    await owner(
+      `INSERT INTO iam.user_account (id, email, display_name, status, is_platform_admin)
+       VALUES ($1, $2, 'Soporte de prueba', 'ACTIVE', true)`,
+      [supportUserId, `soporte-${supportUserId}@demo.test`],
+    );
 
     await withContext('user', admin, async (client) => {
       expect((await client.query('SELECT 1 FROM clinical.patient')).rows).toHaveLength(0);

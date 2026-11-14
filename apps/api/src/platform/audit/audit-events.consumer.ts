@@ -147,6 +147,9 @@ export const AUDITED_EVENTS: Readonly<Record<string, AuditMapping>> = {
     resourceType: 'platform.feature_flag',
     fields: () => ['enabled'],
   },
+  // El soporte con permiso del dueño (RN-A09, ADR-129): sin el motivo.
+  'tenancy.support.granted': { action: 'GRANT', resourceType: 'tenancy.support_access_grant' },
+  'tenancy.support.revoked': { action: 'REVOKE', resourceType: 'tenancy.support_access_grant' },
   'scheduling.appointment.booked': { action: 'CREATE', resourceType: 'scheduling.appointment' },
   'scheduling.appointment.updated': {
     action: 'UPDATE',

@@ -17,6 +17,7 @@ import {
   type MembershipDirectory,
   type MembershipSummary,
   type SessionStore,
+  type SupportGrantSummary,
 } from '../ports/iam.ports.js';
 
 export interface AccountView {
@@ -26,6 +27,8 @@ export interface AccountView {
   readonly kind: SessionKind;
   readonly activeOrganizationId: OrganizationId | null;
   readonly memberships: readonly MembershipSummary[];
+  /** Solo en una sesión PLATFORM en modo soporte, con el permiso vigente (RN-A09, ADR-129). */
+  readonly support: SupportGrantSummary | null;
 }
 
 export interface SessionView {
@@ -57,6 +60,10 @@ export class AccountQueries {
     if (!account) return null;
     const memberships =
       session.kind === 'STAFF' ? await this.memberships.membershipsOf(userId) : [];
+    const support =
+      session.kind === 'PLATFORM' && session.activeOrganizationId
+        ? await this.memberships.supportGrant(session.activeOrganizationId, userId)
+        : null;
     return {
       id: account.id,
       email: account.email,
@@ -64,6 +71,7 @@ export class AccountQueries {
       kind: session.kind,
       activeOrganizationId: session.activeOrganizationId,
       memberships: memberships.filter((membership) => membership.active),
+      support: support?.available ? support : null,
     };
   }
 

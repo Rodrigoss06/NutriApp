@@ -7,6 +7,7 @@ export {
   type Profession,
 } from './domain/tenancy-rules.js';
 export { PlatformTenancy } from './application/platform-tenancy.js';
+export { SupportGrantQueries } from './application/queries/support-grant.queries.js';
 export {
   ACTIVE_PATIENT_COUNTER,
   MEMBER_PROFILES,

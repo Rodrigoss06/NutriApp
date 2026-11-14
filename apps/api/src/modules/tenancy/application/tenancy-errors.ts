@@ -30,3 +30,13 @@ export const PLAN_UNKNOWN = domainError({
   code: 'NC-TEN-046',
   message: 'El plan de membresía no existe.',
 });
+
+export const SUPPORT_USER_NOT_FOUND = domainError({
+  code: 'NC-TEN-047',
+  rule: 'RN-A09',
+  message: 'Esa persona no es del soporte de la plataforma.',
+});
+export const SUPPORT_GRANT_NOT_FOUND = domainError({
+  code: 'NC-TEN-048',
+  message: 'No encontrado.',
+});

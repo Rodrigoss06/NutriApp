@@ -19,7 +19,9 @@ export type TenancyEventType =
   | 'tenancy.feature.changed'
   | 'tenancy.plan.created'
   | 'tenancy.plan.updated'
-  | 'tenancy.branding.changed';
+  | 'tenancy.branding.changed'
+  | 'tenancy.support.granted'
+  | 'tenancy.support.revoked';
 
 export function tenancyEvent<TPayload>(
   type: TenancyEventType & EventType,

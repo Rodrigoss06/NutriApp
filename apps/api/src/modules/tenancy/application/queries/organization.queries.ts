@@ -2,7 +2,9 @@ import { Inject, Injectable } from '@nestjs/common';
 import type { Features } from '@nutricoach/contracts';
 import { FeatureFlags } from '../../../../platform/index.js';
 import {
+  CLOCK,
   UNIT_OF_WORK,
+  type Clock,
   type OrganizationId,
   type PatientId,
   type SecurityContext,
@@ -16,6 +18,7 @@ import {
   type SettingValue,
 } from '../../domain/settings.js';
 import { addDays, type MemberRole } from '../../domain/tenancy-rules.js';
+import { SUPPORT_GRANT_STORE, type SupportGrantStore } from '../ports/support-grant.ports.js';
 import {
   ACTIVE_PATIENT_COUNTER,
   MEMBER_PROFILES,
@@ -154,7 +157,31 @@ export class DirectoryQueries {
   constructor(
     @Inject(UNIT_OF_WORK) private readonly uow: UnitOfWork,
     @Inject(TENANCY_STORE) private readonly store: TenancyStore,
+    @Inject(SUPPORT_GRANT_STORE) private readonly supportGrants: SupportGrantStore,
+    @Inject(CLOCK) private readonly clock: Clock,
   ) {}
+
+  /**
+   * El permiso de soporte vigente de esa persona en esa organización (RN-A09, ADR-129), con el contexto del soporte: la RLS le deja
+   * leer solo los suyos. Si tiene los dos alcances, CLINICAL_READ.
+   */
+  async supportGrant(organizationId: OrganizationId, userId: UserId) {
+    const grants = await this.uow.query(
+      { organizationId, userId, role: 'PLATFORM_ADMIN', patientId: null },
+      () => this.supportGrants.activeOfSupport(userId, organizationId, this.clock.now()),
+    );
+    const grant = grants.find((g) => g.scope === 'CLINICAL_READ') ?? grants[0];
+    return grant
+      ? {
+          grantId: grant.id,
+          organizationId,
+          organizationName: grant.organizationName,
+          organizationStatus: grant.organizationStatus,
+          scope: grant.scope,
+          expiresAt: grant.expiresAt,
+        }
+      : null;
+  }
 
   membership(organizationId: OrganizationId, userId: UserId): Promise<MembershipRecord | null> {
     return this.uow.query({ organizationId, userId, role: 'ACCOUNT', patientId: null }, () =>

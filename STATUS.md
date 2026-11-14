@@ -23,7 +23,7 @@ Próxima demo: Demo 3 · Entrenamiento y app del paciente · semana 6
 | P13 App del paciente | ✅ | Rodrigo | #50 a #55 | 6 criterios en verde (integración y E2E en escritorio y celular): recuperación del día en el motor (ADR-080), registros por /me (ADR-081), Hoy y el plan (ADR-082), registro diario y entreno (ADR-083, ADR-084) y el profesional con los registros (ADR-085). Lighthouse móvil 97 en Hoy (local). La cola sin conexión (RF-31, deseable) queda fuera. /notion-sync aplicado (30 cambios en 11 páginas) |
 | P14 Analítica y evolución, Demo 3 | ✅ | Rodrigo | #57 a #68 | Plan aprobado (2026-11-05, ADR-086): 7 PR. PR 1 (motor, #57), PR 2a (dieta, #58), PR 2b (rutina, #59) y PR 3 (control semanal, #60) por la API; PR 4 (web de la analítica y del control semanal, #61, ADR-090) con E2E en escritorio y celular; PR 5a (evolución, tendencia por mes y ficha por la API, #62, ADR-091) y PR 5b (sus pantallas, #63, ADR-092); PR 6a (panel con alertas por la API y en Inicio, #64, ADR-093), PR 6b (material educativo, #65, ADR-094) y PR 6c (fichas en la app, #66, ADR-095); PR 7a (`seed:load` y p95, #67, ADR-096) y PR 7b (`demo:3` con Luis y Mateo, y guion, #68, ADR-097). Criterios 1 a 5 en verde: el 4, con el p95 de docs/demos/demo-3-p95.md. Etiqueta v0.3.0 (39f5b64); staging, pendiente de P4. /notion-sync aplicado (51 cambios en 14 páginas) |
 | P14.5 Hoja piloto de JV Fitness | ✅ | Rodrigo | #70 a #94 | Aprobado por Rodrigo (2026-11-08, ADR-098), en 25 PR contra main. Fase A: metas de día (#70, ADR-099), volumen ajustado (#77, ADR-106) y la cadera, la comparativa física y el estrés (#78, ADR-107). Con las respuestas de Jeremy: perfiles de día (#71 y #72, ADR-100 y ADR-101), porciones por perfil (#73 y #74, ADR-102 y ADR-103), cambios del día (#75 y #76, ADR-104 y ADR-105), panel de fatiga (#79, ADR-108), check-in del domingo (#80 y #81, ADR-109 y ADR-110), la prescripción de la hoja (#82, #83 y #85, ADR-111, ADR-112 y ADR-114), el descanso por tramos (#84, ADR-113), la fatiga por grupo muscular (#86, ADR-115) y WhatsApp (#87, ADR-116). Fase C, fuera del contrato y cotizada por la cláusula 12: informe del mesociclo (#88 y #89, ADR-117 y ADR-118), fotos de progreso (#90 y #91, ADR-119 y ADR-120), coeficientes de la fatiga (#92, ADR-121) y expediente de documentos (#93 y #94, ADR-122 y ADR-123). Los 4 criterios en verde: G-41 a G-44 en `test/golden` (motor 1.17.0) y el panel de Mateo por HTTP en `demo-3.int.spec.ts`. /notion-sync aplicado (87 cambios en 11 páginas) |
-| P15 Marca, calendario, admin y migración | 🟨 | Rodrigo | | Plan aprobado (2026-11-13, ADR-124): 9 PR, la marca al final por pedido del cliente. PR 1 y 2, la agenda por la API y sus pantallas (ADR-125, ADR-126); PR 3a y 3b, el panel interno (ADR-127, ADR-128) |
+| P15 Marca, calendario, admin y migración | 🟨 | Rodrigo | #97 | Plan aprobado (2026-11-13, ADR-124): 9 PR, la marca al final por pedido del cliente. PR 1 y 2, la agenda por la API y sus pantallas (ADR-125, ADR-126; el 1, abierto en #97); PR 3a y 3b, el panel interno (ADR-127, ADR-128); PR 4a, el soporte con permiso por la API (ADR-129) |
 | P16 Producción y entrega, Demo 4 | ⬜ | Rodrigo | | |
 
 Leyenda: ⬜ pendiente · 🟨 en curso · ✅ terminado · ⛔ bloqueado
@@ -37,7 +37,7 @@ Leyenda: ⬜ pendiente · 🟨 en curso · ✅ terminado · ⛔ bloqueado
   - PR 1, la agenda por la API (RF-37; RN-J01 a RN-J03; ADR-125): citas en la agenda propia o, para el dueño y el
     administrador, en la de otro; los cruces los rechaza la base aunque lleguen a la vez; estados con If-Match y la asistencia
     desde que empieza; disponibilidad semanal; el recordatorio por correo 24 h antes de la cita confirmada, una sola vez; las
-    citas del paciente por /me y la próxima cita en el panel. Abierto.
+    citas del paciente por /me y la próxima cita en el panel. Abierto (#97).
   - PR 2, las pantallas de la agenda (ADR-126): la semana y el mes, la disponibilidad, la pestaña Citas del expediente, las
     citas en la línea de tiempo, «Tu agenda de hoy» y la próxima cita en Inicio, las sesiones verificadas y por validar del
     control semanal y «Tus citas» en la app. E2E `agenda.spec.ts`. Listo en local, después del PR 1.
@@ -45,8 +45,12 @@ Leyenda: ⬜ pendiente · 🟨 en curso · ✅ terminado · ⛔ bloqueado
     producción desde el panel), el uso del cupo de cada organización y las banderas de la fase C, que apagan la función en la
     API, el panel y la app. Listo en local, después del PR 2.
   - PR 3b, las pantallas del panel interno (ADR-128): organizaciones con su cupo, alta, renovar o cambiar de plan, días de gracia
-    y funciones; planes con su edición y su alta; lo apagado sale del panel y de la app. E2E `plataforma.spec.ts`. Listo en
-    local, después del PR 3a.
+    y funciones; planes con su edición y su alta; lo apagado sale del panel y de la app, y con las fotos apagadas el paciente
+    todavía retira su autorización. E2E `plataforma.spec.ts`. Listo en local, después del PR 3a.
+  - PR 4a, el soporte con permiso por la API (RN-A09; ADR-129): el dueño da, ve y revoca permisos ACCOUNT o CLINICAL_READ de 1 a
+    7 días a una persona de la lista del soporte; el soporte entra a la organización en modo soporte, solo lee lo que abre su
+    alcance y cada petición queda en la auditoría; vencer o revocar corta el acceso en la petición siguiente. La base ya no deja
+    a la plataforma darse un permiso. Listo en local, después del PR 3b.
 - P14.5 terminado (#70 a #94; aprobado el 2026-11-08, ADR-098), en 25 PR contra main: lo que trae la hoja piloto de Jeremy, por
   fases. Fase A, sin esperar respuestas:
   PR 1a, metas de día de entrenamiento y de descanso; PR 2, volumen ajustado por RIR y descanso; PR 6a, la cadera en Progreso,

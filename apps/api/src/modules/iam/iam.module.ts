@@ -13,6 +13,7 @@ import { InvitationHandlers } from './application/commands/invitation.handlers.j
 import { LoginHandler } from './application/commands/login.handler.js';
 import { PatientInvitationHandlers } from './application/commands/patient-invitation.handlers.js';
 import { PasswordHandlers } from './application/commands/password.handlers.js';
+import { SupportSessionHandler } from './application/commands/support-session.handler.js';
 import { UpdateAccountHandler } from './application/commands/update-account.handler.js';
 import {
   ACCOUNT_STORE,
@@ -37,6 +38,7 @@ import {
   SessionController,
 } from './adapters/in/http/invitation.controller.js';
 import { IamSessionAuthenticator } from './adapters/in/http/session-authenticator.adapter.js';
+import { SupportSessionController } from './adapters/in/http/support-session.controller.js';
 import {
   PrismaAccountStore,
   PrismaPasswordResetStore,
@@ -50,9 +52,23 @@ import {
 } from './adapters/out/security/security-adapters.js';
 import { IamMemberProfiles, IamPendingStaffInvitations } from './adapters/out/tenancy-providers.js';
 
-/** Membresías de tenancy (TENANT_DIRECTORY) vistas desde iam; sin tenancy, ninguna. */
+/** Membresías y permisos de soporte de tenancy (TENANT_DIRECTORY) vistos desde iam; sin tenancy, ninguno. */
 function membershipDirectory(directory?: TenantDirectory): MembershipDirectory {
   return {
+    supportGrant: async (organizationId, userId) => {
+      const grant = directory ? await directory.supportGrant(organizationId, userId) : null;
+      return grant
+        ? {
+            grantId: grant.grantId,
+            organizationId: grant.organizationId,
+            organizationName: grant.organizationName,
+            available:
+              grant.organizationStatus !== 'SUSPENDED' && grant.organizationStatus !== 'CLOSED',
+            scope: grant.scope,
+            expiresAt: grant.expiresAt,
+          }
+        : null;
+    },
     membershipsOf: async (userId: UserId) =>
       directory
         ? (await directory.membershipsOf(userId)).map((m) => ({
@@ -80,6 +96,7 @@ function membershipDirectory(directory?: TenantDirectory): MembershipDirectory {
     OrganizationInvitationController,
     InvitationController,
     SessionController,
+    SupportSessionController,
   ],
   providers: [
     LoginHandler,
@@ -90,6 +107,7 @@ function membershipDirectory(directory?: TenantDirectory): MembershipDirectory {
     InvitationHandlers,
     PatientInvitationHandlers,
     ActiveOrganizationHandler,
+    SupportSessionHandler,
     IamApi,
     AccountQueries,
     IamMailConsumer,

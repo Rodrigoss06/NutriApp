@@ -274,7 +274,7 @@ export class PrismaSessionStore implements SessionStore {
     return count;
   }
 
-  async setActiveOrganization(id: string, organizationId: OrganizationId): Promise<void> {
+  async setActiveOrganization(id: string, organizationId: OrganizationId | null): Promise<void> {
     await this.db.tx.session.updateMany({
       where: { id, revokedAt: null },
       data: { activeOrgId: organizationId },
