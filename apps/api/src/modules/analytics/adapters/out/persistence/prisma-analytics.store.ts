@@ -331,7 +331,10 @@ export class PrismaAnalyticsStore implements AnalyticsStore {
     await this.db.tx.patientOverview.deleteMany({ where: { patientId } });
   }
 
-  async overviewPage(alert: OverviewAlert | null, limit: number): Promise<OverviewPage> {
+  async overviewPage(
+    alerts: readonly OverviewAlert[] | null,
+    limit: number,
+  ): Promise<OverviewPage> {
     const tallies = await this.db.tx.$queryRaw<{ alert: string; patients: bigint }[]>`
       SELECT alert, count(*) AS patients
       FROM analytics.patient_overview, unnest(alerts) AS alert
@@ -345,46 +348,63 @@ export class PrismaAnalyticsStore implements AnalyticsStore {
         counts[tally.alert as OverviewAlert] = Number(tally.patients);
       }
     }
+    // Con varias, los que tienen cualquiera de ellas: el operador && de los arreglos.
+    const wanted = alerts === null ? null : [...alerts];
     const [total] = await this.db.tx.$queryRaw<{ patients: bigint }[]>`
       SELECT count(*) AS patients FROM analytics.patient_overview
-      WHERE cardinality(alerts) > 0 AND (${alert}::text IS NULL OR ${alert}::text = ANY(alerts))`;
-    const rows = await this.db.tx.$queryRaw<
-      {
-        patient_id: string;
-        last_log_date: Date | null;
-        last_evaluation_at: Date | null;
-        last_weight_kg: { toString(): string } | null;
-        adherence_7d_pct: { toString(): string } | null;
-        adherence_30d_pct: { toString(): string } | null;
-        unread_notes: number;
-        next_appointment_at: Date | null;
-        alerts: string[];
-        updated_at: Date;
-      }[]
-    >`
+      WHERE cardinality(alerts) > 0 AND (${wanted}::text[] IS NULL OR alerts && ${wanted}::text[])`;
+    const rows = await this.db.tx.$queryRaw<OverviewSqlRow[]>`
       SELECT patient_id, last_log_date, last_evaluation_at, last_weight_kg, adherence_7d_pct, adherence_30d_pct,
              unread_notes, next_appointment_at, alerts, updated_at
       FROM analytics.patient_overview
-      WHERE cardinality(alerts) > 0 AND (${alert}::text IS NULL OR ${alert}::text = ANY(alerts))
+      WHERE cardinality(alerts) > 0 AND (${wanted}::text[] IS NULL OR alerts && ${wanted}::text[])
       ORDER BY cardinality(alerts) DESC, last_log_date ASC NULLS FIRST, patient_id
       LIMIT ${limit}`;
     return {
       counts,
       total: Number(total?.patients ?? 0),
-      rows: rows.map((row) => ({
-        patientId: row.patient_id,
-        lastLogDate: row.last_log_date ? isoDate(row.last_log_date) : null,
-        lastEvaluationAt: row.last_evaluation_at,
-        lastWeightKg: num(row.last_weight_kg),
-        adherence7dPct: num(row.adherence_7d_pct),
-        adherence30dPct: num(row.adherence_30d_pct),
-        unreadNotes: row.unread_notes,
-        nextAppointmentAt: row.next_appointment_at,
-        alerts: row.alerts.filter((code): code is OverviewAlert =>
-          (OVERVIEW_ALERTS as readonly string[]).includes(code),
-        ),
-        updatedAt: row.updated_at,
-      })),
+      rows: rows.map(overviewRowOf),
     };
   }
+
+  async overviewRows(patientIds: readonly string[]): Promise<readonly OverviewRow[]> {
+    if (patientIds.length === 0) return [];
+    const rows = await this.db.tx.$queryRaw<OverviewSqlRow[]>`
+      SELECT patient_id, last_log_date, last_evaluation_at, last_weight_kg, adherence_7d_pct, adherence_30d_pct,
+             unread_notes, next_appointment_at, alerts, updated_at
+      FROM analytics.patient_overview
+      WHERE patient_id = ANY(${[...patientIds]}::uuid[])`;
+    return rows.map(overviewRowOf);
+  }
+}
+
+/** Una fila de `analytics.patient_overview` como la devuelve PostgreSQL. */
+interface OverviewSqlRow {
+  readonly patient_id: string;
+  readonly last_log_date: Date | null;
+  readonly last_evaluation_at: Date | null;
+  readonly last_weight_kg: { toString(): string } | null;
+  readonly adherence_7d_pct: { toString(): string } | null;
+  readonly adherence_30d_pct: { toString(): string } | null;
+  readonly unread_notes: number;
+  readonly next_appointment_at: Date | null;
+  readonly alerts: string[];
+  readonly updated_at: Date;
+}
+
+function overviewRowOf(row: OverviewSqlRow): OverviewRow {
+  return {
+    patientId: row.patient_id,
+    lastLogDate: row.last_log_date ? isoDate(row.last_log_date) : null,
+    lastEvaluationAt: row.last_evaluation_at,
+    lastWeightKg: num(row.last_weight_kg),
+    adherence7dPct: num(row.adherence_7d_pct),
+    adherence30dPct: num(row.adherence_30d_pct),
+    unreadNotes: row.unread_notes,
+    nextAppointmentAt: row.next_appointment_at,
+    alerts: row.alerts.filter((code): code is OverviewAlert =>
+      (OVERVIEW_ALERTS as readonly string[]).includes(code),
+    ),
+    updatedAt: row.updated_at,
+  };
 }

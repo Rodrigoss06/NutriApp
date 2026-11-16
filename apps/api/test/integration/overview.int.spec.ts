@@ -1,4 +1,8 @@
-import { overviewResponseSchema, patientListResponseSchema } from '@nutricoach/contracts';
+import {
+  overviewPatientsResponseSchema,
+  overviewResponseSchema,
+  patientListResponseSchema,
+} from '@nutricoach/contracts';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { AnalyticsRebuild } from '../../src/modules/analytics/index.js';
 import { ApiHarness, type StaffOrganization } from './support/api-harness.js';
@@ -8,7 +12,8 @@ import { patientWithConsent } from './support/luis.js';
 /**
  * P14 (PR 6a) · el panel del profesional con alertas, contra PostgreSQL como app_user (RF-34, ADR-093): sin registros en 3 días,
  * adherencia de 7 días baja, notas sin leer y el semáforo del día, en la fecha local del paciente (RN-G04). Solo lo ve su equipo
- * de atención (RN-A05) y la lectura queda en la auditoría (RN-B03). Datos sintéticos.
+ * de atención (RN-A05) y la lectura queda en la auditoría (RN-B03). La fila de unos pacientes, con alertas o sin ellas, para el
+ * tablero y el resumen del expediente (ADR-137). Datos sintéticos.
  */
 
 const GLOBAL_THRESHOLD = '019a2000-0000-7000-8000-000000000001';
@@ -72,6 +77,12 @@ const overview = async (query = '', as = cookie) => {
   const response = await harness.get(`/analytics/overview${query}`, as);
   expect(response.status, JSON.stringify(response.body)).toBe(200);
   return overviewResponseSchema.parse(response.body);
+};
+
+const rowsOf = async (ids: readonly string[], as = cookie) => {
+  const response = await harness.get(`/analytics/overview/patients?ids=${ids.join(',')}`, as);
+  expect(response.status, JSON.stringify(response.body)).toBe(200);
+  return overviewPatientsResponseSchema.parse(response.body).patients;
 };
 
 const alertsOf = async (patientId: string) =>
@@ -151,10 +162,41 @@ describe('RF-34 · las alertas del panel, en la fecha local del paciente (ADR-09
     expect(await alertsOf(anaId)).toEqual([]);
   });
 
+  it('ADR-137 · la fila de cada paciente pedido, tenga alertas o no: Ana, sin alertas, también vuelve', async () => {
+    const rows = await rowsOf([luisId, anaId]);
+    const byId = new Map(rows.map((row) => [row.patientId, row]));
+
+    expect([...byId.keys()].sort()).toEqual([luisId, anaId].sort());
+    expect(byId.get(anaId)?.alerts).toEqual([]);
+    expect(byId.get(anaId)?.adherence7dPct).toBeCloseTo(100, 1);
+    expect(byId.get(luisId)?.alerts).toEqual(['LOW_ADHERENCE', 'READINESS_RED']);
+    // Un id repetido vuelve una vez; uno que no existe, ninguna.
+    expect((await rowsOf([anaId, anaId, uuid()])).map((row) => row.patientId)).toEqual([anaId]);
+
+    expect((await harness.get('/analytics/overview/patients', cookie)).status).toBe(400);
+    expect((await harness.get('/analytics/overview/patients?ids=no-es-un-id', cookie)).status).toBe(
+      400,
+    );
+    const tooMany = Array.from({ length: 101 }, () => uuid()).join(',');
+    expect((await harness.get(`/analytics/overview/patients?ids=${tooMany}`, cookie)).status).toBe(
+      400,
+    );
+  });
+
   it('el filtro por alerta y los nombres desde /patients, sin que analytics los lea (ADR-064)', async () => {
     const red = await overview('?alert=READINESS_RED');
     expect(red.patients.map((patient) => patient.patientId)).toEqual([luisId]);
     expect(red.total).toBe(1);
+
+    // ADR-137 · con varias, los que tienen cualquiera de ellas, en el mismo orden del panel.
+    const any = await overview('?alert=READINESS_RED,NO_RECENT_LOGS');
+    expect(any.patients.map((patient) => patient.patientId)).toEqual([inesId, luisId]);
+    expect(any.total).toBe(2);
+    expect((await overview('?alert=UNREAD_NOTES,PENDING_REVIEW')).total).toBe(0);
+    expect((await harness.get('/analytics/overview?alert=READINESS_RED,OTRA', cookie)).status).toBe(
+      400,
+    );
+    expect((await harness.get('/analytics/overview?alert=', cookie)).status).toBe(400);
 
     const names = await harness.get(`/patients?ids=${luisId},${inesId}`, cookie);
     expect(names.status, JSON.stringify(names.body)).toBe(200);
@@ -173,6 +215,7 @@ describe('RF-34 · las alertas del panel, en la fecha local del paciente (ADR-09
     const outsider = await overview('', org.staff.outsider.cookie);
     expect(outsider.patients).toEqual([]);
     expect(outsider.total).toBe(0);
+    expect(await rowsOf([luisId, inesId, anaId], org.staff.outsider.cookie)).toEqual([]);
 
     const audited = await owner<{ n: string }>(
       `SELECT count(*) AS n FROM audit.audit_log
@@ -188,5 +231,6 @@ describe('RF-34 · las alertas del panel, en la fecha local del paciente (ADR-09
     await harness.app.get(AnalyticsRebuild).patient(inesId);
 
     expect((await overview()).patients.map((patient) => patient.patientId)).not.toContain(inesId);
+    expect(await rowsOf([inesId])).toEqual([]);
   });
 });

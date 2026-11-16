@@ -3787,3 +3787,29 @@ Consecuencias:
   env.local.example en local), y la dueña ve el consentimiento migrado, los dos planes en Dieta y la referencia en Nuevo plan. La web
   no toca la base: corre la CLI de la API como lo haría quien migra.
 - Para Notion (/notion-sync de P15): 04 RF-40 (dónde se ve lo importado).
+
+## ADR-137 · Un panel para 50 pacientes: el plan de seis cambios y la fila del panel por paciente — aceptada (2026-11-16)
+Contexto: fuera de los prompts. Con 50 pacientes por entrenador (TRAMO_50), la capacidad sobra (RNF-01: p95 de 102 ms en la analítica
+con 500 pacientes, ADR-096), pero la interfaz creció pantalla por pantalla: 25 destinos dentro de un paciente (14 pestañas, 9 en
+Entrenamiento y 2 en Analítica), un expediente que abre en la Ficha administrativa, el seguimiento repartido en tres pantallas, una
+lista de pacientes sin señales y el control semanal de uno en uno. Rodrigo revisó la propuesta «Panel para 50 pacientes» y el
+2026-11-16 pidió los seis cambios, con la barra lateral (opción B) para el expediente. El alcance contractual (ajuste o cláusula 12)
+lo define Rodrigo con el cliente.
+Decisión:
+- Los seis cambios, cada uno en su PR contra main: (1) expediente con barra lateral de seis grupos y un Resumen de entrada; (2) la
+  revisión semanal en serie; (3) Inicio como bandeja de trabajo agrupada por tarea; (4) la lista de pacientes como tablero con sus
+  señales; (5) Ctrl + K y «anterior / siguiente» entre pacientes; (6) «Más» de la app del paciente en grupos. Ninguno cambia reglas
+  clínicas, permisos ni lo que la API calcula: cambia cómo se llega a cada pantalla.
+- Este PR, solo la API, sobre `analytics.patient_overview` (ADR-093), sin tabla ni migración nueva:
+  - `GET /analytics/overview?alert=A,B`: una o varias alertas; con varias, los que tienen cualquiera (`alerts && $1`), en el mismo
+    orden del panel. Un código desconocido o la lista vacía responden 400. Una sola alerta funciona como antes.
+  - `GET /analytics/overview/patients?ids=a,b,c` (hasta 100, sin repetidos): la fila de cada paciente pedido, tenga alertas o no,
+    para el tablero y el Resumen. La RLS deja fuera a los que el equipo de atención no ve (RN-A05); un archivado no tiene fila. Sin
+    nombres: la web los sigue pidiendo a /patients (ADR-064). Lectura auditada como la del panel (RN-B03), con el mismo permiso
+    `patients.read`.
+Consecuencias:
+- Integración `overview.int.spec.ts`: la fila de Ana sin alertas también vuelve; un id repetido vuelve una vez y uno que no existe,
+  ninguna; las varias alertas en el orden del panel; 400 sin ids, con un id inválido, con 101 y con un código desconocido; el
+  profesional fuera del equipo no recibe filas; el archivado no vuelve.
+- `scripts/analytics-p95.ts` mide también el tablero con 50 pacientes al azar.
+- Para Notion (/notion-sync): 04 RF-34 (las alertas agrupadas y la fila por paciente) y 02 (las dos lecturas de analytics).

@@ -11,6 +11,7 @@ import {
   ANALYTICS_STORE,
   type AnalyticsStore,
   type OverviewPage,
+  type OverviewRow,
 } from '../ports/analytics.ports.js';
 
 /**
@@ -27,14 +28,30 @@ export class OverviewQueries {
 
   async page(
     context: SecurityContext,
-    alert: OverviewAlert | null,
+    alerts: readonly OverviewAlert[] | null,
     limit: number,
   ): Promise<OverviewPage> {
-    const page = await this.uow.query(context, () => this.store.overviewPage(alert, limit));
+    const page = await this.uow.query(context, () => this.store.overviewPage(alerts, limit));
     await this.audit.record(context, {
       action: 'READ',
       resourceType: 'analytics.patient_overview',
     });
     return page;
+  }
+
+  /**
+   * La fila de cada paciente pedido, con alertas o sin ellas: el tablero de pacientes y el resumen del expediente (ADR-137). La RLS
+   * deja fuera a los que el equipo no ve (RN-A05) y la lectura queda en la auditoría (RN-B03).
+   */
+  async rows(
+    context: SecurityContext,
+    patientIds: readonly string[],
+  ): Promise<readonly OverviewRow[]> {
+    const rows = await this.uow.query(context, () => this.store.overviewRows(patientIds));
+    await this.audit.record(context, {
+      action: 'READ',
+      resourceType: 'analytics.patient_overview',
+    });
+    return rows;
   }
 }
