@@ -45,7 +45,7 @@ test.describe('P15 · Exportación del paciente', () => {
 
     // La dueña registró al paciente: es su responsable.
     await loginInPage(page, organization.ownerEmail);
-    await page.goto(`/panel/pacientes/${patient.id}`);
+    await page.goto(`/panel/pacientes/${patient.id}/ficha`);
     const section = page.getByRole('region', { name: 'Exportar sus datos' });
     await expect(section).toContainText('Queda 24 horas');
     expect(await seriousViolations(page)).toEqual([]);

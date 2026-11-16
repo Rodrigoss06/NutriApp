@@ -215,7 +215,7 @@ test.describe('RN-A06 · acceso del paciente a la app', () => {
     const patient = await registerPatientByApi(organization.ownerEmail, { email });
 
     await loginInPage(page, organization.ownerEmail);
-    await page.goto(`/panel/pacientes/${patient.id}`);
+    await page.goto(`/panel/pacientes/${patient.id}/ficha`);
     expect(await seriousViolations(page)).toEqual([]);
     const seen = await mailCount(email, '/invitacion');
     await page.getByRole('button', { name: 'Invitar a la app' }).click();
@@ -351,7 +351,7 @@ test.describe('RN-A05 · lo que el expediente ofrece según el equipo de atenci�
     };
 
     await test.step('la ficha: ni datos, ni archivo, ni equipo, ni invitación', async () => {
-      await page.goto(base);
+      await page.goto(`${base}/ficha`);
       await expect(
         page.getByRole('heading', { level: 2, name: 'Equipo de atención' }),
       ).toBeVisible();

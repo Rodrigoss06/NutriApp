@@ -6,6 +6,7 @@ import {
   publishedExchangePlanByApi,
   publishedProgramByApi,
 } from './support/patient-app';
+import { recordTab } from './support/record';
 import { createOrganization, loginAsPatientInPage, loginInPage } from './support/stack';
 
 /**
@@ -17,13 +18,6 @@ import { createOrganization, loginAsPatientInPage, loginInPage } from './support
  */
 
 const RICE = 'Arroz pilado o pulido cocido';
-
-async function recordTab(page: Page, name: string): Promise<void> {
-  await page
-    .getByRole('navigation', { name: 'Secciones del expediente' })
-    .getByRole('link', { name, exact: true })
-    .click();
-}
 
 test.describe('P14.5 · Perfiles de día del plan', () => {
   test('el coach agrega Descanso y un perfil propio con sus gramos, ve sus kcal con su método y quedan guardados', async ({

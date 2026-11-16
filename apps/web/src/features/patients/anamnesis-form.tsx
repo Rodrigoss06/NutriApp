@@ -240,7 +240,7 @@ export function AnamnesisForm({
         <Notice tone="info" title="Solo lectura">
           La anamnesis la escribe el equipo de atención con permiso de escritura. El equipo se edita
           en la{' '}
-          <Link href={`/panel/pacientes/${patientId}`} className="underline">
+          <Link href={`/panel/pacientes/${patientId}/ficha`} className="underline">
             Ficha
           </Link>
           .

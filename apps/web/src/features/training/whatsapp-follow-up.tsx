@@ -61,7 +61,10 @@ export function WhatsappFollowUp({ patientId }: { patientId: string }) {
             {phoneProblem ? (
               <>
                 {' '}
-                <Link href={`/panel/pacientes/${patientId}`} className="text-brand-text underline">
+                <Link
+                  href={`/panel/pacientes/${patientId}/ficha`}
+                  className="text-brand-text underline"
+                >
                   Ir a la ficha
                 </Link>
               </>

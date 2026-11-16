@@ -1,6 +1,7 @@
 import { expect, test, type Page } from '@playwright/test';
 import { seriousViolations } from './support/axe';
 import { luisWithPrescription, type Versioned } from './support/luis';
+import { recordTab } from './support/record';
 import { apiAs, createOrganization, loginInPage } from './support/stack';
 
 /**
@@ -85,13 +86,6 @@ async function fillAllowedFoodsByApi(ownerEmail: string, planId: string): Promis
   });
   expect(updated.status(), 'completar los alimentos permitidos').toBe(200);
   await api.dispose();
-}
-
-async function recordTab(page: Page, name: string): Promise<void> {
-  await page
-    .getByRole('navigation', { name: 'Secciones del expediente' })
-    .getByRole('link', { name, exact: true })
-    .click();
 }
 
 const saved = async (page: Page) => {
