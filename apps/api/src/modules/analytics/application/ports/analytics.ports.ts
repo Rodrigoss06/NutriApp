@@ -92,10 +92,12 @@ export interface AnalyticsStore {
   replaceOverview(organizationId: string, row: OverviewRow): Promise<void>;
   deleteOverview(patientId: string): Promise<void>;
   /**
-   * Los pacientes con alguna alerta (o con esa), con la RLS del equipo de atención (RN-A05): primero los de más alertas y, a igual
-   * número, los de registro más antiguo.
+   * Los pacientes con alguna alerta (o con alguna de esas), con la RLS del equipo de atención (RN-A05): primero los de más alertas
+   * y, a igual número, los de registro más antiguo.
    */
-  overviewPage(alert: OverviewAlert | null, limit: number): Promise<OverviewPage>;
+  overviewPage(alerts: readonly OverviewAlert[] | null, limit: number): Promise<OverviewPage>;
+  /** Las filas de esos pacientes, tengan alertas o no, con la misma RLS (ADR-137). Sin fila o fuera del equipo, no vuelven. */
+  overviewRows(patientIds: readonly string[]): Promise<readonly OverviewRow[]>;
 }
 
 export const ANALYTICS_STORE = Symbol('ANALYTICS_STORE');

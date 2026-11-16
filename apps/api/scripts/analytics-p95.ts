@@ -176,6 +176,12 @@ async function measure(
     ],
     ['Rutina del programa vigente (RF-33)', () => `/patients/${pick()}/analytics/training`],
     ['Panel con alertas (RF-34)', () => '/analytics/overview'],
+    // El tablero de pacientes pide la fila de los que muestra, hasta 100 (ADR-137): aquí, 50 al azar.
+    [
+      'Tablero, 50 pacientes (ADR-137)',
+      () =>
+        `/analytics/overview/patients?ids=${[...new Set(Array.from({ length: 50 }, pick))].join(',')}`,
+    ],
   ];
   const stats: QueryStats[] = [];
   for (const [name, path] of queries) {

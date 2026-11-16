@@ -25,12 +25,34 @@ export const LOW_ADHERENCE_PCT = 80;
 /** Cuántos pacientes con alertas devuelve una página, como máximo. */
 export const OVERVIEW_MAX_LIMIT = 100;
 
-/** GET /api/v1/analytics/overview?alert&limit: solo los pacientes con alguna alerta, de los que el equipo ve (RN-A05). */
+/**
+ * GET /api/v1/analytics/overview?alert&limit: solo los pacientes con alguna alerta, de los que el equipo ve (RN-A05). `alert`
+ * acepta una o varias, separadas por comas: los que tienen cualquiera de ellas (la bandeja de Inicio agrupa por tarea, ADR-137).
+ */
 export const overviewQuerySchema = z.object({
-  alert: z.enum(OVERVIEW_ALERTS).optional(),
+  alert: z
+    .string()
+    .max(200)
+    .transform((value) => [...new Set(value.split(',').filter(Boolean))])
+    .pipe(z.array(z.enum(OVERVIEW_ALERTS)).min(1))
+    .optional(),
   limit: z.coerce.number().int().min(1).max(OVERVIEW_MAX_LIMIT).default(50),
 });
 export type OverviewQuery = z.input<typeof overviewQuerySchema>;
+
+/**
+ * GET /api/v1/analytics/overview/patients?ids=a,b,c: la fila del panel de esos pacientes, tengan alertas o no, hasta 100 (el
+ * tablero de pacientes y el resumen del expediente, ADR-137). Los que el equipo no ve, o que no tienen fila (archivados), no
+ * vuelven (RN-A05).
+ */
+export const overviewPatientsQuerySchema = z.object({
+  ids: z
+    .string()
+    .max(3_700)
+    .transform((value) => [...new Set(value.split(',').filter(Boolean))])
+    .pipe(z.array(z.uuid()).min(1).max(OVERVIEW_MAX_LIMIT)),
+});
+export type OverviewPatientsQuery = z.input<typeof overviewPatientsQuerySchema>;
 
 const count = z.int().nonnegative();
 
@@ -54,9 +76,15 @@ export type OverviewPatient = z.infer<typeof overviewPatientSchema>;
 export const overviewResponseSchema = z.object({
   /** Los pacientes con cada alerta; un paciente cuenta en cada una de las suyas. */
   counts: z.record(z.enum(OVERVIEW_ALERTS), count),
-  /** Los pacientes con alguna alerta (o con la pedida), aunque la página traiga menos. */
+  /** Los pacientes con alguna alerta (o con alguna de las pedidas), aunque la página traiga menos. */
   total: count,
   /** Primero los de más alertas; a igual número, los que llevan más días sin registrar. */
   patients: z.array(overviewPatientSchema),
 });
 export type OverviewResponse = z.infer<typeof overviewResponseSchema>;
+
+export const overviewPatientsResponseSchema = z.object({
+  /** Una fila por paciente pedido que el equipo ve y que tiene fila; sin orden: la web los busca por id. */
+  patients: z.array(overviewPatientSchema),
+});
+export type OverviewPatientsResponse = z.infer<typeof overviewPatientsResponseSchema>;
