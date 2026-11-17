@@ -25,7 +25,7 @@ test.describe('P15 · Supresión del paciente', () => {
     await owner.dispose();
 
     await loginInPage(page, organization.ownerEmail);
-    await page.goto(`/panel/pacientes/${patient.id}`);
+    await page.goto(`/panel/pacientes/${patient.id}/ficha`);
     const form = page.getByRole('form', { name: 'Suprimir sus datos' });
     const suppress = form.getByRole('button', { name: 'Suprimir para siempre' });
     await expect(suppress).toBeDisabled();

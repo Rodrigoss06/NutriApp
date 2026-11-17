@@ -1,54 +1,38 @@
-import type { PatientExportListResponse } from '@nutricoach/contracts';
+import type { OverviewPatientsResponse } from '@nutricoach/contracts';
 import { Notice } from '@nutricoach/ui';
 import type { Metadata } from 'next';
-import { PatientExportSection } from '@/features/patient-export/patient-export-section';
-import { AppAccessSection } from '@/features/patients/app-access-section';
-import { CareTeamSection } from '@/features/patients/care-team-section';
-import { PatientDetails } from '@/features/patients/patient-details';
-import { SuppressionSection } from '@/features/patients/suppression-section';
-import { Section } from '@/features/patients/section';
-import { getMembers, getPatient } from '@/features/patients/server';
+import { PatientSummary } from '@/features/patients/patient-summary';
+import { getOrganization, getPatient, patientLabel } from '@/features/patients/server';
 import { serverApi } from '@/lib/api/server';
 
-export const metadata: Metadata = { title: 'Ficha' };
+export const metadata: Metadata = { title: 'Resumen' };
 
 /**
- * La ficha: datos, equipo de atención, acceso a la app, la exportación y la supresión de sus datos (RF-08, RF-07, RN-A05, RN-A06,
- * RN-B04, RN-B05).
+ * La entrada del expediente (ADR-138): el estado del paciente, de su fila del panel (RF-34, ADR-137), con cada alerta y cada dato
+ * enlazados a su sección. La lectura queda en la auditoría (RN-B03).
  */
-export default async function PatientPage({ params }: { params: Promise<{ patientId: string }> }) {
+export default async function PatientSummaryPage({
+  params,
+}: {
+  params: Promise<{ patientId: string }>;
+}) {
   const { patientId } = await params;
-  const [patient, members, exports] = await Promise.all([
+  const [patient, organization, label, overview] = await Promise.all([
     getPatient(patientId),
-    getMembers(),
-    serverApi<PatientExportListResponse>(`/patients/${patientId}/exports`),
+    getOrganization(),
+    patientLabel(),
+    serverApi<OverviewPatientsResponse>(
+      `/analytics/overview/patients?ids=${encodeURIComponent(patientId)}`,
+    ),
   ]);
   if (!patient.ok) return null;
-  if (!members.ok) return <Notice tone="danger" title="No pudimos cargar el equipo" />;
+  if (!overview.ok) return <Notice tone="danger" title="No pudimos cargar el resumen" />;
   return (
-    <div className="flex flex-col gap-8">
-      <Section title="Datos">
-        <PatientDetails patient={patient.data} members={members.data.members} />
-      </Section>
-      <Section
-        title="Equipo de atención"
-        description="Con la visibilidad por equipo, solo ellos y el dueño de la organización ven este expediente."
-      >
-        <CareTeamSection patient={patient.data} members={members.data.members} />
-      </Section>
-      <Section title="Acceso a la app">
-        <AppAccessSection patient={patient.data} members={members.data.members} />
-      </Section>
-      {/* El soporte no exporta: su lista responde 403 y la sección no se muestra (RN-A09). */}
-      {exports.ok ? (
-        <PatientExportSection
-          patientId={patient.data.id}
-          responsibleMemberId={patient.data.responsibleMemberId}
-          members={members.data.members}
-          initial={exports.data}
-        />
-      ) : null}
-      <SuppressionSection patient={patient.data} />
-    </div>
+    <PatientSummary
+      patient={patient.data}
+      row={overview.data.patients.find((row) => row.patientId === patientId) ?? null}
+      patientLabel={label}
+      timezone={organization.ok ? organization.data.timezone : 'America/Lima'}
+    />
   );
 }

@@ -1,6 +1,7 @@
 import { readFileSync } from 'node:fs';
 import { expect, test, type Locator, type Page } from '@playwright/test';
 import { seriousViolations } from './support/axe';
+import { recordTab } from './support/record';
 import {
   apiAs,
   createOrganization,
@@ -72,13 +73,6 @@ const bornYearsAgo = (years: number) => {
 async function choose(page: Page, label: string, option: string | RegExp): Promise<void> {
   await page.getByRole('combobox', { name: label }).click();
   await page.getByRole('option', { name: option }).first().click();
-}
-
-async function recordTab(page: Page, name: string): Promise<void> {
-  await page
-    .getByRole('navigation', { name: 'Secciones del expediente' })
-    .getByRole('link', { name, exact: true })
-    .click();
 }
 
 /** Las tomas de un sitio en la captura, como las escribe la persona: Enter guarda y avanza. */

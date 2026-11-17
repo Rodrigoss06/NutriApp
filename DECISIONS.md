@@ -3813,3 +3813,32 @@ Consecuencias:
   profesional fuera del equipo no recibe filas; el archivado no vuelve.
 - `scripts/analytics-p95.ts` mide también el tablero con 50 pacientes al azar.
 - Para Notion (/notion-sync): 04 RF-34 (las alertas agrupadas y la fila por paciente) y 02 (las dos lecturas de analytics).
+
+## ADR-138 · El expediente con barra lateral y un Resumen de entrada; la Ficha pasa a /ficha — aceptada (2026-11-16)
+Contexto: cambio 1 de ADR-137, con la opción B que eligió Rodrigo. El expediente tenía 14 pestañas en una fila (6 fuera de la pantalla
+a 1280 px), 9 más dentro de Entrenamiento y 2 dentro de Analítica, y abría en la Ficha administrativa.
+Decisión:
+- Una barra lateral («Secciones del expediente») con el Resumen y cinco grupos: Seguimiento (Día a día, Control semanal, Analítica
+  de dieta y de rutina, Informes y Fotos), Nutrición (Energía y Dieta), Entrenamiento (Programas, Seguridad, Perfil, Cribado, Postura y
+  Pruebas físicas), Evaluaciones (Evaluaciones y Evolución) y Expediente (Ficha, Historia clínica, Condiciones, objetivos y notas,
+  Consentimientos, Documentos, Citas, App del paciente y Línea de tiempo). Las rutas no cambian, salvo la Ficha; la activa lleva
+  aria-current también en sus páginas internas (la sección de ruta más larga que la contiene). Las banderas apagadas (ADR-127)
+  siguen ocultando Informes, Fotos y Documentos. «App del paciente» usa la palabra de la organización.
+- Desde 1280 px, la barra va fija a la izquierda del contenido (13rem). Por debajo, incluido el celular, es un selector: un botón
+  «Sección: <la actual>» que abre la misma lista y se cierra al elegir. Se eligió 1280 px porque a 1024 px, con el riel del panel,
+  el contenido quedaba en unos 480 px.
+- Se quitan las pestañas internas de Entrenamiento y de Analítica: la barra ya lleva a cada una.
+- `/panel/pacientes/:id` es el Resumen: las alertas del paciente, cada una con el enlace a su sección (el texto dice qué hacer), y lo
+  último de su fila del panel (último registro, notas sin leer, adherencia de 7 y 30 días con su forma de cálculo, próxima cita,
+  última evaluación cerrada y último peso), cada dato con su sección. Sin fila (recién registrado) o sin registros ni evaluaciones,
+  «Para empezar» enlaza consentimientos, historia, evaluaciones y la Ficha. Un archivado no tiene fila: el Resumen lo dice y lleva
+  a la Ficha. No calcula nada: muestra la fila (ADR-137).
+- La Ficha (datos, equipo de atención, acceso a la app, exportación y supresión) pasa a `/panel/pacientes/:id/ficha`; sus enlaces
+  internos («Ver el equipo de atención», «Ir a la ficha», la anamnesis de solo lectura) apuntan ahí. Registrar un paciente sigue
+  llevando a su expediente, que ahora abre en el Resumen.
+Consecuencias:
+- Unitarias de la web: la sección de cada ruta, los grupos sin rutas repetidas, las banderas, la palabra de la organización y los
+  datos del Resumen sin datos («Sin días con meta», no 0).
+- E2E: `support/record.ts` abre el selector en el celular antes de elegir una sección; pacientes, exportación y supresión abren la
+  Ficha en `/ficha`, y el panel interno busca Informes y Fotos en la barra del expediente.
+- Para Notion (/notion-sync): 04 RF-10 (el expediente abre en el Resumen) y 02 §11 (la navegación del expediente).

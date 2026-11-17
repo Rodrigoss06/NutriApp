@@ -14,7 +14,7 @@ export function CareTeamNotice({ patientId, action }: { patientId: string; actio
       title={`Para ${action}, necesitas estar en su equipo de atención con acceso de escritura`}
       rule="RN-A05"
     >
-      <Link href={`/panel/pacientes/${patientId}`} className="underline underline-offset-4">
+      <Link href={`/panel/pacientes/${patientId}/ficha`} className="underline underline-offset-4">
         Ver el equipo de atención
       </Link>
     </Notice>

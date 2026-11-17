@@ -1,6 +1,7 @@
 import { randomBytes, randomUUID } from 'node:crypto';
 import { expect, test } from '@playwright/test';
 import { seriousViolations } from './support/axe';
+import { recordNavigation } from './support/record';
 import {
   apiContext,
   apiLogin,
@@ -84,13 +85,13 @@ test.describe('P15 · Panel interno', () => {
     await expect(photos).toContainText('Apagada');
     expect(await seriousViolations(page)).toEqual([]);
 
-    // La dueña ya no ve la pestaña Fotos; el informe sigue.
+    // La dueña ya no ve la sección Fotos del expediente; el informe sigue.
     await page.context().clearCookies();
     await loginInPage(page, organization.ownerEmail);
     await page.goto(`/panel/pacientes/${patient.id}/entrenamiento`);
-    const tabs = page.getByRole('navigation', { name: 'Secciones de entrenamiento' });
-    await expect(tabs.getByRole('link', { name: 'Informes' })).toBeVisible();
-    await expect(tabs.getByRole('link', { name: 'Fotos' })).toHaveCount(0);
+    const sections = await recordNavigation(page);
+    await expect(sections.getByRole('link', { name: 'Informes', exact: true })).toBeVisible();
+    await expect(sections.getByRole('link', { name: 'Fotos', exact: true })).toHaveCount(0);
 
     // El paciente ya no sube ni ve fotos, pero puede retirar su autorización, y al retirarla el enlace se va.
     await page.context().clearCookies();

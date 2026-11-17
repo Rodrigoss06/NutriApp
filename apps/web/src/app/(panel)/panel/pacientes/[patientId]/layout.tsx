@@ -3,12 +3,12 @@ import Link from 'next/link';
 import type { ReactNode } from 'react';
 import { pluralLabel } from '@/features/organization/labels';
 import { PatientHeader } from '@/features/patients/patient-header';
-import { RecordTabs } from '@/features/patients/record-tabs';
+import { RecordNav } from '@/features/patients/record-nav';
 import { getOrganization, getPatient, patientLabel } from '@/features/patients/server';
 
 /**
  * Expediente del paciente (RF-09, RF-10). Abrirlo deja un READ en la auditoría (RN-B03). Fuera del equipo de atención
- * la API responde 404 (RN-A05): para quien no lo ve, no existe.
+ * la API responde 404 (RN-A05): para quien no lo ve, no existe. Las secciones van en la barra lateral, en seis grupos (ADR-138).
  */
 export default async function PatientRecordLayout({
   children,
@@ -45,11 +45,14 @@ export default async function PatientRecordLayout({
   return (
     <div className="flex flex-col gap-6">
       <PatientHeader patient={patient.data} patientLabel={label} />
-      <RecordTabs
-        patientId={patientId}
-        features={organization.ok ? organization.data.features : null}
-      />
-      {children}
+      <div className="flex flex-col gap-6 xl:grid xl:grid-cols-[13rem_minmax(0,1fr)] xl:items-start xl:gap-8">
+        <RecordNav
+          patientId={patientId}
+          features={organization.ok ? organization.data.features : null}
+          patientLabel={label}
+        />
+        <div className="flex min-w-0 flex-col gap-6">{children}</div>
+      </div>
     </div>
   );
 }

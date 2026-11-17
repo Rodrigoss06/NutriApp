@@ -35,6 +35,20 @@ export const ALERT_TONES = {
   PENDING_REVIEW: 'info',
 } as const satisfies Record<OverviewAlert, Tone>;
 
+/** Qué se hace con cada alerta: el texto del enlace que lleva a su sección (ADR-138). */
+export const ALERT_ACTIONS = {
+  NO_RECENT_LOGS: 'Ver su día a día',
+  LOW_ADHERENCE: 'Ver la analítica de dieta',
+  UNREAD_NOTES: 'Leer sus notas',
+  READINESS_RED: 'Ver su registro de hoy',
+  READINESS_YELLOW: 'Ver su registro de hoy',
+  WEEKLY_RED: 'Ver el control semanal',
+  WEEKLY_AMBER: 'Ver el control semanal',
+  FATIGUE_RED: 'Ver la analítica de rutina',
+  FATIGUE_AMBER: 'Ver la analítica de rutina',
+  PENDING_REVIEW: 'Decidir el control semanal',
+} as const satisfies Record<OverviewAlert, string>;
+
 /** Dónde se atiende cada alerta, dentro del paciente: su seguimiento, su analítica o su control semanal. */
 export function alertHref(patientId: string, alert: OverviewAlert): string {
   const base = `/panel/pacientes/${patientId}`;
